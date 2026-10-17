@@ -1,0 +1,25 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Yorliq o'lchamlari{% endblock %}
+{% block kontent %}
+{% include "panel/sozlamalar/_menyu.html" %}
+<h1>Yorliq o'lchamlari</h1>
+<table>
+  <thead><tr><th>Nomi</th><th class="son">Eni, mm</th><th class="son">Bo'yi, mm</th><th>Faol</th><th>Standart</th><th></th></tr></thead>
+  <tbody>
+  {% for o in royxat %}
+    <tr>
+      <td>{{ o.nomi }}</td><td class="son">{{ o.eni_mm }}</td><td class="son">{{ o.boyi_mm }}</td>
+      <td>{% if o.faol %}ha{% else %}yo'q{% endif %}</td><td>{% if o.standart %}ha{% endif %}</td>
+      <td><a href="{% url 'panel:yorliq_olchami_tahrir' o.pk %}">Tahrirlash</a></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6">O'lcham yo'q.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<h2>Yangi o'lcham</h2>
+<form method="post">{% csrf_token %}
+  {% include "panel/sozlamalar/_forma.html" %}
+  <button type="submit">Qo'shish</button>
+</form>
+{% endblock %}

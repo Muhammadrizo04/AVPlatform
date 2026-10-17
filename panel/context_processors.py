@@ -11,6 +11,7 @@ def sinxron_holati(request):
     oxirgi = oxirgi_muvaffaqiyatli()
     return {
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
+        "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),
         "tozalash_huquqi": huquqi_bor(request.user, "tozalash"),
         "sinxron_holati": {
             "oxirgi": (oxirgi.tugadi or oxirgi.boshlandi) if oxirgi else None,

@@ -1,0 +1,20 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ tur.nomi }}{% endblock %}
+{% block kontent %}
+{% include "panel/sozlamalar/_menyu.html" %}
+<h1>AV turi: {{ tur.nomi }}</h1>
+{% for x in xatolar %}<p class="xato">{{ x }}</p>{% endfor %}
+<form method="post">{% csrf_token %}
+  {% include "panel/sozlamalar/_forma.html" %}
+  <h2>Qo'shimcha maydonlar</h2>
+  <p>Kalit: kichik lotin harf, raqam, _. «tanlov» tipida qiymatlar vergul bilan. Bo'sh qator e'tiborga olinmaydi.</p>
+  <table>
+    <thead><tr><th>Kalit</th><th>Nomi</th><th>Tip</th><th>Majburiy</th><th>Tanlov qiymatlari</th></tr></thead>
+    <tbody>
+    {% for m in maydonlar %}{% include "panel/sozlamalar/_maydon_qatori.html" %}{% endfor %}
+    {% for _ in bosh_qatorlar %}{% include "panel/sozlamalar/_maydon_qatori.html" with m=None %}{% endfor %}
+    </tbody>
+  </table>
+  <button type="submit">Saqlash</button> <a href="{% url 'panel:av_turlari' %}">Bekor qilish</a>
+</form>
+{% endblock %}
