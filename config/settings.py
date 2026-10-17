@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "vositalar",
     "mol",
     "yorliqlar",
+    "hisobotlar",
     "panel",
 ]
 

@@ -1,0 +1,10 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Xizmat muddati{% endblock %}
+{% block kontent %}
+<h1>Xizmat muddati</h1>
+<h2>Muddati tugagan ({{ tugagan|length }})</h2>
+{% include "hisobotlar/_muddat_jadval.html" with royxat=tugagan %}
+<h2>6 oyda tugaydi ({{ olti_oy|length }})</h2>
+{% include "hisobotlar/_muddat_jadval.html" with royxat=olti_oy %}
+{% include "hisobotlar/_pastki.html" %}
+{% endblock %}
