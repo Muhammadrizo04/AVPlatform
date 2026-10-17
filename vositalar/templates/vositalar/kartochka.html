@@ -3,6 +3,7 @@
 {% block kontent %}
 <p><a href="{% url 'vositalar:royxat' %}">← AV ro'yxati</a></p>
 <h1>{{ av.nomi }}</h1>
+{% if yorliq_huquqi %}<p><a href="{% url 'yorliqlar:tanlash' %}?av={{ av.pk }}">QR-yorliq chop etish</a></p>{% endif %}
 
 <h2>1C ma'lumotlari <small>(faqat o'qish)</small></h2>
 <table>

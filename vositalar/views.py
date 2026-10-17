@@ -55,6 +55,7 @@ def royxat(request):
         "params": request.GET,
         "query": _filtr_soz_parametrlari(request),
         "taqsim_huquqi": taqsim_huquqi,
+        "yorliq_huquqi": huquqi_bor(request.user, "yorliq"),
         "holatlar": Holat.choices,
     }
     if request.headers.get("HX-Request"):
@@ -339,6 +340,7 @@ def kartochka(request, pk):
         "qoshimcha_maydonlar": qoshimcha,
         "xatolar": xatolar,
         "tahrir": tahrir,
+        "yorliq_huquqi": huquqi_bor(request.user, "yorliq"),
         "amortizatsiya": hisobla(av.jami_summa, k.ishga_tushgan_sana, samarali_muddat(k), timezone.localdate()),
         "dona_narxi": dona_narxi(av.jami_summa, av.jami_soni),
         "tarix": tarix(av),

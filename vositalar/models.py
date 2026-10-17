@@ -174,4 +174,8 @@ class YorliqOlchami(models.Model):
 
     @classmethod
     def standarti(cls) -> "YorliqOlchami":
-        return cls.objects.get(standart=True)
+        """Faol standart o'lcham; yo'q bo'lsa — birinchi faol o'lcham; faol o'lcham umuman yo'q bo'lsa DoesNotExist."""
+        olcham = cls.objects.filter(faol=True).order_by("-standart", "eni_mm", "boyi_mm", "pk").first()
+        if olcham is None:
+            raise cls.DoesNotExist("Faol yorliq o'lchami yo'q. Sozlamalarda o'lcham qo'shing yoki faollashtiring.")
+        return olcham

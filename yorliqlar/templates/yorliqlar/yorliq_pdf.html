@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: {{ eni }}mm {{ boyi }}mm; margin: 0; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; color: #000; }
+  .yorliq { width: {{ eni }}mm; height: {{ boyi }}mm; box-sizing: border-box; padding: {{ chekka }}mm;
+            overflow: hidden; page-break-after: always; break-after: page; }
+  .yorliq:last-child { page-break-after: auto; break-after: auto; }
+  .qator { height: {{ qr }}mm; overflow: hidden; }
+  .qator img { float: left; width: {{ qr }}mm; height: {{ qr }}mm; margin-right: 1mm; }
+  .inv { font-size: {{ inv_shrifti }}pt; font-weight: bold; line-height: 1.1; word-break: break-all; }
+  .filial { font-size: 5pt; line-height: 1.15; margin-top: 0.6mm; }
+  .nom { font-size: {{ nom_shrifti }}pt; line-height: 1.15; margin-top: 0.5mm; white-space: nowrap; overflow: hidden; }
+</style>
+</head>
+<body>
+{% for y in yorliqlar %}<div class="yorliq">
+  <div class="qator">
+    <img src="{{ y.qr }}" alt="">
+    <div class="inv">{{ y.inv }}</div>
+    <div class="filial">{{ y.filial }}</div>
+    {% if nom_yonida %}<div class="nom">{% for q in y.nom %}{{ q }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+  </div>
+  {% if not nom_yonida %}<div class="nom">{% for q in y.nom %}{{ q }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}
+</div>{% endfor %}
+</body>
+</html>
