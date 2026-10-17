@@ -13,7 +13,7 @@ MAKS_HAJM = 15 * 1024 * 1024
 MAKS_TOMON = 1600
 MINI_TOMON = 300
 MAKS_PIKSEL = 60_000_000  # dekompressiya bombasidan himoya
-FORMATLAR = {"JPEG": "jpg", "PNG": "png"}
+FORMATLAR = {"JPEG": "jpg", "PNG": "png", "MPO": "jpg"}  # MPO — ko'p kadrli telefon JPEG'i
 XATO = "Faqat JPEG yoki PNG rasm yuklash mumkin."
 
 
@@ -26,7 +26,7 @@ def _ochib_tekshir(fayl) -> tuple[Image.Image, str]:
             raise ValidationError(XATO)
         if rasm.width * rasm.height > MAKS_PIKSEL:
             raise ValidationError("Rasm o'lchami juda katta.")
-        format = rasm.format
+        format = "JPEG" if rasm.format == "MPO" else rasm.format
         rasm.load()
         return ImageOps.exif_transpose(rasm), format
     except ValidationError:

@@ -385,3 +385,22 @@ def test_kartochka_sahifasi_sorovlar_soni_o_smaydi(client_hisobchi, filial_a, hi
         )
     with django_assert_max_num_queries(30):
         assert client_hisobchi.get(url("kartochka", av.pk)).status_code == 200
+
+
+def test_mpo_rasm_jpeg_sifatida_saqlanadi(filial_a, hisobchi):
+    buf = io.BytesIO()
+    Image.new("RGB", (300, 200), "red").save(
+        buf, "MPO", save_all=True, append_images=[Image.new("RGB", (300, 200), "blue")]
+    )
+    with Image.open(io.BytesIO(buf.getvalue())) as tekshir:
+        assert tekshir.format == "MPO"
+    rasm = rasm_saqla(av_yarat(filial_a), yuklama(buf.getvalue()), hisobchi)
+    assert rasm.fayl.name.endswith(".jpg")
+    with Image.open(rasm.fayl.path) as im:
+        assert im.format == "JPEG"
+
+
+def test_htmx_4xx_javoblarni_almashtirish_sozlamasi(client_hisobchi):
+    html = client_hisobchi.get(reverse("panel:bosh")).content.decode()
+    assert 'name="htmx-config"' in html and "responseHandling" in html
+    assert "400|409|422" in html
