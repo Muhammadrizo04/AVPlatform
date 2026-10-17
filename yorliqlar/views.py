@@ -19,7 +19,7 @@ MAX_AV = 300  # tanlash sahifasida ko'rsatiladigan AV'lar
 
 def _son(qiymat) -> bool:
     """Faqat ASCII raqamlar ("²" kabi Unicode raqamlar int() da xato beradi)."""
-    return qiymat.isascii() and qiymat.isdigit()
+    return len(qiymat) <= 18 and qiymat.isascii() and qiymat.isdigit()
 
 
 def _idlar(royxat) -> list[int]:

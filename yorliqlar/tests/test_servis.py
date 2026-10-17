@@ -256,3 +256,16 @@ def test_tanlash_av_chegarasi_va_nusxa_chegarasi(client_rol, filial_a, monkeypat
     javob = client.get(reverse(TANLASH), {"bayroq": "yorliq_yoq"})
     assert javob.context["elementlar"] == []
     assert "Filtrni toraytiring" in " ".join(str(m) for m in javob.context["messages"])
+
+
+@pytest.mark.parametrize("uzun", ["9" * 5000, "9" * 19])
+def test_juda_uzun_son_500_bermaydi(client_rol, filial_a, olcham_40, uzun):
+    client = client_rol("hisobchi")
+    av = av_yarat(filial_a, inv="1")
+    assert client.post(reverse(PDF), {"av": [av.pk], f"nusxa_{av.pk}": "1", "olcham": uzun}).status_code == 404
+    assert client.post(reverse(PDF), {"av": [uzun], "olcham": olcham_40.pk}, follow=True).status_code == 200
+    javob = client.post(reverse(PDF), {"av": [av.pk], f"nusxa_{av.pk}": uzun, "olcham": olcham_40.pk}, follow=True)
+    assert javob["Content-Type"].startswith("text/html")
+    assert client.get(reverse(TANLASH), {"bolim": uzun}).status_code == 200
+    assert client.get(reverse(TANLASH), {"av": uzun}).status_code == 404
+    assert not AVKartochka.objects.filter(av=av).exists()
