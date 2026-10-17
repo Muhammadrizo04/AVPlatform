@@ -196,3 +196,33 @@ def test_hisobotlar_sorovlar_soni_qatorlarga_bogliq_emas(hisobchi, filial_a, dja
         servis.mol_qaydnoma(hisobchi)
     with django_assert_max_num_queries(6):
         servis.muddat(hisobchi, BUGUN)
+
+
+def test_kesim_bolim_yigindisi_1c_summasiga_aniq_teng(client_rol, hisobchi, filial_a):
+    av = av_yarat(filial_a, soni="3")  # summa 100, dona 33.333...
+    bolimlar = [Bolim.objects.create(filial=filial_a, nomi=n) for n in "XYZ"]
+    for b in bolimlar:
+        qator(av, filial_a, "1", bolim=b)
+
+    qatorlar = servis.kesim(hisobchi, "bolim", BUGUN)
+    assert sorted(q["boshlangich"] for q in qatorlar) == [Decimal("33.33"), Decimal("33.33"), Decimal("33.34")]
+    assert servis.jami(qatorlar)["boshlangich"] == Decimal("100.00")
+    assert servis.jami(qatorlar)["qoldiq"] == Decimal("100.00")
+
+    client = client_rol("hisobchi")
+    javob = client.get(reverse("hisobotlar:kesim"), {"guruh": "bolim"})
+    assert javob.context["jami"]["boshlangich"] == Decimal("100.00")
+    satrlar = xlsx_qatorlar(client.get(reverse("hisobotlar:kesim"), {"guruh": "bolim", "format": "xlsx"}))
+    assert satrlar[-1][0] == "Jami"
+    assert Decimal(str(satrlar[-1][2])) == Decimal("100.00")
+    assert sum(Decimal(str(q[2])) for q in satrlar[1:-1]) == Decimal("100.00")
+
+
+def test_kesim_bolim_qoldiq_yigindisi_aniq(hisobchi, filial_a):
+    av = av_yarat(filial_a, soni="3")
+    kartochka(av, oy_qosh(BUGUN, -7), 24)  # qoldiq 100 * 17/24 = 70.83
+    for n in "XYZ":
+        qator(av, filial_a, "1", bolim=Bolim.objects.create(filial=filial_a, nomi=n))
+    qatorlar = servis.kesim(hisobchi, "bolim", BUGUN)
+    assert servis.jami(qatorlar)["qoldiq"] == Decimal("70.83")
+    assert servis.jami(qatorlar)["boshlangich"] == Decimal("100.00")

@@ -5,7 +5,7 @@ bo'lmasa, qoldiq qiymat = boshlang'ich qiymat (boshqaruv paneli bilan bir xil).
 """
 from collections import defaultdict
 from datetime import date
-from decimal import Decimal
+from decimal import ROUND_FLOOR, Decimal
 from typing import Literal
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -82,6 +82,20 @@ def _qiymat(soni: Decimal, av: AV) -> Decimal:
     return soni * dona_narxi(av.jami_summa, av.jami_soni)
 
 
+def _taqsimla(jami: Decimal, ogirliklar: list[Decimal]) -> list[Decimal]:
+    """`jami` (0.01 aniqlikda) ni og'irliklarga proporsional bo'ladi (eng katta qoldiq usuli): qismlar 0.01 ga
+    yaxlitlangan va yig'indisi aynan `jami` ga teng."""
+    umumiy = sum(ogirliklar, NOL)
+    if umumiy <= 0:
+        return [NOL] * len(ogirliklar)
+    aniq = [jami * w / umumiy for w in ogirliklar]
+    pol = [x.quantize(TIYIN, rounding=ROUND_FLOOR) for x in aniq]
+    qolgan = int((jami - sum(pol, NOL)) / TIYIN)
+    for i in sorted(range(len(aniq)), key=lambda i: (pol[i] - aniq[i], i))[:qolgan]:
+        pol[i] += TIYIN
+    return pol
+
+
 def kesim(user, guruh: Literal["filial", "bolim", "tur"], bugun: date) -> list[dict]:
     """Har qator `{nomi, soni, boshlangich, qoldiq}`. Bo'lim kesimida taqsimlanmagan — «Bo'limsiz»."""
     if guruh == "filial":
@@ -97,19 +111,25 @@ def kesim(user, guruh: Literal["filial", "bolim", "tur"], bugun: date) -> list[d
     elif guruh == "bolim":
         qatorlar, avlar = _taqsimotlar(user)
         bolimlar = _bolimlar()
+        av_qatorlari = defaultdict(list)
         for t in qatorlar:
-            nomi = f"{t.filial.nomi} / {bolimlar[t.bolim_id].toliq_nomi}" if t.bolim_id else BOLIMSIZ
-            summa = _qiymat(t.soni, avlar[t.av_id])
-            jam = jamlar[nomi]
-            jam["soni"] += t.soni
-            jam["boshlangich"] += summa
-            jam["qoldiq"] += _qoldiq_qiymati(summa, avlar[t.av_id], bugun)
+            av_qatorlari[t.av_id].append(t)
+        for av_id, royxat in av_qatorlari.items():
+            av = avlar[av_id]
+            ogirliklar = [t.soni for t in royxat]
+            jami_summa = sum((_qiymat(t.soni, av) for t in royxat), NOL).quantize(TIYIN)
+            boshlangichlar = _taqsimla(jami_summa, ogirliklar)
+            qoldiqlar = _taqsimla(_qoldiq_qiymati(jami_summa, av, bugun), ogirliklar)
+            for t, boshlangich, qoldiq in zip(royxat, boshlangichlar, qoldiqlar):
+                nomi = f"{t.filial.nomi} / {bolimlar[t.bolim_id].toliq_nomi}" if t.bolim_id else BOLIMSIZ
+                jam = jamlar[nomi]
+                jam["soni"] += t.soni
+                jam["boshlangich"] += boshlangich
+                jam["qoldiq"] += qoldiq
     else:
         raise ValueError(f"Noma'lum guruh: {guruh!r}")
     qatorlar = [
-        {"nomi": nomi, "soni": j["soni"], "boshlangich": j["boshlangich"].quantize(TIYIN),
-         "qoldiq": j["qoldiq"].quantize(TIYIN)}
-        for nomi, j in jamlar.items()
+        {"nomi": nomi, **j} for nomi, j in jamlar.items()
     ]
     return sorted(qatorlar, key=lambda q: (q["nomi"] == BOLIMSIZ, q["nomi"]))
 
