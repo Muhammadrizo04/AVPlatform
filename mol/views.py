@@ -1,0 +1,186 @@
+from decimal import Decimal
+
+from django.contrib import messages
+from django.db.models import Q
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect, render
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from hisoblar.huquqlar import amal_kerak, huquqi_bor
+from onec.models import AV
+from vositalar.amortizatsiya import dona_narxi
+from vositalar.bayroqlar import BAYROQLAR
+from vositalar.models import Holat
+
+from . import sorovlar
+from .models import MolAkt
+from .pdf import akt_pdf as akt_pdf_yarat
+from .servis import AktXato, akt_tasdiqla as akt_tasdiqla_xizmat, akt_yarat
+
+NOL = Decimal("0")
+TIYIN = Decimal("0.01")
+
+
+def _id(qiymat) -> int:
+    qiymat = (qiymat or "").strip()
+    return int(qiymat) if qiymat.isdigit() else 0
+
+
+@amal_kerak("korish")
+def xodimlar(request):
+    royxat = list(sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk"))
+    yigindi = sorovlar.xodim_yigindilari(request.user)
+    for x in royxat:
+        x.av_soni, x.qiymat = yigindi.get(x.pk, (NOL, NOL))
+    return render(request, "mol/xodimlar.html", {"xodimlar": royxat})
+
+
+@amal_kerak("korish")
+def xodim(request, pk):
+    x = sorovlar.korinadigan_xodimlar(request.user).filter(pk=pk).first()
+    if x is None:
+        raise Http404
+    qatorlar = list(
+        sorovlar.ruxsat_taqsimot(request.user)
+        .filter(mol=x)
+        .select_related("av", "filial", "bolim__ota__ota")
+        .order_by("av__nomi", "filial__nomi", "pk")
+    )
+    narxlar = {
+        av.pk: dona_narxi(av.jami_summa, av.jami_soni)
+        for av in AV.objects.qoldiq_bilan().filter(pk__in={t.av_id for t in qatorlar})
+    }
+    holatlar = dict(Holat.choices)
+    for t in qatorlar:
+        t.qiymat = t.soni * narxlar.get(t.av_id, NOL)
+        t.holat_nomi = holatlar.get(t.holat, t.holat)
+    aktlar = sorovlar.korinadigan_aktlar(request.user).filter(Q(topshiruvchi=x) | Q(qabul_qiluvchi=x))
+    kontekst = {
+        "xodim": x,
+        "qatorlar": qatorlar,
+        "jami_soni": sum((t.soni for t in qatorlar), NOL),
+        "jami_qiymat": sum((t.qiymat for t in qatorlar), NOL),
+        "aktlar": aktlar.order_by("-raqam"),
+        "akt_huquqi": huquqi_bor(request.user, "mol_akt"),
+    }
+    return render(request, "mol/xodim.html", kontekst)
+
+
+@amal_kerak("korish")
+def ketganlar(request):
+    qatorlar = BAYROQLAR["ketgan_xodimda"].so_rov(request.user, timezone.localdate()).order_by("mol__ism", "mol_id", "pk")
+    guruhlar: dict[int, dict] = {}
+    for t in qatorlar:
+        g = guruhlar.setdefault(t.mol_id, {"xodim": t.mol, "qatorlar": [], "soni": NOL})
+        g["qatorlar"].append(t)
+        g["soni"] += t.soni
+    return render(
+        request,
+        "mol/ketganlar.html",
+        {"guruhlar": list(guruhlar.values()), "akt_huquqi": huquqi_bor(request.user, "mol_akt")},
+    )
+
+
+def _topshiruvchi(request, qiymat):
+    """(topshiruvchi yoki None=МОЛ'siz qatorlar, ruxsat etilgan taqsimot qatorlari)."""
+    top = None
+    qatorlar = sorovlar.ruxsat_taqsimot(request.user).filter(av__in=AV.objects.faol().values("pk"))
+    if (qiymat or "").strip():
+        top = sorovlar.korinadigan_xodimlar(request.user).filter(pk=_id(qiymat)).first()
+        if top is None:
+            raise Http404
+        qatorlar = qatorlar.filter(mol=top)
+    else:
+        qatorlar = qatorlar.filter(mol__isnull=True)
+    return top, qatorlar.select_related("av", "filial", "bolim__ota__ota").order_by("av__nomi", "filial__nomi", "pk")
+
+
+def _akt_yaratish(request, top, qatorlar) -> MolAkt:
+    qabul = sorovlar.faol_xodimlar(request.user).filter(pk=_id(request.POST.get("qabul"))).first()
+    if qabul is None:
+        raise AktXato("Qabul qiluvchini tanlang (faol xodim bo'lishi kerak).")
+    mavjud = {t.pk: t for t in qatorlar}
+    tanlangan = list(dict.fromkeys(request.POST.getlist("tanlangan")))
+    tanlov = []
+    for qiymat in tanlangan:
+        t = mavjud.get(_id(qiymat))
+        if t is None:
+            raise AktXato("Tanlangan qator topshiruvchining ruxsat etilgan qatorlari orasida yo'q.")
+        soni = (request.POST.get(f"soni_{t.pk}") or "").strip() or t.soni
+        tanlov.append((t, soni))
+    return akt_yarat(top, qabul, tanlov, request.user, izoh=request.POST.get("izoh", "").strip())
+
+
+@amal_kerak("mol_akt")
+def akt_yangi(request):
+    manba = request.POST if request.method == "POST" else request.GET
+    top, qatorlar = _topshiruvchi(request, manba.get("topshiruvchi"))
+    qatorlar = list(qatorlar)
+    xato, status = "", 200
+    if request.method == "POST":
+        try:
+            akt = _akt_yaratish(request, top, qatorlar)
+        except AktXato as e:
+            xato, status = str(e), 400
+        else:
+            messages.success(request, f"Qoralama akt {akt.nomi} yaratildi.")
+            return redirect("mol:akt", pk=akt.pk)
+    kontekst = {
+        "topshiruvchi": top,
+        "qatorlar": qatorlar,
+        "qabul_qiluvchilar": [x for x in sorovlar.faol_xodimlar(request.user).order_by("ism", "pk") if not top or x.pk != top.pk],
+        "xodimlar": sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk"),
+        "xato": xato,
+        "forma": request.POST if request.method == "POST" else {},
+    }
+    return render(request, "mol/akt_yangi.html", kontekst, status=status)
+
+
+def _akt_yoki_404(request, pk) -> MolAkt:
+    akt = sorovlar.korinadigan_aktlar(request.user).filter(pk=pk).first()
+    if akt is None:
+        raise Http404
+    return akt
+
+
+@amal_kerak("korish")
+def akt(request, pk):
+    a = _akt_yoki_404(request, pk)
+    qatorlar = list(a.qatorlar.select_related("av", "filial", "bolim__ota__ota").order_by("pk"))
+    narxlar = {
+        av.pk: dona_narxi(av.jami_summa, av.jami_soni)
+        for av in AV.objects.qoldiq_bilan().filter(pk__in={q.av_id for q in qatorlar})
+    }
+    holatlar = dict(Holat.choices)
+    for q in qatorlar:
+        q.qiymat = q.soni * narxlar.get(q.av_id, NOL)
+        q.holat_nomi = holatlar.get(q.holat, q.holat)
+    kontekst = {
+        "akt": a,
+        "qatorlar": qatorlar,
+        "jami_qiymat": sum((q.qiymat for q in qatorlar), NOL),
+        "tasdiqlash_mumkin": a.holat == MolAkt.Holat.QORALAMA and huquqi_bor(request.user, "mol_akt"),
+    }
+    return render(request, "mol/akt.html", kontekst)
+
+
+@require_POST
+@amal_kerak("mol_akt")
+def akt_tasdiqla(request, pk):
+    a = _akt_yoki_404(request, pk)
+    try:
+        akt_tasdiqla_xizmat(a, request.user)
+    except AktXato as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, f"Akt {a.nomi} tasdiqlandi.")
+    return redirect("mol:akt", pk=a.pk)
+
+
+@amal_kerak("korish")
+def akt_pdf(request, pk):
+    a = _akt_yoki_404(request, pk)
+    javob = HttpResponse(akt_pdf_yarat(a), content_type="application/pdf")
+    javob["Content-Disposition"] = f'inline; filename="{a.nomi}.pdf"'
+    return javob

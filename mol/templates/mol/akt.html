@@ -1,0 +1,30 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ akt.nomi }}{% endblock %}
+{% block kontent %}
+<h1>МОЛ akti {{ akt.nomi }} <small>({{ akt.get_holat_display }})</small></h1>
+<p>Sana: {{ akt.sana|date:"d.m.Y" }}<br>
+Topshiruvchi: <strong>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</strong><br>
+Qabul qiluvchi: <strong>{{ akt.qabul_qiluvchi.ism }}</strong></p>
+{% if akt.izoh %}<p>Izoh: {{ akt.izoh }}</p>{% endif %}
+{% if akt.tasdiq_vaqti %}<p>Tasdiqlangan: {{ akt.tasdiq_vaqti|date:"d.m.Y H:i" }}</p>{% endif %}
+<table>
+  <thead><tr><th>№</th><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th><th class="son">Qiymat</th></tr></thead>
+  <tbody>
+  {% for q in qatorlar %}
+    <tr>
+      <td>{{ forloop.counter }}</td><td>{{ q.av.inv_raqam }}</td><td>{{ q.av.nomi }}</td><td>{{ q.filial.nomi }}</td>
+      <td>{% if q.bolim %}{{ q.bolim.toliq_nomi }}{% else %}—{% endif %}</td><td>{{ q.holat_nomi }}</td>
+      <td class="son">{{ q.soni|floatformat:"-3" }}</td><td class="son">{{ q.qiymat|floatformat:2 }}</td>
+    </tr>
+  {% endfor %}
+    <tr><th colspan="7">Jami</th><th class="son">{{ jami_qiymat|floatformat:2 }}</th></tr>
+  </tbody>
+</table>
+<p>
+  <a href="{% url 'mol:akt_pdf' akt.pk %}">PDF</a>
+  {% if tasdiqlash_mumkin %}
+  <form method="post" action="{% url 'mol:akt_tasdiqla' akt.pk %}" style="display:inline">{% csrf_token %}<button type="submit">Tasdiqlash</button></form>
+  {% endif %}
+</p>
+<p><a href="{% url 'mol:xodimlar' %}">&larr; МОЛ nazorati</a></p>
+{% endblock %}

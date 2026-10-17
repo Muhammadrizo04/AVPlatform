@@ -1,0 +1,47 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Yangi МОЛ akti{% endblock %}
+{% block kontent %}
+<h1>Yangi МОЛ topshirish-qabul akti</h1>
+<form method="get">
+  <label>Topshiruvchi
+    <select name="topshiruvchi" onchange="this.form.submit()">
+      <option value="">— МОЛ'siz qatorlar —</option>
+      {% for x in xodimlar %}<option value="{{ x.pk }}"{% if topshiruvchi and x.pk == topshiruvchi.pk %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+    </select>
+  </label>
+  <noscript><button type="submit">Ko'rsatish</button></noscript>
+</form>
+{% if xato %}<p class="xato" role="alert">{{ xato }}</p>{% endif %}
+<form method="post">
+  {% csrf_token %}
+  <input type="hidden" name="topshiruvchi" value="{{ topshiruvchi.pk|default:'' }}">
+  <table>
+    <thead><tr><th></th><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Holat</th><th class="son">Mavjud</th><th>Topshiriladigan soni</th></tr></thead>
+    <tbody>
+    {% for t in qatorlar %}
+      <tr>
+        <td><input type="checkbox" name="tanlangan" value="{{ t.pk }}" aria-label="Tanlash"></td>
+        <td>{{ t.av.inv_raqam }}</td>
+        <td>{{ t.av.nomi }}</td>
+        <td>{{ t.filial.nomi }}</td>
+        <td>{{ t.get_holat_display }}</td>
+        <td class="son">{{ t.soni|floatformat:"-3" }}</td>
+        <td><input type="text" inputmode="decimal" name="soni_{{ t.pk }}" value="{{ t.soni|floatformat:'-3' }}" size="8" aria-label="Soni"></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7"><em>Topshiriladigan qator yo'q.</em></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p>
+    <label>Qabul qiluvchi
+      <select name="qabul" required>
+        <option value="">— tanlang —</option>
+        {% for x in qabul_qiluvchilar %}<option value="{{ x.pk }}"{% if forma.qabul == x.pk|stringformat:"s" %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+      </select>
+    </label>
+  </p>
+  <p><label>Izoh<br><textarea name="izoh" rows="2" cols="50">{{ forma.izoh }}</textarea></label></p>
+  <button type="submit"{% if not qatorlar %} disabled{% endif %}>Qoralama aktni yaratish</button>
+</form>
+{% endblock %}

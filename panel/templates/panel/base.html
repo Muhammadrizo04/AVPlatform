@@ -33,7 +33,7 @@
   <header class="yuqori">
     <strong>Asosiy vositalar</strong>
     <nav>
-      {% block menyu %}<a href="{% url 'panel:bosh' %}">Bosh sahifa</a> <a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a> <a href="{% url 'vositalar:bolimlar' %}">Bo'limlar</a>{% endblock %}
+      {% block menyu %}<a href="{% url 'panel:bosh' %}">Bosh sahifa</a> <a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a> <a href="{% url 'vositalar:bolimlar' %}">Bo'limlar</a>  <a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
     </nav>
     <div class="bosh">
       <span>{{ user.get_username }}{% if user.profil %} · {{ user.profil.get_rol_display }}{% endif %}</span>

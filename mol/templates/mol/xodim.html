@@ -1,0 +1,46 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ xodim.ism }}{% endblock %}
+{% block kontent %}
+<h1>{{ xodim.ism }}</h1>
+<p>Filial: {{ xodim.filial.nomi|default:"—" }}
+{% if xodim.ishdan_bushagan or xodim.neaktiv or xodim.onec_da_yoq %} · <span class="xato">Ketgan / faol emas</span>{% endif %}</p>
+{% if akt_huquqi and qatorlar %}<p><a href="{% url 'mol:akt_yangi' %}?topshiruvchi={{ xodim.pk }}">Topshirish aktini yaratish</a></p>{% endif %}
+<h2>Biriktirilgan AV'lar</h2>
+<table>
+  <thead><tr><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th><th class="son">Qiymat</th></tr></thead>
+  <tbody>
+  {% for t in qatorlar %}
+    <tr>
+      <td>{{ t.av.inv_raqam }}</td>
+      <td><a href="{% url 'vositalar:kartochka' t.av_id %}">{{ t.av.nomi }}</a></td>
+      <td>{{ t.filial.nomi }}</td>
+      <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}—{% endif %}</td>
+      <td>{{ t.holat_nomi }}</td>
+      <td class="son">{{ t.soni|floatformat:"-3" }}</td>
+      <td class="son">{{ t.qiymat|floatformat:2 }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7"><em>AV biriktirilmagan.</em></td></tr>
+  {% endfor %}
+  {% if qatorlar %}<tr><th colspan="5">Jami</th><th class="son">{{ jami_soni|floatformat:"-3" }}</th><th class="son">{{ jami_qiymat|floatformat:2 }}</th></tr>{% endif %}
+  </tbody>
+</table>
+<h2>Aktlar</h2>
+{% if aktlar %}
+<table>
+  <thead><tr><th>Akt</th><th>Sana</th><th>Topshiruvchi</th><th>Qabul qiluvchi</th><th>Holat</th></tr></thead>
+  <tbody>
+  {% for a in aktlar %}
+    <tr>
+      <td><a href="{% url 'mol:akt' a.pk %}">{{ a.nomi }}</a></td>
+      <td>{{ a.sana|date:"d.m.Y" }}</td>
+      <td>{{ a.topshiruvchi.ism|default:"—" }}</td>
+      <td>{{ a.qabul_qiluvchi.ism }}</td>
+      <td>{{ a.get_holat_display }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}<p><em>Akt yo'q.</em></p>{% endif %}
+<p><a href="{% url 'mol:xodimlar' %}">&larr; МОЛ nazorati</a></p>
+{% endblock %}
