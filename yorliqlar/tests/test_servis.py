@@ -213,3 +213,46 @@ def test_hr_yorliq_403(client_rol, filial_a, olcham_40):
     av = av_yarat(filial_a, inv="1")
     assert client.get(reverse(TANLASH), {"av": av.pk}).status_code == 403
     assert client.post(reverse(PDF), {"av": [av.pk], "olcham": olcham_40.pk}).status_code == 403
+
+
+def test_unicode_raqam_500_bermaydi(client_rol, filial_a, olcham_40):
+    client = client_rol("hisobchi")
+    av = av_yarat(filial_a, inv="1")
+    assert client.post(reverse(PDF), {"av": [av.pk], f"nusxa_{av.pk}": "1", "olcham": "²"}).status_code == 404
+    javob = client.post(reverse(PDF), {"av": ["²"], "olcham": olcham_40.pk}, follow=True)
+    assert javob.status_code == 200
+    javob = client.post(reverse(PDF), {"av": [av.pk], f"nusxa_{av.pk}": "²", "olcham": olcham_40.pk}, follow=True)
+    assert javob["Content-Type"].startswith("text/html")
+    assert client.get(reverse(TANLASH), {"bolim": "²"}).status_code == 200
+    assert client.get(reverse(TANLASH), {"av": "²"}).status_code == 404
+    assert not AVKartochka.objects.filter(av=av).exists()
+
+
+def test_jami_sahifa_chegarasi(client_rol, filial_a, olcham_40, monkeypatch):
+    from yorliqlar import views
+
+    monkeypatch.setattr(views, "MAX_SAHIFA", 5)
+    client = client_rol("hisobchi")
+    a, b = av_yarat(filial_a, inv="1"), av_yarat(filial_a, inv="2")
+    veri = {"av": [a.pk, b.pk], f"nusxa_{a.pk}": "3", f"nusxa_{b.pk}": "3", "olcham": olcham_40.pk}
+    javob = client.post(reverse(PDF), veri, follow=True)
+    assert javob["Content-Type"].startswith("text/html")
+    assert "ko'pi bilan 5" in " ".join(str(m) for m in javob.context["messages"])
+    assert not AVKartochka.objects.exists()
+    veri[f"nusxa_{b.pk}"] = "2"
+    assert client.post(reverse(PDF), veri).status_code == 200
+
+
+def test_tanlash_av_chegarasi_va_nusxa_chegarasi(client_rol, filial_a, monkeypatch):
+    from yorliqlar import views
+
+    monkeypatch.setattr(views, "MAX_AV", 2)
+    monkeypatch.setattr(views, "MAX_NUSXA", 4)
+    client = client_rol("hisobchi")
+    bir = av_yarat(filial_a, inv="1", soni="9")
+    javob = client.get(reverse(TANLASH), {"av": [bir.pk]})
+    assert javob.context["elementlar"][0]["nusxa"] == 4
+    ikki, uch = av_yarat(filial_a, inv="2"), av_yarat(filial_a, inv="3")
+    javob = client.get(reverse(TANLASH), {"bayroq": "yorliq_yoq"})
+    assert javob.context["elementlar"] == []
+    assert "Filtrni toraytiring" in " ".join(str(m) for m in javob.context["messages"])

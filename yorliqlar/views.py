@@ -13,10 +13,17 @@ from vositalar.models import YorliqOlchami
 from . import servis
 
 MAX_NUSXA = 500
+MAX_SAHIFA = 2000  # bitta PDF'dagi jami yorliqlar
+MAX_AV = 300  # tanlash sahifasida ko'rsatiladigan AV'lar
+
+
+def _son(qiymat) -> bool:
+    """Faqat ASCII raqamlar ("²" kabi Unicode raqamlar int() da xato beradi)."""
+    return qiymat.isascii() and qiymat.isdigit()
 
 
 def _idlar(royxat) -> list[int]:
-    return [int(x) for x in royxat if x.isdigit()]
+    return [int(x) for x in royxat if _son(x)]
 
 
 def _avlar(request, idlar, bolim="", bayroq=""):
@@ -25,7 +32,7 @@ def _avlar(request, idlar, bolim="", bayroq=""):
         return AV.objects.none()
     params = {}
     if bolim:
-        if not bolim.isdigit():
+        if not _son(bolim):
             return AV.objects.none()
         params["bolim"] = bolim
     if bayroq:
@@ -39,7 +46,7 @@ def _avlar(request, idlar, bolim="", bayroq=""):
 
 
 def _nusxa(av) -> int:
-    return max(int(av.jami_soni), 1)
+    return min(max(int(av.jami_soni), 1), MAX_NUSXA)
 
 
 @amal_kerak("yorliq")
@@ -55,6 +62,9 @@ def tanlash(request):
     except YorliqOlchami.DoesNotExist as xato:
         standart = None
         messages.error(request, str(xato))
+    if len(avlar) > MAX_AV:
+        messages.error(request, f"AV'lar juda ko'p ({len(avlar)} ta, ko'pi bilan {MAX_AV}). Filtrni toraytiring.")
+        avlar = []
     elementlar = [{"av": av, "nusxa": _nusxa(av), "kalitsiz": av.kalit is None} for av in avlar]
     return render(
         request,
@@ -82,10 +92,14 @@ def pdf(request):
     elementlar = []
     for pk, av in avlar.items():
         qiymat = (request.POST.get(f"nusxa_{pk}") or "").strip()
-        if not qiymat.isdigit() or not 1 <= int(qiymat) <= MAX_NUSXA:
+        if not _son(qiymat) or not 1 <= int(qiymat) <= MAX_NUSXA:
             messages.error(request, f"{av.nomi}: nusxalar soni 1 dan {MAX_NUSXA} gacha bo'lishi kerak.")
             return orqaga
         elementlar.append((av, int(qiymat)))
+    jami = sum(n for _, n in elementlar)
+    if jami > MAX_SAHIFA:
+        messages.error(request, f"Jami yorliqlar soni {jami} ta, ko'pi bilan {MAX_SAHIFA} ta bo'lishi mumkin.")
+        return orqaga
     try:
         baytlar = servis.yorliq_pdf(elementlar, olcham)
     except ValueError as xato:
