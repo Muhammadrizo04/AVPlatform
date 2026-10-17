@@ -489,8 +489,10 @@ def bolim_saqla(request):
         bolim = Bolim.objects.filter(filial=filial, pk=_id(request.POST["bolim"])).first()
         if bolim is None:
             raise Http404
-    ota = None
-    if request.POST.get("ota"):
+    ota = bolimlar_xizmat.SAQLA  # `ota` maydoni yuborilmasa — o'zgarmaydi; bo'sh qiymat — ildiz
+    if "ota" in request.POST and not request.POST["ota"]:
+        ota = None
+    elif request.POST.get("ota"):
         # Ruxsatsiz filial bo'limi 404; ruxsatli boshqa filial bo'limi — bo'lakda tushunarli xato (400).
         ota = filial_bilan_chekla(Bolim.objects.all(), request.user).filter(pk=_id(request.POST["ota"])).first()
         if ota is None:

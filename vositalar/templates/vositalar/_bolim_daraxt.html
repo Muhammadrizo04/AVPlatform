@@ -2,7 +2,7 @@
   {% if xato %}<p class="xato" role="alert">{{ xato }}</p>{% endif %}
   {% if not qatorlar %}<p><em>Bu filialda bo'lim yo'q.</em></p>{% endif %}
   <ul style="list-style:none;padding:0">
-  {% for b, chuqurlik in qatorlar %}
+  {% for b, chuqurlik, toliq in qatorlar %}
     <li style="margin-left:{{ chuqurlik }}rem;{% if not b.faol %}color:#7b8794{% endif %}">
       <a href="{% url 'vositalar:bolimlar' %}?filial={{ filial.pk }}&amp;bolim={{ b.pk }}">{{ b.nomi }}</a>{% if not b.faol %} <em>(faol emas)</em>{% endif %}
       {% if tahrir_huquqi %}
@@ -18,12 +18,12 @@
     <input type="hidden" name="filial" value="{{ filial.pk }}">
     <select name="bolim" aria-label="Bo'lim">
       <option value="">— yangi bo'lim —</option>
-      {% for b, chuqurlik in qatorlar %}<option value="{{ b.pk }}">{{ b.toliq_nomi }}</option>{% endfor %}
+      {% for b, chuqurlik, toliq in qatorlar %}<option value="{{ b.pk }}"{% if tanlangan and b.pk == tanlangan.pk %} selected{% endif %}>{{ toliq }}</option>{% endfor %}
     </select>
-    <input type="text" name="nomi" maxlength="255" placeholder="Nomi" aria-label="Nomi" required>
+    <input type="text" name="nomi" maxlength="255" placeholder="Nomi" value="{{ tanlangan.nomi }}" aria-label="Nomi" required>
     <select name="ota" aria-label="Ota bo'lim">
       <option value="">— ildiz —</option>
-      {% for b, chuqurlik in qatorlar %}{% if b.faol %}<option value="{{ b.pk }}">{{ b.toliq_nomi }}</option>{% endif %}{% endfor %}
+      {% for b, chuqurlik, toliq in qatorlar %}{% if b.faol or b.pk == tanlangan.ota_id %}<option value="{{ b.pk }}"{% if tanlangan and b.pk == tanlangan.ota_id %} selected{% endif %}>{{ toliq }}</option>{% endif %}{% endfor %}
     </select>
     <button type="submit">Saqlash</button>
   </form>

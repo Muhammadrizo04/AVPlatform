@@ -153,3 +153,49 @@ def cheklangan_client_yarat(foydalanuvchi):
         return client
 
     return yarat
+
+
+def test_nomlash_otani_ozgartirmaydi(client_hisobchi, filial_a):
+    ota = Bolim.objects.create(filial=filial_a, nomi="Ota", faol=False)
+    bola = Bolim.objects.create(filial=filial_a, ota=ota, nomi="Bola")
+    javob = client_hisobchi.post(
+        reverse("vositalar:bolim_saqla"), {"filial": filial_a.pk, "bolim": bola.pk, "nomi": "Yangi nom"}
+    )
+    assert javob.status_code == 200
+    bola.refresh_from_db()
+    assert bola.nomi == "Yangi nom" and bola.ota_id == ota.pk
+    assert not Jurnal.objects.filter(obyekt_turi="vositalar.bolim", obyekt_id=str(bola.pk), maydon="ota").exists()
+
+    # aniq ildiz tanlovi (ota="") esa ko'chiradi
+    assert saqla(client_hisobchi, filial_a, "Yangi nom", bolim=bola).status_code == 200
+    bola.refresh_from_db()
+    assert bola.ota_id is None
+
+
+def test_forma_tanlangan_bolim_bilan_toldiriladi(client_hisobchi, filial_a):
+    ota = Bolim.objects.create(filial=filial_a, nomi="Ota", faol=False)
+    bola = Bolim.objects.create(filial=filial_a, ota=ota, nomi="Bola")
+    matn = client_hisobchi.get(
+        reverse("vositalar:bolimlar"), {"filial": filial_a.pk, "bolim": bola.pk}
+    ).content.decode()
+    assert f'<option value="{ota.pk}" selected>' in matn
+    assert f'<option value="{bola.pk}" selected>' in matn
+    assert 'value="Bola"' in matn
+
+
+def test_daraxt_sorovlari_chuqurlikka_bogliq_emas(client_hisobchi, filial_a):
+    from django.db import connection
+    from django.test.utils import CaptureQueriesContext
+
+    def sorovlar():
+        with CaptureQueriesContext(connection) as ctx:
+            assert client_hisobchi.get(reverse("vositalar:bolimlar"), {"filial": filial_a.pk}).status_code == 200
+        return len(ctx)
+
+    ota = None
+    for i in range(3):
+        ota = Bolim.objects.create(filial=filial_a, ota=ota, nomi=f"D{i}")
+    uch = sorovlar()
+    for i in range(3, 8):
+        ota = Bolim.objects.create(filial=filial_a, ota=ota, nomi=f"D{i}")
+    assert sorovlar() == uch

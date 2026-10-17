@@ -29,36 +29,45 @@ def pastkilar(bolim: Bolim) -> list[Bolim]:
     return natija
 
 
-def daraxt(filial_id: int) -> list[tuple[Bolim, int]]:
-    """Filial bo'limlari tartiblangan ro'yxat: [(bo'lim, chuqurlik)], ota bolasidan oldin (bitta so'rov)."""
+def daraxt(filial_id: int) -> list[tuple[Bolim, int, str]]:
+    """Filial bo'limlari tartiblangan ro'yxat: [(bo'lim, chuqurlik, to'liq nomi)], ota bolasidan oldin.
+    Bitta so'rov; to'liq nom xotiradagi xaritadan hisoblanadi (har satrda qo'shimcha so'rov yo'q)."""
     xarita = _bolalar_xaritasi(filial_id)
-    natija: list[tuple[Bolim, int]] = []
-    stek = [(b, 0) for b in reversed(xarita.get(None, []))]
+    natija: list[tuple[Bolim, int, str]] = []
+    stek = [(b, 0, b.nomi) for b in reversed(xarita.get(None, []))]
     while stek:
-        b, chuqurlik = stek.pop()
-        natija.append((b, chuqurlik))
-        stek.extend((c, chuqurlik + 1) for c in reversed(xarita.get(b.pk, [])))
+        b, chuqurlik, toliq = stek.pop()
+        natija.append((b, chuqurlik, toliq))
+        stek.extend((c, chuqurlik + 1, f"{toliq} / {c.nomi}") for c in reversed(xarita.get(b.pk, [])))
     return natija
 
 
-def bolim_saqla(bolim: Bolim | None, filial, nomi: str, ota: Bolim | None, kim) -> Bolim:
-    """Yangi bo'lim yaratadi (`bolim=None`) yoki mavjudini qayta nomlaydi/ko'chiradi. Xato — `AmalXato`."""
+SAQLA = object()  # «ota o'zgarmaydi» belgisi (None — aniq ildiz tanlovi)
+
+
+def bolim_saqla(bolim: Bolim | None, filial, nomi: str, ota=SAQLA, kim=None) -> Bolim:
+    """Yangi bo'lim yaratadi (`bolim=None`) yoki mavjudini qayta nomlaydi/ko'chiradi. Xato — `AmalXato`.
+    Tahrirda `ota=SAQLA` — ota o'zgarmaydi; `ota=None` — ildizga ko'chiriladi."""
     nomi = (nomi or "").strip()
     if not nomi:
         raise AmalXato("Bo'lim nomini kiriting.")
     if len(nomi) > 255:
         raise AmalXato("Bo'lim nomi 255 belgidan oshmasin.")
-    if ota is not None:
-        if ota.filial_id != filial.pk:
-            raise AmalXato("Ota bo'lim boshqa filialga tegishli.")
-        if not ota.faol:
-            raise AmalXato("Ota bo'lim faol emas.")
     with transaction.atomic():
+        if bolim is not None:
+            bolim = Bolim.objects.select_for_update().get(pk=bolim.pk)
+        o_zgarmaydi = ota is SAQLA
+        if o_zgarmaydi:
+            ota = None if bolim is None else bolim.ota
+        if ota is not None:
+            if ota.filial_id != filial.pk:
+                raise AmalXato("Ota bo'lim boshqa filialga tegishli.")
+            if not ota.faol and not (o_zgarmaydi and bolim is not None):
+                raise AmalXato("Ota bo'lim faol emas.")
         if bolim is None:
             yangi = Bolim.objects.create(filial=filial, ota=ota, nomi=nomi)
             yoz(kim, yangi, "yaratildi", "", yangi.toliq_nomi)
             return yangi
-        bolim = Bolim.objects.select_for_update().get(pk=bolim.pk)
         if ota is not None and (ota.pk == bolim.pk or ota.pk in {b.pk for b in pastkilar(bolim)}):
             raise AmalXato("Bo'limni o'zining ichiga yoki pastki bo'limiga ko'chirib bo'lmaydi.")
         eski_nomi, eski_ota = bolim.nomi, bolim.ota
