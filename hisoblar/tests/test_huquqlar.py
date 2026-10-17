@@ -116,3 +116,43 @@ def test_5_xato_urinishdan_keyin_blok(foydalanuvchi):
     javob = client.post(url, {"username": u.username, "password": PAROL})
     assert javob.status_code == 429
     assert "_auth_user_id" not in client.session
+
+
+def test_bosh_revizor_sessiyasi_bilan_ham_403(client_rol):
+    assert client_rol(Rol.REVIZOR).get(reverse("bosh")).status_code == 403
+
+
+def test_bosh_rol_sessiya_davomida_o_zgarsa_403(foydalanuvchi):
+    u = foydalanuvchi(Rol.HISOBCHI)
+    client = Client()
+    client.force_login(u)
+    assert client.get(reverse("bosh")).status_code == 200
+    u.profil.rol = Rol.REVIZOR
+    u.profil.save()
+    assert client.get(reverse("bosh")).status_code == 403
+
+
+def test_bir_foydalanuvchi_xatosi_boshqasini_bloklamaydi(foydalanuvchi):
+    a, b = foydalanuvchi(Rol.HISOBCHI), foydalanuvchi(Rol.HISOBCHI)
+    url = reverse("hisoblar:kirish")
+    client_a = Client()
+    for _ in range(5):
+        client_a.post(url, {"username": a.username, "password": "noto'g'ri"})
+    assert client_a.post(url, {"username": a.username, "password": PAROL}).status_code == 429
+    client_b = Client()  # xuddi shu IP (127.0.0.1)
+    javob = client_b.post(url, {"username": b.username, "password": PAROL})
+    assert javob.status_code == 302
+    assert client_b.session["_auth_user_id"] == str(b.pk)
+
+
+def test_muvaffaqiyatli_kirishdan_keyin_xato_hisobi_nollanadi(foydalanuvchi):
+    u = foydalanuvchi(Rol.HISOBCHI)
+    url = reverse("hisoblar:kirish")
+    client = Client()
+    for _ in range(4):
+        client.post(url, {"username": u.username, "password": "noto'g'ri"})
+    assert client.post(url, {"username": u.username, "password": PAROL}).status_code == 302
+    client.post(reverse("hisoblar:chiqish"))
+    for _ in range(4):
+        client.post(url, {"username": u.username, "password": "noto'g'ri"})
+    assert client.post(url, {"username": u.username, "password": PAROL}).status_code == 302

@@ -14,6 +14,9 @@ DEBUG = env.bool("DEBUG", default=False)
 SECRET_KEY = env.str("SECRET_KEY", default="dev-faqat-ishlab-chiqish-uchun" if DEBUG else environ.Env.NOTSET)
 ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
+# nginx ortida bo'lsa mijoz IP'si X-Forwarded-For dan olinadi (1 ta proksi); aks holda REMOTE_ADDR.
+PROXY_ORQASIDA = env.bool("PROXY_ORQASIDA", default=False)
+
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
@@ -91,6 +94,11 @@ SESSION_SAVE_EVERY_REQUEST = True
 # Kirish: 5 noto'g'ri urinish -> 15 daqiqa blok
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 0.25  # soat
+AXES_LOCKOUT_PARAMETERS = [["username", "ip_address"]]  # bir foydalanuvchining xatosi boshqalarni bloklamaydi
+AXES_RESET_ON_SUCCESS = True  # muvaffaqiyatli kirishdan keyin xato hisobi nolga tushadi
+if PROXY_ORQASIDA:
+    AXES_IPWARE_PROXY_COUNT = 1
+    AXES_IPWARE_META_PRECEDENCE_ORDER = ["HTTP_X_FORWARDED_FOR", "REMOTE_ADDR"]
 AXES_LOCKOUT_TEMPLATE = "hisoblar/blok.html"
 
 LANGUAGE_CODE = "uz"
