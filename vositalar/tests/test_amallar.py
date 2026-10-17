@@ -352,3 +352,24 @@ def test_xato_tranzaksiyani_orqaga_qaytaradi(av, filial, ombor, ofis, user, monk
 
     assert Taqsimot.objects.get().soni == SON("6")
     assert not TaqsimotHarakat.objects.exists()
+
+
+def test_parallel_yaratilgan_nishon_amalxato(av, filial, ombor, ofis, user, monkeypatch):
+    """Nishon qatorni qulflashdan keyin boshqa amal yaratgan bo'lsa (unikal kalit buzilishi) — 500 emas, AmalXato."""
+    import vositalar.amallar as amallar
+
+    qoldiq(av, filial, "6")
+    q = qator(av, filial, "4", bolim=ombor)
+    qator(av, filial, "2", bolim=ofis)  # nishon: qulflangan ro'yxatda «yo'q» deb ko'rsatiladi
+    asl = amallar._qulfla
+
+    def nishonsiz(qator_):
+        manba, qulflangan = asl(qator_)
+        return manba, [t for t in qulflangan if t.bolim_id != ofis.pk]
+
+    monkeypatch.setattr(amallar, "_qulfla", nishonsiz)
+    with pytest.raises(AmalXato, match="qayta urinib ko'ring"):
+        kochir(q, SON("1"), ofis, user)
+    q.refresh_from_db()
+    assert q.soni == SON("4")
+    assert jami(av, filial) == SON("6")

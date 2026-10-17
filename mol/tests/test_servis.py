@@ -226,3 +226,33 @@ def test_pdf_baytlar(filial, user, bobur, aziz, ombor):
     assert akt.nomi in matn
     assert "Bobur" in matn and "Aziz" in matn and "INV-1" in matn
     assert "400.00" in matn  # 4 dona x (600 / 6)
+
+
+def test_raqam_advisory_lock_bilan(filial, user, bobur, aziz, ombor):
+    """Akt raqami advisory lock (7310002) ostida beriladi: lock band bo'lsa akt yaratish kutadi."""
+    import psycopg
+    from django.db import OperationalError, connection
+
+    from mol.servis import AKT_RAQAM_QULFI
+
+    assert AKT_RAQAM_QULFI == 7310002
+    q = qator(av_yarat(filial), filial, "6", ombor, bobur)
+    s = connection.settings_dict
+    with psycopg.connect(
+        dbname=s["NAME"], user=s["USER"], password=s["PASSWORD"],
+        host=s["HOST"] or None, port=s["PORT"] or None, autocommit=True,
+    ) as boshqa:
+        boshqa.execute("SELECT pg_advisory_lock(%s)", [AKT_RAQAM_QULFI])
+        try:
+            with connection.cursor() as c:
+                c.execute("SET lock_timeout = '300ms'")
+            try:
+                with pytest.raises(OperationalError):
+                    akt_yarat(bobur, aziz, [(q, SON("1"))], user)
+            finally:
+                with connection.cursor() as c:
+                    c.execute("SET lock_timeout = 0")
+        finally:
+            boshqa.execute("SELECT pg_advisory_unlock(%s)", [AKT_RAQAM_QULFI])
+    assert not MolAkt.objects.exists()
+    assert akt_yarat(bobur, aziz, [(q, SON("1"))], user).raqam == 1

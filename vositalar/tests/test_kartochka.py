@@ -19,7 +19,7 @@ from vositalar.models import AVKartochka, AVTuriSozlama, Bolim, Holat, Rasm, Taq
 from vositalar.qoshimcha import qoshimcha_tekshir
 from vositalar.rasmlar import rasm_saqla
 from vositalar.tarix import tarix
-from vositalar.tests.test_bayroqlar import av_yarat, qator
+from vositalar.tests.test_bayroqlar import av_yarat, qator, qoldiq
 from vositalar.views import kartochka_saqla
 
 MB = 1024 * 1024
@@ -359,7 +359,7 @@ def test_tarix_tartibi(filial_a, hisobchi):
     Jurnal.objects.filter(maydon="izoh").update(qachon=utc(2026, 5, 1))
     yoz(hisobchi, t, "soni", 2, 1)  # Taqsimot jurnali tarixga kirmaydi (TaqsimotHarakat bilan takror)
 
-    qatorlar = tarix(av)
+    qatorlar = tarix(av, hisobchi)
     assert [q.tur for q in qatorlar] == ["jurnal", "rasm", "holat", "mol_akt", "1c"]
     assert [q.sana for q in qatorlar] == sorted((q.sana for q in qatorlar), reverse=True)
     assert all(q.sana.tzinfo is not None for q in qatorlar)
@@ -404,3 +404,48 @@ def test_htmx_4xx_javoblarni_almashtirish_sozlamasi(client_hisobchi):
     html = client_hisobchi.get(reverse("panel:bosh")).content.decode()
     assert 'name="htmx-config"' in html and "responseHandling" in html
     assert "400|409|422" in html
+
+
+def test_tarix_boshqa_filialni_oshkor_qilmaydi(foydalanuvchi, filial_a, filial_b, hisobchi):
+    """Ikki filialda qoldig'i bor AV: faqat A'ga ruxsatli foydalanuvchi B'ning bo'lim/xodim nomlari, 1C summalari
+    va aktlarini tarixda ko'rmaydi."""
+    av = av_yarat(filial_a, soni="1")
+    qoldiq(av, filial_b, "1")
+    kartochka_ol(av)
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    b_bolim = Bolim.objects.create(filial=filial_b, nomi="Bbolimi")
+    b_xodim = Xodim.objects.create(ref_1c=uuid.uuid4(), ism="Bxodimi", filial=filial_b)
+    a_xodim = Xodim.objects.create(ref_1c=uuid.uuid4(), ism="Axodimi", filial=filial_a)
+    for filial, summa in ((filial_a, "111"), (filial_b, "98765")):
+        Harakat1C.objects.create(
+            sana=datetime(2026, 1, 10, 8, tzinfo=dt_timezone.utc), hujjat_turi="Kirim", hujjat_raqami="5",
+            hujjat_ref=uuid.uuid4(), av=av, filial=filial, vid="kirim", soni=Decimal("1"), summa=Decimal(summa),
+        )
+    TaqsimotHarakat.objects.create(
+        av=av, filial=filial_b, yangi_bolim=b_bolim, yangi_mol=b_xodim, yangi_holat=Holat.ISHLATILMOQDA,
+        soni=Decimal("1"), kim=hisobchi, sabab="kochirish",
+    )
+    TaqsimotHarakat.objects.create(
+        av=av, filial=filial_a, yangi_mol=a_xodim, yangi_holat=Holat.ISHLATILMOQDA, soni=Decimal("1"),
+        kim=hisobchi, sabab="kochirish",
+    )
+    akt_b = MolAkt.objects.create(raqam=7, qabul_qiluvchi=b_xodim, tuzdi=hisobchi)
+    MolAktQator.objects.create(akt=akt_b, av=av, filial=filial_b, holat=Holat.ISHLATILMOQDA, soni=Decimal("1"))
+    akt_a = MolAkt.objects.create(raqam=8, qabul_qiluvchi=a_xodim, tuzdi=hisobchi)
+    MolAktQator.objects.create(akt=akt_a, av=av, filial=filial_a, holat=Holat.ISHLATILMOQDA, soni=Decimal("1"))
+
+    matn = " ".join(q.matn for q in tarix(av, user_a))
+    for begona in ("Bbolimi", "Bxodimi", "98765", "MA-000007", "Filial B"):
+        assert begona not in matn
+    for oziniki in ("Axodimi", "111", "MA-000008"):
+        assert oziniki in matn
+    html = client_user(user_a).get(url("kartochka", av.pk)).content.decode()
+    assert "Bxodimi" not in html and "98765" not in html and "MA-000007" not in html
+    hammasi = " ".join(q.matn for q in tarix(av, foydalanuvchi("admin")))
+    assert "Bxodimi" in hammasi and "98765" in hammasi and "MA-000007" in hammasi
+
+
+def client_user(user):
+    c = Client()
+    c.force_login(user)
+    return c

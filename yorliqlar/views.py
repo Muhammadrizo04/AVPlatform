@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from hisoblar.huquqlar import amal_kerak
+from hisoblar.parametrlar import son
 from onec.models import AV
 from vositalar.bayroqlar import BAYROQLAR
 from vositalar.filtrlar import av_filtrla
@@ -17,13 +18,8 @@ MAX_SAHIFA = 2000  # bitta PDF'dagi jami yorliqlar
 MAX_AV = 300  # tanlash sahifasida ko'rsatiladigan AV'lar
 
 
-def _son(qiymat) -> bool:
-    """Faqat ASCII raqamlar ("²" kabi Unicode raqamlar int() da xato beradi)."""
-    return len(qiymat) <= 18 and qiymat.isascii() and qiymat.isdigit()
-
-
 def _idlar(royxat) -> list[int]:
-    return [int(x) for x in royxat if _son(x)]
+    return [pk for pk in map(son, royxat) if pk is not None]
 
 
 def _avlar(request, idlar, bolim="", bayroq=""):
@@ -32,7 +28,7 @@ def _avlar(request, idlar, bolim="", bayroq=""):
         return AV.objects.none()
     params = {}
     if bolim:
-        if not _son(bolim):
+        if son(bolim) is None:
             return AV.objects.none()
         params["bolim"] = bolim
     if bayroq:
@@ -92,10 +88,11 @@ def pdf(request):
     elementlar = []
     for pk, av in avlar.items():
         qiymat = (request.POST.get(f"nusxa_{pk}") or "").strip()
-        if not _son(qiymat) or not 1 <= int(qiymat) <= MAX_NUSXA:
+        nusxa = son(qiymat)
+        if nusxa is None or not 1 <= nusxa <= MAX_NUSXA:
             messages.error(request, f"{av.nomi}: nusxalar soni 1 dan {MAX_NUSXA} gacha bo'lishi kerak.")
             return orqaga
-        elementlar.append((av, int(qiymat)))
+        elementlar.append((av, nusxa))
     jami = sum(n for _, n in elementlar)
     if jami > MAX_SAHIFA:
         messages.error(request, f"Jami yorliqlar soni {jami} ta, ko'pi bilan {MAX_SAHIFA} ta bo'lishi mumkin.")

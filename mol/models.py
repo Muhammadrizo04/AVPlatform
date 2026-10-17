@@ -44,3 +44,6 @@ class MolAktQator(models.Model):
     bolim = models.ForeignKey("vositalar.Bolim", null=True, blank=True, on_delete=models.PROTECT, related_name="+")
     holat = models.CharField(max_length=30, choices=TaqsimotHolat.choices)
     soni = models.DecimalField(max_digits=15, decimal_places=3)
+    # Tasdiqlash paytidagi bir dona narxi (1C summa / soni, tiyingacha). Tasdiqlangan akt qiymati shundan olinadi
+    # (keyingi 1C o'zgarishlari aktni o'zgartirmaydi); qoralamada — bo'sh, qiymat joriy 1C ma'lumotidan.
+    dona_narxi = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)

@@ -220,3 +220,92 @@ def test_hr_akt_yaratadi(client_rol, filial, bobur):
     av = av_yarat(filial)
     qator(av, filial, "1", bobur)
     assert client_rol("hr").get(reverse("mol:akt_yangi"), {"topshiruvchi": bobur.pk}).status_code == 200
+
+
+def test_akt_yangi_faqat_ruxsat_filial_qatorlari(foydalanuvchi, filial, filial_yarat, bobur, aziz):
+    boshqa = filial_yarat("B")
+    stol = av_yarat(filial, "2", "200", "1", "Stol")
+    shkaf = av_yarat(boshqa, "2", "200", "2", "Shkaf")
+    oziniki = qator(stol, filial, "2", bobur)
+    begona = qator(shkaf, boshqa, "2", bobur)
+    c = client_user(foydalanuvchi("hr", [filial]))
+
+    javob = c.get(reverse("mol:akt_yangi"), {"topshiruvchi": bobur.pk})
+    assert javob.status_code == 200
+    assert [t.pk for t in javob.context["qatorlar"]] == [oziniki.pk]
+    assert "Shkaf" not in javob.content.decode()
+
+    javob = c.post(
+        reverse("mol:akt_yangi"), {"topshiruvchi": bobur.pk, "qabul": aziz.pk, "tanlangan": [begona.pk]}
+    )
+    assert javob.status_code == 400
+    assert not MolAkt.objects.exists()
+
+    javob = c.post(
+        reverse("mol:akt_yangi"), {"topshiruvchi": bobur.pk, "qabul": aziz.pk, "tanlangan": [oziniki.pk]}
+    )
+    assert javob.status_code == 302
+    assert {q.filial_id for q in MolAkt.objects.get().qatorlar.all()} == {filial.pk}
+
+
+def test_akt_yangi_boshqa_filial_qabul_qiluvchisi_rad(foydalanuvchi, filial, filial_yarat, bobur):
+    boshqa = filial_yarat("B")
+    begona = Xodim.objects.create(ref_1c=uuid.uuid4(), ism="Begona", filial=boshqa)
+    q = qator(av_yarat(filial, "1", "100"), filial, "1", bobur)
+    c = client_user(foydalanuvchi("hr", [filial]))
+
+    javob = c.get(reverse("mol:akt_yangi"), {"topshiruvchi": bobur.pk})
+    assert "Begona" not in {x.ism for x in javob.context["qabul_qiluvchilar"]}
+    javob = c.post(reverse("mol:akt_yangi"), {"topshiruvchi": bobur.pk, "qabul": begona.pk, "tanlangan": [q.pk]})
+    assert javob.status_code == 400
+    assert not MolAkt.objects.exists()
+
+
+@pytest.fixture
+def pdf_konteksti(monkeypatch):
+    """`akt_pdf` shablon kontekstlari (PDF baytlaridan qiymat o'qimaslik uchun)."""
+    import mol.pdf
+
+    olingan = []
+    asl = mol.pdf.render_to_string
+
+    def ushla(shablon, kontekst):
+        olingan.append(kontekst)
+        return asl(shablon, kontekst)
+
+    monkeypatch.setattr(mol.pdf, "render_to_string", ushla)
+    return olingan
+
+
+def test_tasdiqlangan_akt_qiymati_ozgarmaydi(client_rol, filial, bobur, aziz, pdf_konteksti):
+    av = av_yarat(filial, "3", "300")
+    q = qator(av, filial, "3", bobur)
+    c = client_rol("hr")
+    akt = akt_yarat(bobur, aziz, [(q, SON("2"))], kim=foydalanuvchi_ol(c))
+
+    # Qoralama — joriy 1C qiymati.
+    assert c.get(reverse("mol:akt", args=[akt.pk])).context["jami_qiymat"] == SON("200")
+    AVQoldiq.objects.filter(av=av).update(summa=SON("600"))
+    assert c.get(reverse("mol:akt", args=[akt.pk])).context["jami_qiymat"] == SON("400")
+
+    assert c.post(reverse("mol:akt_tasdiqla", args=[akt.pk])).status_code == 302
+    akt.refresh_from_db()
+    assert akt.holat == MolAkt.Holat.TASDIQLANGAN
+    assert akt.qatorlar.get().dona_narxi == SON("200.00")
+
+    def qiymatlar():
+        sahifa = c.get(reverse("mol:akt", args=[akt.pk])).context
+        assert c.get(reverse("mol:akt_pdf", args=[akt.pk])).status_code == 200
+        return sahifa["jami_qiymat"], pdf_konteksti[-1]["jami"]
+
+    assert qiymatlar() == (SON("400"), "400.00")
+    AVQoldiq.objects.filter(av=av).update(summa=SON("900"))  # 1C summa o'zgardi
+    assert qiymatlar() == (SON("400"), "400.00")
+    AVQoldiq.objects.filter(av=av).update(soni=SON("0"), summa=SON("0"))  # AV arxivga tushdi
+    assert qiymatlar() == (SON("400"), "400.00")
+
+
+def foydalanuvchi_ol(client):
+    from django.contrib.auth import get_user_model
+
+    return get_user_model().objects.get(pk=client.session["_auth_user_id"])

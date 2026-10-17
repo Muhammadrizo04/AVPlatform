@@ -52,6 +52,8 @@ ONEC_URL=<1C HTTP-servis manzili>
 ONEC_LOGIN=<texnik foydalanuvchi>
 ONEC_PAROL=<texnik foydalanuvchi paroli>
 MEDIA_ROOT=/var/lib/av/media
+# Ichki VM (HTTP) — False; VPS'da (nginx TLS'ni tugatadi) True, 8-bo'limdagi «HTTPS (VPS)» ga qarang
+HTTPS=False
 ```
 
 `SECRET_KEY` hosil qilish:
@@ -102,7 +104,10 @@ sudo nginx -t && sudo systemctl reload nginx
 curl -I http://<host>/static/panel/htmx.min.js
 ```
 
-Jadval: sinxron har 5 daqiqada (`*:0/5`), to'liq sinxron (`--toliq`) har kecha 03:00, zaxira har kecha 02:30.
+Jadval: sinxron har 5 daqiqada (`*:0/5`), to'liq sinxron (`--toliq`) har kecha 03:02:30, zaxira har kecha 02:30.
+To'liq sinxron 03:00 dagi 5 daqiqalik sinxron bilan to'qnashmasligi uchun 2,5 daqiqa keyin boshlanadi; baribir band
+bo'lsa (`sinxron --toliq` advisory lock ololmasa), har 15 s da qayta urinadi, 5 daqiqadan keyin to'xtaydi
+(`journalctl -u av-sinxron-toliq.service` da «Sinxron band» yozuvi). Oddiy (5 daqiqalik) sinxron band bo'lsa kutmaydi.
 Holatni ko'rish:
 
 ```bash
@@ -180,7 +185,20 @@ tiklanadi, `.env` online qiymatlarga almashtiriladi, HTTPS yoqiladi.
 ### HTTPS (VPS)
 
 VPS internetga ochiq: faqat HTTPS. `sudo apt install certbot python3-certbot-nginx && sudo certbot --nginx -d <domen>`,
-so'ng `.env` da `ALLOWED_HOSTS=<domen>` va `PROXY_ORQASIDA=True`; nginx 80 -> 443 yo'naltiradi.
+so'ng `.env` da quyidagilarni o'rnating va `sudo systemctl restart av-gunicorn.service`; nginx 80 -> 443 yo'naltiradi.
+
+```ini
+ALLOWED_HOSTS=<domen>
+PROXY_ORQASIDA=True
+HTTPS=True
+# ixtiyoriy: bo'sh bo'lsa ALLOWED_HOSTS dan https://<domen> olinadi
+# CSRF_TRUSTED_ORIGINS=https://<domen>
+```
+
+`HTTPS=True` quyidagilarni yoqadi: `SECURE_PROXY_SSL_HEADER` (`X-Forwarded-Proto: https`), secure sessiya va CSRF
+cookie, HSTS (1 yil) va `CSRF_TRUSTED_ORIGINS`. Busiz TLS ortida kirish formasi CSRF tekshiruvidan o'tmaydi.
+nginx `proxy_set_header X-Forwarded-Proto $scheme;` o'rnatishi shart (`deploy/nginx-av.conf` da bor) —
+certbot qo'shgan 443 `server` blokida ham shu `location /` sozlamasi qolganini tekshiring.
 `ufw` bilan faqat 22/80/443 ochiq qoldiring; PostgreSQL tashqariga ochilmasin.
 
 ## 9. Windows'da lokal ishlab chiqish
@@ -223,7 +241,9 @@ Har bir ssenariy foydalanuvchi bilan qo'lda tekshiriladi (belgi qo'ying).
 - [ ] Hisobotlarni ko'radi/eksport qiladi; o'zgartirish tugmalari yo'q.
 
 **Revizor**
-- [ ] Kirib, AV kartochkasi va rasmini ko'radi (boshqa filial rasmi 403/404).
+- [ ] Revizor login/parol bilan kira olmaydi: kirish rad etiladi, «Panelga kirish huquqi yo'q» xabari chiqadi
+  (spec §4: 1-bosqichda revizor panelga kirmaydi).
+
+**Umumiy**
 - [ ] QR yorliq matni (`DS|<filial kodi>|<inv. raqam>`) kartochkadagi kalitga mos.
-- [ ] Taqsimotni o'zgartira olmaydi, admin sahifalari yopiq.
 - [ ] 8 soat harakatsizlikdan keyin sessiya tugaydi va qayta login so'raydi.

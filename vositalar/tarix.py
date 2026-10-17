@@ -5,8 +5,9 @@ from datetime import date, datetime, time
 from django.db.models import Q
 from django.utils import timezone
 
+from hisoblar.huquqlar import filial_bilan_chekla
 from jurnal.models import Jurnal
-from mol.models import MolAkt
+from mol.sorovlar import korinadigan_aktlar
 from onec.models import AV, Harakat1C
 
 from .models import AVKartochka, Holat, Rasm, TaqsimotHarakat
@@ -48,22 +49,25 @@ def _taqsimot_matni(h: TaqsimotHarakat) -> str:
     return qism
 
 
-def tarix(av: AV) -> list[TarixQator]:
-    """`av` bo'yicha barcha voqealar, sana bo'yicha kamayuvchi. Jurnaldan faqat AV va uning kartochkasi qatorlari
-    olinadi (taqsimot jurnali `TaqsimotHarakat` bilan takrorlanadi)."""
+def tarix(av: AV, user) -> list[TarixQator]:
+    """`av` bo'yicha `user` ko'ra oladigan voqealar, sana bo'yicha kamayuvchi. 1C harakatlari va taqsimot
+    harakatlari — faqat ruxsat etilgan filiallardan, МОЛ aktlari — faqat ko'rinadigan aktlar (boshqa filial bo'lim,
+    xodim nomlari va summalari chiqmaydi). Jurnaldan faqat AV va uning kartochkasi qatorlari olinadi (taqsimot
+    jurnali `TaqsimotHarakat` bilan takrorlanadi); ular va rasmlar filialga bog'liq emas."""
     natija = []
-    for h in Harakat1C.objects.filter(av=av).select_related("filial"):
+    for h in filial_bilan_chekla(Harakat1C.objects.filter(av=av), user).select_related("filial"):
         joy = f", {h.filial.nomi}" if h.filial else ""
         natija.append(TarixQator(
             h.sana, "1c", f"1C {h.get_vid_display().lower()}: {h.hujjat_turi} {h.hujjat_raqami}".strip()
             + f" — {h.soni:f} dona, {h.summa:f}{joy}", "1C",
         ))
-    harakatlar = TaqsimotHarakat.objects.filter(av=av).select_related(
+    harakatlar = filial_bilan_chekla(TaqsimotHarakat.objects.filter(av=av), user).select_related(
         "filial", "kim", "eski_bolim", "yangi_bolim", "eski_mol", "yangi_mol"
     )
     for h in harakatlar:
         natija.append(TarixQator(h.sana, "holat" if h.sabab == "holat" else h.sabab, _taqsimot_matni(h), _kim(h.kim)))
-    for akt in MolAkt.objects.filter(qatorlar__av=av).distinct().select_related("topshiruvchi", "qabul_qiluvchi", "tuzdi"):
+    aktlar = korinadigan_aktlar(user).filter(qatorlar__av=av).distinct().select_related("tuzdi")
+    for akt in aktlar:
         kimdan = akt.topshiruvchi.ism if akt.topshiruvchi else "МОЛ'siz"
         natija.append(TarixQator(
             _aware(akt.sana), "mol_akt",

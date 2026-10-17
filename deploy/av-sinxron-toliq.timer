@@ -1,8 +1,8 @@
 [Unit]
-Description=AV: to'liq sinxron har kecha 03:00
+Description=AV: to'liq sinxron har kecha 03:02:30
 
 [Timer]
-OnCalendar=*-*-* 03:00:00
+OnCalendar=*-*-* 03:02:30
 Persistent=true
 Unit=av-sinxron-toliq.service
 

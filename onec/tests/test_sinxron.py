@@ -426,3 +426,53 @@ def test_toliq_sinxrondan_keyin_inkremental_qoladi():
     assert jurnal.toliq is False
     dan, _ = client.harakat_sorovlari[-1]
     assert dan == (HOZIR - timedelta(days=45)).replace(tzinfo=None)
+
+
+def _band_keyin_ok(monkeypatch, band_soni):
+    """`sinxronla` avval `band_soni` marta band, keyin haqiqiy natija; `sleep` chaqiruvlari yoziladi."""
+    import onec.management.commands.sinxron as buyruq
+
+    asl = buyruq.sinxronla
+    holat = {"chaqiruv": 0}
+    kutishlar = []
+
+    def soxta(client, toliq=False):
+        holat["chaqiruv"] += 1
+        if holat["chaqiruv"] <= band_soni:
+            raise SinxronBand("band")
+        return asl(client, toliq=toliq, hozir=HOZIR)
+
+    monkeypatch.setattr(buyruq, "sinxronla", soxta)
+    monkeypatch.setattr(buyruq.time, "sleep", kutishlar.append)
+    return holat, kutishlar
+
+
+def test_buyruq_toliq_band_bolsa_qayta_urinadi(buyruq_client, monkeypatch, capsys):
+    holat, kutishlar = _band_keyin_ok(monkeypatch, 3)
+
+    call_command("sinxron", "--toliq")
+
+    assert holat["chaqiruv"] == 4
+    assert kutishlar == [15, 15, 15]
+    assert SinxronJurnal.objects.get().toliq is True
+    assert "muvaffaqiyatli" in capsys.readouterr().out
+
+
+def test_buyruq_toliq_5_daqiqadan_keyin_toxtaydi(buyruq_client, monkeypatch, capsys):
+    holat, kutishlar = _band_keyin_ok(monkeypatch, 10_000)
+
+    call_command("sinxron", "--toliq")
+
+    assert sum(kutishlar) == 300 and set(kutishlar) == {15}
+    assert holat["chaqiruv"] == 21
+    assert "o'tkazib yuborildi" in capsys.readouterr().out
+    assert not SinxronJurnal.objects.exists()
+
+
+def test_buyruq_inkremental_band_kutmaydi(buyruq_client, monkeypatch, capsys):
+    holat, kutishlar = _band_keyin_ok(monkeypatch, 1)
+
+    call_command("sinxron")
+
+    assert holat["chaqiruv"] == 1 and kutishlar == []
+    assert "o'tkazib yuborildi" in capsys.readouterr().out

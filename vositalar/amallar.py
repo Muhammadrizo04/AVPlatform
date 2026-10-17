@@ -7,7 +7,7 @@ Har o'zgarish uchun `TaqsimotHarakat` va Jurnal yoziladi. Xato matnlari foydalan
 """
 from decimal import Decimal, InvalidOperation
 
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import Sum
 
 from jurnal.yoz import yoz
@@ -102,9 +102,17 @@ def _ozgartir(qator, soni, kim, sabab, *, bolim=_SAQLA, mol=_SAQLA, holat=_SAQLA
         eski_manba_soni = manba.soni
         _ayir(manba, soni)
         if nishon is None:
-            nishon = Taqsimot.objects.create(
-                av_id=juft[0], filial_id=juft[1], bolim_id=yangi[0], mol_id=yangi[1], holat=yangi[2], soni=soni
-            )
+            try:
+                with transaction.atomic():  # savepoint: unikal kalit buzilsa tushunarli xato (500 emas)
+                    nishon = Taqsimot.objects.create(
+                        av_id=juft[0], filial_id=juft[1], bolim_id=yangi[0], mol_id=yangi[1], holat=yangi[2],
+                        soni=soni,
+                    )
+            except IntegrityError:
+                # Shu qiymatli qatorni oraliqda boshqa amal (masalan, 1C sinxroni) yaratgan.
+                raise AmalXato(
+                    "Taqsimot bir vaqtda boshqa amal bilan o'zgardi. Sahifani yangilab, qayta urinib ko'ring."
+                ) from None
             eski_nishon_soni = NOL
         else:
             eski_nishon_soni = nishon.soni

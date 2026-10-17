@@ -17,6 +17,7 @@ from django.views.decorators.http import require_POST
 
 from hisobotlar.excel import jadval_xlsx
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
+from hisoblar.parametrlar import son
 from jurnal.yoz import yoz
 from onec.models import AV, AVQoldiq, AVTuri, Filial, Xodim
 
@@ -111,10 +112,10 @@ def ommaviy(request):
     if not url_has_allowed_host_and_scheme(keyingi, allowed_hosts={request.get_host()}):
         keyingi = reverse("vositalar:royxat")
     orqaga = redirect(keyingi)
-    idlar = [int(x) for x in request.POST.getlist("av") if x.isdigit()]
+    idlar = [pk for pk in map(son, request.POST.getlist("av")) if pk is not None]
     bolim = holat = None
     if amal == "kochirish":
-        bolim = filial_bilan_chekla(Bolim.objects.all(), request.user).filter(pk=request.POST.get("bolim") or 0).first()
+        bolim = filial_bilan_chekla(Bolim.objects.all(), request.user).filter(pk=son(request.POST.get("bolim")) or 0).first()
         if bolim is None:
             messages.error(request, "Bo'limni tanlang.")
             return orqaga
@@ -247,8 +248,8 @@ def kartochka_saqla(kartochka: AVKartochka, malumot: dict, versiya: int, kim) ->
             matn = str(malumot["xizmat_muddati_oy"] or "").strip()
             if not matn:
                 yangi["xizmat_muddati_oy"] = None
-            elif matn.isdigit() and 0 < int(matn) <= 1200:
-                yangi["xizmat_muddati_oy"] = int(matn)
+            elif (oy := son(matn)) is not None and 0 < oy <= 1200:
+                yangi["xizmat_muddati_oy"] = oy
             else:
                 xatolar["xizmat_muddati_oy"] = ["Xizmat muddati 1 dan 1200 gacha oy bo'lishi kerak."]
         if "izoh" in malumot:
@@ -286,10 +287,8 @@ def kartochka_saqla(kartochka: AVKartochka, malumot: dict, versiya: int, kim) ->
 
 
 def _versiya(post) -> int:
-    try:
-        return int(post.get("versiya", ""))
-    except ValueError:
-        return -1
+    versiya = son(post.get("versiya"))
+    return -1 if versiya is None else versiya
 
 
 @amal_kerak("korish")
@@ -343,7 +342,7 @@ def kartochka(request, pk):
         "yorliq_huquqi": huquqi_bor(request.user, "yorliq"),
         "amortizatsiya": hisobla(av.jami_summa, k.ishga_tushgan_sana, samarali_muddat(k), timezone.localdate()),
         "dona_narxi": dona_narxi(av.jami_summa, av.jami_soni),
-        "tarix": tarix(av),
+        "tarix": tarix(av, request.user),
         **_taqsimot_kontekst(request.user, av),
         **_rasmlar_kontekst(request.user, av),
     }
@@ -356,10 +355,9 @@ def taqsimot_amal(request, pk):
     """Taqsimot qatori ustida amal (HTMX): ko'chirish, holat, «1C bilan moslash». МОЛ bu yerda o'zgarmaydi (faqat
     МОЛ aktlari orqali). Xato matni bo'lakda ko'rsatiladi (400), 500 bo'lmaydi."""
     av = _av_yoki_404(request, pk)
-    qator_id = request.POST.get("qator", "")
     qator = (
         filial_bilan_chekla(Taqsimot.objects.filter(av=av), request.user)
-        .filter(pk=int(qator_id) if qator_id.isdigit() else 0)
+        .filter(pk=son(request.POST.get("qator")) or 0)
         .first()
     )
     if qator is None:
@@ -369,10 +367,9 @@ def taqsimot_amal(request, pk):
     xato, status = "", 200
     try:
         if amal == "kochir":
-            bolim_id = request.POST.get("bolim", "")
             bolim = (
                 filial_bilan_chekla(Bolim.objects.all(), request.user)
-                .filter(pk=int(bolim_id) if bolim_id.isdigit() else 0)
+                .filter(pk=son(request.POST.get("bolim")) or 0)
                 .first()
             )
             amallar.kochir(qator, soni, bolim, request.user)
@@ -451,8 +448,8 @@ def _bolim_kontekst(request, filial, tanlangan=None, xato=""):
 
 
 def _id(qiymat) -> int:
-    qiymat = (qiymat or "").strip()
-    return int(qiymat) if qiymat.isdigit() else 0
+    """So'rovdagi id; noto'g'ri bo'lsa 0 (hech narsaga mos kelmaydi)."""
+    return son(qiymat) or 0
 
 
 @amal_kerak("korish")

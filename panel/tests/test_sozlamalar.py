@@ -319,11 +319,16 @@ def test_jurnal_filtrlari(client_admin, admin_user):
 
 
 @pytest.mark.parametrize("params", [
-    {"dan": "kecha"}, {"gacha": "2026-13-45"}, {"dan": "٢٠٢٦-٠١-٠١"}, {"kim": "a\x00b"}, {"page": "-1"},
+    {"dan": "kecha"}, {"gacha": "2026-13-45"}, {"dan": "٢٠٢٦-٠١-٠١"}, {"page": "-1"},
     {"page": "99999999999999999999"}, {"obyekt_turi": "x" * 5000}, {"dan": "9999-12-31", "gacha": "0001-01-01"},
 ])
 def test_jurnal_notogri_parametrlar(client_admin, params):
     assert client_admin.get(reverse("panel:jurnal"), params).status_code == 200
+
+
+def test_jurnal_nul_bayt_400(client_admin):
+    # NUL bayt umumiy middleware'da rad etiladi (PostgreSQL'ga yetib bormaydi).
+    assert client_admin.get(reverse("panel:jurnal"), {"kim": "a\x00b"}).status_code == 400
 
 
 def test_jurnal_sahifalash(client_admin):

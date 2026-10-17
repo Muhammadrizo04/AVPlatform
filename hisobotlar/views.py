@@ -5,8 +5,8 @@ from django.utils import timezone
 from hisoblar.huquqlar import amal_kerak
 from hisobotlar import servis
 from hisobotlar.excel import jadval_xlsx
-from onec.models import Xodim
-from yorliqlar.views import _son
+from hisoblar.parametrlar import son
+from mol.sorovlar import korinadigan_xodimlar
 
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 GURUHLAR = {"filial": "Filial", "bolim": "Bo'lim", "tur": "AV turi"}
@@ -61,7 +61,9 @@ def mol_qaydnoma(request):
     xodim = None
     xodim_id = request.GET.get("xodim", "")
     if xodim_id:
-        xodim = Xodim.objects.filter(pk=int(xodim_id)).first() if _son(xodim_id) else None
+        # Faqat foydalanuvchi filiallarida ko'rinadigan xodim (boshqa filial xodimining ismi ham chiqmasligi kerak).
+        pk = son(xodim_id)
+        xodim = None if pk is None else korinadigan_xodimlar(request.user).filter(pk=pk).first()
         if xodim is None:
             raise Http404
     qatorlar = servis.mol_qaydnoma(request.user, xodim)

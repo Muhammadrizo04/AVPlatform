@@ -47,6 +47,22 @@ def xodim_yigindilari(user, qatorlar=None) -> dict[int, tuple[Decimal, Decimal]]
     return natija
 
 
+def akt_narxlari(akt, qatorlar) -> dict[int, Decimal]:
+    """{akt qatori pk: bir dona narxi}. Tasdiqlangan akt — tasdiqlash paytida saqlangan narx (keyin o'zgarmaydi);
+    qoralama — joriy 1C qoldig'idan (summa / soni)."""
+    tasdiqlangan = akt.holat == MolAkt.Holat.TASDIQLANGAN
+    joriy = {}
+    kerak = {q.av_id for q in qatorlar if not (tasdiqlangan and q.dona_narxi is not None)}
+    if kerak:
+        joriy = {
+            av.pk: dona_narxi(av.jami_summa, av.jami_soni) for av in AV.objects.qoldiq_bilan().filter(pk__in=kerak)
+        }
+    return {
+        q.pk: q.dona_narxi if tasdiqlangan and q.dona_narxi is not None else joriy.get(q.av_id, NOL)
+        for q in qatorlar
+    }
+
+
 def korinadigan_aktlar(user):
     """Barcha qatorlarining filiali ruxsat etilgan aktlar."""
     idlar = ruxsat_filial_idlar(user)

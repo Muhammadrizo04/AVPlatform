@@ -8,6 +8,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from hisoblar.huquqlar import amal_kerak, huquqi_bor
+from hisoblar.parametrlar import son
 from onec.models import AV
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.bayroqlar import BAYROQLAR
@@ -23,8 +24,8 @@ TIYIN = Decimal("0.01")
 
 
 def _id(qiymat) -> int:
-    qiymat = (qiymat or "").strip()
-    return int(qiymat) if qiymat.isdigit() else 0
+    """So'rovdagi id; noto'g'ri bo'lsa 0 (hech narsaga mos kelmaydi)."""
+    return son(qiymat) or 0
 
 
 @amal_kerak("korish")
@@ -148,13 +149,10 @@ def _akt_yoki_404(request, pk) -> MolAkt:
 def akt(request, pk):
     a = _akt_yoki_404(request, pk)
     qatorlar = list(a.qatorlar.select_related("av", "filial", "bolim__ota__ota").order_by("pk"))
-    narxlar = {
-        av.pk: dona_narxi(av.jami_summa, av.jami_soni)
-        for av in AV.objects.qoldiq_bilan().filter(pk__in={q.av_id for q in qatorlar})
-    }
+    narxlar = sorovlar.akt_narxlari(a, qatorlar)
     holatlar = dict(Holat.choices)
     for q in qatorlar:
-        q.qiymat = q.soni * narxlar.get(q.av_id, NOL)
+        q.qiymat = q.soni * narxlar[q.pk]
         q.holat_nomi = holatlar.get(q.holat, q.holat)
     kontekst = {
         "akt": a,

@@ -3,17 +3,11 @@ from django.db.models import Exists, OuterRef, Q, QuerySet
 from django.utils import timezone
 
 from hisoblar.huquqlar import filial_bilan_chekla, ruxsat_filial_idlar
+from hisoblar.parametrlar import son
 from onec.models import AV, AVQoldiq
 
 from .bayroqlar import BAYROQLAR, ruxsat_qoldiq
 from .models import Taqsimot
-
-
-def _son(qiymat) -> int | None:
-    try:
-        return int(qiymat)
-    except (TypeError, ValueError):
-        return None
 
 
 def _bayroq_av_idlari(kalit: str, user) -> list[int]:
@@ -39,7 +33,7 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
     if q:
         qs = qs.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q))
 
-    filial = _son(params.get("filial"))
+    filial = son(params.get("filial"))
     if filial is not None:
         ruxsat = ruxsat_filial_idlar(user)
         if ruxsat is not None and filial not in ruxsat:
@@ -49,13 +43,13 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
         else:
             qs = qs.filter(Exists(AVQoldiq.objects.filter(av=OuterRef("pk"), filial_id=filial, soni__gt=0)))
 
-    turi = _son(params.get("turi"))
+    turi = son(params.get("turi"))
     if turi is not None:
         qs = qs.filter(turi_id=turi)
 
     taqsimot = {}
     for maydon, nom in (("bolim", "bolim_id"), ("mol", "mol_id")):
-        qiymat = _son(params.get(maydon))
+        qiymat = son(params.get(maydon))
         if qiymat is not None:
             taqsimot[nom] = qiymat
     if params.get("holat"):

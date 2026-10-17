@@ -5,19 +5,22 @@ pk tartibida qulflanadi (`moslashtir` bilan bir xil tartib — deadlock yo'q), k
 `mol_ozgartir` chaqiriladi. Istalgan xato -> `AktXato`, hech narsa o'zgarmaydi.
 """
 from collections import defaultdict
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
-from django.db import transaction
-from django.db.models import Q
+from django.db import connection, transaction
+from django.db.models import Max, Q
 from django.utils import timezone
 
 from onec.models import AV, Xodim
 from vositalar.amallar import AmalXato, mol_ozgartir
+from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Taqsimot
 
 from .models import MolAkt, MolAktQator
 
 NOL = Decimal("0")
+TIYIN = Decimal("0.01")
+AKT_RAQAM_QULFI = 7310002  # akt raqamini berish uchun PostgreSQL advisory lock kaliti (sinxron — 7310001)
 
 
 class AktXato(Exception):
@@ -60,9 +63,13 @@ def akt_yarat(topshiruvchi, qabul_qiluvchi, qatorlar, kim, izoh: str = "") -> Mo
 
 
 def _keyingi_raqam() -> int:
-    """max(raqam)+1; oxirgi qator qulflanadi, shuning uchun parallel yaratuvchilar ketma-ket ishlaydi."""
-    oxirgi = MolAkt.objects.select_for_update().order_by("-raqam").first()
-    return 1 if oxirgi is None else oxirgi.raqam + 1
+    """max(raqam)+1. Avval tranzaksiya darajasidagi advisory lock (`AKT_RAQAM_QULFI`) olinadi: parallel yaratuvchilar
+    tranzaksiya tugaguncha ketma-ket ishlaydi (bo'sh jadvalda ham), shuning uchun bir xil raqam berilmaydi.
+    Tranzaksiya ichida chaqirilishi shart."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(%s)", [AKT_RAQAM_QULFI])
+    oxirgi = MolAkt.objects.aggregate(m=Max("raqam"))["m"]
+    return 1 if oxirgi is None else oxirgi + 1
 
 
 def akt_tasdiqla(akt: MolAkt, kim) -> None:
@@ -121,6 +128,15 @@ def _tasdiqla(akt: MolAkt, kim) -> None:
     # 3) Amal: har taqsimot qatori uchun bir marta, yig'indi son bilan.
     for k, soni in kerak.items():
         mol_ozgartir(mavjud[k], soni, qabul, kim, hujjat_izoh=joriy.nomi)
+
+    # 4) Tasdiqlangan akt o'zgarmaydi (spec §7.6): qiymat uchun bir dona narxi shu paytdagi 1C ma'lumotidan saqlanadi.
+    narxlar = {
+        av.pk: dona_narxi(av.jami_summa, av.jami_soni).quantize(TIYIN, ROUND_HALF_UP)
+        for av in AV.objects.qoldiq_bilan().filter(pk__in={q.av_id for q in qatorlar})
+    }
+    for q in qatorlar:
+        q.dona_narxi = narxlar.get(q.av_id, NOL)
+    MolAktQator.objects.bulk_update(qatorlar, ["dona_narxi"])
 
     joriy.holat = MolAkt.Holat.TASDIQLANGAN
     joriy.tasdiqladi = kim

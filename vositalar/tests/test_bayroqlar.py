@@ -351,3 +351,59 @@ def test_faol_va_arxiv(filial_a):
     assert set(AV.objects.faol()) == {faol}
     assert set(AV.objects.arxiv()) == {nol, qoldiqsiz, manfiy}
     assert AV.objects.qoldiq_bilan().get(pk=qoldiqsiz.pk).jami_soni == 0
+
+
+# ---------- filial cheklovi: qolgan bayroqlar ----------
+
+def test_ketgan_xodimda_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    ketgan = xodim(ishdan_bushagan=True)
+    a = av_yarat(filial_a)
+    b = av_yarat(filial_b)
+    ta = qator(a, filial_a, "1", mol=ketgan)
+    qator(b, filial_b, "1", mol=ketgan)
+
+    assert idlar("ketgan_xodimda", user_a) == {ta.pk}
+    assert len(royxat("ketgan_xodimda", foydalanuvchi("admin"))) == 2
+
+
+def test_yorliq_bayroqlari_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    yoq_a, yoq_b = av_yarat(filial_a), av_yarat(filial_b)
+    eski_a = av_yarat(filial_a, inv="125")
+    AVKartochka.objects.create(av=eski_a, yorliq_kaliti="DS|A|124")
+    eski_b = av_yarat(filial_b, inv="125")
+    AVKartochka.objects.create(av=eski_b, yorliq_kaliti="DS|B|124")
+
+    assert idlar("yorliq_yoq", user_a) == {yoq_a.pk}
+    assert idlar("yorliq_almashtirish", user_a) == {eski_a.pk}
+    admin = foydalanuvchi("admin")
+    assert {yoq_a.pk, yoq_b.pk} <= idlar("yorliq_yoq", admin)
+    assert idlar("yorliq_almashtirish", admin) == {eski_a.pk, eski_b.pk}
+
+
+def test_muddat_bayroqlari_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+
+    def av_muddat(filial, sana):
+        av = av_yarat(filial)
+        AVKartochka.objects.create(av=av, ishga_tushgan_sana=sana, xizmat_muddati_oy=60)
+        return av
+
+    tugagan_a, tugagan_b = av_muddat(filial_a, date(2020, 1, 1)), av_muddat(filial_b, date(2020, 1, 1))
+    olti_a, olti_b = av_muddat(filial_a, date(2022, 2, 17)), av_muddat(filial_b, date(2022, 2, 17))
+
+    assert idlar("muddat_tugagan", user_a) == {tugagan_a.pk}
+    assert idlar("muddat_6oy", user_a) == {olti_a.pk}
+    admin = foydalanuvchi("admin")
+    assert idlar("muddat_tugagan", admin) == {tugagan_a.pk, tugagan_b.pk}
+    assert idlar("muddat_6oy", admin) == {olti_a.pk, olti_b.pk}
+
+
+def test_inv_takror_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    a1, a2 = av_yarat(filial_a, inv="7"), av_yarat(filial_a, inv="7")
+    b1, b2 = av_yarat(filial_b, inv="8"), av_yarat(filial_b, inv="8")
+
+    assert idlar("inv_takror", user_a) == {a1.pk, a2.pk}
+    assert idlar("inv_takror", foydalanuvchi("admin")) == {a1.pk, a2.pk, b1.pk, b2.pk}

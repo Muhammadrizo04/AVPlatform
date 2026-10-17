@@ -38,7 +38,7 @@ def test_fayl_mavjud_va_lf(nom):
     "nom,oncalendar",
     [
         ("av-sinxron.timer", "*:0/5"),
-        ("av-sinxron-toliq.timer", "*-*-* 03:00:00"),
+        ("av-sinxron-toliq.timer", "*-*-* 03:02:30"),
         ("av-backup.timer", "*-*-* 02:30:00"),
     ],
 )

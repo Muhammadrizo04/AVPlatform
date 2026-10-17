@@ -226,3 +226,19 @@ def test_kesim_bolim_qoldiq_yigindisi_aniq(hisobchi, filial_a):
     qatorlar = servis.kesim(hisobchi, "bolim", BUGUN)
     assert servis.jami(qatorlar)["qoldiq"] == Decimal("70.83")
     assert servis.jami(qatorlar)["boshlangich"] == Decimal("100.00")
+
+
+def test_mol_qaydnoma_boshqa_filial_xodimi_404(foydalanuvchi, filial_a, filial_b):
+    c = Client()
+    c.force_login(foydalanuvchi("hisobchi", [filial_a]))
+    begona = xodim(filial=filial_b)
+    begona.ism = "Begona Xodim"
+    begona.save()
+    qator(av_yarat(filial_b), filial_b, "1", mol=begona)
+    javob = c.get(reverse("hisobotlar:mol_qaydnoma"), {"xodim": begona.pk})
+    assert javob.status_code == 404
+    assert "Begona Xodim" not in javob.content.decode()
+
+    oziniki = xodim(filial=filial_a)
+    javob = c.get(reverse("hisobotlar:mol_qaydnoma"), {"xodim": oziniki.pk})
+    assert javob.status_code == 200 and javob.context["xodim"] == oziniki
