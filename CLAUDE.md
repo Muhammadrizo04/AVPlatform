@@ -19,7 +19,7 @@
 - Python 3.12 bilan mos kod yozing (3.13'ga xos imkoniyatlar yo'q).
 
 ## Buyruqlar
-- Testlar: `/home/claude/venv/bin/pytest -q` (`.env` shart emas; `config.settings_test`)
+- Testlar (Windows, lokal): `venv\Scripts\python.exe -m pytest -q` (`.env` shart emas; `config.settings_test`; PostgreSQL rol `av`/`av`, CREATEDB)
 - Sinxron: `python manage.py sinxron` (keyingi tasklarda qo'shiladi)
 - Tekshiruv: `python manage.py check`
 - Mahalliy ishga tushirish uchun `.env.example` dan `.env` yarating (dev: `DEBUG=True`).
