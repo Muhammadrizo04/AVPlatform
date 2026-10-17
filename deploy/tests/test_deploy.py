@@ -100,6 +100,7 @@ def test_backup_sh():
     t = (DEPLOY / "backup.sh").read_text(encoding="utf-8")
     assert t.startswith("#!/usr/bin/env bash")
     assert "set -euo pipefail" in t
+    assert re.search(r"^umask 077$", t, re.M)
     assert "pg_dump -Fc" in t
     assert "/var/backups/av" in t
     assert "-mtime +14" in t

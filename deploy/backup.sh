@@ -2,6 +2,7 @@
 # AV zaxirasi: PostgreSQL (pg_dump -Fc) + MEDIA_ROOT (tar.gz) -> /var/backups/av/YYYY-MM-DD.*
 # Ma'lumotlar bazasi parol/manzili .env dagi DATABASE_URL dan olinadi (skriptda qattiq yozilmagan).
 set -euo pipefail
+umask 077
 
 APP_DIR="${APP_DIR:-/opt/av/app}"
 ENV_FAYL="${ENV_FAYL:-$APP_DIR/.env}"

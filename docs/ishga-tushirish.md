@@ -17,6 +17,8 @@ psql --version                              # 16.x bo'lishi kerak (Ubuntu 24.04 
 sudo useradd --system --create-home --home-dir /opt/av --shell /bin/bash av
 sudo mkdir -p /var/lib/av/media /var/backups/av
 sudo chown av:av /var/lib/av/media /var/backups/av
+sudo chmod 700 /var/backups/av             # zaxira faqat av uchun o'qiladigan
+sudo chmod 755 /opt/av                     # nginx (www-data) /opt/av/app/staticfiles ga yetib borishi uchun (Ubuntu 24.04 da home 0750)
 ```
 
 Ma'lumotlar bazasi:
@@ -30,6 +32,7 @@ Kod va bog'liqliklar:
 
 ```bash
 sudo -u av git clone <REPO_MANZILI> /opt/av/app
+sudo chmod 755 /opt/av/app
 sudo -u av python3 -m venv /opt/av/venv
 sudo -u av /opt/av/venv/bin/pip install -r /opt/av/app/requirements.txt gunicorn
 ```
@@ -94,6 +97,9 @@ sudo cp nginx-av.conf /etc/nginx/sites-available/av     # server_name ni o'zgart
 sudo ln -s /etc/nginx/sites-available/av /etc/nginx/sites-enabled/av
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
+
+# Statik fayllar tekshiruvi: 200 bo'lishi kerak (403 bo'lsa /opt/av va /opt/av/app ruxsatini (chmod 755) tekshiring)
+curl -I http://<host>/static/panel/htmx.min.js
 ```
 
 Jadval: sinxron har 5 daqiqada (`*:0/5`), to'liq sinxron (`--toliq`) har kecha 03:00, zaxira har kecha 02:30.
@@ -196,6 +202,7 @@ Har bir ssenariy foydalanuvchi bilan qo'lda tekshiriladi (belgi qo'ying).
 - [ ] Yangi foydalanuvchi yaratib, rol (hisobchi/HR/rahbar/revizor) va filial biriktiradi.
 - [ ] «Hozir sinxronlash» ishlaydi, natija «Muvaffaqiyatli», jurnalda yangi yozuv paydo bo'ladi.
 - [ ] Sozlamalar sahifasi ochiladi va o'zgarish saqlanadi.
+- [ ] Sahifa dizayni to'liq yuklanadi; `curl -I http://<host>/static/panel/htmx.min.js` -> 200 (403 emas).
 - [ ] Zaxira fayllari `/var/backups/av` da bor (`dump` + `media.tar.gz`).
 
 **Hisobchi**
