@@ -43,7 +43,8 @@ saqlanib qoladi; keyinchalik 1C'da bo'linishi mumkin.
 4. **Filial 1C'dan, bo'lim platformadan.** Filial ichidagi bo'limlar daraxti platformada yuritiladi.
 5. **МОЛ = 1C «Ходимлар» (Корхона ходимлари).** МОЛ faqat topshirish-qabul akti orqali o'zgaradi.
 6. **Amortizatsiya — faqat ma'lumot uchun** (chiziqli), 1C'ga yozilmaydi.
-7. **QR-yorliqlar platformada**, termo-printer uchun. Kalit o'zgarsa — yorliq almashtiriladi.
+7. **QR-yorliqlar platformada**, termo-printer uchun; o'lchamlar sozlamada qo'shiladi va o'zgartiriladi. Kalit
+   o'zgarsa — yorliq almashtiriladi.
 8. **Qo'shimcha maydonlar AV turiga qarab.** Holatlar — 6 ta (§5.2).
 9. **Arxitektura A:** Django + PostgreSQL alohida serverda, 1C'dan HTTP orqali tortib oladi. Panel — Django templates +
    HTMX. Avval ichki Linux VM (↔ doms2021), keyin VPS (↔ online 1C).
@@ -128,7 +129,9 @@ Har jadvalda `ref_1c` (UUID, unique), `sinx_vaqti`, `1c_da_yoq` (bool) bor. 1C'd
   1C hujjati (bo'lsa).
 - **`Jurnal`** — kim (foydalanuvchi yoki «1C sinxron»), qachon, obyekt, maydon, eski qiymat, yangi qiymat.
 - **`Foydalanuvchi`** — Django User + rol + ruxsat berilgan filiallar.
-- **`Sozlama`** — yorliq o'lchami (40×30 / 58×40), kompaniya nomi (yorliq/aktlar uchun) va h.k.
+- **`YorliqOlchami`** — nomi, eni (mm), bo'yi (mm), faol, standart. Administrator yangi o'lcham qo'shadi yoki
+  mavjudini o'zgartiradi (eni 20–120 mm, bo'yi 15–120 mm). Boshlang'ich: 40×30 (standart) va 58×40.
+- **`Sozlama`** — kompaniya nomi (yorliq/aktlar uchun) va h.k.
 
 ### 5.3. Hisoblanadigan (saqlanmaydi)
 
@@ -232,14 +235,15 @@ to'xtatiladi va kalit (filial + inv) bo'yicha bog'lash rejasi alohida ishlab chi
    Tasdiqlangan akt o'zgartirilmaydi; xato bo'lsa — teskari akt tuziladi.
 7. **Tozalash ro'yxatlari** — §5.4'dagi 1C bayroqlari, Excel eksport.
 8. **QR-yorliqlar** — AV ro'yxatidan / bo'lim bo'yicha / «chop etilmagan» / «almashtirish kerak» filtri bo'yicha.
-   Har yorliq — PDF'ning bitta sahifasi (40×30 yoki 58×40 mm). Tarkibi: QR, inv. raqam (katta), filial nomi (`filial_rekvizit` —
+   Chop etishda o'lcham faol `YorliqOlchami`lardan tanlanadi (standart oldindan tanlangan). Har yorliq — PDF'ning
+   bitta sahifasi, sahifa aynan tanlangan o'lchamda; matn uzunligi yorliq eniga moslanadi. Tarkibi: QR, inv. raqam (katta), filial nomi (`filial_rekvizit` —
    QR kaliti bilan bir xil), AV nomi (qisqa, 2 qator). **QR matni:** `DS|<filial kodi>|<inv raqam>`. Guruh AV'ning
    barcha donalariga bir xil yorliq; nusxalar soni standart = AV soni (o'zgartirish mumkin). Chop etilganda
    `yorliq_kaliti`, `yorliq_sana` yoziladi.
 9. **Hisobotlar** — AV filial / bo'lim / tur kesimida (soni, boshlang'ich, qoldiq qiymat); МОЛ bo'yicha qaydnoma;
    xizmat muddati tugagan va 6 oyda tugaydiganlar. Excel va chop etish.
 10. **Sozlamalar (administrator)** — foydalanuvchilar, rollar va filiallar; AV turlari (xizmat muddati, qo'shimcha
-    maydonlar); yorliq o'lchami; 1C ulanishi holati va «Hozir sinxronlash»; sinxron jurnali; harakatlar jurnali.
+    maydonlar); yorliq o'lchamlari (qo'shish, o'zgartirish, standartni tanlash); kompaniya nomi; 1C ulanishi holati va «Hozir sinxronlash»; sinxron jurnali; harakatlar jurnali.
 
 ## 8. Xatolarga chidamlilik va tekshiruvlar
 

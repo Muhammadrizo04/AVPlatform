@@ -30,11 +30,13 @@ django-axes · pytest-django · gunicorn + nginx + systemd (Ubuntu 24.04). 1C: B
 - Rollar: `admin`, `hisobchi`, `hr`, `rahbar`, `revizor` (revizor panelga kirmaydi).
 - Kirish: 5 noto'g'ri urinish → 15 daqiqa blok; sessiya 8 soat harakatsizlikdan keyin tugaydi.
 - Rasm: faqat jpg/png, ≤ 15 MB, serverda max 1600 px gacha kichraytiriladi + miniatyura.
-- QR matni: `DS|<filial kodi>|<inv raqam>` (filial = `AV.filial_rekvizit`). Yorliq o'lchamlari: `40x30`, `58x40` mm.
+- QR matni: `DS|<filial kodi>|<inv raqam>` (filial = `AV.filial_rekvizit`). Yorliq o'lchamlari — `YorliqOlchami` jadvalida (eni 20–120 mm, bo'yi 15–120 mm),
+  boshlang'ich 40×30 (standart) va 58×40; administrator qo'shadi/o'zgartiradi.
 - Taqsimot invarianti: har (AV, filial) uchun Σ `Taqsimot.soni` = `AVQoldiq.soni`; buzilishi faqat 1C kamayishida
   bo'lishi mumkin va «Taqsimot 1C bilan mos emas» bayrog'ini beradi.
 - Amortizatsiya: chiziqli, `qoldiq = summa × max(0, 1 − oylar/muddat)`; asos — 1C'dagi joriy summa.
-- Zaxira: har kecha `pg_dump` + `media/`, 14 kun.
+- Platformaning o'z zaxirasi (1C emas): har kecha PostgreSQL bazasi (`pg_dump`) + rasmlar (`media/`), 14 kun.
+  1C bazasining `.dt` zaxirasi alohida — kengaytmani doms2021'ga o'rnatishdan oldin foydalanuvchi oladi.
 - Windows/1C buyruqlari (`1cv8.exe DESIGNER ...`) foydalanuvchi kompyuterida bajariladi (foydalanuvchi o'zi yoki
   computer use orqali); Konfigurator ochiq bo'lsa, yuklashdan oldin yopish so'raladi.
 
@@ -220,7 +222,10 @@ Har ilova: `models.py`, servis modullari, `views.py`, `urls.py`, `templates/<ilo
     `UniqueConstraint(fields=[av, filial, bolim, mol, holat], nulls_distinct=False, name="taqsimot_unikal")`
   - `TaqsimotHarakat(av, filial, eski_bolim, eski_mol, eski_holat, yangi_bolim, yangi_mol, yangi_holat, soni, sana, kim null,
     sabab ∈ kochirish|holat|mol_akt|1c_kopaydi|1c_kamaydi|1c_nolga_tushdi, hujjat_izoh)` (eski_* bo'sh = 1C'dan kelgan)
-  - `Sozlama` (yagona yozuv): `kompaniya_nomi`, `yorliq_olchami ∈ "40x30"|"58x40"`; `Sozlama.ol() -> Sozlama`
+  - `Sozlama` (yagona yozuv): `kompaniya_nomi`; `Sozlama.ol() -> Sozlama`
+  - `YorliqOlchami(nomi, eni_mm Decimal(5,1), boyi_mm Decimal(5,1), faol=True, standart=False)` + `CheckConstraint`
+    (eni 20–120, bo'yi 15–120) + faqat bitta `standart=True` (shartli `UniqueConstraint`); data-migratsiya:
+    `"40×30"` (standart) va `"58×40"`; `YorliqOlchami.standarti() -> YorliqOlchami`
 
 - [ ] **Step 1:** Failing testlar: `test_taqsimot_nulls_unikal` (bir xil av/filial/bolim=None/mol=None/holat ikkinchi qator → IntegrityError),
   `test_taqsimot_soni_musbat`, `test_bolim_toliq_nomi`, `test_sozlama_yagona` (`ol()` ikki marta → bitta yozuv),
@@ -528,8 +533,9 @@ o'zgarish → `TaqsimotHarakat` (`kim=None`, tegishli `1c_*` sabab, `hujjat_izoh
 **Interfaces:**
 - Consumes: `AV.kalit` (Task 8), `Sozlama` (Task 4).
 - Produces:
-  - `qisqa_nom(nomi: str, olcham: str) -> list[str]` — ko'pi bilan 2 qator; `40x30` → qatorda 22 belgi, `58x40` → 30 belgi; sig'masa oxiri `…`
-  - `yorliq_pdf(elementlar: list[tuple[AV, int]], olcham: str) -> bytes` — har nusxa alohida sahifa, sahifa o'lchami aynan mm
+  - `belgi_soni(olcham: YorliqOlchami) -> int` = `int(eni_mm × 0.55)` (40 mm → 22, 58 mm → 31)
+  - `qisqa_nom(nomi: str, olcham: YorliqOlchami) -> list[str]` — ko'pi bilan 2 qator, qatorda `belgi_soni`; sig'masa oxiri `…`
+  - `yorliq_pdf(elementlar: list[tuple[AV, int]], olcham: YorliqOlchami) -> bytes` — har nusxa alohida sahifa, sahifa o'lchami aynan `eni_mm × boyi_mm`; QR tomoni = `min(boyi_mm − 4, eni_mm × 0.5)` mm
   - `chop_etildi(avlar: list[AV], kim: User) -> None` — `yorliq_kaliti = av.kalit`, `yorliq_sana = now()`, jurnal
   - URL: `yorliqlar:tanlash` (manba: tanlangan AV'lar / bo'lim / bayroq `yorliq_yoq`|`yorliq_almashtirish`), `yorliqlar:pdf`
 
@@ -537,13 +543,14 @@ o'zgarish → `TaqsimotHarakat` (`kim=None`, tegishli `1c_*` sabab, `hujjat_izoh
   - `test_qr_matni` — QR'dan dekod qilingan matn (`pyzbar` yoki `zxing-cpp`) `== "DS|07|125"`
   - `test_kalitsiz_av_rad` — inv bo'sh AV → `ValueError`, PDF yaratilmaydi
   - `test_nusxalar_soni` — (guruh AV, 20) → PDF'da 20 sahifa
-  - `test_sahifa_olchami` — `40x30` → sahifa 113.39×85.04 pt (±0.5)
+  - `test_sahifa_olchami` — 40×30 → sahifa 113.39×85.04 pt (±0.5); yangi qo'shilgan 50×25 → 141.73×70.87 pt (±0.5)
+  - `test_nofaol_olcham_tanlanmaydi` — nofaol o'lcham id'si bilan so'rov → xato
   - `test_qisqa_nom_uzun_nom` — 80 belgili nom → 2 qator, oxiri `…`
   - `test_chop_etildi_kalitni_yozadi` — keyin `yorliq_almashtirish` bayrog'ida yo'q
   - `test_yorliq_pdf_filial_cheklovi` — boshqa filial AV id'si bilan so'rov → 404 (Review Focus 5)
   - `test_hr_yorliq_403`
 - [ ] **Step 2:** `pytest yorliqlar -q` → FAIL.
-- [ ] **Step 3:** Yoz (segno → SVG, WeasyPrint `@page { size: 40mm 30mm; margin: 0 }`).
+- [ ] **Step 3:** Yoz (segno → SVG, WeasyPrint `@page { size: <eni>mm <boyi>mm; margin: 0 }` tanlangan o'lchamdan).
 - [ ] **Step 4:** `pytest -q` → PASS.
 - [ ] **Step 5:** Commit: `feat(yorliqlar): QR-yorliqlar`
 
@@ -583,11 +590,12 @@ o'zgarish → `TaqsimotHarakat` (`kim=None`, tegishli `1c_*` sabab, `hujjat_izoh
 
 **Interfaces:**
 - Consumes: `sinxronla`, `SinxronBand`, `OneCClient.settingsdan` (Task 3, 5), `AVTuriSozlama` (Task 4).
-- Produces: URL nomlari `panel:foydalanuvchilar`, `panel:av_turlari`, `panel:umumiy`, `panel:ulanish`, `panel:hozir_sinxronla`, `panel:sinxron_jurnal`, `panel:jurnal`.
+- Produces: URL nomlari `panel:foydalanuvchilar`, `panel:av_turlari`, `panel:umumiy`, `panel:yorliq_olchamlari`, `panel:ulanish`, `panel:hozir_sinxronla`, `panel:sinxron_jurnal`, `panel:jurnal`.
 
 - [ ] **Step 1:** Failing testlar:
   - `test_foydalanuvchi_yaratish_rol_filial`
-  - `test_umumiy_sozlama` — kompaniya nomi va yorliq o'lchami saqlanadi; `"50x50"` → xato
+  - `test_umumiy_sozlama` — kompaniya nomi saqlanadi
+  - `test_yorliq_olchami_qoshish` — 50×25 qo'shiladi; eni 10 yoki bo'yi 200 → xato; boshqasini standart qilish → oldingi standart bekor bo'ladi
   - `test_av_turi_maydonlari_saqlash` — noto'g'ri `tip` → xato; `tanlov` uchun bo'sh `tanlov_qiymatlari` → xato
   - `test_hozir_sinxronla` — soxta client bilan POST → jurnalda yangi `ok`; band bo'lsa «Sinxron hozir ishlayapti» xabari
   - `test_ulanish_sahifasi_parolni_korsatmaydi` — sahifa matnida `ONEC_PAROL` qiymati yo'q
