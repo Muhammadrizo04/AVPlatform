@@ -149,6 +149,16 @@ function Chaqir-Endpoint([string]$Nomi, [string]$Url, [hashtable]$Sarlavhalar) {
     $Rang = 'Green'
     if ($Status -ne 200) { $Rang = 'Red' }
     Write-Host ("  {0} : HTTP {1}, {2} bayt -> {3}" -f $Nomi, $Status, $Hajm, $Fayl) -ForegroundColor $Rang
+    if ($Hajm -ge 3) {
+        $Bosh = New-Object byte[] 3
+        $Fs = [System.IO.File]::OpenRead($Fayl)
+        try { [void]$Fs.Read($Bosh, 0, 3) } finally { $Fs.Close() }
+        if ($Bosh[0] -eq 0xEF -and $Bosh[1] -eq 0xBB -and $Bosh[2] -eq 0xBF) {
+            Write-Host "    BOM: HA — javob EF BB BF bilan boshlanadi (modulda ИспользованиеByteOrderMark.НеИспользовать ishlamagan)" -ForegroundColor Yellow
+        } else {
+            Write-Host "    BOM: yo'q (EF BB BF bilan boshlanmaydi)"
+        }
+    }
     if ($Status -ne 200 -and $Hajm -gt 0 -and $Hajm -lt 4000) {
         Write-Host ("  javob: {0}" -f (Oqi-Log $Fayl))
     }

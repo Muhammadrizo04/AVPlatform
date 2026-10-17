@@ -13,6 +13,11 @@ Platforma 8.3.13, moslik rejimi 8.3.9, prefiks `АВС_`, HTTP-servis `АВС_AV
 
 To'liq kontrakt: `docs/superpowers/plans/2026-10-17-av-platforma-1-bosqich.md`, Task 1. Xato → 400/500 + `{"xato":".."}`.
 
+Javob tanasi UTF-8, BOM'siz (`ИспользованиеByteOrderMark.НеИспользовать`). Baribir Django klienti himoya uchun
+`resp.content` ni `utf-8-sig` bilan dekodlashi shart (`json.loads(resp.content.decode("utf-8-sig"))`), `resp.json()` emas:
+BOM bo'lsa `requests` `.json()` `JSONDecodeError: Unexpected UTF-8 BOM` beradi. Skript har `*.raw.json` uchun
+BOM bor-yo'qligini (EF BB BF) chiqaradi.
+
 ## Fayllar
 
 - `AVSinxron/` — kengaytma, `DumpConfigToFiles` formatida (Configuration.xml, Languages, HTTPServices, ConfigDumpInfo.xml).
