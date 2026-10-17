@@ -1,4 +1,8 @@
+from decimal import Decimal
+
 from django.db import models
+from django.db.models import OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce
 
 
 class OneCModel(models.Model):
@@ -49,6 +53,34 @@ class Xodim(OneCModel):
         return self.ism
 
 
+class AVQuerySet(models.QuerySet):
+    """AV so'rovlari. Qoldiq yig'indilari alohida kichik so'rovda — qatorlar ko'paymaydi."""
+
+    def qoldiq_bilan(self):
+        """`jami_soni`, `jami_summa` — barcha filiallardagi 1C qoldig'i yig'indisi (qoldiq yo'q bo'lsa 0)."""
+        if "jami_soni" in self.query.annotations:
+            return self
+
+        def yigindi(maydon, maydon_turi):
+            qoldiqlar = (
+                AVQoldiq.objects.filter(av=OuterRef("pk")).order_by().values("av").annotate(s=Sum(maydon)).values("s")
+            )
+            return Coalesce(Subquery(qoldiqlar), Decimal("0"), output_field=maydon_turi)
+
+        return self.annotate(
+            jami_soni=yigindi("soni", models.DecimalField(max_digits=18, decimal_places=3)),
+            jami_summa=yigindi("summa", models.DecimalField(max_digits=18, decimal_places=2)),
+        )
+
+    def faol(self):
+        """Umumiy 1C qoldig'i musbat AV'lar."""
+        return self.qoldiq_bilan().filter(jami_soni__gt=0)
+
+    def arxiv(self):
+        """Qoldig'i yo'q yoki nolga tushgan (hisobdan chiqqan) AV'lar."""
+        return self.qoldiq_bilan().filter(jami_soni__lte=0)
+
+
 class AV(OneCModel):
     """Asosiy vosita kartochkasi. `filial_rekvizit` — 1C rekviziti, haqiqiy joylashuv `AVQoldiq` da."""
 
@@ -65,8 +97,19 @@ class AV(OneCModel):
     izoh_1c = models.TextField(blank=True)
     ochirilgan = models.BooleanField(default=False)
 
+    objects = AVQuerySet.as_manager()
+
     def __str__(self):
         return self.nomi
+
+    @property
+    def kalit(self) -> str | None:
+        """Yorliq (QR) kaliti: `DS|<filial kodi>|<inv. raqam>`; filial yoki inv. raqam bo'sh bo'lsa None."""
+        kod = self.filial_rekvizit.kod.strip() if self.filial_rekvizit_id else ""
+        inv = (self.inv_raqam or "").strip()
+        if not kod or not inv:
+            return None
+        return f"DS|{kod}|{inv}"
 
 
 class AVQoldiq(models.Model):
