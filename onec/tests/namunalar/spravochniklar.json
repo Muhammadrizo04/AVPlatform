@@ -1,0 +1,84 @@
+{
+  "tashkilotlar": [
+    {
+      "ref": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "nomi": "Namuna Savdo MChJ"
+    },
+    {
+      "ref": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "nomi": "Namuna Servis MChJ"
+    }
+  ],
+  "filiallar": [
+    {
+      "ref": "a6f20131-5997-5383-b1d4-c56717425007",
+      "kod": "001",
+      "nomi": "Toshkent filiali"
+    },
+    {
+      "ref": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "kod": "002",
+      "nomi": "Samarqand filiali"
+    },
+    {
+      "ref": "acea419f-7c2a-5995-a25a-bdb6c06c4ea0",
+      "kod": "003",
+      "nomi": "Buxoro filiali"
+    }
+  ],
+  "av_turlari": [
+    {
+      "ref": "f14a7b94-9873-5749-96f0-ba617337c834",
+      "nomi": "Kompyuter texnikasi",
+      "tip": "Mashina va uskunalar"
+    },
+    {
+      "ref": "6708cd12-7596-5ac4-8f2b-99837af245c0",
+      "nomi": "Ofis mebeli",
+      "tip": "Boshqa asosiy vositalar"
+    },
+    {
+      "ref": "f18729bd-660d-57b3-87b5-b6f6d6c9e0ce",
+      "nomi": "Yengil avtomobillar",
+      "tip": "Transport vositalari"
+    }
+  ],
+  "xodimlar": [
+    {
+      "ref": "41db5ef8-8f55-5e62-8d2d-e328236495d5",
+      "ism": "Aliyev Vali Karimovich",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "telefon": "+998901112233",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": false
+    },
+    {
+      "ref": "93c21d2a-81b0-5871-8045-afb2a9bc82e7",
+      "ism": "Karimova Nodira Akbarovna",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "telefon": "",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": false
+    },
+    {
+      "ref": "f6abebd9-527c-5940-a1ee-f72ecc8926b9",
+      "ism": "Rahimov Sardor Olimovich",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "telefon": "+998935556677",
+      "ishdan_bushagan": true,
+      "neaktiv": true,
+      "ochirilgan": false
+    },
+    {
+      "ref": "53840c3e-9589-57f4-8e2c-b2247c8fb2a4",
+      "ism": "Umarov Bekzod Hamidovich",
+      "filial": null,
+      "telefon": "",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": true
+    }
+  ]
+}
