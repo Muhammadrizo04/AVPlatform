@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>{{ akt.nomi }}</title>
+<style>
+  @page { size: A4; margin: 18mm 14mm; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10pt; color: #000; }
+  h1 { font-size: 14pt; text-align: center; margin: 4mm 0 2mm; }
+  .kompaniya { text-align: center; font-weight: bold; }
+  .sana { text-align: center; margin-bottom: 6mm; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #000; padding: 2mm; text-align: left; vertical-align: top; }
+  th { background: #eee; }
+  td.son { text-align: right; }
+  .imzolar { margin-top: 18mm; width: 100%; }
+  .imzolar td { border: none; width: 50%; padding-top: 6mm; }
+</style>
+</head>
+<body>
+<div class="kompaniya">{{ kompaniya }}</div>
+<h1>МОЛ topshirish-qabul akti {{ akt.nomi }}</h1>
+<div class="sana">{{ akt.sana|date:"d.m.Y" }}</div>
+<p>Topshiruvchi: <b>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</b><br>
+Qabul qiluvchi: <b>{{ akt.qabul_qiluvchi.ism }}</b></p>
+{% if akt.izoh %}<p>Izoh: {{ akt.izoh }}</p>{% endif %}
+<table>
+  <thead>
+    <tr><th>№</th><th>Inv. raqam</th><th>Nomi</th><th>Bo'lim</th><th>Holat</th><th>Soni</th><th>Qiymat</th></tr>
+  </thead>
+  <tbody>
+    {% for s in satrlar %}
+    <tr>
+      <td>{{ s.tartib }}</td><td>{{ s.inv }}</td><td>{{ s.nomi }}</td><td>{{ s.bolim }}</td>
+      <td>{{ s.holat }}</td><td class="son">{{ s.soni }}</td><td class="son">{{ s.qiymat }}</td>
+    </tr>
+    {% endfor %}
+    <tr><td colspan="6"><b>Jami</b></td><td class="son"><b>{{ jami }}</b></td></tr>
+  </tbody>
+</table>
+<table class="imzolar">
+  <tr>
+    <td>Topshirdi: ______________________<br>{{ akt.topshiruvchi.ism|default:"" }}</td>
+    <td>Qabul qildi: ______________________<br>{{ akt.qabul_qiluvchi.ism }}</td>
+  </tr>
+</table>
+</body>
+</html>

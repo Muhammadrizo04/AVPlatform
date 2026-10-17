@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "hisoblar",
     "jurnal",
     "vositalar",
+    "mol",
     "panel",
 ]
 
