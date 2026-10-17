@@ -29,10 +29,14 @@ class Bayroq:
     so_rov: Callable[..., QuerySet | list]  # (user, bugun) -> QuerySet yoki ro'yxat
 
 
-def _av_lar(user) -> QuerySet:
+def ruxsat_qoldiq(user) -> Exists:
+    """Shart: AV'ning ruxsat etilgan filialida musbat qoldig'i bor. Ro'yxat va bayroqlar uchun umumiy qoida."""
+    return Exists(filial_bilan_chekla(AVQoldiq.objects.filter(av=OuterRef("pk"), soni__gt=0), user))
+
+
+def av_lar(user) -> QuerySet:
     """Faol AV'lar, ruxsat etilgan filialda musbat qoldig'i borlari."""
-    musbat = filial_bilan_chekla(AVQoldiq.objects.filter(av=OuterRef("pk"), soni__gt=0), user)
-    return AV.objects.faol().filter(Exists(musbat))
+    return AV.objects.faol().filter(ruxsat_qoldiq(user))
 
 
 def _taqsimotlar(user) -> QuerySet:
@@ -42,7 +46,7 @@ def _taqsimotlar(user) -> QuerySet:
 
 
 def _inv_bosh(user, bugun):
-    return _av_lar(user).filter(inv_raqam__regex=r"^\s*$")
+    return av_lar(user).filter(inv_raqam__regex=r"^\s*$")
 
 
 def _inv_takror(user, bugun):
@@ -55,11 +59,11 @@ def _inv_takror(user, bugun):
         if inv:
             guruhlar[(filial_id, inv)].append(pk)
     takror = [pk for idlar in guruhlar.values() if len(idlar) > 1 for pk in idlar]
-    return _av_lar(user).filter(pk__in=takror)
+    return av_lar(user).filter(pk__in=takror)
 
 
 def _filial_rekvizit_bosh(user, bugun):
-    return _av_lar(user).filter(filial_rekvizit__isnull=True)
+    return av_lar(user).filter(filial_rekvizit__isnull=True)
 
 
 def _mos_emas(user, bugun):
@@ -77,7 +81,7 @@ def _mos_emas(user, bugun):
         for av, filial in qoldiq.keys() | taqsimot.keys()
         if max(qoldiq.get((av, filial), NOL), NOL) != taqsimot.get((av, filial), NOL)
     }
-    return _av_lar(user).filter(pk__in=mos_emas)
+    return av_lar(user).filter(pk__in=mos_emas)
 
 
 def _bolimsiz(user, bugun):
@@ -95,7 +99,7 @@ def _ketgan_xodimda(user, bugun):
 
 
 def _yorliq_yoq(user, bugun):
-    return _av_lar(user).filter(
+    return av_lar(user).filter(
         Q(kartochka__isnull=True) | Q(kartochka__yorliq_kaliti__isnull=True) | Q(kartochka__yorliq_kaliti="")
     )
 
@@ -103,7 +107,7 @@ def _yorliq_yoq(user, bugun):
 def _yorliq_almashtirish(user, bugun):
     """Chop etilgan yorliq kaliti joriy kalitdan farq qiladi (joriy kalit yo'q bo'lsa ham — eski yorliq yaroqsiz)."""
     qs = (
-        _av_lar(user)
+        av_lar(user)
         .filter(kartochka__yorliq_kaliti__isnull=False)
         .exclude(kartochka__yorliq_kaliti="")
         .select_related("filial_rekvizit", "kartochka")
@@ -114,7 +118,7 @@ def _yorliq_almashtirish(user, bugun):
 def _tugash_sanalari(user, bugun):
     """(AV, tugash sanasi) — xizmat muddati va ishga tushgan sanasi ma'lum faol AV'lar uchun."""
     qs = (
-        _av_lar(user)
+        av_lar(user)
         .filter(kartochka__ishga_tushgan_sana__isnull=False)
         .select_related("kartochka", "turi__sozlama")
     )

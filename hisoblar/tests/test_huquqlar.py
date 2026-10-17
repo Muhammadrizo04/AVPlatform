@@ -73,7 +73,7 @@ def test_hisobchi_kira_oladi_va_chiqadi(foydalanuvchi):
     javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL})
     assert javob.status_code == 302
     assert client.session["_auth_user_id"] == str(u.pk)
-    assert client.get(reverse("bosh")).status_code == 200
+    assert client.get(reverse("panel:bosh")).status_code == 200
     javob = client.post(reverse("hisoblar:chiqish"))
     assert javob.status_code == 302
     assert "_auth_user_id" not in client.session
@@ -119,17 +119,17 @@ def test_5_xato_urinishdan_keyin_blok(foydalanuvchi):
 
 
 def test_bosh_revizor_sessiyasi_bilan_ham_403(client_rol):
-    assert client_rol(Rol.REVIZOR).get(reverse("bosh")).status_code == 403
+    assert client_rol(Rol.REVIZOR).get(reverse("panel:bosh")).status_code == 403
 
 
 def test_bosh_rol_sessiya_davomida_o_zgarsa_403(foydalanuvchi):
     u = foydalanuvchi(Rol.HISOBCHI)
     client = Client()
     client.force_login(u)
-    assert client.get(reverse("bosh")).status_code == 200
+    assert client.get(reverse("panel:bosh")).status_code == 200
     u.profil.rol = Rol.REVIZOR
     u.profil.save()
-    assert client.get(reverse("bosh")).status_code == 403
+    assert client.get(reverse("panel:bosh")).status_code == 403
 
 
 def test_bir_foydalanuvchi_xatosi_boshqasini_bloklamaydi(foydalanuvchi):

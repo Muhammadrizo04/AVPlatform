@@ -69,6 +69,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "panel.context_processors.sinxron_holati",
             ],
         },
     },
@@ -87,7 +88,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = "hisoblar:kirish"
-LOGIN_REDIRECT_URL = "bosh"
+LOGIN_REDIRECT_URL = "panel:bosh"
 LOGOUT_REDIRECT_URL = "hisoblar:kirish"
 
 # Sessiya: 8 soat harakatsizlikdan keyin tugaydi

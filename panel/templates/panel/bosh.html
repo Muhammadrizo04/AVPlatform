@@ -1,3 +1,24 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Bosh sahifa{% endblock %}
-{% block kontent %}<h1>Bosh sahifa</h1>{% endblock %}
+{% block kontent %}
+<h1>Bosh sahifa</h1>
+
+<h2>Filiallar kesimi</h2>
+<table>
+  <thead><tr><th>Filial</th><th class="son">Soni</th><th class="son">Boshlang'ich qiymat</th><th class="son">Qoldiq qiymat</th></tr></thead>
+  <tbody>
+  {% for q in filiallar %}
+    <tr><td>{{ q.filial.nomi }}</td><td class="son">{{ q.soni }}</td><td class="son">{{ q.boshlangich }}</td><td class="son">{{ q.qoldiq }}</td></tr>
+  {% empty %}
+    <tr><td colspan="4">Ma'lumot yo'q.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Nazorat va tozalash</h2>
+<div class="kartochkalar">
+  {% for b in bayroqlar %}
+    <a class="kartochka" href="{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}"><strong>{{ b.soni }}</strong>{{ b.nomi }}</a>
+  {% endfor %}
+</div>
+{% endblock %}
