@@ -1,0 +1,10 @@
+[Unit]
+Description=AV: sinxron har 5 daqiqada
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+Unit=av-sinxron.service
+
+[Install]
+WantedBy=timers.target
