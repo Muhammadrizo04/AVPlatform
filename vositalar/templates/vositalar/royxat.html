@@ -20,9 +20,13 @@
   </select>
   <label><input type="checkbox" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}> Guruhlar</label>
   <label><input type="checkbox" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}> Arxiv</label>
-  {% if params.bayroq %}<input type="hidden" name="bayroq" value="{{ params.bayroq }}">{% endif %}
+  <select name="mol"><option value="">Barcha MOL</option>
+    {% for x in xodimlar %}<option value="{{ x.pk }}" {% if params.mol == x.pk|stringformat:"s" %}selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+  </select>
+  <select name="bayroq"><option value="">Bayroq: hammasi</option>
+    {% for kalit, nomi in bayroqlar %}<option value="{{ kalit }}" {% if params.bayroq == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
   <noscript><button type="submit">Qidirish</button></noscript>
-  <a href="{% url 'vositalar:royxat_excel' %}?{{ query }}">Excel</a>
 </form>
 
 <div id="jadval">{% include "vositalar/_jadval.html" %}</div>

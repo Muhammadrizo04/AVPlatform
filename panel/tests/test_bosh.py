@@ -77,3 +77,13 @@ def test_sinxron_banner_ikki_xatoda_yoq(client_hisobchi):
     javob = client_hisobchi.get(reverse("panel:bosh"))
     assert javob.context["sinxron_holati"]["xato"] is False
     assert "1C bilan aloqa yo'q" not in html.unescape(javob.content.decode())
+
+
+def test_sinxron_banner_kulrang_oxirgi_vaqt(client_hisobchi):
+    SinxronJurnal.objects.create(
+        boshlandi=datetime(2026, 10, 17, 10, 0, tzinfo=dt_timezone.utc),
+        tugadi=datetime(2026, 10, 17, 10, 1, tzinfo=dt_timezone.utc),
+        natija=SinxronJurnal.Natija.OK,
+    )
+    matn = html.unescape(client_hisobchi.get(reverse("panel:bosh")).content.decode())
+    assert "Oxirgi muvaffaqiyatli sinxron:" in matn

@@ -39,6 +39,8 @@
   {% endif %}
 </form>
 
+<p><a href="{% url 'vositalar:royxat_excel' %}?{{ query }}">Excel</a></p>
+
 <p>
   Jami: {{ sahifa.paginator.count }}.
   {% if sahifa.has_previous %}<a href="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-get="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-target="#jadval" hx-push-url="true">« Oldingi</a>{% endif %}

@@ -11,9 +11,10 @@ from django.views.decorators.http import require_POST
 
 from hisobotlar.excel import jadval_xlsx
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
-from onec.models import AV, AVTuri, Filial
+from onec.models import AV, AVTuri, Filial, Xodim
 
 from . import amallar
+from .bayroqlar import BAYROQLAR
 from .filtrlar import av_filtrla
 from .models import Bolim, Holat, Taqsimot
 
@@ -53,6 +54,8 @@ def royxat(request):
     kontekst.update(
         filiallar=filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
         turlar=AVTuri.objects.order_by("nomi"),
+        xodimlar=filial_bilan_chekla(Xodim.objects.filter(ochirilgan=False), request.user, "filial").order_by("ism"),
+        bayroqlar=[(kalit, b.nomi) for kalit, b in BAYROQLAR.items()],
         bolimlar=_bolimlar(request.user),
     )
     javob = render(request, "vositalar/royxat.html", kontekst)

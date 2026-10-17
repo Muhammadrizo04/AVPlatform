@@ -2,7 +2,7 @@
 from django.db.models import Exists, OuterRef, Q, QuerySet
 from django.utils import timezone
 
-from hisoblar.huquqlar import filial_bilan_chekla
+from hisoblar.huquqlar import filial_bilan_chekla, ruxsat_filial_idlar
 from onec.models import AV, AVQoldiq
 
 from .bayroqlar import BAYROQLAR, ruxsat_qoldiq
@@ -41,6 +41,9 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
 
     filial = _son(params.get("filial"))
     if filial is not None:
+        ruxsat = ruxsat_filial_idlar(user)
+        if ruxsat is not None and filial not in ruxsat:
+            return qs.none()
         if arxiv:
             qs = qs.filter(filial_rekvizit_id=filial)
         else:

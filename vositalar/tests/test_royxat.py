@@ -9,7 +9,7 @@ from openpyxl import load_workbook
 from onec.models import AV
 from vositalar.filtrlar import av_filtrla
 from vositalar.models import Bolim, Holat, Taqsimot, TaqsimotHarakat
-from vositalar.tests.test_bayroqlar import av_yarat, qator
+from vositalar.tests.test_bayroqlar import av_yarat, qator, qoldiq
 
 ROYXAT = "vositalar:royxat"
 
@@ -177,11 +177,39 @@ def test_ommaviy_amal_xatosi_500_emas(client_hisobchi, filial_a):
 def test_ommaviy_boshqa_filial_av_tegilmaydi(foydalanuvchi, filial_a, filial_b):
     boshqa = av_yarat(filial_b)
     qator(boshqa, filial_b)
-    bolim_b = Bolim.objects.create(filial=filial_b, nomi="B ombor")
+    bolim_a = Bolim.objects.create(filial=filial_a, nomi="A ombor")
     client = Client()
     client.force_login(foydalanuvchi("hisobchi", [filial_a]))
-    client.post(reverse("vositalar:ommaviy"), {"av": [boshqa.pk], "amal": "kochirish", "bolim": bolim_b.pk})
+    javob = client.post(
+        reverse("vositalar:ommaviy"), {"av": [boshqa.pk], "amal": "kochirish", "bolim": bolim_a.pk}, follow=True
+    )
     assert Taqsimot.objects.get(av=boshqa).bolim is None
+    # darvoza AV'ni umuman ko'rmaydi: u qayta ishlanmaydi (AmalXato xabarida ham tilga olinmaydi)
+    assert boshqa.nomi not in xabarlar(javob)
+
+
+def test_royxat_ruxsatsiz_filial_parametri_bosh(foydalanuvchi, filial_a, filial_b):
+    ikkalasida = av_yarat(filial_a)
+    qoldiq(ikkalasida, filial_b, "1")
+    client = Client()
+    client.force_login(foydalanuvchi("hisobchi", [filial_a]))
+    assert nomlar(client.get(reverse(ROYXAT), {"filial": filial_a.pk})) == {ikkalasida.nomi}
+    assert nomlar(client.get(reverse(ROYXAT), {"filial": filial_b.pk})) == set()
+
+
+def test_htmx_qismida_excel_havolasi_joriy_filtr_bilan(client_hisobchi, filial_a):
+    av_yarat(filial_a, inv="ABC")
+    qism = client_hisobchi.get(reverse(ROYXAT), {"q": "abc"}, HTTP_HX_REQUEST="true").content.decode()
+    assert f"{reverse('vositalar:royxat_excel')}?q=abc" in qism
+
+
+def test_royxat_mol_va_bayroq_boshqaruvlari(client_hisobchi, filial_a):
+    from vositalar.tests.test_bayroqlar import xodim
+
+    x = xodim(filial=filial_a)
+    matn = client_hisobchi.get(reverse(ROYXAT)).content.decode()
+    assert 'name="mol"' in matn and x.ism in matn
+    assert 'name="bayroq"' in matn and 'value="inv_bosh"' in matn
 
 
 def test_rahbar_ommaviy_amal_403(client_rol, filial_a, bolim):
