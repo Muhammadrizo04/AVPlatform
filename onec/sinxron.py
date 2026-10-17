@@ -22,6 +22,8 @@ QULF_KALITI = 7310001
 HARAKAT_OYNASI = timedelta(days=45)
 # To'liq sinxronda harakatlar shu sanadan olinadi (strftime 4 xonali yil beradi).
 TOLIQ_BOSHI = datetime(1900, 1, 1)
+# Harakatlar doim shu sanagacha olinadi: kelajak sanali 1C hujjatlari ham oynaga kiradi.
+CHEKSIZ_GACHA = datetime(3999, 12, 31, 23, 59, 59)
 
 
 class SinxronBand(Exception):
@@ -82,17 +84,15 @@ def ketma_ket_xatolar() -> int:
 
 def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime) -> dict:
     # 1C so'rovlari tranzaksiyadan oldin: tarmoq kutilayotganda baza qulflanmaydi.
+    # 1C oralig'i — zonasiz mahalliy vaqt: [dan, CHEKSIZ_GACHA].
     if toliq:
-        dan = None
-        dan_1c = TOLIQ_BOSHI
+        dan = TOLIQ_BOSHI
     else:
-        dan = (hozir - HARAKAT_OYNASI).replace(microsecond=0)
-        dan_1c = timezone.localtime(dan).replace(tzinfo=None)
-    gacha_1c = timezone.localtime(hozir).replace(tzinfo=None, microsecond=0)
+        dan = timezone.localtime(hozir - HARAKAT_OYNASI).replace(tzinfo=None, microsecond=0)
 
     sprav = client.spravochniklar()
     vos = client.vositalar()
-    harakatlar = client.harakatlar(dan_1c, gacha_1c)
+    harakatlar = client.harakatlar(dan, CHEKSIZ_GACHA)
 
     ozgarishlar = {}
     with transaction.atomic():
@@ -106,7 +106,7 @@ def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime) -> dict:
             AV, vos["vositalar"], lambda q: _av(q, turlar, tashkilotlar, filiallar), vaqt, ozgarishlar, "av"
         )
         _qoldiqlar(vos["qoldiqlar"], avlar, tashkilotlar, filiallar, ozgarishlar)
-        _harakatlar(harakatlar, dan, avlar, tashkilotlar, filiallar, ozgarishlar)
+        _harakatlar(harakatlar, dan, CHEKSIZ_GACHA, avlar, tashkilotlar, filiallar, ozgarishlar)
         ozgarishlar["moslash"] = moslashtir()
     return ozgarishlar
 
@@ -208,32 +208,39 @@ def _qoldiqlar(qatorlar, avlar, tashkilotlar, filiallar, ozgarishlar) -> None:
     ozgarishlar["qoldiq_otkazildi"] = otkazildi
 
 
-def _harakatlar(qatorlar, dan, avlar, tashkilotlar, filiallar, ozgarishlar) -> None:
-    """`dan` dan boshlab (to'liqda — hammasi) o'chirilib qaytadan yoziladi.
+def _harakatlar(qatorlar, dan, gacha, avlar, tashkilotlar, filiallar, ozgarishlar) -> None:
+    """1C'dan so'ralgan [dan, gacha] oralig'i (zonasiz mahalliy vaqt) aynan o'chirilib qaytadan yoziladi.
 
-    Sanasi/hujjati bo'sh yoki AV'si noma'lum qator o'tkazib yuboriladi.
+    Sanasi/hujjati bo'sh, AV'si noma'lum, `vid`i noma'lum yoki sanasi oraliqdan tashqari
+    (1C parametrlarni e'tiborsiz qoldirsa) qator o'tkazib yuboriladi.
     """
     zona = timezone.get_current_timezone()
     yangilar, otkazildi = [], 0
     for q in qatorlar:
         av_id = _id(q.get("av"), avlar)
-        if not q.get("sana") or not q.get("hujjat_ref") or av_id is None:
+        sana = datetime.fromisoformat(q["sana"]) if q.get("sana") else None
+        if (
+            sana is None or not dan <= sana <= gacha
+            or not q.get("hujjat_ref") or av_id is None
+            or q.get("vid") not in Harakat1C.Vid.values
+        ):
             otkazildi += 1
             continue
         yangilar.append(Harakat1C(
-            sana=timezone.make_aware(datetime.fromisoformat(q["sana"]), zona),
+            sana=timezone.make_aware(sana, zona),
             hujjat_turi=_matn(q, "hujjat_turi"),
             hujjat_raqami=_matn(q, "hujjat_raqami"),
             hujjat_ref=uuid.UUID(q["hujjat_ref"]),
             av_id=av_id,
             tashkilot_id=_id(q.get("tashkilot"), tashkilotlar),
             filial_id=_id(q.get("filial"), filiallar),
-            vid=q.get("vid"),
+            vid=q["vid"],
             soni=_son(q.get("soni")),
             summa=_son(q.get("summa")),
         ))
-    eskilar = Harakat1C.objects.all() if dan is None else Harakat1C.objects.filter(sana__gte=dan)
-    eskilar.delete()
+    Harakat1C.objects.filter(
+        sana__gte=timezone.make_aware(dan, zona), sana__lte=timezone.make_aware(gacha, zona)
+    ).delete()
     Harakat1C.objects.bulk_create(yangilar, batch_size=500)
     ozgarishlar["harakat"] = len(yangilar)
     ozgarishlar["harakat_otkazildi"] = otkazildi

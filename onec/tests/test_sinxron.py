@@ -20,6 +20,7 @@ TOSHKENT = ZoneInfo("Asia/Tashkent")
 # Namunadagi harakatlar 2026-09 oyida: 45 kunlik oyna ularning hammasini qamraydi.
 HOZIR = datetime(2026, 10, 1, 12, 0, tzinfo=TOSHKENT)
 QULF = 7310001
+CHEKSIZ_GACHA = datetime(3999, 12, 31, 23, 59, 59)
 LOGIN = "sinov-login"
 PAROL = "sinov-parol-98765"
 
@@ -41,6 +42,7 @@ class SoxtaClient:
         self.har = namuna("harakatlar")["harakatlar"]
         self.vositalar_xatosi = None
         self.harakat_sorovlari = []
+        self.parametrlarni_etiborsiz = False  # 1C dan/gacha'ni e'tiborsiz qoldirsa
 
     def spravochniklar(self):
         return copy.deepcopy(self.sprav)
@@ -57,7 +59,8 @@ class SoxtaClient:
         return [
             copy.deepcopy(h)
             for h in self.har
-            if h["sana"] is None or dan <= datetime.fromisoformat(h["sana"]) <= gacha
+            if self.parametrlarni_etiborsiz or h["sana"] is None
+            or dan <= datetime.fromisoformat(h["sana"]) <= gacha
         ]
 
 
@@ -68,7 +71,22 @@ def yaroqli_qoldiqlar(client):
 
 def yaroqli_harakatlar(client):
     av_reflar = {v["ref"] for v in client.vos["vositalar"]}
-    return [h for h in client.har if h["sana"] and h["hujjat_ref"] and h["av"] in av_reflar]
+    return [
+        h for h in client.har
+        if h["sana"] and h["hujjat_ref"] and h["av"] in av_reflar and h["vid"] in ("kirim", "chiqim")
+    ]
+
+
+def mahalliy_iso(vaqt):
+    return vaqt.astimezone(TOSHKENT).replace(tzinfo=None).isoformat()
+
+
+def namuna_harakat(client, sana):
+    """Namunadagi birinchi harakat nusxasi, boshqa sana va hujjat bilan."""
+    h = copy.deepcopy(client.har[0])
+    h["sana"] = mahalliy_iso(sana)
+    h["hujjat_ref"] = str(uuid.uuid4())
+    return h
 
 
 def soxta_harakat(av, sana):
@@ -157,7 +175,46 @@ def test_harakat_oynasi_eskini_saqlaydi():
     assert Harakat1C.objects.count() == len(yaroqli_harakatlar(client)) + 1
     dan, gacha = client.harakat_sorovlari[-1]
     assert dan == (HOZIR - timedelta(days=45)).replace(tzinfo=None)
-    assert gacha == HOZIR.replace(tzinfo=None)
+    assert gacha == CHEKSIZ_GACHA
+
+
+def test_kelajakdagi_harakat_saqlanadi():
+    client = SoxtaClient()
+    kelajak = namuna_harakat(client, HOZIR + timedelta(days=5))
+    client.har.append(kelajak)
+
+    sinxronla(client, hozir=HOZIR)
+    sinxronla(client, hozir=HOZIR)
+
+    assert Harakat1C.objects.filter(hujjat_ref=kelajak["hujjat_ref"]).count() == 1
+    assert Harakat1C.objects.count() == len(yaroqli_harakatlar(client))
+
+
+def test_oraliqdan_tashqari_harakat_otkaziladi():
+    client = SoxtaClient()
+    yaroqli_soni = len(yaroqli_harakatlar(client))
+    sinxronla(client, hozir=HOZIR)
+    eski = soxta_harakat(AV.objects.first(), HOZIR - timedelta(days=60))
+    client.har.append(namuna_harakat(client, HOZIR - timedelta(days=60)))
+    client.parametrlarni_etiborsiz = True
+
+    jurnal = sinxronla(client, hozir=HOZIR)
+
+    assert jurnal.ozgarishlar["harakat_otkazildi"] == 1
+    assert Harakat1C.objects.filter(pk=eski.pk).exists()
+    assert Harakat1C.objects.count() == yaroqli_soni + 1
+
+
+def test_nomalum_vid_otkaziladi():
+    client = SoxtaClient()
+    client.har[0]["vid"] = None
+    client.har[1]["vid"] = "boshqa"
+
+    jurnal = sinxronla(client, hozir=HOZIR)
+
+    assert jurnal.natija == SinxronJurnal.Natija.OK, jurnal.xato_matni
+    assert jurnal.ozgarishlar["harakat_otkazildi"] == 2
+    assert Harakat1C.objects.count() == len(yaroqli_harakatlar(client))
 
 
 def test_toliq_sinxron_hammasini_almashtiradi():
