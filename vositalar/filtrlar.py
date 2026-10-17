@@ -71,3 +71,16 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
     if kalit in BAYROQLAR:
         qs = qs.filter(pk__in=_bayroq_av_idlari(kalit, user))
     return qs
+
+
+def korinadigan_av(user, pk) -> AV | None:
+    """Foydalanuvchi ko'ra oladigan AV (faol — ruxsat etilgan filialdagi qoldiq, arxiv — ruxsat etilgan
+    `filial_rekvizit` bo'yicha) yoki None. Kartochka, HTMX bo'laklari va rasm URL'lari shu funksiyadan foydalanadi."""
+    for params in ({}, {"arxiv": "1"}):
+        qs = av_filtrla(AV.objects.all(), params, user).select_related(
+            "turi__sozlama", "filial_rekvizit", "tashkilot"
+        )
+        av = qs.filter(pk=pk).first()
+        if av is not None:
+            return av
+    return None
