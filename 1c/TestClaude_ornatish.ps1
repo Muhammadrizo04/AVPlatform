@@ -183,7 +183,7 @@ function Chaqir-Endpointlar {
     Yoz-Sarlavha "3-qadam: /hs/av/ endpointlarini chaqirish ($BazaUrl)"
     if (-not (Test-Path -LiteralPath $NamunaPapka)) { New-Item -ItemType Directory -Path $NamunaPapka -Force | Out-Null }
     $P = Ol-Parol
-    $Token = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes("{0}:{1}" -f $Login, $P))
+    $Token = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes(("{0}:{1}" -f $Login, $P)))
     $Sarlavhalar = @{ Authorization = "Basic $Token" }
 
     $Hozir = Get-Date
