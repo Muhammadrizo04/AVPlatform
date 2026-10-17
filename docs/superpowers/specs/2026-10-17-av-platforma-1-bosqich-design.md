@@ -211,8 +211,8 @@ to'xtatiladi va kalit (filial + inv) bo'yicha bog'lash rejasi alohida ishlab chi
    Tasdiqlangan akt o'zgartirilmaydi; xato bo'lsa — teskari akt tuziladi.
 7. **Tozalash ro'yxatlari** — §5.4'dagi 1C bayroqlari, Excel eksport.
 8. **QR-yorliqlar** — AV ro'yxatidan / bo'lim bo'yicha / «chop etilmagan» / «almashtirish kerak» filtri bo'yicha.
-   Har yorliq — PDF'ning bitta sahifasi (40×30 yoki 58×40 mm). Tarkibi: QR, inv. raqam (katta), filial nomi, AV nomi
-   (qisqa, 2 qator). **QR matni:** `DS|<filial kodi>|<inv raqam>`. Chop etilganda `yorliq_kaliti`, `yorliq_sana` yoziladi.
+   Har yorliq — PDF'ning bitta sahifasi (40×30 yoki 58×40 mm). Tarkibi: QR, inv. raqam (katta), filial nomi (`filial_rekvizit` —
+   QR kaliti bilan bir xil), AV nomi (qisqa, 2 qator). **QR matni:** `DS|<filial kodi>|<inv raqam>`. Chop etilganda `yorliq_kaliti`, `yorliq_sana` yoziladi.
 9. **Hisobotlar** — AV filial / bo'lim / tur kesimida (soni, boshlang'ich, qoldiq qiymat); МОЛ bo'yicha qaydnoma;
    xizmat muddati tugagan va 6 oyda tugaydiganlar. Excel va chop etish.
 10. **Sozlamalar (administrator)** — foydalanuvchilar, rollar va filiallar; AV turlari (xizmat muddati, qo'shimcha
