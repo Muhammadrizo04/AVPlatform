@@ -1,0 +1,2 @@
+def moslashtir() -> dict:
+    return {}
