@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ConfigDumpInfo xmlns="http://v8.1c.ru/8.3/xcf/dumpinfo" xmlns:xen="http://v8.1c.ru/8.3/xcf/enums" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" format="Hierarchical" version="2.7">
+	<ConfigVersions>
+		<Metadata name="Configuration.AVSinxron" id="ec45a83a-ce93-412e-b27a-d19663e6e274" configVersion="0aebe984bc5502a8aa5f80888ab936ad73322ce4"/>
+		<Metadata name="HTTPService.АВС_AV" id="b42f1b35-07d2-4d26-a58c-75698d9341bb" configVersion="608bccb953a61506620cde2524b210ed16af3fa7">
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Versiya" id="5025b854-a745-4cea-82a1-8eec9f7da8d4"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Versiya.Method.GET" id="0301b2e6-ef48-43e4-88c2-28f2b8ab8a8c"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Spravochniklar" id="2439f013-f90a-42f0-81cb-d91c9d251542"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Spravochniklar.Method.GET" id="60961292-86f7-45f0-889e-8f5b0c1b8e5b"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Vositalar" id="0eb1abc6-5321-487c-aef4-2397c0967f12"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Vositalar.Method.GET" id="d6873401-ff6c-41ae-aeb0-f65a0a05c872"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Harakatlar" id="481ce37c-64fd-49b4-8d28-6912fb488a5a"/>
+			<Metadata name="HTTPService.АВС_AV.URLTemplate.Harakatlar.Method.GET" id="cfe8796b-9eb8-4738-acdb-ad711eda78d2"/>
+		</Metadata>
+		<Metadata name="HTTPService.АВС_AV.Module" id="b42f1b35-07d2-4d26-a58c-75698d9341bb.0" configVersion="19d3540bf62ef57f6e771f4fe7c6a5e6a6bf14ee"/>
+		<Metadata name="Language.Русский" id="7d7158fc-2fe5-4770-b619-48152e9fc3f3" configVersion="3b63617d6d7a5dfdc194ec2c46b7eed93df76888"/>
+	</ConfigVersions>
+</ConfigDumpInfo>
