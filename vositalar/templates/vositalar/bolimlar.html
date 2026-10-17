@@ -1,0 +1,31 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Bo'limlar{% endblock %}
+{% block kontent %}
+<h1>Bo'limlar</h1>
+<form method="get">
+  <label>Filial
+    <select name="filial" onchange="this.form.submit()">
+      {% for f in filiallar %}<option value="{{ f.pk }}"{% if f.pk == filial.pk %} selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+    </select>
+  </label>
+  <noscript><button type="submit">Ko'rsatish</button></noscript>
+</form>
+{% if filial %}
+{% include "vositalar/_bolim_daraxt.html" %}
+{% if tanlangan %}
+<section>
+  <h2>{{ tanlangan.toliq_nomi }} — AV'lar</h2>
+  {% if avlar %}
+  <table>
+    <thead><tr><th>Inv. raqam</th><th>Nomi</th><th class="son">Soni</th></tr></thead>
+    <tbody>
+    {% for a in avlar %}
+      <tr><td>{{ a.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' a.pk %}">{{ a.nomi }}</a></td><td class="son">{{ a.bolim_soni|floatformat:"-3" }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p><em>Bu bo'limda AV yo'q.</em></p>{% endif %}
+</section>
+{% endif %}
+{% else %}<p>Ruxsat etilgan filial yo'q.</p>{% endif %}
+{% endblock %}

@@ -21,6 +21,7 @@ from jurnal.yoz import yoz
 from onec.models import AV, AVQoldiq, AVTuri, Filial, Xodim
 
 from . import amallar
+from . import bolimlar as bolimlar_xizmat
 from .amortizatsiya import dona_narxi, hisobla, samarali_muddat
 from .bayroqlar import BAYROQLAR
 from .filtrlar import av_filtrla, korinadigan_av
@@ -429,3 +430,92 @@ def rasm_fayl(request, rasm_pk):
     javob = FileResponse(oqim, content_type=mimetypes.guess_type(fayl.name)[0] or "application/octet-stream")
     javob["Cache-Control"] = "private, max-age=3600"
     return javob
+
+
+def _ruxsat_filiallar(user):
+    return filial_bilan_chekla(Filial.objects.all(), user, "pk").order_by("nomi")
+
+
+def _bolim_kontekst(request, filial, tanlangan=None, xato=""):
+    kontekst = {
+        "filial": filial,
+        "qatorlar": bolimlar_xizmat.daraxt(filial.pk),
+        "tahrir_huquqi": huquqi_bor(request.user, "bolim_tahrir"),
+        "xato": xato,
+    }
+    if tanlangan is not None:
+        kontekst["tanlangan"] = tanlangan
+    return kontekst
+
+
+def _id(qiymat) -> int:
+    qiymat = (qiymat or "").strip()
+    return int(qiymat) if qiymat.isdigit() else 0
+
+
+@amal_kerak("korish")
+def bolimlar(request):
+    """Filial bo'limlari daraxti va tanlangan bo'limdagi AV'lar (soni bilan)."""
+    filiallar = list(_ruxsat_filiallar(request.user))
+    filial = None
+    if request.GET.get("filial"):
+        filial = next((f for f in filiallar if f.pk == _id(request.GET["filial"])), None)
+        if filial is None:
+            raise Http404
+    elif filiallar:
+        filial = filiallar[0]
+    kontekst = {"filiallar": filiallar, "filial": filial}
+    if filial is not None:
+        tanlangan = Bolim.objects.filter(filial=filial, pk=_id(request.GET.get("bolim"))).first()
+        kontekst.update(_bolim_kontekst(request, filial, tanlangan))
+        if tanlangan is not None:
+            soni = dict(Taqsimot.objects.filter(bolim=tanlangan).values_list("av_id").annotate(s=Sum("soni")))
+            avlar = list(av_filtrla(AV.objects.filter(pk__in=soni), {}, request.user).order_by("nomi", "pk"))
+            for av in avlar:
+                av.bolim_soni = soni[av.pk]
+            kontekst["avlar"] = avlar
+    return render(request, "vositalar/bolimlar.html", kontekst)
+
+
+@require_POST
+@amal_kerak("bolim_tahrir")
+def bolim_saqla(request):
+    """Bo'lim yaratish / nomlash / ko'chirish (HTMX). Xato matni bo'lakda (400), 500 bo'lmaydi."""
+    filial = _ruxsat_filiallar(request.user).filter(pk=_id(request.POST.get("filial"))).first()
+    if filial is None:
+        raise Http404
+    bolim = None
+    if request.POST.get("bolim"):
+        bolim = Bolim.objects.filter(filial=filial, pk=_id(request.POST["bolim"])).first()
+        if bolim is None:
+            raise Http404
+    ota = None
+    if request.POST.get("ota"):
+        # Ruxsatsiz filial bo'limi 404; ruxsatli boshqa filial bo'limi — bo'lakda tushunarli xato (400).
+        ota = filial_bilan_chekla(Bolim.objects.all(), request.user).filter(pk=_id(request.POST["ota"])).first()
+        if ota is None:
+            raise Http404
+    xato, status = "", 200
+    try:
+        bolimlar_xizmat.bolim_saqla(bolim, filial, request.POST.get("nomi", ""), ota, request.user)
+    except amallar.AmalXato as e:
+        xato, status = str(e), 400
+    return render(request, "vositalar/_bolim_daraxt.html", _bolim_kontekst(request, filial, xato=xato), status=status)
+
+
+@require_POST
+@amal_kerak("bolim_tahrir")
+def bolim_nofaol(request, pk):
+    """Faol bo'limni (pastkilari bilan) faolsizlantiradi; faolsizini qayta faollashtiradi (HTMX)."""
+    bolim = filial_bilan_chekla(Bolim.objects.select_related("filial"), request.user).filter(pk=pk).first()
+    if bolim is None:
+        raise Http404
+    xato, status = "", 200
+    try:
+        if bolim.faol:
+            bolimlar_xizmat.bolim_nofaol_qil(bolim, request.user)
+        else:
+            bolimlar_xizmat.bolim_faollashtir(bolim, request.user)
+    except amallar.AmalXato as e:
+        xato, status = str(e), 400
+    return render(request, "vositalar/_bolim_daraxt.html", _bolim_kontekst(request, bolim.filial, xato=xato), status=status)
