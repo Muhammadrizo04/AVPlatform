@@ -1,0 +1,11 @@
+onec/tests/namunalar/*.raw.json
+.env
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+media/
+staticfiles/
+.pytest_cache/
+*.sqlite3
+*.log

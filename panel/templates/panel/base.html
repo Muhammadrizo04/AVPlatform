@@ -1,0 +1,33 @@
+{% load static %}<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
+  <script src="{% static 'panel/htmx.min.js' %}" defer></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; color: #1f2933; background: #f5f7fa; }
+    .yuqori { display: flex; align-items: center; gap: 1.5rem; padding: .6rem 1.2rem; background: #243b53; color: #fff; }
+    .yuqori a { color: #fff; text-decoration: none; }
+    .yuqori .bosh { margin-left: auto; display: flex; gap: .8rem; align-items: center; }
+    .yuqori button { background: none; border: 1px solid #9fb3c8; color: #fff; padding: .25rem .7rem; border-radius: 4px; cursor: pointer; }
+    main { max-width: 72rem; margin: 1.5rem auto; padding: 0 1rem; }
+    .xato { color: #b8302a; }
+  </style>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% if user.is_authenticated %}
+  <header class="yuqori">
+    <strong>Asosiy vositalar</strong>
+    <nav>
+      {% block menyu %}<a href="{% url 'bosh' %}">Bosh sahifa</a>{% endblock %}
+    </nav>
+    <div class="bosh">
+      <span>{{ user.get_username }}{% if user.profil %} · {{ user.profil.get_rol_display }}{% endif %}</span>
+      <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button type="submit">Chiqish</button></form>
+    </div>
+  </header>
+  {% endif %}
+  <main>{% block kontent %}{% endblock %}</main>
+</body>
+</html>

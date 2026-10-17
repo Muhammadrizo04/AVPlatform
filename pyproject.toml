@@ -1,0 +1,5 @@
+[project]
+name = "asosiy-vositalar"
+version = "0.1.0"
+description = "Asosiy vositalar platformasi (1C ma'lumotlarining faqat o'qiladigan nusxasi)"
+requires-python = ">=3.12"
