@@ -394,3 +394,35 @@ def test_buyruq_band(buyruq_client, capsys):
             boshqa.execute("SELECT pg_advisory_unlock(%s)", [QULF])
 
     assert "band" in capsys.readouterr().out.lower()
+
+
+def test_birinchi_inkremental_chaqiriq_toliq_bajariladi():
+    client = SoxtaClient()
+
+    jurnal = sinxronla(client, toliq=False, hozir=HOZIR)
+
+    assert jurnal.natija == SinxronJurnal.Natija.OK and jurnal.toliq is True
+    dan, _ = client.harakat_sorovlari[-1]
+    assert dan.year <= 1900
+
+
+def test_toliq_muvaffaqiyatsiz_bolsa_keyingisi_ham_toliq():
+    client = SoxtaClient()
+    client.vositalar_xatosi = OneCXato("1C HTTP 500 qaytardi: /vositalar")
+    assert sinxronla(client, hozir=HOZIR).natija == SinxronJurnal.Natija.XATO
+    client.vositalar_xatosi = None
+
+    jurnal = sinxronla(client, hozir=HOZIR)
+
+    assert jurnal.natija == SinxronJurnal.Natija.OK and jurnal.toliq is True
+
+
+def test_toliq_sinxrondan_keyin_inkremental_qoladi():
+    client = SoxtaClient()
+    sinxronla(client, toliq=True, hozir=HOZIR)
+
+    jurnal = sinxronla(client, hozir=HOZIR)
+
+    assert jurnal.toliq is False
+    dan, _ = client.harakat_sorovlari[-1]
+    assert dan == (HOZIR - timedelta(days=45)).replace(tzinfo=None)

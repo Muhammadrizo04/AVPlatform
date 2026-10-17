@@ -20,6 +20,10 @@ NOL = Decimal("0")
 Sabab = TaqsimotHarakat.Sabab
 
 
+class MoslashXato(Exception):
+    """Moslashdan keyin Σ taqsimot 1C qoldig'iga teng emas (mos emas holatdan tashqari)."""
+
+
 def farq(av: AV, filial) -> Decimal:
     """1C qoldig'i - sum(taqsimot) shu (AV, filial) uchun. Manfiy — taqsimot 1C'dan ortiq (mos emas)."""
     qoldiq = AVQoldiq.objects.filter(av=av, filial=filial).aggregate(s=Sum("soni"))["s"] or NOL
@@ -36,11 +40,14 @@ def moslashtir() -> dict:
 
         # Bir (av, filial) uchun bir nechta tashkilot qatori bo'lishi mumkin — yig'iladi.
         qoldiq = _yigindi(AVQoldiq.objects)
-        taqsimot = _yigindi(Taqsimot.objects)
-        taqsimlanmagan = {
-            (t.av_id, t.filial_id): t
-            for t in Taqsimot.objects.filter(bolim=None, mol=None, holat=Holat.ISHLATILMOQDA)
-        }
+        # Qatorlar qulflanadi (spec §8): foydalanuvchining parallel ko'chirishi o'qish va yozish orasida kirmaydi.
+        # PostgreSQL FOR UPDATE'ni GROUP BY bilan qabul qilmaydi — yig'indi Python'da, qulflangan qatorlardan.
+        taqsimot, taqsimlanmagan = {}, {}
+        for t in Taqsimot.objects.select_for_update().order_by("pk"):
+            juft = (t.av_id, t.filial_id)
+            taqsimot[juft] = taqsimot.get(juft, NOL) + t.soni
+            if t.bolim_id is None and t.mol_id is None and t.holat == Holat.ISHLATILMOQDA:
+                taqsimlanmagan[juft] = t
 
         ishlar = []  # (juft, tur, miqdor)
         for juft in qoldiq.keys() | taqsimot.keys():
@@ -57,8 +64,6 @@ def moslashtir() -> dict:
                 olinadi = min(taqsimlanmagan[juft].soni if juft in taqsimlanmagan else NOL, -d)
                 if olinadi > 0:
                     ishlar.append((juft, "kamaydi", olinadi))
-                if -d - olinadi > 0:
-                    statistika["mos_emas"] += 1
 
         izohlar = _hujjat_izohlari({juft for juft, _, _ in ishlar})
         for juft, tur, miqdor in ishlar:
@@ -74,7 +79,25 @@ def moslashtir() -> dict:
                 statistika["kamaydi"] += 1
 
         _ishga_tushgan_sanalar()
+        statistika["mos_emas"] = _invariantni_tekshir()
         return statistika
+
+
+def _invariantni_tekshir() -> int:
+    """Bazadagi haqiqiy yig'indilar bo'yicha invariantni tekshiradi (spec §8). Faqat Σ taqsimot > 1C qoldig'i
+    bo'lgan (mos emas, farq < 0) juftlar ruxsat etiladi; ularning soni qaytariladi. Boshqasi — `MoslashXato`
+    (sinxron tranzaksiyasi rollback bo'ladi)."""
+    qoldiq = _yigindi(AVQoldiq.objects)
+    taqsimot = _yigindi(Taqsimot.objects)
+    mos_emas = 0
+    for juft in qoldiq.keys() | taqsimot.keys():
+        q = max(qoldiq.get(juft, NOL), NOL)
+        t = taqsimot.get(juft, NOL)
+        if t < q or (q <= 0 and t != 0):
+            raise MoslashXato(f"Taqsimot invarianti buzildi: av={juft[0]} filial={juft[1]} 1C={q} taqsimot={t}")
+        if t > q:
+            mos_emas += 1
+    return mos_emas
 
 
 def _yigindi(manba) -> dict:
@@ -176,3 +199,5 @@ def _ishga_tushgan_sanalar() -> None:
         kartochka.ishga_tushgan_sana = timezone.localdate(q["sana"])
         ozgargan.append(kartochka)
     AVKartochka.objects.bulk_update(ozgargan, ["ishga_tushgan_sana"], batch_size=500)
+    for kartochka in ozgargan:
+        yoz(None, kartochka, "ishga_tushgan_sana", None, kartochka.ishga_tushgan_sana)

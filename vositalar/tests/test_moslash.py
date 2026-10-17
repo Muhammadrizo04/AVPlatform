@@ -3,12 +3,14 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from jurnal.models import Jurnal
 from onec.models import AV, AVQoldiq, Harakat1C, Tashkilot
 from vositalar.models import AVKartochka, Bolim, Holat, Taqsimot, TaqsimotHarakat
-from vositalar.moslash import farq, moslashtir
+from vositalar.moslash import MoslashXato, farq, moslashtir
 
 SON = Decimal
 
@@ -271,3 +273,38 @@ def test_takroriy_moslash_idempotent(av, filial_a, filial_b):
         "yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "mos_emas": 1,
     }
     assert holat() == oldin
+
+
+def test_ishga_tushgan_sana_jurnalga_yoziladi(av, filial_a):
+    qoldiq(av, filial_a, "1")
+    harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 2, 3, 10, 0)))
+
+    moslashtir()
+    moslashtir()
+
+    j = Jurnal.objects.get(obyekt_turi="vositalar.avkartochka")
+    assert j.kim is None and j.kim_nomi == "1C sinxron"
+    assert (j.obyekt_id, j.maydon, j.eski, j.yangi) == (str(av.kartochka.pk), "ishga_tushgan_sana", "", "2026-02-03")
+
+
+def test_invariant_buzilsa_xato_va_rollback(av, filial_a, monkeypatch):
+    qoldiq(av, filial_a, "5")
+    monkeypatch.setattr("vositalar.moslash._kopaydi", lambda *args, **kw: None)
+
+    with pytest.raises(MoslashXato, match="invarianti"):
+        moslashtir()
+
+    # moslashtir() o'z atomic blokida: kartochka ham rollback bo'lgan.
+    assert not AVKartochka.objects.exists() and not Taqsimot.objects.exists()
+
+
+def test_taqsimot_qatorlari_qulflanadi(av, filial_a):
+    """Taqsimot qatorlari `select_for_update` bilan o'qiladi (spec §8)."""
+    qoldiq(av, filial_a, "5")
+    qator(av, filial_a, "2")
+
+    with CaptureQueriesContext(connection) as ctx:
+        moslashtir()
+    sorovlar = [q["sql"] for q in ctx.captured_queries if 'FROM "vositalar_taqsimot"' in q["sql"]]
+
+    assert any("FOR UPDATE" in s for s in sorovlar)

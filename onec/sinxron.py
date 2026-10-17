@@ -34,6 +34,9 @@ def sinxronla(client: OneCClient, toliq: bool = False, hozir: datetime | None = 
     """Bitta sinxron urinishi. Natija jurnalga yoziladi; band bo'lsa `SinxronBand` ko'tariladi."""
     boshlandi = timezone.now()
     hozir = hozir or boshlandi
+    # Hali birorta muvaffaqiyatli to'liq sinxron bo'lmasa, to'liq tarix olinadi: aks holda AV'ning birinchi kirimi
+    # (ishga_tushgan_sana manbai) 45 kunlik oynadan tashqarida qolib, noto'g'ri sana yoziladi.
+    toliq = toliq or not SinxronJurnal.objects.filter(toliq=True, natija=SinxronJurnal.Natija.OK).exists()
 
     with connection.cursor() as kursor:
         kursor.execute("SELECT pg_try_advisory_lock(%s)", [QULF_KALITI])
