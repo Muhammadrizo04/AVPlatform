@@ -179,8 +179,9 @@ def test_forma_tanlangan_bolim_bilan_toldiriladi(client_hisobchi, filial_a):
         reverse("vositalar:bolimlar"), {"filial": filial_a.pk, "bolim": bola.pk}
     ).content.decode()
     assert f'<option value="{ota.pk}" selected>' in matn
-    assert f'<option value="{bola.pk}" selected>' in matn
-    assert 'value="Bola"' in matn
+    assert f'<input type="hidden" name="bolim" value="{bola.pk}">' in matn
+    assert 'name="nomi" maxlength="255" value="Bola"' in matn
+    assert "<select name=\"bolim\"" not in matn  # erkin bo'lim tanlash yo'q: tahrirlanadigan bo'lim oldindan tanlangan
 
 
 def test_daraxt_sorovlari_chuqurlikka_bogliq_emas(client_hisobchi, filial_a):
@@ -199,3 +200,16 @@ def test_daraxt_sorovlari_chuqurlikka_bogliq_emas(client_hisobchi, filial_a):
     for i in range(3, 8):
         ota = Bolim.objects.create(filial=filial_a, ota=ota, nomi=f"D{i}")
     assert sorovlar() == uch
+
+
+def test_aniq_joriy_nofaol_ota_qabul_qilinadi(client_hisobchi, filial_a):
+    ota = Bolim.objects.create(filial=filial_a, nomi="Ota", faol=False)
+    bola = Bolim.objects.create(filial=filial_a, ota=ota, nomi="Bola")
+    javob = saqla(client_hisobchi, filial_a, "Yangi nom", ota=ota, bolim=bola)
+    assert javob.status_code == 200
+    bola.refresh_from_db()
+    assert bola.nomi == "Yangi nom" and bola.ota_id == ota.pk
+    assert not Jurnal.objects.filter(obyekt_turi="vositalar.bolim", obyekt_id=str(bola.pk), maydon="ota").exists()
+    # yangi ota esa faol bo'lishi shart
+    boshqa = Bolim.objects.create(filial=filial_a, nomi="Boshqa", faol=False)
+    assert saqla(client_hisobchi, filial_a, "Yangi nom", ota=boshqa, bolim=bola).status_code == 400

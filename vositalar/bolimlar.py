@@ -62,7 +62,8 @@ def bolim_saqla(bolim: Bolim | None, filial, nomi: str, ota=SAQLA, kim=None) -> 
         if ota is not None:
             if ota.filial_id != filial.pk:
                 raise AmalXato("Ota bo'lim boshqa filialga tegishli.")
-            if not ota.faol and not (o_zgarmaydi and bolim is not None):
+            joriy = bolim is not None and ota.pk == bolim.ota_id  # o'zgarmagan ota faolsiz bo'lsa ham mumkin
+            if not ota.faol and not joriy:
                 raise AmalXato("Ota bo'lim faol emas.")
         if bolim is None:
             yangi = Bolim.objects.create(filial=filial, ota=ota, nomi=nomi)

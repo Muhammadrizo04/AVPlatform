@@ -499,10 +499,15 @@ def bolim_saqla(request):
             raise Http404
     xato, status = "", 200
     try:
-        bolimlar_xizmat.bolim_saqla(bolim, filial, request.POST.get("nomi", ""), ota, request.user)
+        natija = bolimlar_xizmat.bolim_saqla(bolim, filial, request.POST.get("nomi", ""), ota, request.user)
+        bolim = bolim and natija
     except amallar.AmalXato as e:
         xato, status = str(e), 400
-    return render(request, "vositalar/_bolim_daraxt.html", _bolim_kontekst(request, filial, xato=xato), status=status)
+    if bolim is not None:
+        bolim.refresh_from_db()
+    return render(
+        request, "vositalar/_bolim_daraxt.html", _bolim_kontekst(request, filial, bolim, xato=xato), status=status
+    )
 
 
 @require_POST
