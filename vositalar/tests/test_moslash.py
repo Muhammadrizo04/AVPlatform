@@ -1,0 +1,273 @@
+import uuid
+from datetime import date, datetime
+from decimal import Decimal
+
+import pytest
+from django.utils import timezone
+
+from jurnal.models import Jurnal
+from onec.models import AV, AVQoldiq, Harakat1C, Tashkilot
+from vositalar.models import AVKartochka, Bolim, Holat, Taqsimot, TaqsimotHarakat
+from vositalar.moslash import farq, moslashtir
+
+SON = Decimal
+
+
+@pytest.fixture
+def av(db):
+    return AV.objects.create(ref_1c=uuid.uuid4(), kod="1", nomi="Stol")
+
+
+@pytest.fixture
+def filial_a(filial_yarat):
+    return filial_yarat("A")
+
+
+@pytest.fixture
+def filial_b(filial_yarat):
+    return filial_yarat("B")
+
+
+def qoldiq(av, filial, soni, tashkilot=None):
+    return AVQoldiq.objects.create(
+        av=av, filial=filial, tashkilot=tashkilot, soni=SON(soni), summa=SON("100")
+    )
+
+
+def qator(av, filial, soni, bolim=None, holat=Holat.ISHLATILMOQDA):
+    return Taqsimot.objects.create(av=av, filial=filial, bolim=bolim, holat=holat, soni=SON(soni))
+
+
+def taqsimlanmagan(av, filial):
+    return Taqsimot.objects.filter(
+        av=av, filial=filial, bolim=None, mol=None, holat=Holat.ISHLATILMOQDA
+    ).first()
+
+
+def harakat1c(av, filial, vid, sana, turi="Kirim", raqam="1"):
+    return Harakat1C.objects.create(
+        sana=sana, hujjat_turi=turi, hujjat_raqami=raqam, hujjat_ref=uuid.uuid4(),
+        av=av, filial=filial, vid=vid, soni=SON("1"), summa=SON("1"),
+    )
+
+
+def test_yangi_av_taqsimlanmagan(av, filial_a):
+    qoldiq(av, filial_a, "20")
+
+    stat = moslashtir()
+
+    qatorlar = list(Taqsimot.objects.all())
+    assert len(qatorlar) == 1
+    q = qatorlar[0]
+    assert (q.bolim, q.mol, q.holat, q.soni) == (None, None, Holat.ISHLATILMOQDA, SON("20"))
+    assert AVKartochka.objects.filter(av=av).exists()
+    assert stat["yangi_kartochka"] == 1
+    assert stat["kopaydi"] == 1
+    assert farq(av, filial_a) == 0
+    h = TaqsimotHarakat.objects.get()
+    assert h.sabab == TaqsimotHarakat.Sabab.ONEC_KOPAYDI and h.kim is None and h.soni == SON("20")
+    assert h.yangi_holat == Holat.ISHLATILMOQDA
+    j = Jurnal.objects.get(obyekt_turi="vositalar.taqsimot")
+    assert j.kim is None and j.kim_nomi == "1C sinxron" and j.maydon == "soni"
+    assert (SON(j.eski), SON(j.yangi)) == (0, 20)
+
+
+def test_kopaydi(av, filial_a):
+    zal = Bolim.objects.create(filial=filial_a, nomi="Zal")
+    qoldiq(av, filial_a, "25")
+    qator(av, filial_a, "5")
+    ombor = qator(av, filial_a, "15", bolim=zal)
+    AVKartochka.objects.create(av=av)
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a).soni == SON("10")
+    ombor.refresh_from_db()
+    assert ombor.soni == SON("15")
+    assert stat["kopaydi"] == 1 and stat["yangi_kartochka"] == 0
+    assert TaqsimotHarakat.objects.get().soni == SON("5")
+
+
+def test_kamaydi_taqsimlanmagandan_yetadi(av, filial_a):
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    qoldiq(av, filial_a, "18")
+    qator(av, filial_a, "3")
+    qator(av, filial_a, "17", bolim=ombor)
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a).soni == SON("1")
+    assert Taqsimot.objects.get(bolim=ombor).soni == SON("17")
+    assert farq(av, filial_a) == 0
+    assert stat["kamaydi"] == 1 and stat["mos_emas"] == 0
+    h = TaqsimotHarakat.objects.get()
+    assert h.sabab == TaqsimotHarakat.Sabab.ONEC_KAMAYDI and h.soni == SON("2") and h.eski_holat == Holat.ISHLATILMOQDA
+
+
+def test_kamaydi_yetmaydi(av, filial_a):
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    qoldiq(av, filial_a, "15")
+    qator(av, filial_a, "20", bolim=ombor)
+
+    stat = moslashtir()
+
+    assert Taqsimot.objects.get().soni == SON("20")
+    assert farq(av, filial_a) == -5
+    assert stat["mos_emas"] == 1 and stat["kamaydi"] == 0
+    assert not TaqsimotHarakat.objects.exists()
+
+
+def test_kamaydi_qisman_taqsimlanmagandan(av, filial_a):
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    qoldiq(av, filial_a, "15")
+    qator(av, filial_a, "2")
+    qator(av, filial_a, "18", bolim=ombor)
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a) is None
+    assert farq(av, filial_a) == -3
+    assert stat["kamaydi"] == 1 and stat["mos_emas"] == 1
+    assert TaqsimotHarakat.objects.get().soni == SON("2")
+
+
+def test_qisman_filial_otkazma(av, filial_a, filial_b):
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    qoldiq(av, filial_a, "15")
+    qoldiq(av, filial_b, "5")
+    qator(av, filial_a, "20", bolim=ombor)
+
+    stat = moslashtir()
+
+    assert farq(av, filial_a) == -5
+    assert Taqsimot.objects.get(filial=filial_a).soni == SON("20")
+    assert taqsimlanmagan(av, filial_b).soni == SON("5")
+    assert farq(av, filial_b) == 0
+    assert stat["mos_emas"] == 1 and stat["kopaydi"] == 1
+
+
+def test_filial_nolga_tushdi(av, filial_a, filial_b):
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    qoldiq(av, filial_b, "4")
+    qator(av, filial_a, "3")
+    qator(av, filial_a, "7", bolim=ombor, holat=Holat.NOSOZ)
+    qator(av, filial_b, "4")
+
+    stat = moslashtir()
+
+    assert not Taqsimot.objects.filter(filial=filial_a).exists()
+    assert Taqsimot.objects.filter(filial=filial_b).count() == 1
+    assert stat["nolga_tushdi"] == 1
+    harakatlar = TaqsimotHarakat.objects.filter(filial=filial_a)
+    assert harakatlar.count() == 2
+    assert {h.sabab for h in harakatlar} == {TaqsimotHarakat.Sabab.ONEC_NOLGA_TUSHDI}
+    assert sorted(h.soni for h in harakatlar) == [SON("3"), SON("7")]
+    nosoz = harakatlar.get(soni=SON("7"))
+    assert (nosoz.eski_bolim, nosoz.eski_holat, nosoz.yangi_holat) == (ombor, Holat.NOSOZ, "")
+    jurnallar = Jurnal.objects.filter(obyekt_turi="vositalar.taqsimot")
+    assert sorted((SON(j.eski), SON(j.yangi)) for j in jurnallar) == [(3, 0), (7, 0)]
+
+
+def test_qoldiq_nol_yoki_yoq(av, filial_a, filial_b):
+    qoldiq(av, filial_a, "0")
+    qator(av, filial_a, "3")
+    qator(av, filial_b, "2")  # qoldiq qatori umuman yo'q
+
+    stat = moslashtir()
+
+    assert not Taqsimot.objects.exists()
+    assert stat["nolga_tushdi"] == 2 and stat["mos_emas"] == 0
+
+
+def test_bir_nechta_tashkilot_qoldigi_yigiladi(av, filial_a):
+    t1 = Tashkilot.objects.create(ref_1c=uuid.uuid4(), nomi="T1")
+    t2 = Tashkilot.objects.create(ref_1c=uuid.uuid4(), nomi="T2")
+    qoldiq(av, filial_a, "6", tashkilot=t1)
+    qoldiq(av, filial_a, "4", tashkilot=t2)
+
+    moslashtir()
+
+    assert Taqsimot.objects.get().soni == SON("10")
+    assert farq(av, filial_a) == 0
+
+
+def test_hujjat_izoh_oxirgi_harakatdan(av, filial_a, filial_b):
+    qoldiq(av, filial_a, "5")
+    qoldiq(av, filial_b, "1")
+    harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 1, 1)), "Kirim", "11")
+    harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 3, 1)), "Ko'chirish", "22")
+    harakat1c(av, filial_b, "kirim", timezone.make_aware(datetime(2026, 4, 1)), "Boshqa", "99")
+
+    moslashtir()
+
+    assert TaqsimotHarakat.objects.get(filial=filial_a).hujjat_izoh == "Ko'chirish 22"
+    assert TaqsimotHarakat.objects.get(filial=filial_b).hujjat_izoh == "Boshqa 99"
+
+
+def test_hujjat_izoh_harakat_bolmasa_bosh(av, filial_a):
+    qoldiq(av, filial_a, "5")
+
+    moslashtir()
+
+    assert TaqsimotHarakat.objects.get().hujjat_izoh == ""
+
+
+def test_ishga_tushgan_sana_birinchi_kirim(av, filial_a):
+    boshqa = AV.objects.create(ref_1c=uuid.uuid4(), kod="2", nomi="Stul")
+    qoldiq(av, filial_a, "1")
+    harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 5, 10, 23, 30)))
+    harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 2, 3, 0, 30)))
+    harakat1c(av, filial_a, "chiqim", timezone.make_aware(datetime(2025, 1, 1)))
+    AVKartochka.objects.create(av=boshqa, ishga_tushgan_sana=date(2020, 1, 1))
+    harakat1c(boshqa, filial_a, "kirim", timezone.make_aware(datetime(2026, 6, 1)))
+
+    moslashtir()
+
+    assert av.kartochka.ishga_tushgan_sana == date(2026, 2, 3)
+    boshqa.kartochka.refresh_from_db()
+    assert boshqa.kartochka.ishga_tushgan_sana == date(2020, 1, 1)
+
+
+def test_ishga_tushgan_sana_kirim_yoq(av):
+    moslashtir()
+
+    assert av.kartochka.ishga_tushgan_sana is None
+
+
+def test_nol_qoldiqli_av_ham_kartochka_oladi(av):
+    stat = moslashtir()
+
+    assert AVKartochka.objects.filter(av=av).exists()
+    assert stat["yangi_kartochka"] == 1
+    assert not Taqsimot.objects.exists()
+
+
+def test_takroriy_moslash_idempotent(av, filial_a, filial_b):
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    boshqa = AV.objects.create(ref_1c=uuid.uuid4(), kod="2", nomi="Stul")
+    qoldiq(av, filial_a, "15")
+    qoldiq(av, filial_b, "5")
+    qator(av, filial_a, "2")
+    qator(av, filial_a, "20", bolim=ombor)
+    qator(boshqa, filial_a, "3")
+    harakat1c(av, filial_b, "kirim", timezone.make_aware(datetime(2026, 5, 1)))
+
+    birinchi = moslashtir()
+    assert birinchi["kamaydi"] == 1 and birinchi["kopaydi"] == 1 and birinchi["nolga_tushdi"] == 1
+
+    def holat():
+        return (
+            sorted(Taqsimot.objects.values_list("av_id", "filial_id", "bolim_id", "soni")),
+            TaqsimotHarakat.objects.count(),
+            Jurnal.objects.count(),
+            AVKartochka.objects.count(),
+        )
+
+    oldin = holat()
+
+    ikkinchi = moslashtir()
+
+    assert ikkinchi == {
+        "yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "mos_emas": 1,
+    }
+    assert holat() == oldin
