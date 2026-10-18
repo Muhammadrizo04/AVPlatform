@@ -113,7 +113,10 @@ def test_birinchi_sinxron_hammasini_yaratadi():
     assert jurnal.ozgarishlar["av"]["yaratildi"] == len(client.vos["vositalar"])
 
     # Maydonlar kontrakt bo'yicha joylashgan.
-    v = next(x for x in client.vos["vositalar"] if x["turi"] and x["filial"] and x["chiqarilgan_sana"])
+    v = next(
+        x for x in client.vos["vositalar"]
+        if x["turi"] and x["filial"] and x["tashkilot"] and x["chiqarilgan_sana"]
+    )
     av = AV.objects.get(ref_1c=v["ref"])
     assert (av.kod, av.nomi, av.inv_raqam, av.izoh_1c) == (v["kod"], v["nomi"], v["inv_raqam"], v["izoh"])
     assert str(av.chiqarilgan_sana) == v["chiqarilgan_sana"]
@@ -192,7 +195,9 @@ def test_kelajakdagi_harakat_saqlanadi():
 
 def test_oraliqdan_tashqari_harakat_otkaziladi():
     client = SoxtaClient()
-    yaroqli_soni = len(yaroqli_harakatlar(client))
+    oyna_boshi = (HOZIR - timedelta(days=45)).astimezone(TOSHKENT).replace(tzinfo=None)
+    yaroqli = yaroqli_harakatlar(client)
+    oynadan_tashqari = sum(datetime.fromisoformat(h["sana"]) < oyna_boshi for h in yaroqli)
     sinxronla(client, hozir=HOZIR)
     eski = soxta_harakat(AV.objects.first(), HOZIR - timedelta(days=60))
     client.har.append(namuna_harakat(client, HOZIR - timedelta(days=60)))
@@ -200,9 +205,9 @@ def test_oraliqdan_tashqari_harakat_otkaziladi():
 
     jurnal = sinxronla(client, hozir=HOZIR)
 
-    assert jurnal.ozgarishlar["harakat_otkazildi"] == 1
+    assert jurnal.ozgarishlar["harakat_otkazildi"] == oynadan_tashqari + 1
     assert Harakat1C.objects.filter(pk=eski.pk).exists()
-    assert Harakat1C.objects.count() == yaroqli_soni + 1
+    assert Harakat1C.objects.count() == len(yaroqli) + 1
 
 
 def test_nomalum_vid_otkaziladi():

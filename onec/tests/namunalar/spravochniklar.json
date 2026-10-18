@@ -1,84 +1,196 @@
 {
   "tashkilotlar": [
     {
-      "ref": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
-      "nomi": "Namuna Savdo MChJ"
-    },
-    {
-      "ref": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
-      "nomi": "Namuna Servis MChJ"
+      "ref": "fdcd0ab5-72dc-44fc-bb25-778e9bb7b70f",
+      "nomi": "Namuna tashkilot 1"
     }
   ],
   "filiallar": [
     {
-      "ref": "a6f20131-5997-5383-b1d4-c56717425007",
-      "kod": "001",
-      "nomi": "Toshkent filiali"
+      "ref": "95f5749d-422e-47b8-bec8-e230b5c67255",
+      "kod": "000000001",
+      "nomi": "Filial 000000001"
     },
     {
-      "ref": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
-      "kod": "002",
-      "nomi": "Samarqand filiali"
+      "ref": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
+      "kod": "000000002",
+      "nomi": "Filial 000000002"
     },
     {
-      "ref": "acea419f-7c2a-5995-a25a-bdb6c06c4ea0",
-      "kod": "003",
-      "nomi": "Buxoro filiali"
+      "ref": "24716269-5678-4477-8364-c786888032b7",
+      "kod": "000000005",
+      "nomi": "Filial 000000005"
+    },
+    {
+      "ref": "d0ebe9f4-4ee2-4861-bf9f-860ecc3de18f",
+      "kod": "000000007",
+      "nomi": "Filial 000000007"
+    },
+    {
+      "ref": "187b066d-c2b8-49f2-89fd-5992fc3e0d24",
+      "kod": "000000008",
+      "nomi": "Filial 000000008"
+    },
+    {
+      "ref": "23deef4b-7b33-4741-9da0-4d1b7111ee3f",
+      "kod": "000000009",
+      "nomi": "Filial 000000009"
+    },
+    {
+      "ref": "fdce015d-1888-4320-bb57-459cbdc39d12",
+      "kod": "000000010",
+      "nomi": "Filial 000000010"
+    },
+    {
+      "ref": "ab41a871-c8ea-419a-b751-bcf69eed4afc",
+      "kod": "000000011",
+      "nomi": "Filial 000000011"
+    },
+    {
+      "ref": "5c4f003a-fe71-431a-b505-c95efdc5b35c",
+      "kod": "000000012",
+      "nomi": "Filial 000000012"
+    },
+    {
+      "ref": "dd2ff20a-55cf-40e0-97a3-04059df869b9",
+      "kod": "000000017",
+      "nomi": "Filial 000000017"
+    },
+    {
+      "ref": "4fa89c0c-1445-4cb2-b497-0cdf71f2d5bd",
+      "kod": "000000018",
+      "nomi": "Filial 000000018"
     }
   ],
   "av_turlari": [
     {
-      "ref": "f14a7b94-9873-5749-96f0-ba617337c834",
-      "nomi": "Kompyuter texnikasi",
-      "tip": "Mashina va uskunalar"
+      "ref": "bcc304c6-3247-4081-b502-2fc7e71bc022",
+      "nomi": "BOSHQA ASOSI VOSITA",
+      "tip": ""
     },
     {
-      "ref": "6708cd12-7596-5ac4-8f2b-99837af245c0",
-      "nomi": "Ofis mebeli",
-      "tip": "Boshqa asosiy vositalar"
+      "ref": "e76c926a-a14f-4bd5-b2c9-c001ccbe10d7",
+      "nomi": "KOMPYUTERLAR",
+      "tip": ""
     },
     {
-      "ref": "f18729bd-660d-57b3-87b5-b6f6d6c9e0ce",
-      "nomi": "Yengil avtomobillar",
-      "tip": "Transport vositalari"
+      "ref": "7412d89b-4271-4c01-b573-9a2e46302a08",
+      "nomi": "TELEFON SIMKARTALAR",
+      "tip": ""
+    },
+    {
+      "ref": "874b38f7-d043-4418-ba1b-7c18773f5262",
+      "nomi": "Video kuzatuv",
+      "tip": ""
+    },
+    {
+      "ref": "06623e35-bd3d-4957-bbd4-bb288e747ae1",
+      "nomi": "XO'JALIK MOLLAR",
+      "tip": ""
+    },
+    {
+      "ref": "792c245a-206a-4944-9233-5e92e73198d6",
+      "nomi": "Бошка асосий воситалар",
+      "tip": ""
+    },
+    {
+      "ref": "c0475f06-2f53-4349-8eaf-728cbe682f5d",
+      "nomi": "Бошка техник воситалар",
+      "tip": ""
+    },
+    {
+      "ref": "6c2e8abe-831c-4684-9b28-35ed19640a2e",
+      "nomi": "Компьютер куриламалари",
+      "tip": ""
+    },
+    {
+      "ref": "2b302f10-f027-4710-b8fb-3dc0003c47ca",
+      "nomi": "Мебель жихозлари",
+      "tip": ""
+    },
+    {
+      "ref": "c6e0c7d1-2a53-4e48-9ca5-cefed6ac9980",
+      "nomi": "Электрон курилмалар",
+      "tip": ""
+    },
+    {
+      "ref": "9549125d-8528-4e27-9164-1c6d8892382f",
+      "nomi": "Электрон ускуналар",
+      "tip": ""
     }
   ],
   "xodimlar": [
     {
-      "ref": "41db5ef8-8f55-5e62-8d2d-e328236495d5",
-      "ism": "Aliyev Vali Karimovich",
-      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
-      "telefon": "+998901112233",
-      "ishdan_bushagan": false,
-      "neaktiv": false,
-      "ochirilgan": false
-    },
-    {
-      "ref": "93c21d2a-81b0-5871-8045-afb2a9bc82e7",
-      "ism": "Karimova Nodira Akbarovna",
-      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "ref": "1f99da41-9d51-4adf-af1f-1933135b84a2",
+      "ism": "Xodim 001",
+      "filial": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
       "telefon": "",
       "ishdan_bushagan": false,
       "neaktiv": false,
       "ochirilgan": false
     },
     {
-      "ref": "f6abebd9-527c-5940-a1ee-f72ecc8926b9",
-      "ism": "Rahimov Sardor Olimovich",
-      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
-      "telefon": "+998935556677",
+      "ref": "cdb6ffae-2bb1-4846-aeb9-81ffe6c47737",
+      "ism": "Xodim 002",
+      "filial": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
+      "telefon": "",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": false
+    },
+    {
+      "ref": "bb241f52-76c1-4192-b253-a53062fe12a5",
+      "ism": "Xodim 003",
+      "filial": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
+      "telefon": "",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": false
+    },
+    {
+      "ref": "90cf6a1f-0e79-4ced-9056-ce979627dd5c",
+      "ism": "Xodim 004",
+      "filial": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
+      "telefon": "",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": false
+    },
+    {
+      "ref": "3a74a14c-f479-4ac4-bc1b-bcc5a7b0a8bb",
+      "ism": "Xodim 005",
+      "filial": "95f5749d-422e-47b8-bec8-e230b5c67255",
+      "telefon": "",
+      "ishdan_bushagan": false,
+      "neaktiv": false,
+      "ochirilgan": false
+    },
+    {
+      "ref": "ba3736ff-a74b-4011-979c-e60a8f7c6823",
+      "ism": "Xodim 006",
+      "filial": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
+      "telefon": "",
       "ishdan_bushagan": true,
       "neaktiv": true,
       "ochirilgan": false
     },
     {
-      "ref": "53840c3e-9589-57f4-8e2c-b2247c8fb2a4",
-      "ism": "Umarov Bekzod Hamidovich",
+      "ref": "58b6583a-67e6-44f7-8857-f6dc44f627ab",
+      "ism": "Xodim 007",
+      "filial": "b3e7fa10-629b-4cae-a8db-ced81efbf4d0",
+      "telefon": "",
+      "ishdan_bushagan": true,
+      "neaktiv": true,
+      "ochirilgan": false
+    },
+    {
+      "ref": "4d71474d-f137-4d65-b5a1-5fc711bb12c4",
+      "ism": "Xodim 008",
       "filial": null,
       "telefon": "",
       "ishdan_bushagan": false,
       "neaktiv": false,
-      "ochirilgan": true
+      "ochirilgan": false
     }
   ]
 }
