@@ -1,0 +1,52 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ av.nomi }}{% endblock %}
+{% block kontent %}
+<p><a href="{% url 'vositalar:royxat' %}">← AV ro'yxati</a></p>
+<h1>{{ av.nomi }}</h1>
+{% if yorliq_huquqi %}<p><a href="{% url 'yorliqlar:tanlash' %}?av={{ av.pk }}">QR-yorliq chop etish</a></p>{% endif %}
+
+<h2>1C ma'lumotlari <small>(faqat o'qish)</small></h2>
+<table>
+  <tr><th>Inv. raqam</th><td>{{ av.inv_raqam|default:"—" }}</td><th>Turi</th><td>{{ av.turi.nomi|default:"—" }}</td></tr>
+  <tr><th>Filial (rekvizit)</th><td>{{ av.filial_rekvizit.nomi|default:"—" }}</td><th>Tashkilot</th><td>{{ av.tashkilot.nomi|default:"—" }}</td></tr>
+  <tr><th>Chiqarilgan sana</th><td>{{ av.chiqarilgan_sana|date:"d.m.Y"|default:"—" }}</td><th>Kod</th><td>{{ av.kod }}</td></tr>
+  <tr><th>Soni</th><td>{{ av.jami_soni|floatformat:"-3" }}</td><th>Summa</th><td>{{ av.jami_summa }}</td></tr>
+  <tr><th>Dona narxi</th><td>{{ dona_narxi|floatformat:2 }}</td><th>1C izohi</th><td>{{ av.izoh_1c|default:"—" }}</td></tr>
+</table>
+
+<h2>Amortizatsiya</h2>
+{% if amortizatsiya %}
+<table>
+  <tr><th>O'tgan oylar</th><td>{{ amortizatsiya.oylar }}</td><th>Qoldiq qiymat</th><td>{{ amortizatsiya.qoldiq_qiymat }}</td></tr>
+  <tr><th>Eskirish</th><td>{{ amortizatsiya.eskirish_foiz }}%</td><th>Tugash sanasi</th><td>{{ amortizatsiya.tugash_sanasi|date:"d.m.Y" }}</td></tr>
+</table>
+{% else %}<p>Hisoblab bo'lmaydi: ishga tushgan sana yoki xizmat muddati kiritilmagan.</p>{% endif %}
+
+<h2>Platforma maydonlari</h2>
+{% if xatolar %}<ul class="xabarlar">{% for x in xatolar %}<li class="error">{{ x }}</li>{% endfor %}</ul>{% endif %}
+<form method="post" action="{% url 'vositalar:kartochka' av.pk %}">
+  {% csrf_token %}
+  <input type="hidden" name="versiya" value="{{ kartochka.versiya }}">
+  <fieldset {% if not tahrir %}disabled{% endif %} style="border:0;padding:0">
+    <p><label>Ishga tushgan sana <input type="date" name="ishga_tushgan_sana" value="{{ qiymat.ishga_tushgan_sana|stringformat:'s' }}"></label></p>
+    <p><label>Xizmat muddati (oy) <input type="number" name="xizmat_muddati_oy" min="1" max="1200" value="{{ qiymat.xizmat_muddati_oy }}"></label></p>
+    {% for m in qoshimcha_maydonlar %}
+    <p><label>{{ m.nomi }}{% if m.majburiy %} *{% endif %}
+      {% if m.tip == "tanlov" %}
+      <select name="q_{{ m.kalit }}"><option value="">—</option>
+        {% for v in m.tanlov_qiymatlari %}<option value="{{ v }}" {% if v == m.qiymat %}selected{% endif %}>{{ v }}</option>{% endfor %}
+      </select>
+      {% elif m.tip == "sana" %}<input type="date" name="q_{{ m.kalit }}" value="{{ m.qiymat }}">
+      {% elif m.tip == "son" %}<input type="text" inputmode="decimal" name="q_{{ m.kalit }}" value="{{ m.qiymat }}">
+      {% else %}<input type="text" name="q_{{ m.kalit }}" value="{{ m.qiymat }}">{% endif %}
+    </label></p>
+    {% endfor %}
+    <p><label>Izoh<br><textarea name="izoh" rows="3" cols="60">{{ qiymat.izoh }}</textarea></label></p>
+  </fieldset>
+  {% if tahrir %}<button type="submit">Saqlash</button>{% endif %}
+</form>
+
+{% include "vositalar/_taqsimot.html" %}
+{% include "vositalar/_rasmlar.html" %}
+{% include "vositalar/_tarix.html" %}
+{% endblock %}

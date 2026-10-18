@@ -1,0 +1,13 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Kirish{% endblock %}
+{% block kontent %}
+<h1>Tizimga kirish</h1>
+<form method="post">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<p class="xato">{{ form.non_field_errors|join:" " }}</p>{% endif %}
+  <p><label>Login<br>{{ form.username }}</label></p>
+  <p><label>Parol<br>{{ form.password }}</label></p>
+  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  <button type="submit">Kirish</button>
+</form>
+{% endblock %}

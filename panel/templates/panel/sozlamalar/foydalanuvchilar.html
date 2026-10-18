@@ -1,0 +1,25 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Foydalanuvchilar{% endblock %}
+{% block kontent %}
+{% include "panel/sozlamalar/_menyu.html" %}
+<h1>Foydalanuvchilar</h1>
+<table>
+  <thead><tr><th>Login</th><th>Ism</th><th>Rol</th><th>Filiallar</th><th>Holati</th><th></th></tr></thead>
+  <tbody>
+  {% for u in royxat %}
+    <tr>
+      <td>{{ u.username }}</td><td>{{ u.first_name }}</td>
+      <td>{{ u.profil.get_rol_display|default:"—" }}</td>
+      <td>{% for f in u.profil.filiallar.all %}{{ f.nomi }}{% if not forloop.last %}, {% endif %}{% empty %}hammasi{% endfor %}</td>
+      <td>{% if u.is_active %}faol{% else %}faolsiz{% endif %}</td>
+      <td><a href="{% url 'panel:foydalanuvchi_tahrir' u.pk %}">Tahrirlash</a></td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<h2>Yangi foydalanuvchi</h2>
+<form method="post">{% csrf_token %}
+  {% include "panel/sozlamalar/_forma.html" %}
+  <button type="submit">Yaratish</button>
+</form>
+{% endblock %}

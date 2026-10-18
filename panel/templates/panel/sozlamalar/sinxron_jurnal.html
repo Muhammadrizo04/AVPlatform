@@ -1,0 +1,20 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Sinxron jurnali{% endblock %}
+{% block kontent %}
+{% include "panel/sozlamalar/_menyu.html" %}
+<h1>Sinxron jurnali</h1>
+<table>
+  <thead><tr><th>Boshlandi</th><th>Tugadi</th><th>Natija</th><th>To'liq</th><th>Xato</th></tr></thead>
+  <tbody>
+  {% for j in sahifa %}
+    <tr>
+      <td>{{ j.boshlandi|date:"d.m.Y H:i:s" }}</td><td>{{ j.tugadi|date:"H:i:s" }}</td>
+      <td>{{ j.get_natija_display }}</td><td>{% if j.toliq %}ha{% endif %}</td><td>{{ j.xato_matni }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5">Jurnal bo'sh.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+{% endblock %}

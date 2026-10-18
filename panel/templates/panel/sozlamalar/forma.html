@@ -1,0 +1,11 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ sarlavha }}{% endblock %}
+{% block kontent %}
+{% include "panel/sozlamalar/_menyu.html" %}
+<h1>{{ sarlavha }}</h1>
+<form method="post">{% csrf_token %}
+  {% include "panel/sozlamalar/_forma.html" %}
+  <button type="submit">Saqlash</button>
+  {% if orqaga %}<a href="{% url orqaga %}">Bekor qilish</a>{% endif %}
+</form>
+{% endblock %}

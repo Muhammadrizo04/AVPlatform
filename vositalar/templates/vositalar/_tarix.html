@@ -1,0 +1,13 @@
+<section id="tarix">
+  <h2>Tarix</h2>
+  <table>
+    <thead><tr><th>Sana</th><th>Voqea</th><th>Kim</th></tr></thead>
+    <tbody>
+    {% for q in tarix %}
+      <tr><td>{{ q.sana|date:"d.m.Y H:i" }}</td><td>{{ q.matn }}</td><td>{{ q.kim }}</td></tr>
+    {% empty %}
+      <tr><td colspan="3">Tarix bo'sh.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>

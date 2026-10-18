@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest>=8
+pytest-django>=4.9
+responses>=0.25
+pypdf>=5
+zxing-cpp>=2.2

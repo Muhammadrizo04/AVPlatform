@@ -1,0 +1,17 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}МОЛ qaydnomasi{% endblock %}
+{% block kontent %}
+<h1>МОЛ qaydnomasi{% if xodim %}: {{ xodim.ism }}{% endif %}</h1>
+<table>
+  <thead><tr><th>МОЛ</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th><th class="son">Qiymat</th></tr></thead>
+  <tbody>
+  {% for q in qatorlar %}
+    <tr><td>{{ q.xodim.ism }}</td><td>{{ q.av.nomi }}</td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td>{{ q.holat }}</td><td class="son">{{ q.soni }}</td><td class="son">{{ q.qiymat }}</td></tr>
+  {% empty %}
+    <tr><td colspan="7">Ma'lumot yo'q.</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot><tr><th colspan="6">Jami</th><th class="son">{{ jami }}</th></tr></tfoot>
+</table>
+{% include "hisobotlar/_pastki.html" %}
+{% endblock %}

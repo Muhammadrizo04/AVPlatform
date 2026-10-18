@@ -1,0 +1,27 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}O'zgarishlar jurnali{% endblock %}
+{% block kontent %}
+{% include "panel/sozlamalar/_menyu.html" %}
+<h1>O'zgarishlar jurnali</h1>
+<form method="get" class="amallar" style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem">
+  <input name="kim" value="{{ kim }}" placeholder="Kim">
+  <input name="obyekt_turi" value="{{ obyekt_turi }}" placeholder="Obyekt (masalan, auth.user)">
+  <input type="date" name="dan" value="{{ dan|date:'Y-m-d' }}">
+  <input type="date" name="gacha" value="{{ gacha|date:'Y-m-d' }}">
+  <button type="submit">Saralash</button>
+</form>
+<table>
+  <thead><tr><th>Qachon</th><th>Kim</th><th>Obyekt</th><th>Maydon</th><th>Eski</th><th>Yangi</th></tr></thead>
+  <tbody>
+  {% for j in sahifa %}
+    <tr>
+      <td>{{ j.qachon|date:"d.m.Y H:i" }}</td><td>{{ j.kim_nomi }}</td><td>{{ j.obyekt_turi }} #{{ j.obyekt_id }}</td>
+      <td>{{ j.maydon }}</td><td>{{ j.eski }}</td><td>{{ j.yangi }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6">Yozuv yo'q.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+{% endblock %}

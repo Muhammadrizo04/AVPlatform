@@ -1,0 +1,64 @@
+{
+  "harakatlar": [
+    {
+      "sana": "2026-09-01T09:15:00",
+      "hujjat_turi": "ПоступлениеОС",
+      "hujjat_raqami": "125",
+      "hujjat_ref": "257a7b04-4fd5-53fb-a3e8-0a899683a944",
+      "av": "c02e22e7-df62-5a0f-913f-a76ad1fc71c1",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "vid": "kirim",
+      "soni": 1,
+      "summa": 12500000.5
+    },
+    {
+      "sana": "2026-09-03T11:00:00",
+      "hujjat_turi": "ПоступлениеОС",
+      "hujjat_raqami": "126",
+      "hujjat_ref": "b5a511e3-d005-5e2d-a934-13ecfb2ad4b3",
+      "av": "89a60314-9f55-5c1a-9c4a-2f0c73bdeb99",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "vid": "kirim",
+      "soni": 12,
+      "summa": 7200000
+    },
+    {
+      "sana": "2026-09-10T14:30:00",
+      "hujjat_turi": "ПеремещениеОС",
+      "hujjat_raqami": "31",
+      "hujjat_ref": "f7655d2d-fd11-5cd4-928f-ef5f66cfd0a5",
+      "av": "50a4a674-145d-5088-aeab-aad823b7201c",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "vid": "chiqim",
+      "soni": 1,
+      "summa": 2100000
+    },
+    {
+      "sana": "2026-09-10T14:30:00",
+      "hujjat_turi": "ПеремещениеОС",
+      "hujjat_raqami": "31",
+      "hujjat_ref": "f7655d2d-fd11-5cd4-928f-ef5f66cfd0a5",
+      "av": "50a4a674-145d-5088-aeab-aad823b7201c",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "vid": "kirim",
+      "soni": 1,
+      "summa": 2100000
+    },
+    {
+      "sana": "2026-09-20T16:45:00",
+      "hujjat_turi": "СписаниеОС",
+      "hujjat_raqami": "7",
+      "hujjat_ref": "9e47f3ef-dc0e-5111-9293-4650446d92f1",
+      "av": "9cac3257-d25c-536c-a09b-be8982b5f169",
+      "tashkilot": null,
+      "filial": null,
+      "vid": "chiqim",
+      "soni": 1,
+      "summa": 0
+    }
+  ]
+}

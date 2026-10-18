@@ -1,0 +1,4 @@
+{% if forma.non_field_errors %}<p class="xato">{{ forma.non_field_errors|join:" " }}</p>{% endif %}
+{% for f in forma %}
+  <p>{{ f.label_tag }} {{ f }}{% if f.errors %} <span class="xato">{{ f.errors|join:" " }}</span>{% endif %}</p>
+{% endfor %}

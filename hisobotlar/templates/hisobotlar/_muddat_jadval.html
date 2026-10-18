@@ -1,0 +1,10 @@
+<table>
+  <thead><tr><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Tugash sanasi</th><th class="son">Soni</th><th class="son">Summa</th></tr></thead>
+  <tbody>
+  {% for av in royxat %}
+    <tr><td>{{ av.inv_raqam }}</td><td>{{ av.nomi }}</td><td>{{ av.filial_rekvizit.nomi|default:"" }}</td><td>{{ av.tugash|date:"d.m.Y" }}</td><td class="son">{{ av.jami_soni }}</td><td class="son">{{ av.jami_summa }}</td></tr>
+  {% empty %}
+    <tr><td colspan="6">Yo'q.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>

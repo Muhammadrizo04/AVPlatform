@@ -1,0 +1,22 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}МОЛ nazorati{% endblock %}
+{% block kontent %}
+<h1>МОЛ nazorati</h1>
+<p><a href="{% url 'mol:ketganlar' %}">Ketgan xodimlardagi AV'lar</a></p>
+<table>
+  <thead><tr><th>Xodim</th><th>Filial</th><th>Holati</th><th class="son">AV soni</th><th class="son">Qiymat</th></tr></thead>
+  <tbody>
+  {% for x in xodimlar %}
+    <tr>
+      <td><a href="{% url 'mol:xodim' x.pk %}">{{ x.ism }}</a></td>
+      <td>{{ x.filial.nomi|default:"—" }}</td>
+      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}<span class="xato">Ketgan</span>{% else %}Faol{% endif %}</td>
+      <td class="son">{{ x.av_soni|floatformat:"-3" }}</td>
+      <td class="son">{{ x.qiymat|floatformat:2 }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5"><em>Xodim yo'q.</em></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

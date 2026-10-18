@@ -1,0 +1,146 @@
+{
+  "vositalar": [
+    {
+      "ref": "c02e22e7-df62-5a0f-913f-a76ad1fc71c1",
+      "kod": "00000001",
+      "nomi": "Noutbuk Lenovo ThinkPad",
+      "toliq_nomi": "Noutbuk Lenovo ThinkPad",
+      "inv_raqam": "INV-0001",
+      "chiqarilgan_sana": "2023-03-15",
+      "turi": "f14a7b94-9873-5749-96f0-ba617337c834",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "izoh": "",
+      "ochirilgan": false
+    },
+    {
+      "ref": "89a60314-9f55-5c1a-9c4a-2f0c73bdeb99",
+      "kod": "00000002",
+      "nomi": "Ofis stullari",
+      "toliq_nomi": "Ofis stullari",
+      "inv_raqam": "INV-0002",
+      "chiqarilgan_sana": "2022-11-01",
+      "turi": "6708cd12-7596-5ac4-8f2b-99837af245c0",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "izoh": "Guruhli hisob",
+      "ochirilgan": false
+    },
+    {
+      "ref": "e0fd2867-bcb4-5119-a3a7-c0dcbbe14d18",
+      "kod": "00000003",
+      "nomi": "Printer HP LaserJet",
+      "toliq_nomi": "Printer HP LaserJet",
+      "inv_raqam": "INV-0003",
+      "chiqarilgan_sana": "2021-06-20",
+      "turi": "f14a7b94-9873-5749-96f0-ba617337c834",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "izoh": "",
+      "ochirilgan": false
+    },
+    {
+      "ref": "50a4a674-145d-5088-aeab-aad823b7201c",
+      "kod": "00000004",
+      "nomi": "Konditsioner Midea",
+      "toliq_nomi": "Konditsioner Midea",
+      "inv_raqam": "INV-0004",
+      "chiqarilgan_sana": "2024-01-10",
+      "turi": "6708cd12-7596-5ac4-8f2b-99837af245c0",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "izoh": "Ikki filialda",
+      "ochirilgan": false
+    },
+    {
+      "ref": "dd8700d6-836b-5887-9588-293fcb887168",
+      "kod": "00000005",
+      "nomi": "Planshet Samsung",
+      "toliq_nomi": "Planshet Samsung",
+      "inv_raqam": "",
+      "chiqarilgan_sana": null,
+      "turi": "f14a7b94-9873-5749-96f0-ba617337c834",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "acea419f-7c2a-5995-a25a-bdb6c06c4ea0",
+      "izoh": "",
+      "ochirilgan": false
+    },
+    {
+      "ref": "9cac3257-d25c-536c-a09b-be8982b5f169",
+      "kod": "00000006",
+      "nomi": "Eski stol",
+      "toliq_nomi": "Eski stol",
+      "inv_raqam": "INV-0006",
+      "chiqarilgan_sana": "2015-05-05",
+      "turi": null,
+      "tashkilot": null,
+      "filial": null,
+      "izoh": "Turi va filiali yo'q",
+      "ochirilgan": true
+    },
+    {
+      "ref": "5c94a47c-9dc3-5cb5-b6c0-874179cc5ef5",
+      "kod": "00000007",
+      "nomi": "Chevrolet Cobalt",
+      "toliq_nomi": "Chevrolet Cobalt",
+      "inv_raqam": "INV-0007",
+      "chiqarilgan_sana": "2020-09-30",
+      "turi": "f18729bd-660d-57b3-87b5-b6f6d6c9e0ce",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "izoh": "",
+      "ochirilgan": false
+    }
+  ],
+  "qoldiqlar": [
+    {
+      "av": "c02e22e7-df62-5a0f-913f-a76ad1fc71c1",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "soni": 1,
+      "summa": 12500000.5
+    },
+    {
+      "av": "89a60314-9f55-5c1a-9c4a-2f0c73bdeb99",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "soni": 12,
+      "summa": 7200000
+    },
+    {
+      "av": "e0fd2867-bcb4-5119-a3a7-c0dcbbe14d18",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "soni": 1,
+      "summa": 3400000
+    },
+    {
+      "av": "50a4a674-145d-5088-aeab-aad823b7201c",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "a6f20131-5997-5383-b1d4-c56717425007",
+      "soni": 1,
+      "summa": 2100000
+    },
+    {
+      "av": "50a4a674-145d-5088-aeab-aad823b7201c",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "soni": 1,
+      "summa": 2100000
+    },
+    {
+      "av": "dd8700d6-836b-5887-9588-293fcb887168",
+      "tashkilot": "75b4d5fa-3832-55b4-aa29-3ac729b2b496",
+      "filial": "acea419f-7c2a-5995-a25a-bdb6c06c4ea0",
+      "soni": 1,
+      "summa": 4800000
+    },
+    {
+      "av": "5c94a47c-9dc3-5cb5-b6c0-874179cc5ef5",
+      "tashkilot": "fc71c54d-a6c7-5631-baf8-e4992bcdec99",
+      "filial": "f041c330-cdf2-5a0c-b552-1fe54a7b403e",
+      "soni": 1,
+      "summa": 98000000
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+<form method="post" action="{% url 'vositalar:ommaviy' %}">
+  {% csrf_token %}
+  <input type="hidden" name="keyingi" value="{{ request.get_full_path }}">
+  <table>
+    <thead>
+      <tr>
+        {% if taqsim_huquqi or yorliq_huquqi %}<th></th>{% endif %}
+        <th>Inv. raqam</th><th>Nomi</th><th>Turi</th><th>Filial</th><th class="son">Soni</th><th class="son">Summa</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for av in sahifa %}
+      <tr>
+        {% if taqsim_huquqi or yorliq_huquqi %}<td><input type="checkbox" name="av" value="{{ av.pk }}"></td>{% endif %}
+        <td>{{ av.inv_raqam }}</td><td>{{ av.nomi }}</td><td>{{ av.turi.nomi|default:"" }}</td>
+        <td>{{ av.filial_rekvizit.nomi|default:"" }}</td><td class="son">{{ av.jami_soni }}</td><td class="son">{{ av.jami_summa }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">AV topilmadi.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% if taqsim_huquqi %}
+  <p>
+    Tanlanganlarga (faqat 1 donali AV'lar):
+    <select name="amal">
+      <option value="kochirish">Bo'limga ko'chirish</option>
+      <option value="holat">Holatni o'zgartirish</option>
+    </select>
+    <select name="bolim"><option value="">— bo'lim —</option>
+      {% for b in bolimlar %}<option value="{{ b.pk }}">{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
+    </select>
+    <select name="holat"><option value="">— holat —</option>
+      {% for kalit, nomi in holatlar %}<option value="{{ kalit }}">{{ nomi }}</option>{% endfor %}
+    </select>
+    <button type="submit">Bajarish</button>
+  </p>
+  {% endif %}
+  {% if yorliq_huquqi %}
+  <p>
+    <button type="submit" formaction="{% url 'yorliqlar:tanlash' %}" formmethod="post">Tanlanganlarga yorliq chop etish</button>
+    {% if params.bolim or params.bayroq %}
+    <a href="{% url 'yorliqlar:tanlash' %}?{% if params.bolim %}bolim={{ params.bolim|urlencode }}{% endif %}{% if params.bolim and params.bayroq %}&{% endif %}{% if params.bayroq %}bayroq={{ params.bayroq|urlencode }}{% endif %}">Filtrdagi hammasiga yorliq</a>
+    {% endif %}
+  </p>
+  {% endif %}
+</form>
+
+<p><a href="{% url 'vositalar:royxat_excel' %}?{{ query }}">Excel</a></p>
+
+<p>
+  Jami: {{ sahifa.paginator.count }}.
+  {% if sahifa.has_previous %}<a href="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-get="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-target="#jadval" hx-push-url="true">« Oldingi</a>{% endif %}
+  {{ sahifa.number }} / {{ sahifa.paginator.num_pages }}
+  {% if sahifa.has_next %}<a href="?{{ query }}&page={{ sahifa.next_page_number }}" hx-get="?{{ query }}&page={{ sahifa.next_page_number }}" hx-target="#jadval" hx-push-url="true">Keyingi »</a>{% endif %}
+</p>

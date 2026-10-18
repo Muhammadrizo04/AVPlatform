@@ -1,0 +1,7 @@
+{% if sahifa.paginator.num_pages > 1 %}
+<p class="amallar">
+  {% if sahifa.has_previous %}<a href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.previous_page_number }}">‹ Oldingi</a>{% endif %}
+  {{ sahifa.number }} / {{ sahifa.paginator.num_pages }}
+  {% if sahifa.has_next %}<a href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.next_page_number }}">Keyingi ›</a>{% endif %}
+</p>
+{% endif %}
