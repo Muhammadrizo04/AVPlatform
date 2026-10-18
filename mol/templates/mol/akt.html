@@ -14,10 +14,10 @@ Qabul qiluvchi: <strong>{{ akt.qabul_qiluvchi.ism }}</strong></p>
     <tr>
       <td>{{ forloop.counter }}</td><td>{{ q.av.inv_raqam }}</td><td>{{ q.av.nomi }}</td><td>{{ q.filial.nomi }}</td>
       <td>{% if q.bolim %}{{ q.bolim.toliq_nomi }}{% else %}—{% endif %}</td><td>{{ q.holat_nomi }}</td>
-      <td class="son">{{ q.soni|floatformat:"-3" }}</td><td class="son">{{ q.qiymat|floatformat:2 }}</td>
+      <td class="son">{{ q.soni|son }}</td><td class="son">{{ q.qiymat|pul }}</td>
     </tr>
   {% endfor %}
-    <tr><th colspan="7">Jami</th><th class="son">{{ jami_qiymat|floatformat:2 }}</th></tr>
+    <tr><th colspan="7">Jami</th><th class="son">{{ jami_qiymat|pul }}</th></tr>
   </tbody>
 </table>
 <p>

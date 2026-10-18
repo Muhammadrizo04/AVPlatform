@@ -11,8 +11,8 @@
       <td><a href="{% url 'mol:xodim' x.pk %}">{{ x.ism }}</a></td>
       <td>{{ x.filial.nomi|default:"—" }}</td>
       <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}<span class="xato">Ketgan</span>{% else %}Faol{% endif %}</td>
-      <td class="son">{{ x.av_soni|floatformat:"-3" }}</td>
-      <td class="son">{{ x.qiymat|floatformat:2 }}</td>
+      <td class="son">{{ x.av_soni|son }}</td>
+      <td class="son">{{ x.qiymat|pul }}</td>
     </tr>
   {% empty %}
     <tr><td colspan="5"><em>Xodim yo'q.</em></td></tr>

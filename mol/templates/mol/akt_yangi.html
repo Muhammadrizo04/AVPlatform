@@ -25,8 +25,8 @@
         <td>{{ t.av.nomi }}</td>
         <td>{{ t.filial.nomi }}</td>
         <td>{{ t.get_holat_display }}</td>
-        <td class="son">{{ t.soni|floatformat:"-3" }}</td>
-        <td><input type="text" inputmode="decimal" name="soni_{{ t.pk }}" value="{{ t.soni|floatformat:'-3' }}" size="8" aria-label="Soni"></td>
+        <td class="son">{{ t.soni|son }}</td>
+        <td><input type="text" inputmode="decimal" name="soni_{{ t.pk }}" value="{{ t.soni|floatformat:"-3u" }}" size="8" aria-label="Soni"></td>
       </tr>
     {% empty %}
       <tr><td colspan="7"><em>Topshiriladigan qator yo'q.</em></td></tr>

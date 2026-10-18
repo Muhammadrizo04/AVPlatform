@@ -20,7 +20,7 @@
     <thead><tr><th>Inv. raqam</th><th>Nomi</th><th class="son">Soni</th></tr></thead>
     <tbody>
     {% for a in avlar %}
-      <tr><td>{{ a.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' a.pk %}">{{ a.nomi }}</a></td><td class="son">{{ a.bolim_soni|floatformat:"-3" }}</td></tr>
+      <tr><td>{{ a.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' a.pk %}">{{ a.nomi }}</a></td><td class="son">{{ a.bolim_soni|son }}</td></tr>
     {% endfor %}
     </tbody>
   </table>

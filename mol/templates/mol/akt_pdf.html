@@ -32,10 +32,10 @@ Qabul qiluvchi: <b>{{ akt.qabul_qiluvchi.ism }}</b></p>
     {% for s in satrlar %}
     <tr>
       <td>{{ s.tartib }}</td><td>{{ s.inv }}</td><td>{{ s.nomi }}</td><td>{{ s.bolim }}</td>
-      <td>{{ s.holat }}</td><td class="son">{{ s.soni }}</td><td class="son">{{ s.qiymat }}</td>
+      <td>{{ s.holat }}</td><td class="son">{{ s.soni|son }}</td><td class="son">{{ s.qiymat|pul }}</td>
     </tr>
     {% endfor %}
-    <tr><td colspan="6"><b>Jami</b></td><td class="son"><b>{{ jami }}</b></td></tr>
+    <tr><td colspan="6"><b>Jami</b></td><td class="son"><b>{{ jami|pul }}</b></td></tr>
   </tbody>
 </table>
 <table class="imzolar">

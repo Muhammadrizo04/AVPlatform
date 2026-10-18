@@ -16,13 +16,13 @@
       <td>{{ t.filial.nomi }}</td>
       <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}—{% endif %}</td>
       <td>{{ t.holat_nomi }}</td>
-      <td class="son">{{ t.soni|floatformat:"-3" }}</td>
-      <td class="son">{{ t.qiymat|floatformat:2 }}</td>
+      <td class="son">{{ t.soni|son }}</td>
+      <td class="son">{{ t.qiymat|pul }}</td>
     </tr>
   {% empty %}
     <tr><td colspan="7"><em>AV biriktirilmagan.</em></td></tr>
   {% endfor %}
-  {% if qatorlar %}<tr><th colspan="5">Jami</th><th class="son">{{ jami_soni|floatformat:"-3" }}</th><th class="son">{{ jami_qiymat|floatformat:2 }}</th></tr>{% endif %}
+  {% if qatorlar %}<tr><th colspan="5">Jami</th><th class="son">{{ jami_soni|son }}</th><th class="son">{{ jami_qiymat|pul }}</th></tr>{% endif %}
   </tbody>
 </table>
 <h2>Aktlar</h2>

@@ -225,7 +225,7 @@ def test_pdf_baytlar(filial, user, bobur, aziz, ombor):
     matn = "".join(p.extract_text() for p in PdfReader(io.BytesIO(pdf)).pages)
     assert akt.nomi in matn
     assert "Bobur" in matn and "Aziz" in matn and "INV-1" in matn
-    assert "400.00" in matn  # 4 dona x (600 / 6)
+    assert "400,00" in matn  # 4 dona x (600 / 6)
 
 
 def test_raqam_advisory_lock_bilan(filial, user, bobur, aziz, ombor):

@@ -34,6 +34,19 @@ def test_bosh_filial_kesimi(client_hisobchi, filial_yarat):
     assert qatorlar["B"]["soni"] == Decimal("3")
     assert qatorlar["B"]["boshlangich"] == Decimal("100")
     assert qatorlar["B"]["qoldiq"] == Decimal("50.00")
+    assert javob.context["jami"] == {"soni": Decimal("5"), "boshlangich": Decimal("200"), "qoldiq": Decimal("150.00")}
+    html = javob.content.decode()
+    assert "<th>Jami</th>" in html
+    assert "<th class=\"son\">5</th>" in html and "200,00" in html and "150,00" in html
+
+
+def test_bosh_sonlar_mingliklar_bilan(client_hisobchi, filial_yarat):
+    av = av_yarat(filial_yarat("A"), soni="1108")
+    av.qoldiqlar.update(summa=Decimal("3485037435.36"))
+    html = client_hisobchi.get(reverse("panel:bosh")).content.decode()
+    assert "1 108<" in html
+    assert "3 485 037 435,36" in html
+    assert "1108,000" not in html
 
 
 def test_bosh_filial_cheklovi(foydalanuvchi, filial_yarat):

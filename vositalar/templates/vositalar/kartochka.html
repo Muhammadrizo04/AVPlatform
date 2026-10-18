@@ -10,15 +10,15 @@
   <tr><th>Inv. raqam</th><td>{{ av.inv_raqam|default:"—" }}</td><th>Turi</th><td>{{ av.turi.nomi|default:"—" }}</td></tr>
   <tr><th>Filial (rekvizit)</th><td>{{ av.filial_rekvizit.nomi|default:"—" }}</td><th>Tashkilot</th><td>{{ av.tashkilot.nomi|default:"—" }}</td></tr>
   <tr><th>Chiqarilgan sana</th><td>{{ av.chiqarilgan_sana|date:"d.m.Y"|default:"—" }}</td><th>Kod</th><td>{{ av.kod }}</td></tr>
-  <tr><th>Soni</th><td>{{ av.jami_soni|floatformat:"-3" }}</td><th>Summa</th><td>{{ av.jami_summa }}</td></tr>
-  <tr><th>Dona narxi</th><td>{{ dona_narxi|floatformat:2 }}</td><th>1C izohi</th><td>{{ av.izoh_1c|default:"—" }}</td></tr>
+  <tr><th>Soni</th><td>{{ av.jami_soni|son }}</td><th>Summa</th><td>{{ av.jami_summa|pul }}</td></tr>
+  <tr><th>Dona narxi</th><td>{{ dona_narxi|pul }}</td><th>1C izohi</th><td>{{ av.izoh_1c|default:"—" }}</td></tr>
 </table>
 
 <h2>Amortizatsiya</h2>
 {% if amortizatsiya %}
 <table>
-  <tr><th>O'tgan oylar</th><td>{{ amortizatsiya.oylar }}</td><th>Qoldiq qiymat</th><td>{{ amortizatsiya.qoldiq_qiymat }}</td></tr>
-  <tr><th>Eskirish</th><td>{{ amortizatsiya.eskirish_foiz }}%</td><th>Tugash sanasi</th><td>{{ amortizatsiya.tugash_sanasi|date:"d.m.Y" }}</td></tr>
+  <tr><th>O'tgan oylar</th><td>{{ amortizatsiya.oylar }}</td><th>Qoldiq qiymat</th><td>{{ amortizatsiya.qoldiq_qiymat|pul }}</td></tr>
+  <tr><th>Eskirish</th><td>{{ amortizatsiya.eskirish_foiz|son }}%</td><th>Tugash sanasi</th><td>{{ amortizatsiya.tugash_sanasi|date:"d.m.Y" }}</td></tr>
 </table>
 {% else %}<p>Hisoblab bo'lmaydi: ishga tushgan sana yoki xizmat muddati kiritilmagan.</p>{% endif %}
 

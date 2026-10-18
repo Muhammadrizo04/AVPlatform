@@ -8,17 +8,20 @@
   <thead><tr><th>Filial</th><th class="son">Soni</th><th class="son">Boshlang'ich qiymat</th><th class="son">Qoldiq qiymat</th></tr></thead>
   <tbody>
   {% for q in filiallar %}
-    <tr><td>{{ q.filial.nomi }}</td><td class="son">{{ q.soni }}</td><td class="son">{{ q.boshlangich }}</td><td class="son">{{ q.qoldiq }}</td></tr>
+    <tr><td>{{ q.filial.nomi }}</td><td class="son">{{ q.soni|son }}</td><td class="son">{{ q.boshlangich|pul }}</td><td class="son">{{ q.qoldiq|pul }}</td></tr>
   {% empty %}
     <tr><td colspan="4">Ma'lumot yo'q.</td></tr>
   {% endfor %}
   </tbody>
+  {% if filiallar %}
+  <tfoot><tr><th>Jami</th><th class="son">{{ jami.soni|son }}</th><th class="son">{{ jami.boshlangich|pul }}</th><th class="son">{{ jami.qoldiq|pul }}</th></tr></tfoot>
+  {% endif %}
 </table>
 
 <h2>Nazorat va tozalash</h2>
 <div class="kartochkalar">
   {% for b in bayroqlar %}
-    <a class="kartochka" href="{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}"><strong>{{ b.soni }}</strong>{{ b.nomi }}</a>
+    <a class="kartochka" href="{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}"><strong>{{ b.soni|son }}</strong>{{ b.nomi }}</a>
   {% endfor %}
 </div>
 {% endblock %}
