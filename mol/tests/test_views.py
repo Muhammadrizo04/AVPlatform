@@ -326,7 +326,7 @@ def test_akt_yangi_qator_oldindan_tanlangan(client_rol, filial):
     javob = client_rol("hisobchi").get(reverse("mol:akt_yangi"), {"qator": t_stol.pk})
     assert javob.status_code == 200
     assert [t.pk for t in javob.context["qatorlar"]] == [t_stol.pk]
-    assert f'name="tanlangan" value="{t_stol.pk}" aria-label="Tanlash" checked' in javob.content.decode()
+    assert f'name="tanlangan" value="{t_stol.pk}" aria-label="Tanlash" data-soni="soni_{t_stol.pk}" checked' in javob.content.decode()
 
 
 @pytest.mark.parametrize("qiymat", ["abc", "²", "9" * 25, "999999"])
@@ -336,3 +336,51 @@ def test_akt_yangi_notogri_qator_parametri(client_rol, filial, qiymat):
     javob = client_rol("hisobchi").get(reverse("mol:akt_yangi"), {"qator": qiymat})
     assert javob.status_code == 200
     assert len(javob.context["qatorlar"]) == 1
+
+
+def _soni_inputlari(html):
+    import re
+    return re.findall(r'<input[^>]*name="soni_(\d+)"[^>]*>', html), re.findall(r'<input[^>]*name="soni_\d+"[^>]*>', html)
+
+
+def test_akt_yangi_soni_faqat_tanlangan_qatorda_yuboriladi(client_rol, filial):
+    stol = av_yarat(filial, kod="1", nomi="Stol")
+    t1 = qator(stol, filial, "6")
+    t2 = qator(av_yarat(filial, kod="2", nomi="Stul"), filial, "3")
+    html = client_rol("hisobchi").get(reverse("mol:akt_yangi")).content.decode()
+    _, inputlar = _soni_inputlari(html)
+    assert len(inputlar) == 2 and all("disabled" in i for i in inputlar)  # tanlanmagan — yuborilmaydi
+    html = client_rol("hisobchi").get(reverse("mol:akt_yangi"), {"qator": t1.pk}).content.decode()
+    _, inputlar = _soni_inputlari(html)
+    assert len(inputlar) == 1 and "disabled" not in inputlar[0]
+    assert f"soni_{t2.pk}" not in html
+
+
+def test_akt_yangi_soni_yuborilmasa_toliq_qator(client_rol, filial, aziz):
+    t = qator(av_yarat(filial), filial, "6")
+    javob = client_rol("hisobchi").post(reverse("mol:akt_yangi"), {"topshiruvchi": "", "tanlangan": [t.pk], "qabul": aziz.pk})
+    assert javob.status_code == 302
+    assert MolAkt.objects.get().qatorlar.get().soni == SON("6")
+
+
+def test_akt_yangi_qidiruv_va_filial_filtri(client_rol, filial, filial_yarat):
+    b = filial_yarat("B")
+    stol = qator(av_yarat(filial, kod="1", nomi="Stol"), filial, "1")
+    stul = qator(av_yarat(filial, kod="2", nomi="Stul"), filial, "1")
+    stul_b = qator(av_yarat(b, kod="3", nomi="Stul"), b, "1")
+    c = client_rol("hisobchi")
+    pklar = lambda **p: {t.pk for t in c.get(reverse("mol:akt_yangi"), p).context["qatorlar"]}
+    assert pklar(q="stul") == {stul.pk, stul_b.pk}
+    assert pklar(q="INV-1") == {stol.pk}
+    assert pklar(q="stul", filial=b.pk) == {stul_b.pk}
+    assert pklar(filial="²") == {stol.pk, stul.pk, stul_b.pk}
+
+
+def test_akt_yangi_qatorlar_soni_cheklangan(client_rol, filial, monkeypatch):
+    import mol.views
+    monkeypatch.setattr(mol.views, "AKT_QATOR_CHEGARASI", 2)
+    for i in range(3):
+        qator(av_yarat(filial, kod=str(i + 1)), filial, "1")
+    javob = client_rol("hisobchi").get(reverse("mol:akt_yangi"))
+    assert len(javob.context["qatorlar"]) == 2
+    assert "Filtrni toraytiring" in javob.content.decode()

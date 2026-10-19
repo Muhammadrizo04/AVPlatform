@@ -7,9 +7,9 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from hisoblar.huquqlar import amal_kerak, huquqi_bor
+from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisoblar.parametrlar import son
-from onec.models import AV
+from onec.models import AV, Filial
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.bayroqlar import BAYROQLAR
 from vositalar.models import Holat
@@ -116,36 +116,64 @@ def _akt_yaratish(request, top, qatorlar) -> MolAkt:
     return akt_yarat(top, qabul, tanlov, request.user, izoh=request.POST.get("izoh", "").strip())
 
 
+# Formada ko'pi bilan shuncha qator ko'rsatiladi (ko'p qator — sahifa og'ir, POST maydonlar chegarasi).
+AKT_QATOR_CHEGARASI = 200
+
+
+def _korinadigan_qatorlar(qatorlar, manba, tanlanganlar: set[int]):
+    """Formada ko'rsatiladigan qatorlar: `q` (inv. raqam / nom) va `filial` filtri, chegaralangan;
+    tanlangan qatorlar har doim ko'rsatiladi. (qatorlar, kesildimi) qaytaradi."""
+    qs = qatorlar
+    q = (manba.get("q") or "").strip()
+    if q:
+        qs = qs.filter(Q(av__inv_raqam__icontains=q) | Q(av__nomi__icontains=q))
+    filial_id = son(manba.get("filial"))
+    if filial_id:
+        qs = qs.filter(filial_id=filial_id)
+    royxat = list(qs[: AKT_QATOR_CHEGARASI + 1])
+    kesildi = len(royxat) > AKT_QATOR_CHEGARASI
+    royxat = royxat[:AKT_QATOR_CHEGARASI]
+    yetmagan = tanlanganlar - {t.pk for t in royxat}
+    if yetmagan:
+        royxat = list(qatorlar.filter(pk__in=yetmagan)) + royxat
+    return royxat, kesildi
+
+
 @amal_kerak("mol_akt")
 def akt_yangi(request):
     manba = request.POST if request.method == "POST" else request.GET
     top, qatorlar = _topshiruvchi(request, manba.get("topshiruvchi"))
-    qatorlar = list(qatorlar)
-    # `?qator=<pk>` (AV kartochkasidan): shu AV qatorlari ko'rsatiladi, ko'rsatilgan qator oldindan belgilanadi.
-    oldindan = None
-    if request.method == "GET":
-        pk = _id(request.GET.get("qator"))
-        tanlangan = next((t for t in qatorlar if t.pk == pk), None) if pk else None
-        if tanlangan is not None:
-            oldindan = tanlangan.pk
-            qatorlar = [t for t in qatorlar if t.av_id == tanlangan.av_id]
     xato, status = "", 200
+    tanlanganlar: set[int] = set()
     if request.method == "POST":
         try:
-            akt = _akt_yaratish(request, top, qatorlar)
+            akt = _akt_yaratish(request, top, list(qatorlar))
         except AktXato as e:
             xato, status = str(e), 400
         else:
             messages.success(request, f"Qoralama akt {akt.nomi} yaratildi.")
             return redirect("mol:akt", pk=akt.pk)
+        tanlanganlar = {pk for pk in (son(v) for v in request.POST.getlist("tanlangan")) if pk}
+    else:
+        # `?qator=<pk>` (AV kartochkasidan): shu AV qatorlari ko'rsatiladi, ko'rsatilgan qator oldindan belgilanadi.
+        pk = son(request.GET.get("qator"))
+        tanlangan = qatorlar.filter(pk=pk).first() if pk else None
+        if tanlangan is not None:
+            tanlanganlar = {tanlangan.pk}
+            qatorlar = qatorlar.filter(av_id=tanlangan.av_id)
+    korinadigan, kesildi = _korinadigan_qatorlar(qatorlar, manba, tanlanganlar)
     kontekst = {
         "topshiruvchi": top,
-        "qatorlar": qatorlar,
-        "oldindan": oldindan,
+        "qatorlar": korinadigan,
+        "tanlanganlar": tanlanganlar,
+        "kesildi": kesildi,
+        "chegara": AKT_QATOR_CHEGARASI,
+        "filiallar": filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
         "qabul_qiluvchilar": [x for x in sorovlar.faol_xodimlar(request.user).order_by("ism", "pk") if not top or x.pk != top.pk],
         "xodimlar": sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk"),
         "xato": xato,
         "forma": request.POST if request.method == "POST" else {},
+        "params": manba,
     }
     return render(request, "mol/akt_yangi.html", kontekst, status=status)
 
