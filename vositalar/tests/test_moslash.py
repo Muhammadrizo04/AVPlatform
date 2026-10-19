@@ -486,3 +486,24 @@ def test_kutilayotgan_filtr(av, filial_a, filial_b):
 
     assert kutilayotgan() == {(av.pk, filial_a.pk): SON("3"), (av.pk, filial_b.pk): SON("1.5")}
     assert kutilayotgan(Q(filial_id__in=[filial_b.pk])) == {(av.pk, filial_b.pk): SON("1.5")}
+
+
+def test_chiqim_qatorlari_taqsimotdan_oldin_qulflanadi(av, filial_a, monkeypatch):
+    """Qulf tartibi ChiqimHujjat -> Taqsimot (Task 4 tasdiqlash bilan bir xil); K qulflangan qatorlardan olinadi."""
+    from vositalar import moslash
+
+    _prixodxona_ofis(av, filial_a)
+    chiqim(av, filial_a, "2")
+    # Ish bosqichida K aggregat so'rovdan emas, qulflangan chiqim qatorlaridan olinishi kerak.
+    monkeypatch.setattr(moslash, "_kutilayotgan", lambda filtr=None: {})
+
+    with CaptureQueriesContext(connection) as ctx:
+        stat = moslashtir()
+
+    sorovlar = [q["sql"] for q in ctx.captured_queries]
+    chiqim_qulf = [i for i, s in enumerate(sorovlar) if 'FROM "chiqimlar_chiqimhujjat"' in s and "FOR UPDATE" in s]
+    taqsimot_qulf = [i for i, s in enumerate(sorovlar) if 'FROM "vositalar_taqsimot"' in s and "FOR UPDATE" in s]
+    assert chiqim_qulf and taqsimot_qulf
+    assert chiqim_qulf[0] < taqsimot_qulf[0]
+    assert stat["kamaydi"] == 0  # K=2 qulflangan qatordan: taqsimot saqlandi
+    assert taqsimlanmagan(av, filial_a).soni == SON("4")

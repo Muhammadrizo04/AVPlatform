@@ -58,7 +58,7 @@ def test_boshlanishdan_oldingi_chiqim_yaratilmaydi(av, fa):
 def test_yangi_chiqim_kutilmoqda(av, fa):
     ref = uuid.uuid4()
     harakat(av, fa, "chiqim", SANA, 2, ref=ref, summa=250)
-    assert yangila() == {"yaratildi": 1, "yangilandi": 0, "bekor": 0}
+    assert yangila() == {"yaratildi": 1, "yangilandi": 0, "bekor": 0, "qaytdi": 0}
     c = ChiqimHujjat.objects.get()
     assert (c.holat, c.soni, c.summa, c.sana) == ("kutilmoqda", Decimal(2), Decimal(250), SANA)
     assert (c.hujjat_ref, c.hujjat_turi, c.hujjat_raqami, c.av, c.filial) == (ref, "Реализация", "7", av, fa)
@@ -84,7 +84,7 @@ def test_soni_nol_va_kirim_yaratilmaydi(av, fa):
 def test_takroriy_chaqiriq_idempotent(av, fa):
     harakat(av, fa, "chiqim", SANA, 1)
     yangila()
-    assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0}
+    assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0}
     assert ChiqimHujjat.objects.count() == 1
 
 
@@ -103,7 +103,7 @@ def test_tasdiqlangan_ozgarmaydi(av, fa):
     ChiqimHujjat.objects.update(holat="tasdiqlangan")
     h.soni = 4
     h.save()
-    assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0}
+    assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0}
     c = ChiqimHujjat.objects.get()
     assert (c.holat, c.soni) == ("tasdiqlangan", Decimal(1))
 
@@ -172,6 +172,24 @@ def test_filial_ozgarsa_eski_bekor_yangi_yaratiladi(av, fa, filial_yarat):
     yangila()
     h.filial = fc
     h.save()
-    assert yangila() == {"yaratildi": 1, "yangilandi": 0, "bekor": 1}
+    assert yangila() == {"yaratildi": 1, "yangilandi": 0, "bekor": 1, "qaytdi": 0}
     assert ChiqimHujjat.objects.get(filial=fa).holat == "bekor"
     assert ChiqimHujjat.objects.get(filial=fc).holat == "kutilmoqda"
+
+
+def test_bekor_chiqim_qayta_paydo_bolsa_kutilmoqda(av, fa):
+    """1C hujjati qayta o'tkazildi: `bekor` yozuv `kutilmoqda`ga qaytadi (aks holda K=0 va taqsimot tasdiqsiz o'chadi)."""
+    ref = uuid.uuid4()
+    harakat(av, fa, "chiqim", SANA, 1, ref=ref)
+    yangila()
+    Harakat1C.objects.all().delete()
+    yangila()
+    assert ChiqimHujjat.objects.get().holat == "bekor"
+    harakat(av, fa, "chiqim", SANA + timedelta(hours=1), 2, ref=ref, summa=250)
+
+    assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 1}
+    c = ChiqimHujjat.objects.get()
+    assert (c.holat, c.soni, c.summa, c.sana) == ("kutilmoqda", Decimal(2), Decimal(250), SANA + timedelta(hours=1))
+    j = Jurnal.objects.filter(obyekt_turi="chiqimlar.chiqimhujjat", obyekt_id=str(c.pk)).order_by("-pk").first()
+    assert (j.maydon, j.eski, j.yangi, j.kim_nomi) == ("holat", "bekor", "kutilmoqda", "1C sinxron")
+    assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0}

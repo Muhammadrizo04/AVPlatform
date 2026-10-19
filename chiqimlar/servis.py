@@ -36,7 +36,7 @@ def taxmin_qil(av_id: int, filial_id: int, sana: datetime, hujjat_turi: str) -> 
 
 def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
     """[dan, gacha] (aware) oralig'idagi 1C chiqimlarini `ChiqimHujjat`ga aks ettiradi."""
-    stat = {"yaratildi": 0, "yangilandi": 0, "bekor": 0}
+    stat = {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0}
     boshlanish = Sozlama.ol().chiqim_boshlanishi
     if boshlanish is None:
         return stat
@@ -82,6 +82,13 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 c.soni, c.summa, c.sana = g["soni"], g["summa"], g["sana"]
                 c.save(update_fields=["soni", "summa", "sana"])
                 stat["yangilandi"] += 1
+            elif c.holat == ChiqimHujjat.Holat.BEKOR:
+                # 1C hujjati qayta o'tkazildi: yana tasdiq kutadi (aks holda K=0 va taqsimot tasdiqsiz o'chadi).
+                c.holat = ChiqimHujjat.Holat.KUTILMOQDA
+                c.soni, c.summa, c.sana = g["soni"], g["summa"], g["sana"]
+                c.save(update_fields=["holat", "soni", "summa", "sana"])
+                jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.BEKOR, ChiqimHujjat.Holat.KUTILMOQDA)
+                stat["qaytdi"] += 1
 
         for kalit, c in mavjud.items():
             if kalit not in guruhlar and c.holat == ChiqimHujjat.Holat.KUTILMOQDA:

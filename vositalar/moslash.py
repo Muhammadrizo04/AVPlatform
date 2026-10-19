@@ -44,14 +44,27 @@ def farq(av: AV, filial) -> Decimal:
 
 def moslashtir() -> dict:
     """Taqsimotni 1C qoldig'iga moslaydi. Statistika (sonlar — (AV, filial) juftlari):
-    `yangi_kartochka`, `kopaydi`, `kamaydi`, `nolga_tushdi`, `mos_emas` (moslashdan keyin farq < 0)."""
+    `yangi_kartochka`, `kopaydi`, `kamaydi`, `nolga_tushdi`, `mos_emas` (moslashdan keyin farq < 0).
+
+    Eslatma: formula `max(1C, 0) + K` bo'yicha kutilayotgan chiqim yetishmayotgan donalarni taqsimlanmaganga qayta
+    qo'shadi. Bu faqat `chiqim_boshlanishi` o'tmishga surilganda yoki chiqim kutilayotgan paytda qaytish (kirim)
+    kelganda bo'lishi mumkin."""
     with transaction.atomic():
         statistika = {"yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "mos_emas": 0}
         statistika["yangi_kartochka"] = _kartochkalar()
 
         # Bir (av, filial) uchun bir nechta tashkilot qatori bo'lishi mumkin — yig'iladi.
         qoldiq = _yigindi(AVQoldiq.objects)
-        kutilayotgan = _kutilayotgan()
+        # Qulf tartibi ChiqimHujjat -> Taqsimot (chiqimni tasdiqlash bilan bir xil, deadlock bo'lmaydi). K qulflangan
+        # qatorlardan: tasdiqlash parallel ravishda taqsimotni kamaytirib `tasdiqlangan` qilsa, eskirgan K bilan
+        # «fantom» dona qayta qo'shilmaydi.
+        from chiqimlar.models import ChiqimHujjat
+
+        kutilayotgan = {}
+        chiqimlar = ChiqimHujjat.objects.select_for_update().filter(holat=ChiqimHujjat.Holat.KUTILMOQDA)
+        for c in chiqimlar.order_by("pk"):
+            juft = (c.av_id, c.filial_id)
+            kutilayotgan[juft] = kutilayotgan.get(juft, NOL) + c.soni
         # Qatorlar qulflanadi (spec §8): foydalanuvchining parallel ko'chirishi o'qish va yozish orasida kirmaydi.
         # PostgreSQL FOR UPDATE'ni GROUP BY bilan qabul qilmaydi — yig'indi Python'da, qulflangan qatorlardan.
         taqsimot, taqsimlanmagan = {}, {}
