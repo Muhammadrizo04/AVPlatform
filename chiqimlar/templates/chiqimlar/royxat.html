@@ -1,0 +1,52 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}1C chiqimlari{% endblock %}
+{% block kontent %}
+<h1>1C chiqimlari</h1>
+
+<form method="get" action="{% url 'chiqimlar:royxat' %}">
+  <select name="holat">
+    <option value="" {% if not holat %}selected{% endif %}>Barcha holatlar</option>
+    {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
+  <select name="tur"><option value="">Barcha turlar</option>
+    {% for kalit, nomi in turlar %}<option value="{{ kalit }}" {% if params.tur == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
+  <select name="filial"><option value="">Barcha filiallar</option>
+    {% for f in filiallar %}<option value="{{ f.pk }}" {% if params.filial == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+  </select>
+  <label>Dan <input type="date" name="dan" value="{{ params.dan }}"></label>
+  <label>Gacha <input type="date" name="gacha" value="{{ params.gacha }}"></label>
+  <button type="submit">Filtrlash</button>
+</form>
+
+<table>
+  <thead>
+    <tr><th>Sana</th><th>1C hujjati</th><th>AV</th><th>Filial</th><th class="son">Soni</th><th class="son">Summa</th><th>Taxmin / tur</th><th>Holat</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for c in sahifa %}
+    <tr>
+      <td>{{ c.sana|date:"d.m.Y" }}</td>
+      <td>{{ c.hujjat_turi }} {{ c.hujjat_raqami }}</td>
+      <td><a href="{% url 'vositalar:kartochka' c.av_id %}">{{ c.av.nomi }}</a></td>
+      <td>{{ c.filial.nomi }}</td>
+      <td class="son">{{ c.soni|son }}</td>
+      <td class="son">{{ c.summa|pul }}</td>
+      <td>{% if c.tur %}{{ c.get_tur_display }}{% else %}{{ c.get_taxmin_tur_display }} (taxmin){% endif %}</td>
+      <td>{{ c.get_holat_display }}</td>
+      <td>{% if taqsim_huquqi and c.holat == "kutilmoqda" %}<a href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Tasdiqlash</a>{% else %}<a href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Ko'rish</a>{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="9">Chiqim topilmadi.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if sahifa.paginator.num_pages > 1 %}
+<p>
+  {% if sahifa.has_previous %}<a href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.previous_page_number }}">‹ Oldingi</a>{% endif %}
+  {{ sahifa.number }} / {{ sahifa.paginator.num_pages }}
+  {% if sahifa.has_next %}<a href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.next_page_number }}">Keyingi ›</a>{% endif %}
+</p>
+{% endif %}
+{% endblock %}

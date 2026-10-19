@@ -21,7 +21,7 @@
 <h2>Nazorat va tozalash</h2>
 <div class="kartochkalar">
   {% for b in bayroqlar %}
-    <a class="kartochka" href="{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}"><strong>{{ b.soni|son }}</strong>{{ b.nomi }}</a>
+    <a class="kartochka" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}"><strong>{{ b.soni|son }}</strong>{{ b.nomi }}</a>
   {% endfor %}
 </div>
 {% endblock %}
