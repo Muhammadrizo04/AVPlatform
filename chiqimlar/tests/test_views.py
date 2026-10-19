@@ -83,7 +83,7 @@ def test_tasdiqlash_oqimi(foydalanuvchi, tayyor, av):
     url = reverse("chiqimlar:tasdiqlash", args=[c.pk])
     r = cl.get(url)
     assert r.status_code == 200
-    assert 'name="kutilgan_soni" value="1"' in r.content.decode() or 'value="1"' in r.content.decode()
+    assert 'name="kutilgan_soni" value="1"' in r.content.decode()
     r = cl.post(url, {"tur": "sotildi", "kutilgan_soni": "1", f"soni_{t.pk}": "1", "izoh": "ok"})
     assert r.status_code == 302 and r.url == reverse("chiqimlar:royxat")
     c.refresh_from_db()
@@ -131,7 +131,21 @@ def test_hr_rahbar_tasdiqlay_olmaydi(foydalanuvchi, tayyor):
         assert cl.get(reverse("chiqimlar:royxat")).status_code == 200
         r = cl.post(reverse("chiqimlar:tasdiqlash", args=[c.pk]), {"tur": "sotildi", "kutilgan_soni": "1"})
         assert r.status_code == 403
-        assert cl.get(reverse("chiqimlar:tasdiqlash", args=[c.pk])).status_code == 403
+        r = cl.get(reverse("chiqimlar:tasdiqlash", args=[c.pk]))
+        html = r.content.decode()
+        assert r.status_code == 200
+        assert 'name="tur"' not in html and 'name="kutilgan_soni"' not in html and "Taxmin qilingan tur" in html
+    c.refresh_from_db()
+    assert c.holat == "kutilmoqda"
+
+
+@pytest.mark.parametrize("holat,matn", [("tasdiqlangan", "allaqachon tasdiqlangan"), ("bekor", "bekor qilingan")])
+def test_post_kutilmoqda_emas_ogohlantirish(foydalanuvchi, av, fa, holat, matn):
+    c = chiqim(av, fa, holat=holat)
+    r = kirgan(foydalanuvchi, "hisobchi").post(
+        reverse("chiqimlar:tasdiqlash", args=[c.pk]), {"tur": "sotildi", "kutilgan_soni": "1"}
+    )
+    assert r.status_code == 200 and matn in html.unescape(r.content.decode())
 
 
 def test_ruxsatsiz_filial_chiqimi_404(foydalanuvchi, av, fa, fb):

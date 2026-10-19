@@ -104,9 +104,19 @@ def tasdiqlash(request, pk):
     if chiqim is None:
         raise Http404
     if chiqim.holat != ChiqimHujjat.Holat.KUTILMOQDA:
+        if request.method == "POST":
+            messages.warning(
+                request,
+                "Bu chiqim 1C'da bekor qilingan." if chiqim.holat == ChiqimHujjat.Holat.BEKOR
+                else "Bu chiqim allaqachon tasdiqlangan.",
+            )
         return render(request, "chiqimlar/tasdiqlash.html", {"chiqim": chiqim, "faqat_oqish": True})
     if not huquqi_bor(request.user, "taqsimot"):
-        raise PermissionDenied
+        if request.method == "POST":
+            raise PermissionDenied
+        return render(request, "chiqimlar/tasdiqlash.html", {
+            "chiqim": chiqim, "faqat_oqish": True, "qatorlar": taqsimot_qatorlari(chiqim),
+        })
     qatorlar = taqsimot_qatorlari(chiqim)
 
     if request.method == "POST":

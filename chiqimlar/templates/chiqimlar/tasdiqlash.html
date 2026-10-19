@@ -12,14 +12,26 @@
 </dl>
 
 {% if faqat_oqish %}
-<h2>{{ chiqim.get_holat_display }}</h2>
+<h2>Holat: {{ chiqim.get_holat_display }}</h2>
 <dl>
   {% if chiqim.tur %}<dt>Tur</dt><dd>{{ chiqim.get_tur_display }}</dd>{% endif %}
   {% if chiqim.qabul_filial %}<dt>Qabul qiluvchi filial (B)</dt><dd>{{ chiqim.qabul_filial.nomi }}</dd>{% endif %}
   {% if chiqim.kim %}<dt>Kim</dt><dd>{{ chiqim.kim.get_full_name|default:chiqim.kim.get_username }}</dd>{% endif %}
   {% if chiqim.qachon %}<dt>Qachon</dt><dd>{{ chiqim.qachon|date:"d.m.Y H:i" }}</dd>{% endif %}
   {% if chiqim.izoh %}<dt>Izoh</dt><dd>{{ chiqim.izoh }}</dd>{% endif %}
+  {% if chiqim.holat == "kutilmoqda" %}<dt>Taxmin qilingan tur</dt><dd>{{ chiqim.get_taxmin_tur_display }}</dd>{% endif %}
 </dl>
+{% if qatorlar %}
+<h2>A filialdagi taqsimot</h2>
+<table>
+  <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Mavjud</th></tr></thead>
+  <tbody>
+  {% for q in qatorlar %}
+    <tr><td>{{ q.bolim.toliq_nomi|default:"—" }}</td><td>{{ q.mol.ism|default:"—" }}</td><td>{{ q.get_holat_display }}</td><td class="son">{{ q.soni|son }}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endif %}
 {% else %}
 {% if xato %}<p class="xato" role="alert">{{ xato }}</p>{% endif %}
 <form method="post" action="{% url 'chiqimlar:tasdiqlash' chiqim.pk %}">
