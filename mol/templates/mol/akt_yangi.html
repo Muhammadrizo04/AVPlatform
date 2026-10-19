@@ -20,7 +20,7 @@
     <tbody>
     {% for t in qatorlar %}
       <tr>
-        <td><input type="checkbox" name="tanlangan" value="{{ t.pk }}" aria-label="Tanlash"></td>
+        <td><input type="checkbox" name="tanlangan" value="{{ t.pk }}" aria-label="Tanlash"{% if t.pk == oldindan %} checked{% endif %}></td>
         <td>{{ t.av.inv_raqam }}</td>
         <td>{{ t.av.nomi }}</td>
         <td>{{ t.filial.nomi }}</td>

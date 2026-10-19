@@ -309,3 +309,30 @@ def foydalanuvchi_ol(client):
     from django.contrib.auth import get_user_model
 
     return get_user_model().objects.get(pk=client.session["_auth_user_id"])
+
+
+def test_xodimlar_sahifasida_yangi_akt_tugmasi(client_rol, filial):
+    havola = f'href="{reverse("mol:akt_yangi")}"'
+    for rol in ("hisobchi", "hr", "admin"):
+        assert havola in client_rol(rol).get(reverse("mol:xodimlar")).content.decode()
+    assert havola not in client_rol("rahbar").get(reverse("mol:xodimlar")).content.decode()
+
+
+def test_akt_yangi_qator_oldindan_tanlangan(client_rol, filial):
+    stol = av_yarat(filial, kod="1", nomi="Stol")
+    stul = av_yarat(filial, kod="2", nomi="Stul")
+    t_stol = qator(stol, filial, "6")
+    qator(stul, filial, "3")
+    javob = client_rol("hisobchi").get(reverse("mol:akt_yangi"), {"qator": t_stol.pk})
+    assert javob.status_code == 200
+    assert [t.pk for t in javob.context["qatorlar"]] == [t_stol.pk]
+    assert f'name="tanlangan" value="{t_stol.pk}" aria-label="Tanlash" checked' in javob.content.decode()
+
+
+@pytest.mark.parametrize("qiymat", ["abc", "²", "9" * 25, "999999"])
+def test_akt_yangi_notogri_qator_parametri(client_rol, filial, qiymat):
+    av = av_yarat(filial)
+    qator(av, filial, "6")
+    javob = client_rol("hisobchi").get(reverse("mol:akt_yangi"), {"qator": qiymat})
+    assert javob.status_code == 200
+    assert len(javob.context["qatorlar"]) == 1

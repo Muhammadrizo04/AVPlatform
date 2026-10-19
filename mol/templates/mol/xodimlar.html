@@ -2,7 +2,10 @@
 {% block sarlavha %}МОЛ nazorati{% endblock %}
 {% block kontent %}
 <h1>МОЛ nazorati</h1>
-<p><a href="{% url 'mol:ketganlar' %}">Ketgan xodimlardagi AV'lar</a></p>
+<p>
+  {% if akt_huquqi %}<a class="tugma" href="{% url 'mol:akt_yangi' %}">Yangi akt</a> · {% endif %}
+  <a href="{% url 'mol:ketganlar' %}">Ketgan xodimlardagi AV'lar</a>
+</p>
 <table>
   <thead><tr><th>Xodim</th><th>Filial</th><th>Holati</th><th class="son">AV soni</th><th class="son">Qiymat</th></tr></thead>
   <tbody>

@@ -449,3 +449,18 @@ def client_user(user):
     c = Client()
     c.force_login(user)
     return c
+
+
+def test_molsiz_qatorda_mol_biriktirish_havolasi(client_rol, filial_a):
+    from onec.models import Xodim
+    import uuid as _uuid
+    av = av_yarat(filial_a, soni="5")
+    molsiz = qator(av, filial_a, "3")
+    xodim = Xodim.objects.create(ref_1c=_uuid.uuid4(), ism="Aziz", filial=filial_a)
+    molli = qator(av, filial_a, "2", mol=xodim)
+    asos = reverse("mol:akt_yangi")
+    for rol in ("hisobchi", "hr"):
+        html = client_rol(rol).get(url("kartochka", av.pk)).content.decode()
+        assert f'href="{asos}?qator={molsiz.pk}"' in html
+        assert f"?qator={molli.pk}" not in html
+    assert asos not in client_rol("rahbar").get(url("kartochka", av.pk)).content.decode()

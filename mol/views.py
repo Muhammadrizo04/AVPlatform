@@ -34,7 +34,10 @@ def xodimlar(request):
     yigindi = sorovlar.xodim_yigindilari(request.user)
     for x in royxat:
         x.av_soni, x.qiymat = yigindi.get(x.pk, (NOL, NOL))
-    return render(request, "mol/xodimlar.html", {"xodimlar": royxat})
+    return render(
+        request, "mol/xodimlar.html",
+        {"xodimlar": royxat, "akt_huquqi": huquqi_bor(request.user, "mol_akt")},
+    )
 
 
 @amal_kerak("korish")
@@ -118,6 +121,14 @@ def akt_yangi(request):
     manba = request.POST if request.method == "POST" else request.GET
     top, qatorlar = _topshiruvchi(request, manba.get("topshiruvchi"))
     qatorlar = list(qatorlar)
+    # `?qator=<pk>` (AV kartochkasidan): shu AV qatorlari ko'rsatiladi, ko'rsatilgan qator oldindan belgilanadi.
+    oldindan = None
+    if request.method == "GET":
+        pk = _id(request.GET.get("qator"))
+        tanlangan = next((t for t in qatorlar if t.pk == pk), None) if pk else None
+        if tanlangan is not None:
+            oldindan = tanlangan.pk
+            qatorlar = [t for t in qatorlar if t.av_id == tanlangan.av_id]
     xato, status = "", 200
     if request.method == "POST":
         try:
@@ -130,6 +141,7 @@ def akt_yangi(request):
     kontekst = {
         "topshiruvchi": top,
         "qatorlar": qatorlar,
+        "oldindan": oldindan,
         "qabul_qiluvchilar": [x for x in sorovlar.faol_xodimlar(request.user).order_by("ism", "pk") if not top or x.pk != top.pk],
         "xodimlar": sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk"),
         "xato": xato,
