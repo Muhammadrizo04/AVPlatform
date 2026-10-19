@@ -11,6 +11,7 @@ from decimal import Decimal
 from django.db import connection, transaction
 from django.utils import timezone
 
+from chiqimlar.servis import chiqimlarni_yangila
 from vositalar.moslash import moslashtir
 
 from .client import OneCClient
@@ -110,6 +111,10 @@ def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime) -> dict:
         )
         _qoldiqlar(vos["qoldiqlar"], avlar, tashkilotlar, filiallar, ozgarishlar)
         _harakatlar(harakatlar, dan, CHEKSIZ_GACHA, avlar, tashkilotlar, filiallar, ozgarishlar)
+        zona = timezone.get_current_timezone()
+        ozgarishlar["chiqim"] = chiqimlarni_yangila(
+            timezone.make_aware(dan, zona), timezone.make_aware(CHEKSIZ_GACHA, zona)
+        )
         ozgarishlar["moslash"] = moslashtir()
     return ozgarishlar
 

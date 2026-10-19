@@ -481,3 +481,21 @@ def test_buyruq_inkremental_band_kutmaydi(buyruq_client, monkeypatch, capsys):
 
     assert holat["chaqiruv"] == 1 and kutishlar == []
     assert "o'tkazib yuborildi" in capsys.readouterr().out
+
+
+def test_sinxron_chiqim_yaratadi():
+    from chiqimlar.models import ChiqimHujjat
+    from vositalar.models import Sozlama
+
+    client = SoxtaClient()
+    chiqimlar = [h for h in yaroqli_harakatlar(client) if h["vid"] == "chiqim" and h["soni"] > 0 and h["filial"]]
+    assert chiqimlar
+    eng_erta = min(datetime.fromisoformat(h["sana"]) for h in chiqimlar).replace(tzinfo=TOSHKENT)
+    Sozlama.objects.update_or_create(pk=1, defaults={"chiqim_boshlanishi": eng_erta - timedelta(days=1)})
+    kutilgan = {(h["hujjat_ref"], h["av"], h["filial"]) for h in chiqimlar}
+
+    jurnal = sinxronla(client, hozir=HOZIR)
+
+    assert jurnal.natija == SinxronJurnal.Natija.OK
+    assert ChiqimHujjat.objects.count() == len(kutilgan)
+    assert jurnal.ozgarishlar["chiqim"]["yaratildi"] == len(kutilgan)

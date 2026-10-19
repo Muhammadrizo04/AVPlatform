@@ -77,6 +77,15 @@ def kamaytir(qator: Taqsimot, soni: Decimal, kim) -> None:
             raise AmalXato("Taqsimot yig'indisi 1C qoldig'idan kamayib ketadi.")
 
 
+def ayir_va_yoz(qator: Taqsimot, soni: Decimal, kim, sabab: str, hujjat_izoh: str = "") -> None:
+    """Qulflangan qatordan `soni` donani olib tashlaydi (0 qolsa o'chiriladi) va `TaqsimotHarakat` + Jurnal yozadi.
+    Qulflash, son va invariant tekshiruvi — chaqiruvchining vazifasi (masalan, `chiqimlar.servis.tasdiqla`)."""
+    eski_soni = qator.soni
+    _ayir(qator, soni)
+    _harakat(qator, soni, kim, sabab, hujjat_izoh[:255], eski=(qator.bolim_id, qator.mol_id, qator.holat))
+    yoz(kim, qator, "soni", eski_soni, eski_soni - soni)
+
+
 def _ozgartir(qator, soni, kim, sabab, *, bolim=_SAQLA, mol=_SAQLA, holat=_SAQLA, hujjat_izoh="") -> Taqsimot:
     """Umumiy amal: `soni` donani (bolim, mol, holat) yangi qiymatiga o'tkazadi; o'zgarmaydiganlari `_SAQLA`.
     `bolim`/`mol` — pk yoki None."""

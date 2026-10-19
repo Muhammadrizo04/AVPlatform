@@ -14,7 +14,7 @@ def _bayroq_av_idlari(kalit: str, user) -> list[int]:
     natija = BAYROQLAR[kalit].so_rov(user, timezone.localdate())
     if isinstance(natija, list):
         return [av.pk for av in natija]
-    if natija.model is Taqsimot:
+    if natija.model is not AV:  # Taqsimot, ChiqimHujjat — AV'ga `av_id` orqali
         return list(natija.values_list("av_id", flat=True))
     return list(natija.values_list("pk", flat=True))
 
@@ -65,6 +65,15 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
     if kalit in BAYROQLAR:
         qs = qs.filter(pk__in=_bayroq_av_idlari(kalit, user))
     return qs
+
+
+def korinadigan_av_idlari(user, idlar) -> set[int]:
+    """`idlar` ichidan foydalanuvchi ko'ra oladigan AV id'lari (`korinadigan_av` bilan bir xil qoida, ro'yxat uchun)."""
+    idlar = list(idlar)
+    korinadi: set[int] = set()
+    for params in ({}, {"arxiv": "1"}):
+        korinadi.update(av_filtrla(AV.objects.filter(pk__in=idlar), params, user).values_list("pk", flat=True))
+    return korinadi
 
 
 def korinadigan_av(user, pk) -> AV | None:

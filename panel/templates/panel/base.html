@@ -22,6 +22,7 @@
     .xabarlar .success { background: #d8f0dc; } .xabarlar .warning { background: #fff3c4; } .xabarlar .error { background: #fadbd8; }
     table { border-collapse: collapse; width: 100%; background: #fff; }
     th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #e4e7eb; }
+    .nishon { background: #b8302a; color: #fff; border-radius: 9px; padding: 0 .45rem; font-size: .8rem; }
     .son { text-align: right; }
     .kartochkalar { display: flex; flex-wrap: wrap; gap: .8rem; }
     .kartochka { background: #fff; border: 1px solid #d9e2ec; border-radius: 6px; padding: .6rem 1rem; min-width: 10rem; text-decoration: none; color: inherit; }
@@ -39,7 +40,7 @@
   <header class="yuqori">
     <strong>Asosiy vositalar</strong>
     <nav>
-      {% block menyu %}<a href="{% url 'panel:bosh' %}">Bosh sahifa</a> <a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a> <a href="{% url 'vositalar:bolimlar' %}">Bo'limlar</a>  <a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% if hisobot_huquqi %} <a href="{% url 'hisobotlar:kesim' %}">Kesim</a> <a href="{% url 'hisobotlar:mol_qaydnoma' %}">МОЛ qaydnomasi</a> <a href="{% url 'hisobotlar:muddat' %}">Xizmat muddati</a>{% endif %}{% if tozalash_huquqi %} <a href="{% url 'hisobotlar:tozalash' %}">Tozalash</a>{% endif %}{% if sozlama_huquqi %} <a href="{% url 'panel:foydalanuvchilar' %}">Sozlamalar</a>{% endif %}{% endblock %}
+      {% block menyu %}<a href="{% url 'panel:bosh' %}">Bosh sahifa</a> <a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a> <a href="{% url 'vositalar:bolimlar' %}">Bo'limlar</a>  <a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% if chiqim_huquqi %} <a href="{% url 'chiqimlar:royxat' %}">1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="nishon">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a>{% endif %}{% if hisobot_huquqi %} <a href="{% url 'hisobotlar:kesim' %}">Kesim</a> <a href="{% url 'hisobotlar:mol_qaydnoma' %}">МОЛ qaydnomasi</a> <a href="{% url 'hisobotlar:muddat' %}">Xizmat muddati</a>{% endif %}{% if tozalash_huquqi %} <a href="{% url 'hisobotlar:tozalash' %}">Tozalash</a>{% endif %}{% if sozlama_huquqi %} <a href="{% url 'panel:foydalanuvchilar' %}">Sozlamalar</a>{% endif %}{% endblock %}
     </nav>
     <div class="bosh">
       <span>{{ user.get_username }}{% if user.profil %} · {{ user.profil.get_rol_display }}{% endif %}</span>

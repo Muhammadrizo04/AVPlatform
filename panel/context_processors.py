@@ -1,4 +1,5 @@
-from hisoblar.huquqlar import huquqi_bor
+from chiqimlar.models import ChiqimHujjat
+from hisoblar.huquqlar import filial_bilan_chekla, huquqi_bor
 from onec.sinxron import ketma_ket_xatolar, oxirgi_muvaffaqiyatli
 
 XATO_CHEGARASI = 3
@@ -9,7 +10,15 @@ def sinxron_holati(request):
     if not request.user.is_authenticated:
         return {}
     oxirgi = oxirgi_muvaffaqiyatli()
+    korish = huquqi_bor(request.user, "korish")
+    chiqim_soni = None
+    if korish and not request.headers.get("HX-Request"):
+        chiqim_soni = filial_bilan_chekla(
+            ChiqimHujjat.objects.filter(holat=ChiqimHujjat.Holat.KUTILMOQDA), request.user
+        ).count()
     return {
+        "chiqim_huquqi": korish,
+        "chiqim_kutilmoqda_soni": chiqim_soni,
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
         "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),
         "tozalash_huquqi": huquqi_bor(request.user, "tozalash"),

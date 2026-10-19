@@ -68,6 +68,9 @@ def test_bosh_bayroq_kartochkalari(client_hisobchi, filial_yarat):
     assert set(kartochkalar) == set(BAYROQLAR)
     assert kartochkalar["inv_bosh"]["soni"] == 1
     for kalit in BAYROQLAR:
+        if kalit == "chiqim_kutilmoqda":  # AV ro'yxati emas, chiqimlar ro'yxatiga olib boradi
+            assert f'href="{reverse("chiqimlar:royxat")}"' in matn
+            continue
         assert f"{reverse('vositalar:royxat')}?bayroq={kalit}" in matn
 
 

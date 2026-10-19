@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "hisoblar",
     "jurnal",
     "vositalar",
+    "chiqimlar",
     "mol",
     "yorliqlar",
     "hisobotlar",

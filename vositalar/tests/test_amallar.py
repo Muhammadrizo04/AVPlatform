@@ -373,3 +373,20 @@ def test_parallel_yaratilgan_nishon_amalxato(av, filial, ombor, ofis, user, monk
     q.refresh_from_db()
     assert q.soni == SON("4")
     assert jami(av, filial) == SON("6")
+
+
+def test_kamaytir_kutilayotgan_chiqim_birliklarini_ayirmaydi_manfiy_qoldiq(av, filial, ombor, user, filial_yarat):
+    from chiqimlar.models import ChiqimHujjat
+
+    qoldiq(av, filial, "-3")
+    qoldiq(av, filial_yarat("B"), "5")  # AV arxivga tushmasligi uchun umumiy qoldiq musbat
+    q = qator(av, filial, "2", bolim=ombor)
+    ChiqimHujjat.objects.create(
+        hujjat_turi="Реализация", hujjat_raqami="1", hujjat_ref=uuid.uuid4(),
+        sana=datetime(2026, 9, 10, tzinfo=dt_timezone.utc), av=av, filial=filial, soni=SON("2"), summa=SON("1"),
+        taxmin_tur="sotildi",
+    )
+    with pytest.raises(AmalXato, match="kamaytirish shart emas"):
+        kamaytir(q, SON("1"), user)
+    q.refresh_from_db()
+    assert q.soni == SON("2")

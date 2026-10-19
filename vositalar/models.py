@@ -115,6 +115,9 @@ class TaqsimotHarakat(models.Model):
         ONEC_KOPAYDI = "1c_kopaydi", "1C'da ko'paydi"
         ONEC_KAMAYDI = "1c_kamaydi", "1C'da kamaydi"
         ONEC_NOLGA_TUSHDI = "1c_nolga_tushdi", "1C'da nolga tushdi"
+        SOTILDI = "sotildi", "Sotildi"
+        OTKAZILDI = "otkazildi", "Filialga o'tkazildi"
+        HISOBDAN_CHIQARILDI = "hisobdan_chiqarildi", "Hisobdan chiqarildi"
 
     av = models.ForeignKey("onec.AV", on_delete=models.PROTECT, related_name="taqsimot_harakatlari")
     filial = models.ForeignKey("onec.Filial", on_delete=models.PROTECT, related_name="+")
@@ -142,6 +145,7 @@ class Sozlama(models.Model):
     PK = 1
 
     kompaniya_nomi = models.CharField(max_length=255, blank=True)
+    chiqim_boshlanishi = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.kompaniya_nomi or "Sozlama"

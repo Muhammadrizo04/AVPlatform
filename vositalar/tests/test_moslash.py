@@ -330,3 +330,192 @@ def test_taqsimot_qatorlari_qulflanadi(av, filial_a):
     sorovlar = [q["sql"] for q in ctx.captured_queries if 'FROM "vositalar_taqsimot"' in q["sql"]]
 
     assert any("FOR UPDATE" in s for s in sorovlar)
+
+
+# --- Kutilayotgan 1C chiqimi (spec §6.5): taqsimot = max(1C, 0) + K ---
+
+
+def chiqim(av, filial, soni, holat="kutilmoqda"):
+    from chiqimlar.models import ChiqimHujjat
+
+    return ChiqimHujjat.objects.create(
+        hujjat_turi="РеализацияТоваровУслуг", hujjat_raqami="7", hujjat_ref=uuid.uuid4(),
+        sana=timezone.now(), av=av, filial=filial, soni=SON(soni), summa=SON("100"),
+        holat=holat, taxmin_tur="sotildi",
+    )
+
+
+def _prixodxona_ofis(av, filial):
+    """1C 6 -> 4: taqsimlanmagan (prixodxona) 4 + Ofis 2."""
+    ofis = qator(av, filial, "2", bolim=Bolim.objects.create(filial=filial, nomi="Ofis"))
+    qator(av, filial, "4")
+    qoldiq(av, filial, "4")
+    AVKartochka.objects.create(av=av)
+    return ofis
+
+
+def test_kutilayotgan_chiqim_taqsimotni_saqlaydi(av, filial_a):
+    ofis = _prixodxona_ofis(av, filial_a)
+    chiqim(av, filial_a, "2")
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a).soni == SON("4")
+    ofis.refresh_from_db()
+    assert ofis.soni == SON("2")
+    assert stat["mos_emas"] == 0 and stat["kamaydi"] == 0 and stat["kopaydi"] == 0
+    assert not TaqsimotHarakat.objects.exists()
+    assert farq(av, filial_a) == 0
+
+
+def test_kutilayotgan_chiqim_filial_nol(av, filial_a, filial_b):
+    qoldiq(av, filial_b, "3")
+    qator(av, filial_b, "3")
+    qoldiq(av, filial_a, "0")
+    ofis = qator(av, filial_a, "1", bolim=Bolim.objects.create(filial=filial_a, nomi="Ofis"))
+    chiqim(av, filial_a, "1")
+
+    stat = moslashtir()
+
+    assert Taqsimot.objects.filter(pk=ofis.pk, soni=SON("1")).exists()
+    assert stat["nolga_tushdi"] == 0 and stat["mos_emas"] == 0
+    assert not TaqsimotHarakat.objects.exists()
+
+
+def test_kutilayotgan_chiqim_qoldiq_qatori_yoq(av, filial_a):
+    """1C'da filial qoldig'i qatori umuman yo'q (q=0), K=1 — qator saqlanadi."""
+    ofis = qator(av, filial_a, "1", bolim=Bolim.objects.create(filial=filial_a, nomi="Ofis"))
+    chiqim(av, filial_a, "1")
+
+    stat = moslashtir()
+
+    assert Taqsimot.objects.filter(pk=ofis.pk).exists()
+    assert stat["nolga_tushdi"] == 0 and stat["mos_emas"] == 0
+
+
+def test_chiqimsiz_kamayish_eskicha(av, filial_a, filial_b):
+    ofis = _prixodxona_ofis(av, filial_a)
+    chiqim(av, filial_b, "2")  # boshqa juftdagi chiqim bu juftga ta'sir qilmaydi
+    qoldiq(av, filial_b, "2")
+    qator(av, filial_b, "4")  # filial_b: 2 + K 2 = 4 — mos
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a).soni == SON("2")
+    ofis.refresh_from_db()
+    assert ofis.soni == SON("2")
+    assert stat["kamaydi"] == 1 and stat["mos_emas"] == 0
+    assert farq(av, filial_a) == 0
+
+
+def test_bekor_chiqimdan_keyin_eskicha(av, filial_a):
+    _prixodxona_ofis(av, filial_a)
+    chiqim(av, filial_a, "2", holat="bekor")
+    chiqim(av, filial_a, "2", holat="tasdiqlangan")
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a).soni == SON("2")
+    assert stat["kamaydi"] == 1 and stat["mos_emas"] == 0
+
+
+def test_kutilayotgan_chiqim_kam_taqsimotni_toldiradi(av, filial_a):
+    """Σ taqsimot < 1C + K — farq taqsimlanmaganga qo'shiladi (invariant q + K)."""
+    qoldiq(av, filial_a, "4")
+    qator(av, filial_a, "4")
+    chiqim(av, filial_a, "2")
+
+    stat = moslashtir()
+
+    assert taqsimlanmagan(av, filial_a).soni == SON("6")
+    assert stat["kopaydi"] == 1 and stat["mos_emas"] == 0
+
+
+def test_kutilayotgan_chiqim_ortiqcha_mos_emas(av, filial_a):
+    qoldiq(av, filial_a, "4")
+    qator(av, filial_a, "7", bolim=Bolim.objects.create(filial=filial_a, nomi="Ofis"))
+    chiqim(av, filial_a, "2")
+
+    stat = moslashtir()
+
+    assert stat["mos_emas"] == 1
+    assert farq(av, filial_a) == SON("-1")
+
+
+def test_invariant_K_bilan_tekshiriladi(av, filial_a, monkeypatch):
+    """Ish K'siz hisoblansa ham invariant K bilan tekshiriladi: kam taqsimot — MoslashXato."""
+    from vositalar import moslash
+
+    qoldiq(av, filial_a, "4")
+    qator(av, filial_a, "4")
+    chiqim(av, filial_a, "2")
+    monkeypatch.setattr(moslash, "_kopaydi", lambda *a, **k: None)
+
+    with pytest.raises(MoslashXato):
+        moslashtir()
+
+
+def test_kamaytir_kutilayotgan_chiqimni_ortiqcha_demaydi(av, filial_a, django_user_model):
+    from vositalar.amallar import AmalXato, kamaytir
+
+    user = django_user_model.objects.create_user(username="h", password="x")
+    qoldiq(av, filial_a, "4")
+    q = qator(av, filial_a, "7", bolim=Bolim.objects.create(filial=filial_a, nomi="Ofis"))
+    chiqim(av, filial_a, "2")  # ortiqcha faqat 1 (7 - (4 + 2))
+
+    with pytest.raises(AmalXato):
+        kamaytir(q, SON("2"), user)
+    kamaytir(q, SON("1"), user)
+
+    q.refresh_from_db()
+    assert q.soni == SON("6")
+    assert farq(av, filial_a) == 0
+    with pytest.raises(AmalXato):
+        kamaytir(q, SON("1"), user)
+
+
+def test_kutilayotgan_filtr(av, filial_a, filial_b):
+    from django.db.models import Q
+
+    from chiqimlar.servis import kutilayotgan
+
+    chiqim(av, filial_a, "1")
+    chiqim(av, filial_a, "2")
+    chiqim(av, filial_b, "1.5")
+    chiqim(av, filial_b, "5", holat="bekor")
+
+    assert kutilayotgan() == {(av.pk, filial_a.pk): SON("3"), (av.pk, filial_b.pk): SON("1.5")}
+    assert kutilayotgan(Q(filial_id__in=[filial_b.pk])) == {(av.pk, filial_b.pk): SON("1.5")}
+
+
+def test_chiqim_qatorlari_taqsimotdan_oldin_qulflanadi(av, filial_a, monkeypatch):
+    """Qulf tartibi ChiqimHujjat -> Taqsimot (Task 4 tasdiqlash bilan bir xil); K qulflangan qatorlardan olinadi."""
+    from vositalar import moslash
+
+    _prixodxona_ofis(av, filial_a)
+    chiqim(av, filial_a, "2")
+    # Ish bosqichida K aggregat so'rovdan emas, qulflangan chiqim qatorlaridan olinishi kerak.
+    monkeypatch.setattr(moslash, "_kutilayotgan", lambda filtr=None: {})
+
+    with CaptureQueriesContext(connection) as ctx:
+        stat = moslashtir()
+
+    sorovlar = [q["sql"] for q in ctx.captured_queries]
+    chiqim_qulf = [i for i, s in enumerate(sorovlar) if 'FROM "chiqimlar_chiqimhujjat"' in s and "FOR UPDATE" in s]
+    taqsimot_qulf = [i for i, s in enumerate(sorovlar) if 'FROM "vositalar_taqsimot"' in s and "FOR UPDATE" in s]
+    assert chiqim_qulf and taqsimot_qulf
+    assert chiqim_qulf[0] < taqsimot_qulf[0]
+    assert stat["kamaydi"] == 0  # K=2 qulflangan qatordan: taqsimot saqlandi
+    assert taqsimlanmagan(av, filial_a).soni == SON("4")
+
+
+def test_farq_manfiy_1c_qoldigi_nol_deb_olinadi(av, filial_a):
+    from chiqimlar.models import ChiqimHujjat
+
+    qoldiq(av, filial_a, "-3")
+    qator(av, filial_a, "2")
+    ChiqimHujjat.objects.create(
+        hujjat_turi="Реализация", hujjat_raqami="1", hujjat_ref=uuid.uuid4(), sana=timezone.now(), av=av,
+        filial=filial_a, soni=SON("2"), summa=SON("1"), taxmin_tur="sotildi",
+    )
+    assert farq(av, filial_a) == 0  # max(-3, 0) + 2 - 2
