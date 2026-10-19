@@ -143,3 +143,35 @@ def test_taxmin_sotildi_4_kundan_keyin(av, fa, fb):
 def test_taxmin_spisanie(av, fa, fb):
     harakat(av, fb, "kirim", SANA + timedelta(days=1), 1)
     assert taxmin_qil(av.pk, fa.pk, SANA, "СписаниеОС") == ("hisobdan_chiqarildi", None)
+
+
+def test_taxmin_kirim_oldin_2_kun_otkazish(av, fa, fb):
+    harakat(av, fb, "kirim", SANA - timedelta(days=2), 1)
+    assert taxmin_qil(av.pk, fa.pk, SANA, "Реализация") == ("otkazish", fb.pk)
+
+
+def test_taxmin_kirim_oldin_4_kun_sotildi(av, fa, fb):
+    harakat(av, fb, "kirim", SANA - timedelta(days=4), 1)
+    assert taxmin_qil(av.pk, fa.pk, SANA, "Реализация") == ("sotildi", None)
+
+
+def test_taxmin_soni_nol_kirim_sotildi(av, fa, fb):
+    harakat(av, fb, "kirim", SANA + timedelta(days=1), 0)
+    assert taxmin_qil(av.pk, fa.pk, SANA, "Реализация") == ("sotildi", None)
+
+
+def test_taxmin_bir_xil_filial_kirimi_sotildi(av, fa):
+    harakat(av, fa, "kirim", SANA + timedelta(days=1), 1)
+    assert taxmin_qil(av.pk, fa.pk, SANA, "Реализация") == ("sotildi", None)
+
+
+def test_filial_ozgarsa_eski_bekor_yangi_yaratiladi(av, fa, filial_yarat):
+    fc = filial_yarat("C")
+    ref = uuid.uuid4()
+    h = harakat(av, fa, "chiqim", SANA, 1, ref=ref)
+    yangila()
+    h.filial = fc
+    h.save()
+    assert yangila() == {"yaratildi": 1, "yangilandi": 0, "bekor": 1}
+    assert ChiqimHujjat.objects.get(filial=fa).holat == "bekor"
+    assert ChiqimHujjat.objects.get(filial=fc).holat == "kutilmoqda"

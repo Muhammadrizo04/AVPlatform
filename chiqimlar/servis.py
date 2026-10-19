@@ -10,19 +10,19 @@ from vositalar.models import Sozlama
 
 from .models import ChiqimHujjat
 
-# Chiqimdan keyin shu muddat ichida boshqa filialda kirim bo'lsa — o'tkazish deb taxmin qilinadi.
+# Chiqimdan oldin yoki keyin (±) shu muddat ichida boshqa filialda kirim bo'lsa — o'tkazish deb taxmin qilinadi.
 TAXMIN_OYNASI = timedelta(days=3)
 SPISANIE = "СписаниеОС"
 
 
 def taxmin_qil(av_id: int, filial_id: int, sana: datetime, hujjat_turi: str) -> tuple[str, int | None]:
-    """(tur, qabul_filial_id): spisanie -> hisobdan chiqarildi; oynada boshqa filialga kirim -> o'tkazish; aks holda sotildi."""
+    """(tur, qabul_filial_id): spisanie -> hisobdan chiqarildi; ±oynada boshqa filialga kirim -> o'tkazish; aks holda sotildi."""
     if SPISANIE in (hujjat_turi or ""):
         return ChiqimHujjat.Tur.HISOBDAN_CHIQARILDI, None
     kirim = (
         Harakat1C.objects.filter(
-            av_id=av_id, vid=Harakat1C.Vid.KIRIM, filial__isnull=False,
-            sana__gte=sana, sana__lte=sana + TAXMIN_OYNASI,
+            av_id=av_id, vid=Harakat1C.Vid.KIRIM, filial__isnull=False, soni__gt=0,
+            sana__gte=sana - TAXMIN_OYNASI, sana__lte=sana + TAXMIN_OYNASI,
         )
         .exclude(filial_id=filial_id)
         .order_by("sana", "id")
