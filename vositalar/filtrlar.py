@@ -14,7 +14,7 @@ def _bayroq_av_idlari(kalit: str, user) -> list[int]:
     natija = BAYROQLAR[kalit].so_rov(user, timezone.localdate())
     if isinstance(natija, list):
         return [av.pk for av in natija]
-    if natija.model is Taqsimot:
+    if natija.model is not AV:  # Taqsimot, ChiqimHujjat — AV'ga `av_id` orqali
         return list(natija.values_list("av_id", flat=True))
     return list(natija.values_list("pk", flat=True))
 

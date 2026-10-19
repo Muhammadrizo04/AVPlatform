@@ -11,7 +11,7 @@ from vositalar.models import AVKartochka, AVTuriSozlama, Bolim, Holat, Taqsimot
 BUGUN = date(2026, 10, 17)
 KALITLAR = {
     "inv_bosh", "inv_takror", "filial_rekvizit_bosh", "mos_emas", "bolimsiz", "molsiz", "ketgan_xodimda",
-    "yorliq_yoq", "yorliq_almashtirish", "muddat_tugagan", "muddat_6oy",
+    "yorliq_yoq", "yorliq_almashtirish", "muddat_tugagan", "muddat_6oy", "chiqim_kutilmoqda",
 }
 
 
@@ -407,3 +407,76 @@ def test_inv_takror_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
 
     assert idlar("inv_takror", user_a) == {a1.pk, a2.pk}
     assert idlar("inv_takror", foydalanuvchi("admin")) == {a1.pk, a2.pk, b1.pk, b2.pk}
+
+
+# --- Kutilayotgan 1C chiqimi ---
+
+
+def chiqim(av, filial, soni="1", holat="kutilmoqda"):
+    from django.utils import timezone
+
+    from chiqimlar.models import ChiqimHujjat
+
+    return ChiqimHujjat.objects.create(
+        hujjat_turi="РеализацияТоваровУслуг", hujjat_raqami="7", hujjat_ref=uuid.uuid4(),
+        sana=timezone.now(), av=av, filial=filial, soni=Decimal(soni), summa=Decimal("100"),
+        holat=holat, taxmin_tur="sotildi",
+    )
+
+
+def test_mos_emas_K_bilan(hisobchi, filial_a):
+    mos = av_yarat(filial_a, soni="4")
+    qator(mos, filial_a, "6")
+    chiqim(mos, filial_a, "2")  # 4 + 2 = 6 — mos
+    kam = av_yarat(filial_a, soni="4")
+    qator(kam, filial_a, "4")
+    chiqim(kam, filial_a, "2")  # 4 < 4 + 2 — mos emas
+    bekor = av_yarat(filial_a, soni="4")
+    qator(bekor, filial_a, "6")
+    chiqim(bekor, filial_a, "2", holat="bekor")  # bekor K'ga kirmaydi — mos emas
+
+    assert idlar("mos_emas", hisobchi) == {kam.pk, bekor.pk}
+
+
+def test_mos_emas_K_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    av = av_yarat(filial_a, soni="1")
+    qator(av, filial_a, "1")
+    qoldiq(av, filial_b, "1")
+    qator(av, filial_b, "2")
+    chiqim(av, filial_b, "1")  # filial_b: 1 + 1 = 2 — mos
+
+    assert idlar("mos_emas", user_a) == set()
+    assert idlar("mos_emas", foydalanuvchi("admin")) == set()
+
+
+def test_bayroq_chiqim_kutilmoqda_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    av = av_yarat(filial_a, soni="1")
+    qoldiq(av, filial_b, "1")
+    a = chiqim(av, filial_a)
+    b = chiqim(av, filial_b)
+    chiqim(av, filial_a, holat="bekor")
+    chiqim(av, filial_a, holat="tasdiqlangan")
+
+    assert BAYROQLAR["chiqim_kutilmoqda"].nomi == "1C chiqimi kutilmoqda"
+    assert idlar("chiqim_kutilmoqda", user_a) == {a.pk}
+    assert idlar("chiqim_kutilmoqda", foydalanuvchi("admin")) == {a.pk, b.pk}
+    assert bayroq_sonlari(user_a, BUGUN)["chiqim_kutilmoqda"] == 1
+
+
+def test_av_royxati_bayroq_chiqim_kutilmoqda(foydalanuvchi, filial_a, filial_b):
+    from vositalar.filtrlar import av_filtrla
+
+    user_a = foydalanuvchi("hisobchi", [filial_a])
+    av = av_yarat(filial_a, soni="2")
+    chiqim(av, filial_a)
+    chiqim(av, filial_a)  # bir AV'da ikki chiqim — ro'yxatda bir marta
+    boshqa = av_yarat(filial_b, soni="1")
+    chiqim(boshqa, filial_b)
+    av_yarat(filial_a, soni="1")  # chiqimsiz
+
+    qs = av_filtrla(AV.objects.all(), {"bayroq": "chiqim_kutilmoqda"}, user_a)
+    assert list(qs.values_list("pk", flat=True)) == [av.pk]
+    qs = av_filtrla(AV.objects.all(), {"bayroq": "chiqim_kutilmoqda"}, foydalanuvchi("admin"))
+    assert set(qs.values_list("pk", flat=True)) == {av.pk, boshqa.pk}

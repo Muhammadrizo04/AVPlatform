@@ -1,14 +1,15 @@
 """Taqsimotni 1C qoldig'i bilan moslash (spec §6.3).
 
 Har sinxrondan keyin, sinxron tranzaksiyasi ichida chaqiriladi. 1C — qoldiq manbai; bu yerda har (AV, filial)
-uchun `d = 1C qoldig'i - sum(taqsimot)` hisoblanib, farq «taqsimlanmagan» qatorga (bolim/MOL bo'sh,
+uchun `d = max(1C qoldig'i, 0) + K - sum(taqsimot)` hisoblanib (K — shu juftdagi `kutilmoqda` 1C chiqimlari soni,
+spec §6.5: hisobchi tasdiqlamaguncha chiqim taqsimotni o'zgartirmaydi), farq «taqsimlanmagan» qatorga (bolim/MOL bo'sh,
 `ishlatilmoqda`) yoziladi yoki undan ayiriladi. Har o'zgarish `TaqsimotHarakat` va Jurnal («1C sinxron») ga yoziladi.
 Qayta chaqirish hech narsani o'zgartirmaydi.
 """
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Min, Sum
+from django.db.models import Min, Q, Sum
 from django.utils import timezone
 
 from jurnal.yoz import yoz
@@ -24,11 +25,21 @@ class MoslashXato(Exception):
     """Moslashdan keyin Σ taqsimot 1C qoldig'iga teng emas (mos emas holatdan tashqari)."""
 
 
+def _kutilayotgan(filtr: Q | None = None) -> dict:
+    """K: {(av_id, filial_id): Σ kutilmoqda chiqim soni}. `chiqimlar.servis` vositalar'ni import qiladi — aylanma
+    import bo'lmasligi uchun funksiya ichida."""
+    from chiqimlar.servis import kutilayotgan
+
+    return kutilayotgan(filtr)
+
+
 def farq(av: AV, filial) -> Decimal:
-    """1C qoldig'i - sum(taqsimot) shu (AV, filial) uchun. Manfiy — taqsimot 1C'dan ortiq (mos emas)."""
+    """1C qoldig'i + K - sum(taqsimot) shu (AV, filial) uchun (K — kutilayotgan 1C chiqimi, spec §6.5). Manfiy —
+    taqsimot ortiq (mos emas)."""
     qoldiq = AVQoldiq.objects.filter(av=av, filial=filial).aggregate(s=Sum("soni"))["s"] or NOL
     taqsimot = Taqsimot.objects.filter(av=av, filial=filial).aggregate(s=Sum("soni"))["s"] or NOL
-    return qoldiq - taqsimot
+    k = _kutilayotgan(Q(av_id=av.pk, filial_id=filial.pk)).get((av.pk, filial.pk), NOL)
+    return qoldiq + k - taqsimot
 
 
 def moslashtir() -> dict:
@@ -40,6 +51,7 @@ def moslashtir() -> dict:
 
         # Bir (av, filial) uchun bir nechta tashkilot qatori bo'lishi mumkin — yig'iladi.
         qoldiq = _yigindi(AVQoldiq.objects)
+        kutilayotgan = _kutilayotgan()
         # Qatorlar qulflanadi (spec §8): foydalanuvchining parallel ko'chirishi o'qish va yozish orasida kirmaydi.
         # PostgreSQL FOR UPDATE'ni GROUP BY bilan qabul qilmaydi — yig'indi Python'da, qulflangan qatorlardan.
         taqsimot, taqsimlanmagan = {}, {}
@@ -50,8 +62,9 @@ def moslashtir() -> dict:
                 taqsimlanmagan[juft] = t
 
         ishlar = []  # (juft, tur, miqdor)
-        for juft in qoldiq.keys() | taqsimot.keys():
-            q = max(qoldiq.get(juft, NOL), NOL)
+        for juft in qoldiq.keys() | taqsimot.keys() | kutilayotgan.keys():
+            # Kutilayotgan chiqim (K) tasdiqlanmaguncha taqsimotda qoladi: 1C 0 bo'lsa ham qatorlar o'chmaydi.
+            q = max(qoldiq.get(juft, NOL), NOL) + kutilayotgan.get(juft, NOL)
             t = taqsimot.get(juft, NOL)
             if q <= 0:
                 if t > 0:
@@ -84,17 +97,21 @@ def moslashtir() -> dict:
 
 
 def _invariantni_tekshir() -> int:
-    """Bazadagi haqiqiy yig'indilar bo'yicha invariantni tekshiradi (spec §8). Faqat Σ taqsimot > 1C qoldig'i
-    bo'lgan (mos emas, farq < 0) juftlar ruxsat etiladi; ularning soni qaytariladi. Boshqasi — `MoslashXato`
+    """Bazadagi haqiqiy yig'indilar bo'yicha invariantni tekshiradi (spec §8): Σ taqsimot = max(1C, 0) + K.
+    Faqat Σ taqsimot > 1C qoldig'i + K bo'lgan (mos emas, farq < 0) juftlar ruxsat etiladi; ularning soni qaytariladi. Boshqasi — `MoslashXato`
     (sinxron tranzaksiyasi rollback bo'ladi)."""
     qoldiq = _yigindi(AVQoldiq.objects)
     taqsimot = _yigindi(Taqsimot.objects)
+    kutilayotgan = _kutilayotgan()
     mos_emas = 0
-    for juft in qoldiq.keys() | taqsimot.keys():
-        q = max(qoldiq.get(juft, NOL), NOL)
+    for juft in qoldiq.keys() | taqsimot.keys() | kutilayotgan.keys():
+        k = kutilayotgan.get(juft, NOL)
+        q = max(qoldiq.get(juft, NOL), NOL) + k
         t = taqsimot.get(juft, NOL)
         if t < q or (q <= 0 and t != 0):
-            raise MoslashXato(f"Taqsimot invarianti buzildi: av={juft[0]} filial={juft[1]} 1C={q} taqsimot={t}")
+            raise MoslashXato(
+                f"Taqsimot invarianti buzildi: av={juft[0]} filial={juft[1]} 1C+K={q} (K={k}) taqsimot={t}"
+            )
         if t > q:
             mos_emas += 1
     return mos_emas

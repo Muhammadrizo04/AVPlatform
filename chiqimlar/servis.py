@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from django.db import transaction
+from django.db.models import Q, Sum
 
 from jurnal import yoz as jurnal_yoz
 from onec.models import Harakat1C
@@ -89,3 +90,12 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.KUTILMOQDA, ChiqimHujjat.Holat.BEKOR)
                 stat["bekor"] += 1
     return stat
+
+
+def kutilayotgan(filtr: Q | None = None) -> dict[tuple[int, int], Decimal]:
+    """K (spec §6.5): {(av_id, filial_id): Σ soni} — `kutilmoqda` chiqimlar; `filtr` — qo'shimcha shart."""
+    qs = ChiqimHujjat.objects.filter(holat=ChiqimHujjat.Holat.KUTILMOQDA)
+    if filtr is not None:
+        qs = qs.filter(filtr)
+    qatorlar = qs.order_by().values_list("av_id", "filial_id").annotate(jami=Sum("soni"))
+    return {(av, filial): jami for av, filial, jami in qatorlar}

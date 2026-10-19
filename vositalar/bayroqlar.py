@@ -3,7 +3,8 @@ shu reestrdan foydalanadi.
 
 Qoidalar: barcha bayroqlar faqat faol AV'lar (umumiy 1C qoldig'i > 0) bo'yicha va foydalanuvchining filiallari
 doirasida. AV darajasidagi bayroqlar — ruxsat etilgan filialda musbat qoldig'i bor AV'lar; taqsimot darajasidagilar —
-`Taqsimot.filial` bo'yicha chegaralanadi.
+`Taqsimot.filial` bo'yicha chegaralanadi. Istisno: `chiqim_kutilmoqda` — `ChiqimHujjat.filial` bo'yicha, AV
+faolligidan qat'i nazar (1C'da to'liq chiqib ketgan AV'ning chiqimi ham tasdiqlanishi kerak).
 """
 from collections import defaultdict
 from dataclasses import dataclass
@@ -13,7 +14,8 @@ from typing import Callable
 
 from django.db.models import Exists, OuterRef, Q, QuerySet, Sum
 
-from hisoblar.huquqlar import filial_bilan_chekla
+from chiqimlar.models import ChiqimHujjat  # models vositalar'ni import qilmaydi (servis qiladi)
+from hisoblar.huquqlar import filial_bilan_chekla, ruxsat_filial_idlar
 from onec.models import AV, AVQoldiq
 
 from .amortizatsiya import hisobla, oy_qosh, samarali_muddat
@@ -25,7 +27,7 @@ NOL = Decimal("0")
 @dataclass(frozen=True)
 class Bayroq:
     nomi: str
-    model: type  # ro'yxat elementlari turi: AV yoki Taqsimot
+    model: type  # ro'yxat elementlari turi: AV, Taqsimot yoki ChiqimHujjat
     so_rov: Callable[..., QuerySet | list]  # (user, bugun) -> QuerySet yoki ro'yxat
 
 
@@ -67,8 +69,9 @@ def _filial_rekvizit_bosh(user, bugun):
 
 
 def _mos_emas(user, bugun):
-    """Biror (AV, filial) uchun Σ taqsimot ≠ 1C qoldig'i (qoldiq <= 0 bo'lsa 0 deb olinadi — moslash bilan bir xil).
-    Faqat foydalanuvchi filiallaridagi juftlar hisobga olinadi."""
+    """Biror (AV, filial) uchun Σ taqsimot ≠ max(1C qoldig'i, 0) + K (K — kutilayotgan 1C chiqimi; moslash bilan
+    bir xil). Faqat foydalanuvchi filiallaridagi juftlar hisobga olinadi."""
+    from chiqimlar.servis import kutilayotgan  # chiqimlar.servis vositalar'ni import qiladi
 
     def yigindi(qs):
         qatorlar = filial_bilan_chekla(qs, user).order_by().values_list("av_id", "filial_id").annotate(jami=Sum("soni"))
@@ -76,12 +79,20 @@ def _mos_emas(user, bugun):
 
     qoldiq = yigindi(AVQoldiq.objects.all())
     taqsimot = yigindi(Taqsimot.objects.all())
+    ruxsat = ruxsat_filial_idlar(user)
+    k = kutilayotgan(None if ruxsat is None else Q(filial_id__in=ruxsat))
     mos_emas = {
         av
-        for av, filial in qoldiq.keys() | taqsimot.keys()
-        if max(qoldiq.get((av, filial), NOL), NOL) != taqsimot.get((av, filial), NOL)
+        for av, filial in qoldiq.keys() | taqsimot.keys() | k.keys()
+        if max(qoldiq.get((av, filial), NOL), NOL) + k.get((av, filial), NOL) != taqsimot.get((av, filial), NOL)
     }
     return av_lar(user).filter(pk__in=mos_emas)
+
+
+def _chiqim_kutilmoqda(user, bugun):
+    """Foydalanuvchi filiallaridagi tasdiqlanmagan (`kutilmoqda`) 1C chiqim hujjatlari."""
+    qs = ChiqimHujjat.objects.filter(holat=ChiqimHujjat.Holat.KUTILMOQDA).select_related("av", "filial")
+    return filial_bilan_chekla(qs, user, "filial")
 
 
 def _bolimsiz(user, bugun):
@@ -150,6 +161,7 @@ BAYROQLAR: dict[str, Bayroq] = {
     "yorliq_almashtirish": Bayroq("Yorliqni almashtirish kerak", AV, _yorliq_almashtirish),
     "muddat_tugagan": Bayroq("Xizmat muddati tugagan", AV, _muddat_tugagan),
     "muddat_6oy": Bayroq("6 oyda tugaydi", AV, _muddat_6oy),
+    "chiqim_kutilmoqda": Bayroq("1C chiqimi kutilmoqda", ChiqimHujjat, _chiqim_kutilmoqda),
 }
 
 
