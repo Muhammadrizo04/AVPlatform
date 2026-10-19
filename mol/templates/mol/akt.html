@@ -12,7 +12,7 @@ Qabul qiluvchi: <strong>{{ akt.qabul_qiluvchi.ism }}</strong></p>
   <tbody>
   {% for q in qatorlar %}
     <tr>
-      <td>{{ forloop.counter }}</td><td>{{ q.av.inv_raqam }}</td><td>{{ q.av.nomi }}</td><td>{{ q.filial.nomi }}</td>
+      <td>{{ forloop.counter }}</td><td>{{ q.av.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.filial.nomi }}</td>
       <td>{% if q.bolim %}{{ q.bolim.toliq_nomi }}{% else %}—{% endif %}</td><td>{{ q.holat_nomi }}</td>
       <td class="son">{{ q.soni|son }}</td><td class="son">{{ q.qiymat|pul }}</td>
     </tr>

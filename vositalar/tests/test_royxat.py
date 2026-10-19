@@ -46,6 +46,17 @@ def test_royxat_qidiruv_inv_va_nom(client_hisobchi, filial_a):
     assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "lenovo"})) == {"Noutbuk Lenovo"}
 
 
+@pytest.mark.parametrize("htmx", [False, True])
+def test_royxatda_kartochkaga_havola(client_hisobchi, client_rol, filial_a, htmx):
+    av = av_yarat(filial_a, inv="ABC-1")
+    sarlavha = {"HTTP_HX_REQUEST": "true"} if htmx else {}
+    url = reverse("vositalar:kartochka", args=[av.pk])
+    for client in (client_hisobchi, client_rol("rahbar")):
+        html = client.get(reverse(ROYXAT), **sarlavha).content.decode()
+        assert f'<a href="{url}">{av.nomi}</a>' in html
+        assert f'<a href="{url}">ABC-1</a>' in html
+
+
 def test_royxat_filtr_bayroq(client_hisobchi, filial_a):
     bosh = av_yarat(filial_a, inv="")
     av_yarat(filial_a, inv="BOR")

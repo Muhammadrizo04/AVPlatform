@@ -12,7 +12,8 @@
     {% for av in sahifa %}
       <tr>
         {% if taqsim_huquqi or yorliq_huquqi %}<td><input type="checkbox" name="av" value="{{ av.pk }}"></td>{% endif %}
-        <td>{{ av.inv_raqam }}</td><td>{{ av.nomi }}</td><td>{{ av.turi.nomi|default:"" }}</td>
+        {% url 'vositalar:kartochka' av.pk as kartochka_url %}
+        <td>{% if av.inv_raqam %}<a href="{{ kartochka_url }}">{{ av.inv_raqam }}</a>{% endif %}</td><td><a href="{{ kartochka_url }}">{{ av.nomi }}</a></td><td>{{ av.turi.nomi|default:"" }}</td>
         <td>{{ av.filial_rekvizit.nomi|default:"" }}</td><td class="son">{{ av.jami_soni|son }}</td><td class="son">{{ av.jami_summa|pul }}</td>
       </tr>
     {% empty %}
