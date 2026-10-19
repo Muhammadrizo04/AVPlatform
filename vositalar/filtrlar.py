@@ -67,6 +67,15 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
     return qs
 
 
+def korinadigan_av_idlari(user, idlar) -> set[int]:
+    """`idlar` ichidan foydalanuvchi ko'ra oladigan AV id'lari (`korinadigan_av` bilan bir xil qoida, ro'yxat uchun)."""
+    idlar = list(idlar)
+    korinadi: set[int] = set()
+    for params in ({}, {"arxiv": "1"}):
+        korinadi.update(av_filtrla(AV.objects.filter(pk__in=idlar), params, user).values_list("pk", flat=True))
+    return korinadi
+
+
 def korinadigan_av(user, pk) -> AV | None:
     """Foydalanuvchi ko'ra oladigan AV (faol — ruxsat etilgan filialdagi qoldiq, arxiv — ruxsat etilgan
     `filial_rekvizit` bo'yicha) yoki None. Kartochka, HTMX bo'laklari va rasm URL'lari shu funksiyadan foydalanadi."""

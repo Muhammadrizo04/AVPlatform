@@ -507,3 +507,15 @@ def test_chiqim_qatorlari_taqsimotdan_oldin_qulflanadi(av, filial_a, monkeypatch
     assert chiqim_qulf[0] < taqsimot_qulf[0]
     assert stat["kamaydi"] == 0  # K=2 qulflangan qatordan: taqsimot saqlandi
     assert taqsimlanmagan(av, filial_a).soni == SON("4")
+
+
+def test_farq_manfiy_1c_qoldigi_nol_deb_olinadi(av, filial_a):
+    from chiqimlar.models import ChiqimHujjat
+
+    qoldiq(av, filial_a, "-3")
+    qator(av, filial_a, "2")
+    ChiqimHujjat.objects.create(
+        hujjat_turi="Реализация", hujjat_raqami="1", hujjat_ref=uuid.uuid4(), sana=timezone.now(), av=av,
+        filial=filial_a, soni=SON("2"), summa=SON("1"), taxmin_tur="sotildi",
+    )
+    assert farq(av, filial_a) == 0  # max(-3, 0) + 2 - 2

@@ -92,6 +92,8 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.BEKOR, ChiqimHujjat.Holat.KUTILMOQDA)
                 stat["qaytdi"] += 1
 
+        _taxminlarni_yangila(quyi, gacha, guruhlar)
+
         for kalit, c in mavjud.items():
             if kalit not in guruhlar and c.holat == ChiqimHujjat.Holat.KUTILMOQDA:
                 c.holat = ChiqimHujjat.Holat.BEKOR
@@ -99,6 +101,19 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.KUTILMOQDA, ChiqimHujjat.Holat.BEKOR)
                 stat["bekor"] += 1
     return stat
+
+
+def _taxminlarni_yangila(quyi: datetime, gacha: datetime, guruhlar: dict) -> None:
+    """Tur taxmini keyin kelgan kirim (B'dagi sinxron kechikishi) bilan o'zgarishi mumkin: `kutilmoqda` yozuvlar
+    (guruhlardagilar va ±oynasi qayta yuklangan oraliqqa tegadiganlar) uchun taxmin qayta hisoblanadi. Jurnalga yozilmaydi."""
+    shart = Q(sana__gte=quyi - TAXMIN_OYNASI, sana__lte=gacha + TAXMIN_OYNASI)
+    for ref, av_id, filial_id in guruhlar:
+        shart |= Q(hujjat_ref=ref, av_id=av_id, filial_id=filial_id)
+    for c in ChiqimHujjat.objects.filter(holat=ChiqimHujjat.Holat.KUTILMOQDA).filter(shart):
+        tur, _ = taxmin_qil(c.av_id, c.filial_id, c.sana, c.hujjat_turi)
+        if tur != c.taxmin_tur:
+            c.taxmin_tur = tur
+            c.save(update_fields=["taxmin_tur"])
 
 
 def kutilayotgan(filtr: Q | None = None) -> dict[tuple[int, int], Decimal]:
@@ -134,13 +149,15 @@ def taqsimot_qatorlari(chiqim: ChiqimHujjat) -> list[Taqsimot]:
 def tasdiqla(
     chiqim: ChiqimHujjat, tur: str, qatorlar: dict[int, Decimal], kim, *, kutilgan_soni: Decimal,
     qabul_filial=None, b_bolim=None, b_holat: str = "", izoh: str = "",
-) -> None:
+) -> Decimal:
     """Kutilayotgan 1C chiqimini tasdiqlaydi (spec §6.5): A filialdagi tanlangan qatorlardan jami `chiqim.soni` dona
     olib tashlanadi; `otkazish`da B'ga kelgan taqsimlanmagan donalar ixtiyoriy ravishda `b_bolim`ga joylanadi.
 
     `qatorlar` — {taqsimot_pk: soni} (0 lar e'tiborsiz); `kutilgan_soni` — forma ko'rsatgan chiqim soni.
     Qulf tartibi `moslashtir` bilan bir xil (ChiqimHujjat -> Taqsimot pk tartibida) — deadlock bo'lmaydi.
-    Arxiv AV ham tasdiqlanadi (A juft uchun arxiv tekshiruvi yo'q). Xatoda `ChiqimXato`, tranzaksiya qaytariladi."""
+    Arxiv AV ham tasdiqlanadi (A juft uchun arxiv tekshiruvi yo'q). Xatoda `ChiqimXato`, tranzaksiya qaytariladi.
+    Qaytaradi: B'ga joylangan donalar soni (joylash so'ralmagan yoki imkonsiz bo'lsa 0)."""
+    joylandi = NOL
     with transaction.atomic():
         c = ChiqimHujjat.objects.select_for_update().filter(pk=chiqim.pk).first()
         if c is None:
@@ -193,10 +210,11 @@ def tasdiqla(
                 jurnal_yoz.yoz(kim, c, maydon, oldingi, yangi)
 
         if b_bolim is not None:
-            _b_ga_joyla(c, qulflangan, qabul_filial, b_bolim, b_holat, kim)
+            joylandi = _b_ga_joyla(c, qulflangan, qabul_filial, b_bolim, b_holat, kim)
 
         _tekshir_invariant(c)
     chiqim.refresh_from_db()
+    return joylandi
 
 
 def _tekshir_qatorlar(qatorlar: dict, a_qatorlar: dict, jami: Decimal) -> list:
@@ -230,9 +248,9 @@ def _tekshir_qatorlar(qatorlar: dict, a_qatorlar: dict, jami: Decimal) -> list:
     return tanlangan
 
 
-def _b_ga_joyla(c: ChiqimHujjat, qulflangan: list, qabul_filial, b_bolim, b_holat: str, kim) -> None:
+def _b_ga_joyla(c: ChiqimHujjat, qulflangan: list, qabul_filial, b_bolim, b_holat: str, kim) -> Decimal:
     """B'dagi taqsimlanmagan qatordan min(chiqim soni, qator soni) donani `b_bolim`ga ko'chiradi; `b_holat` berilsa —
-    aynan shu donalarning holati o'zgaradi. Taqsimlanmagan qator bo'lmasa — hech narsa qilinmaydi (Review Focus 5)."""
+    aynan shu donalarning holati o'zgaradi. Taqsimlanmagan qator bo'lmasa — hech narsa qilinmaydi (Review Focus 5). Joylangan donalar sonini qaytaradi."""
     qator = next(
         (
             t for t in qulflangan
@@ -242,7 +260,7 @@ def _b_ga_joyla(c: ChiqimHujjat, qulflangan: list, qabul_filial, b_bolim, b_hola
         None,
     )
     if qator is None:
-        return
+        return NOL
     soni = min(c.soni, qator.soni)
     try:
         nishon = kochir(qator, soni, b_bolim, kim)
@@ -250,6 +268,7 @@ def _b_ga_joyla(c: ChiqimHujjat, qulflangan: list, qabul_filial, b_bolim, b_hola
             holat_ozgartir(nishon, soni, b_holat, kim)
     except AmalXato as xato:
         raise ChiqimXato(str(xato)) from None
+    return soni
 
 
 def _tekshir_invariant(c: ChiqimHujjat) -> None:

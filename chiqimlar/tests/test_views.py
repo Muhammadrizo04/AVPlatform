@@ -159,12 +159,20 @@ def test_b_filial_ruxsatsiz_rad(foydalanuvchi, tayyor, filial_yarat, fa):
     t, c = tayyor
     fv = filial_yarat("V")
     cl = kirgan(foydalanuvchi, "hisobchi", [fa])
-    r = cl.post(reverse("chiqimlar:tasdiqlash", args=[c.pk]), {
-        "tur": "otkazish", "kutilgan_soni": "1", f"soni_{t.pk}": "1", "qabul_filial": fv.pk,
+    url = reverse("chiqimlar:tasdiqlash", args=[c.pk])
+    # Ruxsatsiz B'ga bo'limsiz o'tkazish mumkin (spec §6.5), B ro'yxatda ko'rinadi.
+    assert f'value="{fv.pk}"' in cl.get(url).content.decode()
+    bv = Bolim.objects.create(filial=fv, nomi="Ombor")
+    r = cl.post(url, {
+        "tur": "otkazish", "kutilgan_soni": "1", f"soni_{t.pk}": "1", "qabul_filial": fv.pk, "b_bolim": bv.pk,
     })
     assert r.status_code == 400
     c.refresh_from_db()
     assert c.holat == "kutilmoqda"
+    r = cl.post(url, {"tur": "otkazish", "kutilgan_soni": "1", f"soni_{t.pk}": "1", "qabul_filial": fv.pk})
+    assert r.status_code == 302
+    c.refresh_from_db()
+    assert c.holat == "tasdiqlangan" and c.qabul_filial == fv
 
 
 def test_tasdiqlangan_faqat_oqish(foydalanuvchi, tayyor):
@@ -186,3 +194,49 @@ def test_menyu_nishon(client_rol, av, fa):
     chiqim(av, fa)
     html = client_rol("hisobchi").get(reverse("panel:bosh")).content.decode()
     assert "1C chiqimlari" in html
+
+
+def test_kutilgan_soni_yoq_400(foydalanuvchi, tayyor):
+    t, c = tayyor
+    cl = kirgan(foydalanuvchi, "hisobchi")
+    for forma in ({"tur": "sotildi", f"soni_{t.pk}": "1"}, {"tur": "sotildi", "kutilgan_soni": " ", f"soni_{t.pk}": "1"}):
+        r = cl.post(reverse("chiqimlar:tasdiqlash", args=[c.pk]), forma)
+        assert r.status_code == 400
+        assert "o'zgargan" not in html.unescape(r.content.decode())
+    c.refresh_from_db()
+    assert c.holat == "kutilmoqda"
+
+
+def test_b_taqsimlanmagan_yoq_ogohlantirish(foydalanuvchi, tayyor, fb):
+    t, c = tayyor
+    b = Bolim.objects.create(filial=fb, nomi="Ombor")
+    cl = kirgan(foydalanuvchi, "hisobchi")
+    r = cl.post(reverse("chiqimlar:tasdiqlash", args=[c.pk]), {
+        "tur": "otkazish", "kutilgan_soni": "1", f"soni_{t.pk}": "1", "qabul_filial": fb.pk, "b_bolim": b.pk,
+    }, follow=True)
+    assert "joylandi: 0" in html.unescape(r.content.decode())
+    c.refresh_from_db()
+    assert c.holat == "tasdiqlangan"
+
+
+def test_b_joylandi_ogohlantirish_yoq(foydalanuvchi, tayyor, fb, av):
+    t, c = tayyor
+    b = Bolim.objects.create(filial=fb, nomi="Ombor")
+    Taqsimot.objects.create(av=av, filial=fb, soni=Decimal("1"))
+    r = kirgan(foydalanuvchi, "hisobchi").post(reverse("chiqimlar:tasdiqlash", args=[c.pk]), {
+        "tur": "otkazish", "kutilgan_soni": "1", f"soni_{t.pk}": "1", "qabul_filial": fb.pk, "b_bolim": b.pk,
+    }, follow=True)
+    assert "joylandi:" not in html.unescape(r.content.decode())
+
+
+def test_royxat_korinmaydigan_av_oddiy_matn(foydalanuvchi, fa, fb):
+    # AV arxivda (A'da qoldiq yo'q) va rekviziti B'da: A'ga ruxsatli foydalanuvchi chiqimni ko'radi, AV'ni emas.
+    arxiv_av = AV.objects.create(ref_1c=uuid.uuid4(), kod="9", nomi="ArxivStol", filial_rekvizit=fb)
+    chiqim(arxiv_av, fa)
+    cl = kirgan(foydalanuvchi, "hisobchi", [fa])
+    sahifa = cl.get(reverse("chiqimlar:royxat")).content.decode()
+    assert "ArxivStol" in sahifa
+    assert reverse("vositalar:kartochka", args=[arxiv_av.pk]) not in sahifa
+    # Ruxsat etilgan filial rekviziti bo'lsa — havola bor.
+    cl2 = kirgan(foydalanuvchi, "hisobchi", [fa, fb])
+    assert reverse("vositalar:kartochka", args=[arxiv_av.pk]) in cl2.get(reverse("chiqimlar:royxat")).content.decode()

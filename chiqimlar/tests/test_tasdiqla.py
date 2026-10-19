@@ -307,3 +307,23 @@ def test_taqsimot_qatorlari(av, fa, fb, prixod, ofis):
     qator(av, fb, "1")
     c = chiqim(av, fa, "1")
     assert [t.pk for t in taqsimot_qatorlari(c)] == [p.pk, o.pk]
+
+
+def test_tasdiqla_joylangan_sonni_qaytaradi(av, fa, fb, prixod, b_ombor, user):
+    qoldiq(av, fa, "0")
+    qoldiq(av, fb, "5")
+    q = qator(av, fa, "2", bolim=prixod)
+    qator(av, fb, "1")  # B'da faqat 1 ta taqsimlanmagan, chiqim 2
+    c = chiqim(av, fa, "2", taxmin="otkazish")
+    assert tasdiqla(c, "otkazish", {q.pk: SON("2")}, user, kutilgan_soni=SON("2"), qabul_filial=fb, b_bolim=b_ombor) == SON("1")
+
+
+def test_tasdiqla_joylash_yoq_nol_qaytaradi(av, fa, fb, prixod, b_ombor, user):
+    qoldiq(av, fa, "0")
+    q = qator(av, fa, "1", bolim=prixod)
+    c = chiqim(av, fa, "1", taxmin="otkazish")
+    assert tasdiqla(c, "otkazish", {q.pk: SON("1")}, user, kutilgan_soni=SON("1"), qabul_filial=fb, b_bolim=b_ombor) == 0
+    q2 = qator(av, fa, "1", bolim=prixod)
+    c2 = chiqim(av, fa, "1", taxmin="sotildi")
+    qoldiq(av, fa, "0")
+    assert tasdiqla(c2, "sotildi", {q2.pk: SON("1")}, user, kutilgan_soni=SON("1")) == 0

@@ -28,7 +28,7 @@
     <tr>
       <td>{{ c.sana|date:"d.m.Y" }}</td>
       <td>{{ c.hujjat_turi }} {{ c.hujjat_raqami }}</td>
-      <td><a href="{% url 'vositalar:kartochka' c.av_id %}">{{ c.av.nomi }}</a></td>
+      <td>{% if c.av_id in korinadigan_av %}<a href="{% url 'vositalar:kartochka' c.av_id %}">{{ c.av.nomi }}</a>{% else %}{{ c.av.nomi }}{% endif %}</td>
       <td>{{ c.filial.nomi }}</td>
       <td class="son">{{ c.soni|son }}</td>
       <td class="son">{{ c.summa|pul }}</td>

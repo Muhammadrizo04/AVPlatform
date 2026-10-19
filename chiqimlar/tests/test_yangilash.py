@@ -193,3 +193,23 @@ def test_bekor_chiqim_qayta_paydo_bolsa_kutilmoqda(av, fa):
     j = Jurnal.objects.filter(obyekt_turi="chiqimlar.chiqimhujjat", obyekt_id=str(c.pk)).order_by("-pk").first()
     assert (j.maydon, j.eski, j.yangi, j.kim_nomi) == ("holat", "bekor", "kutilmoqda", "1C sinxron")
     assert yangila() == {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0}
+
+
+def test_taxmin_keyin_kelgan_kirim_bilan_yangilanadi(av, fa, fb):
+    harakat(av, fa, "chiqim", SANA, 1)
+    yangila()
+    assert ChiqimHujjat.objects.get().taxmin_tur == "sotildi"
+    harakat(av, fb, "kirim", SANA + timedelta(days=2), 1, turi="Поступление")
+    yangila()
+    c = ChiqimHujjat.objects.get()
+    assert c.taxmin_tur == "otkazish" and c.holat == "kutilmoqda"
+    assert not Jurnal.objects.filter(obyekt_turi="chiqimlar.chiqimhujjat", maydon="taxmin_tur").exists()
+
+
+def test_taxmin_tasdiqlanganga_tegmaydi(av, fa, fb):
+    harakat(av, fa, "chiqim", SANA, 1)
+    yangila()
+    ChiqimHujjat.objects.update(holat="tasdiqlangan", tur="sotildi")
+    harakat(av, fb, "kirim", SANA + timedelta(days=2), 1, turi="Поступление")
+    yangila()
+    assert ChiqimHujjat.objects.get().taxmin_tur == "sotildi"

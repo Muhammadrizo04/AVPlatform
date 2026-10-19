@@ -34,12 +34,12 @@ def _kutilayotgan(filtr: Q | None = None) -> dict:
 
 
 def farq(av: AV, filial) -> Decimal:
-    """1C qoldig'i + K - sum(taqsimot) shu (AV, filial) uchun (K — kutilayotgan 1C chiqimi, spec §6.5). Manfiy —
-    taqsimot ortiq (mos emas)."""
+    """max(1C qoldig'i, 0) + K - sum(taqsimot) shu (AV, filial) uchun (K — kutilayotgan 1C chiqimi, spec §6.5;
+    `moslashtir` bilan bir xil formula). Manfiy — taqsimot ortiq (mos emas)."""
     qoldiq = AVQoldiq.objects.filter(av=av, filial=filial).aggregate(s=Sum("soni"))["s"] or NOL
     taqsimot = Taqsimot.objects.filter(av=av, filial=filial).aggregate(s=Sum("soni"))["s"] or NOL
     k = _kutilayotgan(Q(av_id=av.pk, filial_id=filial.pk)).get((av.pk, filial.pk), NOL)
-    return qoldiq + k - taqsimot
+    return max(qoldiq, NOL) + k - taqsimot
 
 
 def moslashtir() -> dict:

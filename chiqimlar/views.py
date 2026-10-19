@@ -9,9 +9,10 @@ from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.cache import patch_vary_headers
 
-from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
+from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
 from onec.models import Filial
+from vositalar.filtrlar import korinadigan_av_idlari
 from vositalar.models import Bolim, Holat
 
 from .models import ChiqimHujjat
@@ -57,8 +58,9 @@ def royxat(request):
     sahifa = Paginator(qs, SAHIFA_HAJMI).get_page(request.GET.get("page"))
     params = request.GET.copy()
     params.pop("page", None)
+    korinadigan = korinadigan_av_idlari(request.user, {c.av_id for c in sahifa})
     javob = render(request, "chiqimlar/royxat.html", {
-        "sahifa": sahifa, "params": request.GET, "holat": holat, "query": params.urlencode(),
+        "sahifa": sahifa, "korinadigan_av": korinadigan, "params": request.GET, "holat": holat, "query": params.urlencode(),
         "taqsim_huquqi": huquqi_bor(request.user, "taqsimot"),
         "holatlar": ChiqimHujjat.Holat.choices, "turlar": ChiqimHujjat.Tur.choices,
         "filiallar": filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
@@ -87,10 +89,11 @@ def _decimal(qiymat, nom: str) -> Decimal:
 
 
 def _tasdiqlash_kontekst(request, chiqim, qatorlar, **qosh):
-    ruxsat = filial_bilan_chekla(Filial.objects.exclude(pk=chiqim.filial_id), request.user, "pk").order_by("nomi")
+    # B filial ruxsat etilganlar bilan cheklanmaydi (spec §6.5): faqat B'ga joylash uchun B ruxsat etilgan bo'lishi kerak.
+    b_filiallar = Filial.objects.exclude(pk=chiqim.filial_id).order_by("nomi")
     kontekst = {
         "chiqim": chiqim, "qatorlar": qatorlar, "turlar": ChiqimHujjat.Tur.choices, "holatlar": Holat.choices,
-        "b_filiallar": ruxsat,
+        "b_filiallar": b_filiallar,
         "b_bolimlar": filial_bilan_chekla(Bolim.objects.filter(faol=True), request.user)
         .select_related("filial", "ota").order_by("filial__nomi", "nomi"),
     }
@@ -129,19 +132,23 @@ def tasdiqlash(request, pk):
             "tanlangan_holat": request.POST.get("b_holat", ""), "izoh": request.POST.get("izoh", ""),
         }
         try:
+            if not (request.POST.get("kutilgan_soni") or "").strip():
+                raise _FormaXato("Chiqim soni ko'rsatilmagan. Sahifani yangilang.")
             kutilgan = _decimal(request.POST.get("kutilgan_soni"), "Chiqim soni")
             sonlar = {q.pk: _decimal(q.kiritilgan, "Soni") for q in qatorlar}
             qabul = bolim = None
             if tur == ChiqimHujjat.Tur.OTKAZISH:
-                qabul = filial_bilan_chekla(Filial.objects.exclude(pk=chiqim.filial_id), request.user, "pk") \
-                    .filter(pk=son(b_pk) or 0).first()
+                qabul = Filial.objects.exclude(pk=chiqim.filial_id).filter(pk=son(b_pk) or 0).first()
                 if qabul is None:
-                    raise ChiqimXato("Qabul qiluvchi filialni tanlang (ruxsat etilgan, chiqim filialidan boshqa).")
+                    raise ChiqimXato("Qabul qiluvchi filialni tanlang (chiqim filialidan boshqa).")
                 if request.POST.get("b_bolim"):
+                    ruxsat = ruxsat_filial_idlar(request.user)
+                    if ruxsat is not None and qabul.pk not in ruxsat:
+                        raise ChiqimXato("Bo'limga joylash uchun qabul qiluvchi filial sizga ruxsat etilgan bo'lishi kerak.")
                     bolim = Bolim.objects.filter(pk=son(request.POST.get("b_bolim")) or 0, filial=qabul, faol=True).first()
                     if bolim is None:
                         raise ChiqimXato("Bo'lim qabul qiluvchi filialga tegishli bo'lishi kerak.")
-            tasdiqla(
+            joylandi = tasdiqla(
                 chiqim, tur, sonlar, request.user, kutilgan_soni=kutilgan, qabul_filial=qabul, b_bolim=bolim,
                 b_holat=request.POST.get("b_holat", "") if bolim else "", izoh=request.POST.get("izoh", "")[:2000],
             )
@@ -151,6 +158,12 @@ def tasdiqlash(request, pk):
                 status=400,
             )
         messages.success(request, "Chiqim tasdiqlandi.")
+        if bolim is not None and joylandi < chiqim.soni:
+            messages.warning(
+                request,
+                f"B filialda taqsimlanmagan {chiqim.soni:f} dona topilmadi, joylandi: {joylandi:f}. "
+                "Qolganini taqsimot sahifasidan joylashtiring.",
+            )
         return redirect("chiqimlar:royxat")
 
     taxmin_b = None
