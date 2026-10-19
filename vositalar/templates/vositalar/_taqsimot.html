@@ -11,7 +11,7 @@
     {% for t in g.qatorlar %}
       <tr>
         <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}<em>bo'limsiz</em>{% endif %}</td>
-        <td>{{ t.mol.ism|default:"—" }}</td>
+        <td>{% if t.mol %}{{ t.mol.ism }}{% elif mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}">МОЛ biriktirish</a>{% else %}—{% endif %}</td>
         <td>{{ t.get_holat_display }}</td>
         <td class="son">{{ t.soni|son }}</td>
         {% if taqsim_huquqi %}

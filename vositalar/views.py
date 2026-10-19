@@ -213,6 +213,7 @@ def _taqsimot_kontekst(user, av, **qoshimcha) -> dict:
         "taqsim_huquqi": taqsim_huquqi,
         "holatlar": Holat.choices,
         "bolimlar": list(_bolimlar(user).filter(filial_id__in=guruhlar)) if taqsim_huquqi else [],
+        "mol_akt_huquqi": huquqi_bor(user, "mol_akt"),
     }
     kontekst.update(qoshimcha)
     return kontekst
