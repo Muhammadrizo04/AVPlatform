@@ -114,13 +114,17 @@ def _kartochkalar() -> int:
 
 
 def _hujjat_izohlari(juftlar: set) -> dict:
-    """{(av_id, filial_id): "<hujjat_turi> <hujjat_raqami>"} — shu juftning oxirgi 1C harakati bo'yicha."""
+    """{(av_id, filial_id): "<hujjat_turi> <hujjat_raqami>"} — shu juftda sonni o'zgartirgan oxirgi 1C harakati.
+
+    Soni 0 bo'lgan harakatlar (ПереоценкаОС, РасходыНаОС) taqsimotga sabab bo'lmaydi va hisobga olinmaydi.
+    """
     if not juftlar:
         return {}
     harakatlar = (
         Harakat1C.objects.filter(
             av_id__in={av for av, _ in juftlar}, filial_id__in={filial for _, filial in juftlar}
         )
+        .exclude(soni=0)
         .order_by("av_id", "filial_id", "-sana", "-id")
         .distinct("av_id", "filial_id")
     )

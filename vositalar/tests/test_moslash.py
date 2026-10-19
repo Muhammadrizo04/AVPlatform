@@ -206,6 +206,28 @@ def test_hujjat_izoh_oxirgi_harakatdan(av, filial_a, filial_b):
     assert TaqsimotHarakat.objects.get(filial=filial_b).hujjat_izoh == "Boshqa 99"
 
 
+def test_hujjat_izoh_sonni_ozgartirmagan_harakat_hisobga_olinmaydi(av, filial_a):
+    """ПереоценкаОС (soni 0) keyinroq bo'lsa ham sabab — sonni o'zgartirgan oxirgi hujjat."""
+    qoldiq(av, filial_a, "1")
+    harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 1, 1)), "ПоступлениеОС", "11")
+    qayta = harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 9, 30)), "ПереоценкаОС", "12")
+    Harakat1C.objects.filter(pk=qayta.pk).update(soni=SON("0"))
+
+    moslashtir()
+
+    assert TaqsimotHarakat.objects.get().hujjat_izoh == "ПоступлениеОС 11"
+
+
+def test_hujjat_izoh_faqat_soni_nol_harakat_bolsa_bosh(av, filial_a):
+    qoldiq(av, filial_a, "1")
+    qayta = harakat1c(av, filial_a, "kirim", timezone.make_aware(datetime(2026, 9, 30)), "ПереоценкаОС", "12")
+    Harakat1C.objects.filter(pk=qayta.pk).update(soni=SON("0"))
+
+    moslashtir()
+
+    assert TaqsimotHarakat.objects.get().hujjat_izoh == ""
+
+
 def test_hujjat_izoh_harakat_bolmasa_bosh(av, filial_a):
     qoldiq(av, filial_a, "5")
 
