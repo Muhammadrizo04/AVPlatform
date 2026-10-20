@@ -1,4 +1,4 @@
-"""МОЛ aktlari: qoralama yaratish va tasdiqlash (spec §7.6, §8).
+"""МОЛ aktlari: qoralama yaratish, tasdiqlash va bekor qilish (spec §7.6, §8).
 
 Tasdiqlash — bitta tranzaksiya: avval akt qatorlaridagi barcha (AV, filial) taqsimot qatorlari bitta so'rovda
 pk tartibida qulflanadi (`moslashtir` bilan bir xil tartib — deadlock yo'q), keyin hammasi tekshiriladi, keyin
@@ -81,6 +81,25 @@ def akt_tasdiqla(akt: MolAkt, kim) -> None:
         raise AktXato(str(xato)) from xato
 
 
+def akt_bekor_qil(akt: MolAkt, kim) -> None:
+    """Qoralamani bekor qiladi. Taqsimot o'zgarmaydi (qoralama unga hali ta'sir qilmagan); akt o'chirilmaydi."""
+    with transaction.atomic():
+        joriy = MolAkt.objects.select_for_update().get(pk=akt.pk)
+        _qoralama_bolsin(joriy)
+        joriy.holat = MolAkt.Holat.BEKOR
+        joriy.bekor_qildi = kim
+        joriy.bekor_vaqti = timezone.now()
+        joriy.save(update_fields=["holat", "bekor_qildi", "bekor_vaqti"])
+    akt.holat, akt.bekor_qildi, akt.bekor_vaqti = joriy.holat, joriy.bekor_qildi, joriy.bekor_vaqti
+
+
+def _qoralama_bolsin(akt: MolAkt) -> None:
+    if akt.holat == MolAkt.Holat.TASDIQLANGAN:
+        raise AktXato("Akt allaqachon tasdiqlangan.")
+    if akt.holat == MolAkt.Holat.BEKOR:
+        raise AktXato("Akt bekor qilingan.")
+
+
 def kalit(obyekt) -> tuple:
     """Akt qatori va taqsimot qatorini solishtirish kaliti."""
     return obyekt.av_id, obyekt.filial_id, obyekt.bolim_id, obyekt.holat
@@ -88,8 +107,7 @@ def kalit(obyekt) -> tuple:
 
 def _tasdiqla(akt: MolAkt, kim) -> None:
     joriy = MolAkt.objects.select_for_update().get(pk=akt.pk)
-    if joriy.holat != MolAkt.Holat.QORALAMA:
-        raise AktXato("Akt allaqachon tasdiqlangan.")
+    _qoralama_bolsin(joriy)
     qatorlar = list(joriy.qatorlar.order_by("pk"))
     if not qatorlar:
         raise AktXato("Aktda qator yo'q.")

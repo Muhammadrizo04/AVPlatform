@@ -27,7 +27,8 @@
       <li class="nav-title">Vositalar</li>
       <li class="nav-item"><a class="nav-link{% if ns == 'vositalar' and nom != 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:royxat' %}"><i class="nav-icon cil-list"></i> AV ro'yxati</a></li>
       <li class="nav-item"><a class="nav-link{% if ns == 'vositalar' and nom == 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:bolimlar' %}"><i class="nav-icon cil-sitemap"></i> Bo'limlar</a></li>
-      <li class="nav-item"><a class="nav-link{% if ns == 'mol' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> МОЛ nazorati</a></li>
+      <li class="nav-item"><a class="nav-link{% if ns == 'mol' and nom != 'akt_royxat' and nom != 'akt' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> МОЛ nazorati</a></li>
+      <li class="nav-item"><a class="nav-link{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> МОЛ aktlari</a></li>
       {% if chiqim_huquqi %}
       <li class="nav-item"><a class="nav-link{% if ns == 'chiqimlar' %} active{% endif %}" href="{% url 'chiqimlar:royxat' %}"><i class="nav-icon cil-swap-horizontal"></i> 1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="badge bg-danger ms-auto">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a></li>
       {% endif %}

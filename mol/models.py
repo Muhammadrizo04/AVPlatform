@@ -6,11 +6,12 @@ from vositalar.models import Holat as TaqsimotHolat
 
 
 class MolAkt(models.Model):
-    """МОЛ topshirish-qabul akti: qoralama -> tasdiqlangan (spec §7.6, §8)."""
+    """МОЛ topshirish-qabul akti: qoralama -> tasdiqlangan yoki bekor (spec §7.6, §8)."""
 
     class Holat(models.TextChoices):
         QORALAMA = "qoralama", "Qoralama"
         TASDIQLANGAN = "tasdiqlangan", "Tasdiqlangan"
+        BEKOR = "bekor", "Bekor qilingan"
 
     raqam = models.PositiveIntegerField(unique=True)
     sana = models.DateField(default=timezone.localdate)
@@ -26,6 +27,11 @@ class MolAkt(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
     )
     tasdiq_vaqti = models.DateTimeField(null=True, blank=True)
+    # Bekor qilingan qoralama o'chirilmaydi: raqami band qoladi, kim/qachon bekor qilgani saqlanadi.
+    bekor_qildi = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT, related_name="+"
+    )
+    bekor_vaqti = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.nomi
