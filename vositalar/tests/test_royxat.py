@@ -53,8 +53,8 @@ def test_royxatda_kartochkaga_havola(client_hisobchi, client_rol, filial_a, htmx
     url = reverse("vositalar:kartochka", args=[av.pk])
     for client in (client_hisobchi, client_rol("rahbar")):
         html = client.get(reverse(ROYXAT), **sarlavha).content.decode()
-        assert f'<a href="{url}">{av.nomi}</a>' in html
-        assert f'<a href="{url}">ABC-1</a>' in html
+        assert f'<a href="{url}" class="fw-semibold text-decoration-none">{av.nomi}</a>' in html
+        assert f'<a href="{url}" class="text-body-secondary">Inv. ABC-1</a>' in html
 
 
 def test_royxat_filtr_bayroq(client_hisobchi, filial_a):
@@ -101,7 +101,7 @@ def test_royxat_htmx_faqat_jadval(client_hisobchi, filial_a):
     toliq = client_hisobchi.get(reverse(ROYXAT)).content.decode()
     qism = client_hisobchi.get(reverse(ROYXAT), HTTP_HX_REQUEST="true").content.decode()
     assert "<html" in toliq
-    assert "<html" not in qism and "<table" in qism
+    assert "<html" not in qism and "list-group" in qism
 
 
 def test_royxat_filial_cheklovi(foydalanuvchi, filial_a, filial_b):

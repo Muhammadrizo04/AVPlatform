@@ -2,32 +2,34 @@
 {% block sarlavha %}AV ro'yxati{% endblock %}
 {% block kontent %}
 <h1>Asosiy vositalar</h1>
+<div class="card mb-3"><div class="card-body">
 
 <form method="get" action="{% url 'vositalar:royxat' %}" hx-get="{% url 'vositalar:royxat' %}" hx-target="#jadval" hx-push-url="true"
-      hx-trigger="change, keyup changed delay:300ms from:input[name=q]">
-  <input type="search" name="q" value="{{ params.q }}" placeholder="Inv. raqam yoki nomi">
-  <select name="filial"><option value="">Barcha filiallar</option>
+      hx-trigger="change, keyup changed delay:300ms from:input[name=q]" class="filtrlar">
+  <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam yoki nomi">
+  <select class="form-select form-select-sm" name="filial"><option value="">Barcha filiallar</option>
     {% for f in filiallar %}<option value="{{ f.pk }}" {% if params.filial == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
   </select>
-  <select name="bolim"><option value="">Barcha bo'limlar</option>
+  <select class="form-select form-select-sm" name="bolim"><option value="">Barcha bo'limlar</option>
     {% for b in bolimlar %}<option value="{{ b.pk }}" {% if params.bolim == b.pk|stringformat:"s" %}selected{% endif %}>{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
   </select>
-  <select name="turi"><option value="">Barcha turlar</option>
+  <select class="form-select form-select-sm" name="turi"><option value="">Barcha turlar</option>
     {% for t in turlar %}<option value="{{ t.pk }}" {% if params.turi == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nomi }}</option>{% endfor %}
   </select>
-  <select name="holat"><option value="">Barcha holatlar</option>
+  <select class="form-select form-select-sm" name="holat"><option value="">Barcha holatlar</option>
     {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if params.holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
   </select>
-  <label><input type="checkbox" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}> Guruhlar</label>
-  <label><input type="checkbox" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}> Arxiv</label>
-  <select name="mol"><option value="">Barcha MOL</option>
+  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_guruh" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}><label class="form-check-label" for="f_guruh">Guruhlar</label></div>
+  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_arxiv" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}><label class="form-check-label" for="f_arxiv">Arxiv</label></div>
+  <select class="form-select form-select-sm" name="mol"><option value="">Barcha MOL</option>
     {% for x in xodimlar %}<option value="{{ x.pk }}" {% if params.mol == x.pk|stringformat:"s" %}selected{% endif %}>{{ x.ism }}</option>{% endfor %}
   </select>
-  <select name="bayroq"><option value="">Bayroq: hammasi</option>
+  <select class="form-select form-select-sm" name="bayroq"><option value="">Bayroq: hammasi</option>
     {% for kalit, nomi in bayroqlar %}<option value="{{ kalit }}" {% if params.bayroq == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
   </select>
-  <noscript><button type="submit">Qidirish</button></noscript>
+  <noscript><button type="submit" class="btn btn-sm btn-primary">Qidirish</button></noscript>
 </form>
+</div></div>
 
 <div id="jadval">{% include "vositalar/_jadval.html" %}</div>
 {% endblock %}
