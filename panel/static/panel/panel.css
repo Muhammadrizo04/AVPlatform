@@ -1,0 +1,64 @@
+/* Panel qatlami: CoreUI ustidan loyiha uslublari. Hali CoreUI klassi berilmagan sahifalar ham shu yerda bezatiladi. */
+body { background: var(--cui-tertiary-bg); }
+.wrapper { width: 100%; padding-inline-start: var(--cui-sidebar-occupy-start, 0); transition: padding .15s; }
+.sidebar-nav .nav-link .badge { margin-inline-start: auto; }
+.header { flex-wrap: wrap; }
+.header .banner { margin: 0; width: 100%; }
+
+/* Sahifa sarlavhalari */
+main h1 { font-size: 1.6rem; font-weight: 600; margin: .5rem 0 1rem; }
+main h2 { font-size: 1.2rem; font-weight: 600; margin: 1.5rem 0 .75rem; }
+main h3 { font-size: 1.05rem; font-weight: 600; margin: 1rem 0 .5rem; }
+
+/* Klassi yo'q jadval, tugma va maydonlar — CoreUI ko'rinishiga yaqin */
+main table:not(.table) { width: 100%; margin-bottom: 1rem; border-collapse: collapse; background: var(--cui-body-bg);
+  border: 1px solid var(--cui-border-color); border-radius: var(--cui-border-radius); }
+main table:not(.table) th, main table:not(.table) td { padding: .5rem .75rem; border-bottom: 1px solid var(--cui-border-color); text-align: left; vertical-align: middle; }
+main table:not(.table) thead th { background: var(--cui-secondary-bg); font-weight: 600; }
+main table:not(.table) tbody tr:hover { background: var(--cui-tertiary-bg); }
+main button:not(.btn):not(.btn-close) { display: inline-block; padding: .3rem .75rem; font-size: .875rem; line-height: 1.5;
+  color: #fff; background: var(--cui-primary); border: 1px solid var(--cui-primary); border-radius: var(--cui-border-radius); cursor: pointer; }
+main button:not(.btn):not(.btn-close):hover { filter: brightness(.92); }
+main button:disabled { opacity: .65; cursor: default; }
+main input:not([type=checkbox]):not([type=radio]):not([type=hidden]):not(.form-control):not(.form-select),
+main select:not(.form-select), main textarea:not(.form-control) {
+  padding: .3rem .6rem; font-size: .875rem; color: var(--cui-body-color); background: var(--cui-body-bg);
+  border: 1px solid var(--cui-border-color); border-radius: var(--cui-border-radius); }
+main input:focus, main select:focus, main textarea:focus { outline: 0; border-color: var(--cui-primary); box-shadow: 0 0 0 .2rem rgba(var(--cui-primary-rgb), .25); }
+main fieldset { min-width: 0; }
+
+/* Loyiha klasslari */
+.son { text-align: right !important; font-variant-numeric: tabular-nums; }
+.xato { color: var(--cui-danger); }
+.nishon { background: var(--cui-danger); color: #fff; border-radius: 9px; padding: 0 .45rem; font-size: .8rem; }
+.banner { padding: .4rem 1.5rem; font-size: .875rem; }
+.banner.qizil { background: var(--cui-danger); color: #fff; font-weight: 600; }
+.banner.kulrang { background: var(--cui-secondary-bg); color: var(--cui-secondary-color); }
+.amallar { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+.kartochkalar { display: flex; flex-wrap: wrap; gap: .8rem; }
+.kartochka { background: var(--cui-body-bg); border: 1px solid var(--cui-border-color); border-radius: var(--cui-border-radius);
+  padding: .6rem 1rem; min-width: 10rem; text-decoration: none; color: inherit; }
+.kartochka strong { display: block; font-size: 1.4rem; }
+.filtrlar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.filtrlar .form-select, .filtrlar .form-control { width: auto; max-width: 18rem; }
+
+.kartochka-bayroq:hover { box-shadow: var(--cui-box-shadow-sm); }
+.bayroq-faol { border-left: 4px solid var(--cui-warning); }
+.active-bolim { background: var(--cui-primary-bg-subtle); }
+
+/* AV ro'yxati (list-group) */
+.av-qator { display: flex; gap: .75rem; align-items: flex-start; }
+.av-qator .av-asosiy { flex: 1 1 auto; min-width: 0; }
+.av-qator .av-raqamlar { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+@media print {
+  .sidebar, .header, .footer, .banner, .amallar, .xabarlar { display: none !important; }
+  .wrapper { padding: 0 !important; }
+  body { background: #fff; }
+  main { max-width: none !important; padding: 0 !important; }
+  main table:not(.table) th, main table:not(.table) td { border: 1px solid #999; }
+}
+
+@media (max-width: 575.98px) {
+  .filtrlar .form-select, .filtrlar .form-control { width: 100%; max-width: none; }
+}

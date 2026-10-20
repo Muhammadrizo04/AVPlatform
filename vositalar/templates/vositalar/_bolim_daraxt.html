@@ -1,41 +1,44 @@
-<section id="daraxt">
-  {% if xato %}<p class="xato" role="alert">{{ xato }}</p>{% endif %}
-  {% if not qatorlar %}<p><em>Bu filialda bo'lim yo'q.</em></p>{% endif %}
-  <ul style="list-style:none;padding:0">
+<section id="daraxt" class="card mb-4">
+  <div class="card-header fw-semibold">Bo'limlar daraxti</div>
+  {% if xato %}<div class="alert alert-danger py-2 m-3 mb-0 xato" role="alert">{{ xato }}</div>{% endif %}
+  {% if not qatorlar %}<div class="card-body text-body-secondary"><em>Bu filialda bo'lim yo'q.</em></div>{% endif %}
+  <ul class="list-group list-group-flush">
   {% for b, chuqurlik, toliq in qatorlar %}
-    <li style="margin-left:{{ chuqurlik }}rem;{% if not b.faol %}color:#7b8794{% endif %}">
-      <a href="{% url 'vositalar:bolimlar' %}?filial={{ filial.pk }}&amp;bolim={{ b.pk }}">{{ b.nomi }}</a>{% if not b.faol %} <em>(faol emas)</em>{% endif %}
+    <li class="list-group-item d-flex align-items-center gap-2{% if tanlangan and b.pk == tanlangan.pk %} active-bolim{% endif %}" style="padding-left:calc(1rem + {{ chuqurlik }}rem)">
+      <a href="{% url 'vositalar:bolimlar' %}?filial={{ filial.pk }}&amp;bolim={{ b.pk }}" class="me-auto text-decoration-none{% if not b.faol %} text-body-secondary{% endif %}">{% if chuqurlik %}<span class="text-body-tertiary">└ </span>{% endif %}{{ b.nomi }}</a>{% if not b.faol %} <span class="badge bg-secondary">faol emas</span>{% endif %}
       {% if tahrir_huquqi %}
-      <form method="post" action="{% url 'vositalar:bolim_nofaol' b.pk %}" hx-post="{% url 'vositalar:bolim_nofaol' b.pk %}" hx-target="#daraxt" hx-swap="outerHTML" style="display:inline">
-        <button type="submit">{% if b.faol %}Faolsizlantirish{% else %}Faollashtirish{% endif %}</button>
+      <form method="post" action="{% url 'vositalar:bolim_nofaol' b.pk %}" hx-post="{% url 'vositalar:bolim_nofaol' b.pk %}" hx-target="#daraxt" hx-swap="outerHTML" class="d-inline">
+        <button type="submit" class="btn btn-sm {% if b.faol %}btn-outline-secondary{% else %}btn-outline-success{% endif %} py-0">{% if b.faol %}Faolsizlantirish{% else %}Faollashtirish{% endif %}</button>
       </form>
       {% endif %}
     </li>
   {% endfor %}
   </ul>
   {% if tahrir_huquqi %}
-  <form method="post" action="{% url 'vositalar:bolim_saqla' %}" hx-post="{% url 'vositalar:bolim_saqla' %}" hx-target="#daraxt" hx-swap="outerHTML">
-    <strong>Yangi bo'lim</strong>
+  <div class="card-footer">
+  <form method="post" action="{% url 'vositalar:bolim_saqla' %}" hx-post="{% url 'vositalar:bolim_saqla' %}" hx-target="#daraxt" hx-swap="outerHTML" class="filtrlar mb-2">
+    <strong class="small">Yangi bo'lim</strong>
     <input type="hidden" name="filial" value="{{ filial.pk }}">
-    <input type="text" name="nomi" maxlength="255" placeholder="Nomi" aria-label="Yangi bo'lim nomi" required>
-    <select name="ota" aria-label="Ota bo'lim">
+    <input class="form-control form-control-sm" type="text" name="nomi" maxlength="255" placeholder="Nomi" aria-label="Yangi bo'lim nomi" required>
+    <select class="form-select form-select-sm" name="ota" aria-label="Ota bo'lim">
       <option value="">— ildiz —</option>
       {% for b, chuqurlik, toliq in qatorlar %}{% if b.faol %}<option value="{{ b.pk }}">{{ toliq }}</option>{% endif %}{% endfor %}
     </select>
-    <button type="submit">Qo'shish</button>
+    <button type="submit" class="btn btn-sm btn-primary"><i class="cil-plus me-1"></i>Qo'shish</button>
   </form>
   {% if tanlangan %}
-  <form method="post" action="{% url 'vositalar:bolim_saqla' %}" hx-post="{% url 'vositalar:bolim_saqla' %}" hx-target="#daraxt" hx-swap="outerHTML">
-    <strong>Tahrirlash: {{ tanlangan.nomi }}</strong>
+  <form method="post" action="{% url 'vositalar:bolim_saqla' %}" hx-post="{% url 'vositalar:bolim_saqla' %}" hx-target="#daraxt" hx-swap="outerHTML" class="filtrlar">
+    <strong class="small">Tahrirlash: {{ tanlangan.nomi }}</strong>
     <input type="hidden" name="filial" value="{{ filial.pk }}">
     <input type="hidden" name="bolim" value="{{ tanlangan.pk }}">
-    <input type="text" name="nomi" maxlength="255" value="{{ tanlangan.nomi }}" aria-label="Nomi" required>
-    <select name="ota" aria-label="Ota bo'lim">
+    <input class="form-control form-control-sm" type="text" name="nomi" maxlength="255" value="{{ tanlangan.nomi }}" aria-label="Nomi" required>
+    <select class="form-select form-select-sm" name="ota" aria-label="Ota bo'lim">
       <option value="">— ildiz —</option>
       {% for b, chuqurlik, toliq in qatorlar %}{% if b.pk != tanlangan.pk and b.faol or b.pk == tanlangan.ota_id %}<option value="{{ b.pk }}"{% if b.pk == tanlangan.ota_id %} selected{% endif %}>{{ toliq }}</option>{% endif %}{% endfor %}
     </select>
-    <button type="submit">Saqlash</button>
+    <button type="submit" class="btn btn-sm btn-primary"><i class="cil-save me-1"></i>Saqlash</button>
   </form>
   {% endif %}
+  </div>
   {% endif %}
 </section>

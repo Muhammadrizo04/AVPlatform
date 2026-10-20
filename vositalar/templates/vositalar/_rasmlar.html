@@ -1,29 +1,31 @@
-<section id="rasmlar">
-  <h2>Rasmlar</h2>
-  {% if xato %}<p class="xato" role="alert">{{ xato }}</p>{% endif %}
+<section id="rasmlar" class="card mb-4">
+  <div class="card-header fw-semibold">Rasmlar</div>
+  <div class="card-body">
+  {% if xato %}<div class="alert alert-danger py-2 xato" role="alert">{{ xato }}</div>{% endif %}
   <div class="kartochkalar">
     {% for r in rasmlar %}
     <figure style="margin:0">
       <a href="{% url 'vositalar:rasm_fayl' r.pk %}" target="_blank" rel="noopener">
-        <img src="{% url 'vositalar:rasm_fayl' r.pk %}?mini=1" alt="AV rasmi" loading="lazy" style="max-width:150px;max-height:150px">
+        <img src="{% url 'vositalar:rasm_fayl' r.pk %}?mini=1" alt="AV rasmi" loading="lazy" class="img-thumbnail" style="max-width:150px;max-height:150px">
       </a>
       <figcaption>
-        {% if r.asosiy %}<strong>Asosiy</strong>
+        {% if r.asosiy %}<span class="badge bg-primary mt-1">Asosiy</span>
         {% elif av_tahrir %}
         <form hx-post="{% url 'vositalar:rasm_asosiy' av.pk %}" hx-target="#rasmlar" hx-swap="outerHTML">
-          <input type="hidden" name="rasm" value="{{ r.pk }}"><button type="submit">Asosiy qilish</button>
+          <input type="hidden" name="rasm" value="{{ r.pk }}"><button type="submit" class="btn btn-sm btn-outline-secondary mt-1">Asosiy qilish</button>
         </form>
         {% endif %}
       </figcaption>
     </figure>
     {% empty %}
-    <p>Rasm yo'q.</p>
+    <p class="text-body-secondary mb-0">Rasm yo'q.</p>
     {% endfor %}
   </div>
   {% if av_tahrir %}
-  <form hx-post="{% url 'vositalar:rasm_yukla' av.pk %}" hx-target="#rasmlar" hx-swap="outerHTML" hx-encoding="multipart/form-data">
-    <input type="file" name="fayl" accept="image/jpeg,image/png" capture="environment" required>
-    <button type="submit">Yuklash</button>
+  <form hx-post="{% url 'vositalar:rasm_yukla' av.pk %}" hx-target="#rasmlar" hx-swap="outerHTML" hx-encoding="multipart/form-data" class="d-flex flex-wrap gap-2 mt-3">
+    <input class="form-control form-control-sm w-auto" type="file" name="fayl" accept="image/jpeg,image/png" capture="environment" required>
+    <button type="submit" class="btn btn-sm btn-primary"><i class="cil-cloud-upload me-1"></i>Yuklash</button>
   </form>
   {% endif %}
+  </div>
 </section>

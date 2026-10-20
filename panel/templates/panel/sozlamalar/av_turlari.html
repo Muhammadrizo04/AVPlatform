@@ -1,9 +1,11 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}AV turlari{% endblock %}
 {% block kontent %}
+<h1>Sozlamalar</h1>
 {% include "panel/sozlamalar/_menyu.html" %}
-<h1>AV turlari</h1>
-<table>
+<div class="card mb-4">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
   <thead><tr><th>Nomi</th><th class="son">Xizmat muddati, oy</th><th class="son">Qo'shimcha maydonlar</th><th></th></tr></thead>
   <tbody>
   {% for t in turlar %}
@@ -11,11 +13,13 @@
       <td>{{ t.nomi }}</td>
       <td class="son">{{ t.sozlama.xizmat_muddati_oy|default_if_none:"—" }}</td>
       <td class="son">{{ t.sozlama.maydonlar|length }}</td>
-      <td><a href="{% url 'panel:av_turi_tahrir' t.pk %}">Sozlash</a></td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'panel:av_turi_tahrir' t.pk %}">Sozlash</a></td>
     </tr>
   {% empty %}
-    <tr><td colspan="4">AV turi yo'q (1C sinxronidan keyin paydo bo'ladi).</td></tr>
+    <tr><td colspan="4" class="text-body-secondary">AV turi yo'q (1C sinxronidan keyin paydo bo'ladi).</td></tr>
   {% endfor %}
   </tbody>
 </table>
+</div>
+</div>
 {% endblock %}

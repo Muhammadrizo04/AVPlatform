@@ -1,13 +1,32 @@
 {% extends "panel/base.html" %}
+{% load forma %}
 {% block sarlavha %}Kirish{% endblock %}
 {% block kontent %}
-<h1>Tizimga kirish</h1>
-<form method="post">
-  {% csrf_token %}
-  {% if form.non_field_errors %}<p class="xato">{{ form.non_field_errors|join:" " }}</p>{% endif %}
-  <p><label>Login<br>{{ form.username }}</label></p>
-  <p><label>Parol<br>{{ form.password }}</label></p>
-  {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
-  <button type="submit">Kirish</button>
-</form>
+<div class="row justify-content-center pt-5">
+  <div class="col-sm-9 col-md-6 col-lg-5 col-xl-4">
+    <div class="text-center mb-4">
+      <i class="cil-storage fs-1 text-primary"></i>
+      <div class="fs-4 fw-semibold">Asosiy vositalar</div>
+    </div>
+    <div class="card">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-3">Tizimga kirish</h1>
+        <form method="post">
+          {% csrf_token %}
+          {% if form.non_field_errors %}<div class="alert alert-danger py-2 xato">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+          <div class="mb-3">
+            <label class="form-label" for="{{ form.username.id_for_label }}">Login</label>
+            <div class="input-group"><span class="input-group-text"><i class="cil-user"></i></span>{{ form.username|cui }}</div>
+          </div>
+          <div class="mb-4">
+            <label class="form-label" for="{{ form.password.id_for_label }}">Parol</label>
+            <div class="input-group"><span class="input-group-text"><i class="cil-lock-locked"></i></span>{{ form.password|cui }}</div>
+          </div>
+          {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+          <button type="submit" class="btn btn-primary w-100">Kirish</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

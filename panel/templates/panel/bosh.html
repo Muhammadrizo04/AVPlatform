@@ -3,25 +3,36 @@
 {% block kontent %}
 <h1>Bosh sahifa</h1>
 
+<h2>Nazorat va tozalash</h2>
+<div class="row g-3 mb-4">
+  {% for b in bayroqlar %}
+  <div class="col-6 col-md-4 col-xl-3">
+    <a class="card h-100 text-decoration-none kartochka-bayroq{% if b.soni %} bayroq-faol{% endif %}" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}">
+      <div class="card-body py-2">
+        <div class="fs-4 fw-semibold text-body">{{ b.soni|son }}</div>
+        <div class="small text-body-secondary">{{ b.nomi }}</div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
 <h2>Filiallar kesimi</h2>
-<table>
+<div class="card mb-4">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
   <thead><tr><th>Filial</th><th class="son">Soni</th><th class="son">Boshlang'ich qiymat</th><th class="son">Qoldiq qiymat</th></tr></thead>
   <tbody>
   {% for q in filiallar %}
     <tr><td>{{ q.filial.nomi }}</td><td class="son">{{ q.soni|son }}</td><td class="son">{{ q.boshlangich|pul }}</td><td class="son">{{ q.qoldiq|pul }}</td></tr>
   {% empty %}
-    <tr><td colspan="4">Ma'lumot yo'q.</td></tr>
+    <tr><td colspan="4" class="text-body-secondary">Ma'lumot yo'q.</td></tr>
   {% endfor %}
   </tbody>
   {% if filiallar %}
-  <tfoot><tr><th>Jami</th><th class="son">{{ jami.soni|son }}</th><th class="son">{{ jami.boshlangich|pul }}</th><th class="son">{{ jami.qoldiq|pul }}</th></tr></tfoot>
+  <tfoot class="table-light"><tr><th>Jami</th><th class="son">{{ jami.soni|son }}</th><th class="son">{{ jami.boshlangich|pul }}</th><th class="son">{{ jami.qoldiq|pul }}</th></tr></tfoot>
   {% endif %}
 </table>
-
-<h2>Nazorat va tozalash</h2>
-<div class="kartochkalar">
-  {% for b in bayroqlar %}
-    <a class="kartochka" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}"><strong>{{ b.soni|son }}</strong>{{ b.nomi }}</a>
-  {% endfor %}
+</div>
 </div>
 {% endblock %}

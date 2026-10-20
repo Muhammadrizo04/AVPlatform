@@ -1,13 +1,31 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ akt.nomi }}{% endblock %}
 {% block kontent %}
-<h1>МОЛ akti {{ akt.nomi }} <small>({{ akt.get_holat_display }})</small></h1>
-<p>Sana: {{ akt.sana|date:"d.m.Y" }}<br>
-Topshiruvchi: <strong>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</strong><br>
-Qabul qiluvchi: <strong>{{ akt.qabul_qiluvchi.ism }}</strong></p>
-{% if akt.izoh %}<p>Izoh: {{ akt.izoh }}</p>{% endif %}
-{% if akt.tasdiq_vaqti %}<p>Tasdiqlangan: {{ akt.tasdiq_vaqti|date:"d.m.Y H:i" }}</p>{% endif %}
-<table>
+<a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">МОЛ akti {{ akt.nomi }}
+    {% if akt.holat == "tasdiqlangan" %}<span class="badge bg-success fs-6 align-middle">{{ akt.get_holat_display }}</span>{% else %}<span class="badge bg-warning text-dark fs-6 align-middle">{{ akt.get_holat_display }}</span>{% endif %}</h1>
+  <a href="{% url 'mol:akt_pdf' akt.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>PDF</a>
+  {% if tasdiqlash_mumkin %}
+  <form method="post" action="{% url 'mol:akt_tasdiqla' akt.pk %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Tasdiqlash</button></form>
+  {% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Sana</div>{{ akt.sana|date:"d.m.Y" }}</div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Topshiruvchi</div><strong>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</strong></div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Qabul qiluvchi</div><strong>{{ akt.qabul_qiluvchi.ism }}</strong></div>
+      {% if akt.tasdiq_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Tasdiqlangan</div>{{ akt.tasdiq_vaqti|date:"d.m.Y H:i" }}</div>{% endif %}
+      {% if akt.izoh %}<div class="col-12"><div class="small text-body-secondary">Izoh</div>{{ akt.izoh }}</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
   <thead><tr><th>№</th><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th><th class="son">Qiymat</th></tr></thead>
   <tbody>
   {% for q in qatorlar %}
@@ -17,14 +35,9 @@ Qabul qiluvchi: <strong>{{ akt.qabul_qiluvchi.ism }}</strong></p>
       <td class="son">{{ q.soni|son }}</td><td class="son">{{ q.qiymat|pul }}</td>
     </tr>
   {% endfor %}
-    <tr><th colspan="7">Jami</th><th class="son">{{ jami_qiymat|pul }}</th></tr>
+    <tr class="table-light"><th colspan="7">Jami</th><th class="son">{{ jami_qiymat|pul }}</th></tr>
   </tbody>
 </table>
-<p>
-  <a href="{% url 'mol:akt_pdf' akt.pk %}">PDF</a>
-  {% if tasdiqlash_mumkin %}
-  <form method="post" action="{% url 'mol:akt_tasdiqla' akt.pk %}" style="display:inline">{% csrf_token %}<button type="submit">Tasdiqlash</button></form>
-  {% endif %}
-</p>
-<p><a href="{% url 'mol:xodimlar' %}">&larr; МОЛ nazorati</a></p>
+</div>
+</div>
 {% endblock %}

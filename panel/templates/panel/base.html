@@ -5,51 +5,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"400|409|422","swap":true,"error":false},{"code":"[45]..","swap":false,"error":true}]}'>
   <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
+  <link rel="stylesheet" href="{% static 'panel/vendor/coreui/coreui.min.css' %}">
+  <link rel="stylesheet" href="{% static 'panel/vendor/coreui-icons/css/free.min.css' %}">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}">
+  <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 0; color: #1f2933; background: #f5f7fa; }
-    .yuqori { display: flex; align-items: center; gap: 1.5rem; padding: .6rem 1.2rem; background: #243b53; color: #fff; }
-    .yuqori a { color: #fff; text-decoration: none; }
-    .yuqori .bosh { margin-left: auto; display: flex; gap: .8rem; align-items: center; }
-    .yuqori button { background: none; border: 1px solid #9fb3c8; color: #fff; padding: .25rem .7rem; border-radius: 4px; cursor: pointer; }
-    main { max-width: 72rem; margin: 1.5rem auto; padding: 0 1rem; }
-    .xato { color: #b8302a; }
-    .banner { padding: .5rem 1.2rem; font-size: .9rem; }
-    .banner.qizil { background: #b8302a; color: #fff; font-weight: 600; }
-    .banner.kulrang { background: #e4e7eb; color: #52606d; }
-    .xabarlar { list-style: none; margin: 0 0 1rem; padding: 0; }
-    .xabarlar li { padding: .5rem .8rem; border-radius: 4px; margin-bottom: .4rem; background: #e4e7eb; }
-    .xabarlar .success { background: #d8f0dc; } .xabarlar .warning { background: #fff3c4; } .xabarlar .error { background: #fadbd8; }
-    table { border-collapse: collapse; width: 100%; background: #fff; }
-    th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid #e4e7eb; }
-    .nishon { background: #b8302a; color: #fff; border-radius: 9px; padding: 0 .45rem; font-size: .8rem; }
-    .son { text-align: right; }
-    .kartochkalar { display: flex; flex-wrap: wrap; gap: .8rem; }
-    .kartochka { background: #fff; border: 1px solid #d9e2ec; border-radius: 6px; padding: .6rem 1rem; min-width: 10rem; text-decoration: none; color: inherit; }
-    .kartochka strong { display: block; font-size: 1.4rem; }
-    @media print {
-      .yuqori, .banner, .amallar, .xabarlar { display: none; }
-      body { background: #fff; }
-      main { max-width: none; margin: 0; }
-      th, td { border: 1px solid #999; }
-    }
-  </style>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated %}
-  <header class="yuqori">
-    <strong>Asosiy vositalar</strong>
-    <nav>
-      {% block menyu %}<a href="{% url 'panel:bosh' %}">Bosh sahifa</a> <a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a> <a href="{% url 'vositalar:bolimlar' %}">Bo'limlar</a>  <a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% if chiqim_huquqi %} <a href="{% url 'chiqimlar:royxat' %}">1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="nishon">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a>{% endif %}{% if hisobot_huquqi %} <a href="{% url 'hisobotlar:kesim' %}">Kesim</a> <a href="{% url 'hisobotlar:mol_qaydnoma' %}">МОЛ qaydnomasi</a> <a href="{% url 'hisobotlar:muddat' %}">Xizmat muddati</a>{% endif %}{% if tozalash_huquqi %} <a href="{% url 'hisobotlar:tozalash' %}">Tozalash</a>{% endif %}{% if sozlama_huquqi %} <a href="{% url 'panel:foydalanuvchilar' %}">Sozlamalar</a>{% endif %}{% endblock %}
-    </nav>
-    <div class="bosh">
-      <span>{{ user.get_username }}{% if user.profil %} · {{ user.profil.get_rol_display }}{% endif %}</span>
-      <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button type="submit">Chiqish</button></form>
+  {% with ns=request.resolver_match.namespace nom=request.resolver_match.url_name %}
+  <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
+    <div class="sidebar-header border-bottom">
+      <a class="sidebar-brand text-decoration-none text-white fw-semibold" href="{% url 'panel:bosh' %}">
+        <i class="cil-storage me-2"></i><span class="sidebar-brand-full">Asosiy vositalar</span>
+      </a>
+      <button class="btn-close btn-close-white d-lg-none" type="button" aria-label="Yopish" data-sidebar-toggle></button>
     </div>
-  </header>
-  {% include 'panel/_sinxron_banner.html' %}
+    <ul class="sidebar-nav">
+      {% block menyu %}
+      <li class="nav-item"><a class="nav-link{% if ns == 'panel' and nom == 'bosh' %} active{% endif %}" href="{% url 'panel:bosh' %}"><i class="nav-icon cil-speedometer"></i> Bosh sahifa</a></li>
+      <li class="nav-title">Vositalar</li>
+      <li class="nav-item"><a class="nav-link{% if ns == 'vositalar' and nom != 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:royxat' %}"><i class="nav-icon cil-list"></i> AV ro'yxati</a></li>
+      <li class="nav-item"><a class="nav-link{% if ns == 'vositalar' and nom == 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:bolimlar' %}"><i class="nav-icon cil-sitemap"></i> Bo'limlar</a></li>
+      <li class="nav-item"><a class="nav-link{% if ns == 'mol' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> МОЛ nazorati</a></li>
+      {% if chiqim_huquqi %}
+      <li class="nav-item"><a class="nav-link{% if ns == 'chiqimlar' %} active{% endif %}" href="{% url 'chiqimlar:royxat' %}"><i class="nav-icon cil-swap-horizontal"></i> 1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="badge bg-danger ms-auto">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a></li>
+      {% endif %}
+      {% if hisobot_huquqi or tozalash_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
+      {% if hisobot_huquqi %}
+      <li class="nav-item"><a class="nav-link{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>
+      <li class="nav-item"><a class="nav-link{% if nom == 'mol_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:mol_qaydnoma' %}"><i class="nav-icon cil-description"></i> МОЛ qaydnomasi</a></li>
+      <li class="nav-item"><a class="nav-link{% if nom == 'muddat' %} active{% endif %}" href="{% url 'hisobotlar:muddat' %}"><i class="nav-icon cil-clock"></i> Xizmat muddati</a></li>
+      {% endif %}
+      {% if tozalash_huquqi %}
+      <li class="nav-item"><a class="nav-link{% if nom == 'tozalash' %} active{% endif %}" href="{% url 'hisobotlar:tozalash' %}"><i class="nav-icon cil-task"></i> Tozalash</a></li>
+      {% endif %}
+      {% if sozlama_huquqi %}
+      <li class="nav-title">Tizim</li>
+      <li class="nav-item"><a class="nav-link{% if ns == 'panel' and nom != 'bosh' %} active{% endif %}" href="{% url 'panel:foydalanuvchilar' %}"><i class="nav-icon cil-settings"></i> Sozlamalar</a></li>
+      {% endif %}
+      {% endblock %}
+    </ul>
+  </div>
+  {% endwith %}
   {% endif %}
-  <main>
-    {% if messages %}<ul class="xabarlar">{% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}</ul>{% endif %}{% block kontent %}{% endblock %}</main>
+
+  <div class="wrapper d-flex flex-column min-vh-100">
+    {% if user.is_authenticated %}
+    <header class="header header-sticky p-0 mb-3">
+      <div class="container-fluid border-bottom px-4">
+        <button class="header-toggler" type="button" aria-label="Menyu" data-sidebar-toggle style="margin-inline-start:-14px">
+          <i class="cil-menu fs-4"></i>
+        </button>
+        <span class="header-brand d-lg-none fw-semibold ms-2">Asosiy vositalar</span>
+        <ul class="header-nav ms-auto align-items-center">
+          <li class="nav-item"><span class="nav-link"><i class="cil-user me-1"></i>{{ user.get_username }}{% if user.profil %} <span class="text-body-secondary d-none d-md-inline">· {{ user.profil.get_rol_display }}</span>{% endif %}</span></li>
+          <li class="nav-item py-1"><div class="vr h-100 mx-2 text-body text-opacity-75"></div></li>
+          <li class="nav-item">
+            <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button type="submit" class="btn btn-sm btn-outline-secondary"><i class="cil-account-logout me-1"></i>Chiqish</button></form>
+          </li>
+        </ul>
+      </div>
+      {% include 'panel/_sinxron_banner.html' %}
+    </header>
+    {% endif %}
+    <div class="body flex-grow-1">
+      <main class="container-lg px-4 pb-4">
+        {% if messages %}<div class="xabarlar">{% for m in messages %}<div class="alert {% if m.tags == 'error' %}alert-danger{% elif m.tags %}alert-{{ m.tags }}{% else %}alert-secondary{% endif %} py-2 {{ m.tags }}" role="alert">{{ m }}</div>{% endfor %}</div>{% endif %}{% block kontent %}{% endblock %}</main>
+    </div>
+    <footer class="footer px-4">
+      <div>Asosiy vositalar platformasi</div>
+      <div class="ms-auto text-body-secondary small">1C «КСБ» ma'lumotlari faqat o'qish uchun</div>
+    </footer>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var el = document.getElementById("sidebar");
+      if (!el || !window.coreui) return;
+      var sidebar = coreui.Sidebar.getOrCreateInstance(el);
+      document.querySelectorAll("[data-sidebar-toggle]").forEach(function (b) {
+        b.addEventListener("click", function () { sidebar.toggle(); });
+      });
+    });
+  </script>
 </body>
 </html>
