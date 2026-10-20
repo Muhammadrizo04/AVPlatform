@@ -1,12 +1,12 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ akt.nomi }}{% endblock %}
 {% block kontent %}
-<a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
+<a href="{% url 'mol:akt_royxat' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ aktlari</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-  <h1 class="mb-0 me-auto">МОЛ akti {{ akt.nomi }}
-    {% if akt.holat == "tasdiqlangan" %}<span class="badge bg-success fs-6 align-middle">{{ akt.get_holat_display }}</span>{% else %}<span class="badge bg-warning text-dark fs-6 align-middle">{{ akt.get_holat_display }}</span>{% endif %}</h1>
+  <h1 class="mb-0 me-auto">МОЛ akti {{ akt.nomi }} {% include "mol/_akt_holati.html" with a=akt %}</h1>
   <a href="{% url 'mol:akt_pdf' akt.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>PDF</a>
   {% if tasdiqlash_mumkin %}
+  <form method="post" action="{% url 'mol:akt_bekor' akt.pk %}" class="d-inline" onsubmit="return confirm('Akt {{ akt.nomi }} bekor qilinsinmi? Bu amalni qaytarib bo'lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
   <form method="post" action="{% url 'mol:akt_tasdiqla' akt.pk %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Tasdiqlash</button></form>
   {% endif %}
 </div>
@@ -18,6 +18,7 @@
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Topshiruvchi</div><strong>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</strong></div>
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Qabul qiluvchi</div><strong>{{ akt.qabul_qiluvchi.ism }}</strong></div>
       {% if akt.tasdiq_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Tasdiqlangan</div>{{ akt.tasdiq_vaqti|date:"d.m.Y H:i" }}</div>{% endif %}
+      {% if akt.bekor_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Bekor qilingan</div>{{ akt.bekor_vaqti|date:"d.m.Y H:i" }}{% if akt.bekor_qildi %} · {{ akt.bekor_qildi.get_full_name|default:akt.bekor_qildi.get_username }}{% endif %}</div>{% endif %}
       {% if akt.izoh %}<div class="col-12"><div class="small text-body-secondary">Izoh</div>{{ akt.izoh }}</div>{% endif %}
     </div>
   </div>

@@ -49,7 +49,7 @@
       <td>{{ a.sana|date:"d.m.Y" }}</td>
       <td>{{ a.topshiruvchi.ism|default:"—" }}</td>
       <td>{{ a.qabul_qiluvchi.ism }}</td>
-      <td>{% if a.holat == "tasdiqlangan" %}<span class="badge bg-success">{{ a.get_holat_display }}</span>{% else %}<span class="badge bg-warning text-dark">{{ a.get_holat_display }}</span>{% endif %}</td>
+      <td>{% include "mol/_akt_holati.html" %}</td>
     </tr>
   {% endfor %}
   </tbody>

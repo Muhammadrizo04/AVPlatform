@@ -1,6 +1,9 @@
+import re
+from datetime import date
 from decimal import Decimal
 
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
@@ -17,10 +20,12 @@ from vositalar.models import Holat
 from . import sorovlar
 from .models import MolAkt
 from .pdf import akt_pdf as akt_pdf_yarat
-from .servis import AktXato, akt_tasdiqla as akt_tasdiqla_xizmat, akt_yarat
+from .servis import AktXato, akt_bekor_qil, akt_tasdiqla as akt_tasdiqla_xizmat, akt_yarat
 
 NOL = Decimal("0")
 TIYIN = Decimal("0.01")
+AKT_SAHIFA_HAJMI = 50
+AKT_RAQAMI = re.compile(r"^(?:ma-?)?0*(\d{1,9})$", re.IGNORECASE)
 
 
 def _id(qiymat) -> int:
@@ -178,6 +183,41 @@ def akt_yangi(request):
     return render(request, "mol/akt_yangi.html", kontekst, status=status)
 
 
+def _sana(qiymat) -> date | None:
+    try:
+        return date.fromisoformat((qiymat or "").strip())
+    except ValueError:
+        return None
+
+
+@amal_kerak("korish")
+def akt_royxat(request):
+    """Barcha ko'rinadigan aktlar (qoralama, tasdiqlangan, bekor) — yangisi tepada."""
+    qs = sorovlar.korinadigan_aktlar(request.user).select_related("tuzdi").order_by("-raqam")
+    holat = request.GET.get("holat", "")
+    if holat in MolAkt.Holat.values:
+        qs = qs.filter(holat=holat)
+    q = request.GET.get("q", "").strip()
+    if q:
+        shart = Q(topshiruvchi__ism__icontains=q) | Q(qabul_qiluvchi__ism__icontains=q)
+        raqam = AKT_RAQAMI.match(q)
+        if raqam:
+            shart |= Q(raqam=int(raqam.group(1)))
+        qs = qs.filter(shart)
+    dan, gacha = _sana(request.GET.get("dan")), _sana(request.GET.get("gacha"))
+    if dan:
+        qs = qs.filter(sana__gte=dan)
+    if gacha:
+        qs = qs.filter(sana__lte=gacha)
+    sahifa = Paginator(qs, AKT_SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    params = request.GET.copy()
+    params.pop("page", None)
+    return render(request, "mol/akt_royxat.html", {
+        "sahifa": sahifa, "query": params.urlencode(), "holat": holat, "holatlar": MolAkt.Holat.choices,
+        "params": request.GET, "akt_huquqi": huquqi_bor(request.user, "mol_akt"),
+    })
+
+
 def _akt_yoki_404(request, pk) -> MolAkt:
     akt = sorovlar.korinadigan_aktlar(request.user).filter(pk=pk).first()
     if akt is None:
@@ -213,6 +253,19 @@ def akt_tasdiqla(request, pk):
         messages.error(request, str(e))
     else:
         messages.success(request, f"Akt {a.nomi} tasdiqlandi.")
+    return redirect("mol:akt", pk=a.pk)
+
+
+@require_POST
+@amal_kerak("mol_akt")
+def akt_bekor(request, pk):
+    a = _akt_yoki_404(request, pk)
+    try:
+        akt_bekor_qil(a, request.user)
+    except AktXato as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, f"Akt {a.nomi} bekor qilindi.")
     return redirect("mol:akt", pk=a.pk)
 
 
