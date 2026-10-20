@@ -42,6 +42,10 @@ main fieldset { min-width: 0; }
 .filtrlar { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .filtrlar .form-select, .filtrlar .form-control { width: auto; max-width: 18rem; }
 
+.kartochka-bayroq:hover { box-shadow: var(--cui-box-shadow-sm); }
+.bayroq-faol { border-left: 4px solid var(--cui-warning); }
+.active-bolim { background: var(--cui-primary-bg-subtle); }
+
 /* AV ro'yxati (list-group) */
 .av-qator { display: flex; gap: .75rem; align-items: flex-start; }
 .av-qator .av-asosiy { flex: 1 1 auto; min-width: 0; }

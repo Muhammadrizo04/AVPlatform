@@ -1,9 +1,11 @@
-<nav class="amallar" style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem">
-  <a href="{% url 'panel:foydalanuvchilar' %}">Foydalanuvchilar</a>
-  <a href="{% url 'panel:av_turlari' %}">AV turlari</a>
-  <a href="{% url 'panel:umumiy' %}">Umumiy</a>
-  <a href="{% url 'panel:yorliq_olchamlari' %}">Yorliq o'lchamlari</a>
-  <a href="{% url 'panel:ulanish' %}">1C ulanish</a>
-  <a href="{% url 'panel:sinxron_jurnal' %}">Sinxron jurnali</a>
-  <a href="{% url 'panel:jurnal' %}">O'zgarishlar jurnali</a>
-</nav>
+{% with nom=request.resolver_match.url_name %}
+<ul class="nav nav-tabs mb-3 amallar">
+  <li class="nav-item"><a class="nav-link{% if nom == 'foydalanuvchilar' or nom == 'foydalanuvchi_tahrir' %} active{% endif %}" href="{% url 'panel:foydalanuvchilar' %}">Foydalanuvchilar</a></li>
+  <li class="nav-item"><a class="nav-link{% if nom == 'av_turlari' or nom == 'av_turi_tahrir' %} active{% endif %}" href="{% url 'panel:av_turlari' %}">AV turlari</a></li>
+  <li class="nav-item"><a class="nav-link{% if nom == 'umumiy' %} active{% endif %}" href="{% url 'panel:umumiy' %}">Umumiy</a></li>
+  <li class="nav-item"><a class="nav-link{% if nom == 'yorliq_olchamlari' or nom == 'yorliq_olchami_tahrir' %} active{% endif %}" href="{% url 'panel:yorliq_olchamlari' %}">Yorliq o'lchamlari</a></li>
+  <li class="nav-item"><a class="nav-link{% if nom == 'ulanish' %} active{% endif %}" href="{% url 'panel:ulanish' %}">1C ulanish</a></li>
+  <li class="nav-item"><a class="nav-link{% if nom == 'sinxron_jurnal' %} active{% endif %}" href="{% url 'panel:sinxron_jurnal' %}">Sinxron jurnali</a></li>
+  <li class="nav-item"><a class="nav-link{% if nom == 'jurnal' %} active{% endif %}" href="{% url 'panel:jurnal' %}">O'zgarishlar jurnali</a></li>
+</ul>
+{% endwith %}

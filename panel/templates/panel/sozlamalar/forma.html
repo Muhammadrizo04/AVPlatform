@@ -1,11 +1,16 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ sarlavha }}{% endblock %}
 {% block kontent %}
+<h1>Sozlamalar</h1>
 {% include "panel/sozlamalar/_menyu.html" %}
-<h1>{{ sarlavha }}</h1>
+<div class="card mb-4">
+<div class="card-header fw-semibold">{{ sarlavha }}</div>
+<div class="card-body">
 <form method="post">{% csrf_token %}
   {% include "panel/sozlamalar/_forma.html" %}
-  <button type="submit">Saqlash</button>
-  {% if orqaga %}<a href="{% url orqaga %}">Bekor qilish</a>{% endif %}
+  <button type="submit" class="btn btn-primary"><i class="cil-save me-1"></i>Saqlash</button>
+  {% if orqaga %}<a href="{% url orqaga %}" class="btn btn-outline-secondary">Bekor qilish</a>{% endif %}
 </form>
+</div>
+</div>
 {% endblock %}

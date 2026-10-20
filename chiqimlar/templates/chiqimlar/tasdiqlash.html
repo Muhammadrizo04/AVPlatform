@@ -1,29 +1,38 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Chiqimni tasdiqlash{% endblock %}
 {% block kontent %}
+<a href="{% url 'chiqimlar:royxat' %}" class="btn btn-sm btn-link px-0 mb-1">‹ Ro'yxatga</a>
 <h1>1C chiqimi: {{ chiqim.hujjat_turi }} {{ chiqim.hujjat_raqami }}</h1>
-<p><a href="{% url 'chiqimlar:royxat' %}">‹ Ro'yxatga</a></p>
-<dl>
-  <dt>Sana</dt><dd>{{ chiqim.sana|date:"d.m.Y H:i" }}</dd>
-  <dt>AV</dt><dd><a href="{% url 'vositalar:kartochka' chiqim.av_id %}">{{ chiqim.av.nomi }}</a></dd>
-  <dt>Filial (A)</dt><dd>{{ chiqim.filial.nomi }}</dd>
-  <dt>Soni</dt><dd>{{ chiqim.soni|son }}</dd>
-  <dt>Summa</dt><dd>{{ chiqim.summa|pul }}</dd>
+
+<div class="card mb-4"><div class="card-body">
+<dl class="row mb-0">
+  <dt class="col-sm-3">Sana</dt><dd class="col-sm-9">{{ chiqim.sana|date:"d.m.Y H:i" }}</dd>
+  <dt class="col-sm-3">AV</dt><dd class="col-sm-9"><a href="{% url 'vositalar:kartochka' chiqim.av_id %}">{{ chiqim.av.nomi }}</a></dd>
+  <dt class="col-sm-3">Filial (A)</dt><dd class="col-sm-9">{{ chiqim.filial.nomi }}</dd>
+  <dt class="col-sm-3">Soni</dt><dd class="col-sm-9">{{ chiqim.soni|son }}</dd>
+  <dt class="col-sm-3">Summa</dt><dd class="col-sm-9 mb-0">{{ chiqim.summa|pul }}</dd>
 </dl>
+</div></div>
 
 {% if faqat_oqish %}
-<h2>Holat: {{ chiqim.get_holat_display }}</h2>
-<dl>
-  {% if chiqim.tur %}<dt>Tur</dt><dd>{{ chiqim.get_tur_display }}</dd>{% endif %}
-  {% if chiqim.qabul_filial %}<dt>Qabul qiluvchi filial (B)</dt><dd>{{ chiqim.qabul_filial.nomi }}</dd>{% endif %}
-  {% if chiqim.kim %}<dt>Kim</dt><dd>{{ chiqim.kim.get_full_name|default:chiqim.kim.get_username }}</dd>{% endif %}
-  {% if chiqim.qachon %}<dt>Qachon</dt><dd>{{ chiqim.qachon|date:"d.m.Y H:i" }}</dd>{% endif %}
-  {% if chiqim.izoh %}<dt>Izoh</dt><dd>{{ chiqim.izoh }}</dd>{% endif %}
-  {% if chiqim.holat == "kutilmoqda" %}<dt>Taxmin qilingan tur</dt><dd>{{ chiqim.get_taxmin_tur_display }}</dd>{% endif %}
+<div class="card mb-4">
+<div class="card-header fw-semibold">Holat: {{ chiqim.get_holat_display }}</div>
+<div class="card-body">
+<dl class="row mb-0">
+  {% if chiqim.tur %}<dt class="col-sm-3">Tur</dt><dd class="col-sm-9">{{ chiqim.get_tur_display }}</dd>{% endif %}
+  {% if chiqim.qabul_filial %}<dt class="col-sm-3">Qabul qiluvchi filial (B)</dt><dd class="col-sm-9">{{ chiqim.qabul_filial.nomi }}</dd>{% endif %}
+  {% if chiqim.kim %}<dt class="col-sm-3">Kim</dt><dd class="col-sm-9">{{ chiqim.kim.get_full_name|default:chiqim.kim.get_username }}</dd>{% endif %}
+  {% if chiqim.qachon %}<dt class="col-sm-3">Qachon</dt><dd class="col-sm-9">{{ chiqim.qachon|date:"d.m.Y H:i" }}</dd>{% endif %}
+  {% if chiqim.izoh %}<dt class="col-sm-3">Izoh</dt><dd class="col-sm-9">{{ chiqim.izoh }}</dd>{% endif %}
+  {% if chiqim.holat == "kutilmoqda" %}<dt class="col-sm-3">Taxmin qilingan tur</dt><dd class="col-sm-9">{{ chiqim.get_taxmin_tur_display }}</dd>{% endif %}
 </dl>
+</div>
+</div>
 {% if qatorlar %}
-<h2>A filialdagi taqsimot</h2>
-<table>
+<div class="card mb-4">
+<div class="card-header fw-semibold">A filialdagi taqsimot</div>
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
   <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Mavjud</th></tr></thead>
   <tbody>
   {% for q in qatorlar %}
@@ -31,22 +40,31 @@
   {% endfor %}
   </tbody>
 </table>
+</div>
+</div>
 {% endif %}
 {% else %}
-{% if xato %}<p class="xato" role="alert">{{ xato }}</p>{% endif %}
+{% if xato %}<div class="alert alert-danger py-2 xato" role="alert">{{ xato }}</div>{% endif %}
 <form method="post" action="{% url 'chiqimlar:tasdiqlash' chiqim.pk %}">
   {% csrf_token %}
   <input type="hidden" name="kutilgan_soni" value="{{ chiqim.soni|floatformat:'-3u' }}">
 
-  <fieldset>
-    <legend>Chiqim turi</legend>
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Chiqim turi</div>
+    <div class="card-body">
     {% for kalit, nomi in turlar %}
-      <label><input type="radio" name="tur" value="{{ kalit }}" {% if tanlangan_tur == kalit %}checked{% endif %}> {{ nomi }}</label>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="tur" value="{{ kalit }}" id="tur_{{ kalit }}" {% if tanlangan_tur == kalit %}checked{% endif %}>
+        <label class="form-check-label" for="tur_{{ kalit }}">{{ nomi }}</label>
+      </div>
     {% endfor %}
-  </fieldset>
+    </div>
+  </div>
 
-  <h2>A filialdagi taqsimot: nechta dona chiqariladi (jami {{ chiqim.soni|son }})</h2>
-  <table>
+  <div class="card mb-4">
+  <div class="card-header fw-semibold">A filialdagi taqsimot: nechta dona chiqariladi (jami {{ chiqim.soni|son }})</div>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
     <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Mavjud</th><th class="son">Chiqariladi</th></tr></thead>
     <tbody>
     {% for q in qatorlar %}
@@ -55,35 +73,43 @@
         <td>{{ q.mol.ism|default:"—" }}</td>
         <td>{{ q.get_holat_display }}</td>
         <td class="son">{{ q.soni|son }}</td>
-        <td class="son"><input type="text" inputmode="decimal" name="soni_{{ q.pk }}" value="{{ q.kiritilgan }}" size="8"></td>
+        <td class="son"><input class="form-control form-control-sm ms-auto text-end" style="max-width:8rem" type="text" inputmode="decimal" name="soni_{{ q.pk }}" value="{{ q.kiritilgan }}"></td>
       </tr>
     {% empty %}
-      <tr><td colspan="5">Bu filialda taqsimot qatori yo'q.</td></tr>
+      <tr><td colspan="5" class="text-body-secondary">Bu filialda taqsimot qatori yo'q.</td></tr>
     {% endfor %}
     </tbody>
   </table>
+  </div>
+  </div>
 
-  <fieldset>
-    <legend>Filialga o'tkazish bo'lsa</legend>
-    <label>Qabul qiluvchi filial (B)
-      <select name="qabul_filial"><option value="">—</option>
-        {% for f in b_filiallar %}<option value="{{ f.pk }}" {% if tanlangan_b == f.pk %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
-      </select>
-    </label>
-    <label>B bo'limi
-      <select name="b_bolim"><option value="">— joylamaslik —</option>
-        {% for b in b_bolimlar %}<option value="{{ b.pk }}" {% if tanlangan_bolim == b.pk %}selected{% endif %}>{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
-      </select>
-    </label>
-    <label>B holati
-      <select name="b_holat"><option value="">— o'zgarmasin —</option>
-        {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if tanlangan_holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
-      </select>
-    </label>
-  </fieldset>
+  <div class="card mb-4">
+    <div class="card-header fw-semibold">Filialga o'tkazish bo'lsa</div>
+    <div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-4"><label class="form-label w-100">Qabul qiluvchi filial (B)
+        <select class="form-select" name="qabul_filial"><option value="">—</option>
+          {% for f in b_filiallar %}<option value="{{ f.pk }}" {% if tanlangan_b == f.pk %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+        </select>
+      </label></div>
+      <div class="col-md-4"><label class="form-label w-100">B bo'limi
+        <select class="form-select" name="b_bolim"><option value="">— joylamaslik —</option>
+          {% for b in b_bolimlar %}<option value="{{ b.pk }}" {% if tanlangan_bolim == b.pk %}selected{% endif %}>{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
+        </select>
+      </label></div>
+      <div class="col-md-4"><label class="form-label w-100">B holati
+        <select class="form-select" name="b_holat"><option value="">— o'zgarmasin —</option>
+          {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if tanlangan_holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+        </select>
+      </label></div>
+    </div>
+    </div>
+  </div>
 
-  <p><label>Izoh<br><textarea name="izoh" rows="2" cols="50">{{ izoh }}</textarea></label></p>
-  <button type="submit">Tasdiqlash</button>
+  <div class="card mb-4"><div class="card-body">
+    <label class="form-label w-100">Izoh<textarea class="form-control" name="izoh" rows="2">{{ izoh }}</textarea></label>
+    <button type="submit" class="btn btn-success"><i class="cil-check-alt me-1"></i>Tasdiqlash</button>
+  </div></div>
 </form>
 {% endif %}
 {% endblock %}

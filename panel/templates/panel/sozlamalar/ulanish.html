@@ -1,15 +1,20 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}1C ulanish{% endblock %}
 {% block kontent %}
+<h1>Sozlamalar</h1>
 {% include "panel/sozlamalar/_menyu.html" %}
-<h1>1C ulanish</h1>
-<table>
-  <tr><th>Manzil (ONEC_URL)</th><td>{{ onec_url|default:"—" }}</td></tr>
+<div class="card mb-4">
+<div class="card-header fw-semibold">1C ulanish</div>
+<table class="table mb-0">
+  <tr><th class="w-25">Manzil (ONEC_URL)</th><td>{{ onec_url|default:"—" }}</td></tr>
   <tr><th>Login (ONEC_LOGIN)</th><td>{{ onec_login|default:"—" }}</td></tr>
   <tr><th>Oxirgi muvaffaqiyatli sinxron</th><td>{% if oxirgi %}{{ oxirgi.tugadi|default:oxirgi.boshlandi|date:"d.m.Y H:i" }}{% else %}hali bo'lmagan{% endif %}</td></tr>
-  <tr><th>Holat</th><td>Ketma-ket xatolar: {{ xatolar }}</td></tr>
+  <tr><th>Holat</th><td><span class="badge {% if xatolar %}bg-danger{% else %}bg-success{% endif %}">Ketma-ket xatolar: {{ xatolar }}</span></td></tr>
 </table>
+<div class="card-footer">
 <form method="post" action="{% url 'panel:hozir_sinxronla' %}">{% csrf_token %}
-  <button type="submit">Hozir sinxronlash</button>
+  <button type="submit" class="btn btn-primary"><i class="cil-sync me-1"></i>Hozir sinxronlash</button>
 </form>
+</div>
+</div>
 {% endblock %}

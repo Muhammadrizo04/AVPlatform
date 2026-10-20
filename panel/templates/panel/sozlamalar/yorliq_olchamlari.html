@@ -1,25 +1,33 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Yorliq o'lchamlari{% endblock %}
 {% block kontent %}
+<h1>Sozlamalar</h1>
 {% include "panel/sozlamalar/_menyu.html" %}
-<h1>Yorliq o'lchamlari</h1>
-<table>
+<div class="card mb-4">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
   <thead><tr><th>Nomi</th><th class="son">Eni, mm</th><th class="son">Bo'yi, mm</th><th>Faol</th><th>Standart</th><th></th></tr></thead>
   <tbody>
   {% for o in royxat %}
     <tr>
       <td>{{ o.nomi }}</td><td class="son">{{ o.eni_mm }}</td><td class="son">{{ o.boyi_mm }}</td>
-      <td>{% if o.faol %}ha{% else %}yo'q{% endif %}</td><td>{% if o.standart %}ha{% endif %}</td>
-      <td><a href="{% url 'panel:yorliq_olchami_tahrir' o.pk %}">Tahrirlash</a></td>
+      <td>{% if o.faol %}ha{% else %}yo'q{% endif %}</td><td>{% if o.standart %}<span class="badge bg-primary">ha</span>{% endif %}</td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'panel:yorliq_olchami_tahrir' o.pk %}">Tahrirlash</a></td>
     </tr>
   {% empty %}
-    <tr><td colspan="6">O'lcham yo'q.</td></tr>
+    <tr><td colspan="6" class="text-body-secondary">O'lcham yo'q.</td></tr>
   {% endfor %}
   </tbody>
 </table>
-<h2>Yangi o'lcham</h2>
+</div>
+</div>
+<div class="card mb-4">
+<div class="card-header fw-semibold">Yangi o'lcham</div>
+<div class="card-body">
 <form method="post">{% csrf_token %}
   {% include "panel/sozlamalar/_forma.html" %}
-  <button type="submit">Qo'shish</button>
+  <button type="submit" class="btn btn-primary"><i class="cil-plus me-1"></i>Qo'shish</button>
 </form>
+</div>
+</div>
 {% endblock %}
