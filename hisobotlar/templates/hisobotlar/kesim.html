@@ -1,5 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Kesim hisoboti{% endblock %}
+{% block yol %}Kesim hisoboti{% endblock %}
 {% block kontent %}
 <h1>Kesim: {{ ustun }} bo'yicha</h1>
 <ul class="nav nav-pills mb-3 amallar">{% for kalit, nomi in guruhlar.items %}<li class="nav-item"><a class="nav-link py-1{% if kalit == guruh %} active{% endif %}" href="?guruh={{ kalit }}">{{ nomi }}</a></li>{% endfor %}</ul>

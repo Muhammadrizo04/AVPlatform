@@ -24,7 +24,7 @@ from onec.models import AV, AVQoldiq, AVTuri, Filial, Xodim
 from . import amallar
 from . import bolimlar as bolimlar_xizmat
 from .amortizatsiya import dona_narxi, hisobla, samarali_muddat
-from .bayroqlar import BAYROQLAR
+from .bayroqlar import BAYROQLAR, bayroq_sonlari
 from .filtrlar import av_filtrla, korinadigan_av
 from .models import AVKartochka, Bolim, Holat, Rasm, Taqsimot
 from .qoshimcha import qoshimcha_tekshir
@@ -87,7 +87,9 @@ def royxat(request):
         javob = render(request, "vositalar/_jadval.html", kontekst)
         patch_vary_headers(javob, ["HX-Request"])
         return javob
+    sonlar = bayroq_sonlari(request.user, timezone.localdate(), ("molsiz", "bolimsiz", "mos_emas"))
     kontekst.update(
+        korsatkichlar=sonlar,
         filiallar=filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
         turlar=AVTuri.objects.order_by("nomi"),
         xodimlar=filial_bilan_chekla(Xodim.objects.filter(ochirilgan=False), request.user, "filial").order_by("ism"),

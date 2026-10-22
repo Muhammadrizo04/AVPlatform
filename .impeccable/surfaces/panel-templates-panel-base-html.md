@@ -2,27 +2,29 @@
 version: 1
 slug: "panel-templates-panel-base-html"
 primary_target: "panel/templates/panel/base.html"
-related_targets: ["vositalar/templates/vositalar/kartochka.html"]
+related_targets: ["vositalar/templates/vositalar/kartochka.html","panel/templates/panel/bosh.html"]
 ---
 
 # Surface brief: Asosiy vositalar paneli (barcha ichki sahifalar)
 
-Scope: Django panel shell (`panel/templates/panel/base.html`, `panel/static/panel/panel.css`) va undagi barcha sahifalar; birinchi namuna — AV kartochkasi (`vositalar/templates/vositalar/kartochka.html`). Mode: operate. Build path: code-led.
+Scope: Django panel shell (`panel/templates/panel/base.html`, `panel/static/panel/panel.css`) va undagi barcha sahifalar; asosiy namunalar — bosh sahifa (dashboard) va AV kartochkasi. Mode: operate. Build path: code-led.
 
-Auditoriya va vazifa: hisobchi (asosiy), HR, rahbar, admin — ofis kompyuteri, katta ekran, tezlik va zichlik. Asosiy vazifa: AV qayerda, kimda, qanday holatda; 1C bilan mosligi.
+Auditoriya va vazifa: hisobchi (asosiy), HR, rahbar, admin — ofis kompyuteri, katta ekran, tezlik va zichlik. Asosiy vazifa: AV qayerda, kimda, qanday holatda; 1C bilan mosligi; nima ish kutayapti.
 
-Cheklovlar: CoreUI 5 komponentlari va Bootstrap klasslari ichkarida qoladi (mavzu tokenlar orqali almashtiriladi); tashqi CDN/shrift yo'q; HTMX bo'laklari va testlardagi belgilar saqlanadi.
+Cheklovlar: CoreUI 5 komponentlari ichkarida qoladi (mavzu tokenlar orqali); tashqi CDN/shrift yo'q; grafiklar kutubxonasiz (HTML/CSS); HTMX bo'laklari va testlardagi belgilar saqlanadi.
+
+Tarix: 1-tur «Shveytsariya jadval maktabi» qurildi; foydalanuvchi uni «juda quruq/zerikarli» deb rad etdi va o'zi yo'nalishni belgiladi: «Rangli dashboard (Stripe, Monday)», tuzilma ham o'zgarishi mumkin. Foydalanuvchi belgilagan yo'nalish rolldan ustun.
 
 ## Direction contract
 
-THESIS: Har raqam qat'iy to'rda turadi; panel 1C qoldig'i va platforma taqsimotini yonma-yon ustunlarda solishtiradi va farqni bitta qizil chiziq bilan ko'rsatadi. Rad etadigan standart: qorong'i menyu + soyali oq kartochkalar + binafsha urg'uli umumiy admin paneli.
+THESIS: Panel — jonli boshqaruv paneli: har sahifa rangli holat belgilari va ko'rsatkichlar bilan «nima yaxshi, nima ish kutayapti» ni bir qarashda aytadi; bosh sahifa jadval emas, grafiklar va vazifalar navbati. Rad etadigan standart: kulrang, rangsiz, faqat jadvaldan iborat admin paneli.
 
-OWN-WORLD: Xalqaro tipografik uslub ma'lumot varag'i. Fon #f4f5f7, siyoh #121417, sirt #ffffff, chiziqlar #d9dce1/#eceef1, ikkilamchi matn #5b616b. Qizil #d6281c faqat «harakat kerak» (farq, МОЛ'siz, kutilayotgan chiqim, xato). Ko'k #2f5d8a — platformaning o'z ma'lumoti (bo'lim, МОЛ, holat) va havolalar. Grotesk tizim shrifti, tabular raqamlar, shkala 11/13/15/20/32. Faqat 1px chiziqlar, soya va gradient yo'q, radius 0–2px; sarlavha ostida 1px siyoh chizig'i; katta bosh harfli kichik yorliqlar (11px, .08em).
+OWN-WORLD: Stripe Dashboard aniqligi + monday.com rangli holatlari. Fon #f6f8fb, sirt #ffffff, siyoh #0a2540, ikkilamchi #5b6b82, chiziq #e3e8ef. Asosiy urg'u — indigo #635bff (tugmalar, faol menyu, havolalar). Menyu ustuni to'q navi #0a2540, har bo'lim o'z rangli ikonkasi bilan: vositalar #2a78d6, МОЛ #6250d6, chiqimlar #eb6834, hisobotlar #1baf7a. Holat belgilari — monday uslubida to'liq rangli yumaloq «pill»lar: ishlatilmoqda #1baf7a, zaxirada #eda100, ta'mirda #2a78d6, nosoz #eb6834, hisobdan chiqarishga #6250d6, topilmadi #e34948 (tasdiqlangan palitra, yorliq doim matn bilan). Kartochkalar 12px radius, yumshoq ikki qatlamli soya; bosh sahifa tepasida indigo→ko'k gradient band. Shrift: Segoe UI / tizim sans, tabular raqamlar.
 
-STORY: Foydalanuvchi har sahifada avval «nima, qayerda, kimda, holati» va «1C bilan mosmi» ni ko'radi; qizil ko'rgan joyda ish bor; ko'k — platformada o'zi o'zgartira oladigan narsa; qolgani 1C'dan, faqat o'qish.
+STORY: Kirgan foydalanuvchi bosh sahifada salomlashuv, asosiy ko'rsatkichlar (AV soni, qiymat yoki МОЛ'siz), filiallar va holatlar grafiklari, rangli «bajarilishi kerak» ro'yxatini ko'radi va bitta bosishda ishga o'tadi. AV kartochkasida rangli holat va 1C bilan moslik kartochkalari.
 
-FIRST VIEWPORT: Chapda 220px qora menyu ustuni (oq matn, faol band oq fonli teskari), tepada 40px oq yo'l satri (breadcrumb + sinxron vaqti). AV kartochkasida: 32px nom, ostida Inv. raqam (20px qalin) | turi | soni | filial; o'ngda «QR-yorliq», «МОЛ akti». Ostida imzo harakati — to'liq kenglikdagi solishtirish qatori «1C qoldig'i | Platforma taqsimoti | Farq» (32px raqamlar); farq yoki МОЛ'siz bo'lsa ostida qizil 2px chiziqli ogohlantirish qatori va tugma. Keyin 8/4 to'r: chapda Joylashuv jadvali va Tarix, o'ngda Buxgalteriya, Platforma ma'lumotlari, 1C rekvizitlari.
+FIRST VIEWPORT: Chapda 240px navi menyu (rangli ikonkalar, faol band indigo pill). Tepada oq 56px header (sahifa yo'li, sinxron holati yashil/qizil nuqta bilan, foydalanuvchi avatar-doirasi). Bosh sahifa: indigo→ko'k gradient band ichida «Xayrli kun, {ism}» va 4 ta oq KPI kartochkasi bandni pastga oshib turadi; ostida 7/5 to'r: chapda «Filiallar bo'yicha» gorizontal bar grafik, o'ngda «Holatlar» rangli bar grafik; pastda «Bajarilishi kerak» ro'yxati rangli pill sonlar bilan va filiallar jadvali.
 
-FORM: Shveytsariya jadval maktabi (xalqaro tipografik uslub), o'z ro'yxatimda 6-o'rin; ko'tarishlar: bitta rang–bitta ma'no (aeroport ko'rsatkichlari), ustunlar siljimaydi (vokzal tablosi), 1px aniq chiziqlar (ma'lumotnoma sahifasi), bezaksiz matn-interfeys (metro), 1C zamin / platforma qatlami (orientirlash xaritasi). seed: none (unavailable) — concept-seed ishladi (kalit 674d2fdd, direction/operate, tanlov «assigned» qayd etildi), lekin bu CLI versiyasi SEED REFERENCE satrini umuman chiqarmadi.
+FORM: Foydalanuvchi belgilagan yo'nalish: «Rangli dashboard (Stripe, Monday)» — rolldan ustun (pinned). 1-turdan saqlanganlar: solishtirish qatori (1C | Platforma | Farq), joylashuv tuzilmasi. Roll ishlatilmadi: yo'nalishni foydalanuvchi o'zi belgiladi (2026-10-22, savolga javob: «Rangli dashboard (Stripe, Monday)», «Tuzilma ham o'zgarsin»).
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance

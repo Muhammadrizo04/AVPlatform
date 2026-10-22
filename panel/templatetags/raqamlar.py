@@ -62,3 +62,13 @@ def karta_niqobi(matn):
     if not matn:
         return matn
     return KARTA_RAQAMI.sub(lambda m: f"**** **** **** {m.group(1)}", str(matn))
+
+
+@register.filter
+def holat_sinfi(qiymat) -> str:
+    """Taqsimot holati (kalit yoki o'zbekcha nomi) -> CSS sinfi qismi (`h-<kalit>`); noma'lum bo'lsa — bo'sh."""
+    from vositalar.models import Holat
+
+    if qiymat in Holat.values:
+        return qiymat
+    return {label: kalit for kalit, label in Holat.choices}.get(str(qiymat), "")

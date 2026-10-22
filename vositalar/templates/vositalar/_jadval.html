@@ -17,7 +17,7 @@
           {% if j.bolimlar %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} +{{ j.bolimlar|length|add:"-1" }}{% endif %}</li>{% endif %}
           {% if j.mollar %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i>{{ j.mollar.0 }}{% if j.mollar|length > 1 %} +{{ j.mollar|length|add:"-1" }}{% endif %}</li>{% endif %}
           {% if j.molsiz %}<li class="belgi belgi-ogoh">МОЛ'siz: {{ j.molsiz|son }}</li>{% endif %}
-          {% for h in j.holatlar %}<li class="belgi belgi-holat">{{ h }}</li>{% endfor %}
+          {% for h in j.holatlar %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ h|holat_sinfi }}">{{ h }}</span></li>{% endfor %}
         </ul>
         {% endif %}{% endwith %}
       </div>

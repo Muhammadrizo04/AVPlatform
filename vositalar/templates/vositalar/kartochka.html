@@ -21,7 +21,7 @@
       {% if joylashuv.bolimlar|length > 3 %}<li class="belgi">+{{ joylashuv.bolimlar|length|add:"-3" }} bo'lim</li>{% endif %}
       {% for m in joylashuv.mollar|slice:":3" %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i><a href="{% url 'mol:xodim' m.pk %}">{{ m.ism }}</a></li>{% endfor %}
       {% if joylashuv.mollar|length > 3 %}<li class="belgi">+{{ joylashuv.mollar|length|add:"-3" }} МОЛ</li>{% endif %}
-      {% for nomi, soni in joylashuv.holatlar.items %}<li class="belgi belgi-holat">{{ nomi }}{% if joylashuv.holatlar|length > 1 %} · {{ soni|son }}{% endif %}</li>{% endfor %}
+      {% for nomi, soni in joylashuv.holatlar.items %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ nomi|holat_sinfi }}">{{ nomi }}{% if joylashuv.holatlar|length > 1 %} <span class="son-kichik">{{ soni|son }}</span>{% endif %}</span></li>{% endfor %}
     </ul>
   </div>
   {% if yorliq_huquqi %}
@@ -41,7 +41,7 @@
 </section>
 {% endif %}
 {% if joylashuv.molsiz %}
-<div class="harakat-kerak"><b>МОЛ biriktirilmagan: {{ joylashuv.molsiz|son }} dona</b>{% if mol_akt_huquqi %}<a class="btn btn-danger btn-sm" href="{% url 'mol:akt_yangi' %}">МОЛ akti tuzish</a>{% endif %}</div>
+<div class="harakat-kerak"><b><i class="cil-warning" aria-hidden="true"></i>МОЛ biriktirilmagan: {{ joylashuv.molsiz|son }} dona</b>{% if mol_akt_huquqi %}<a class="btn btn-danger btn-sm" href="{% url 'mol:akt_yangi' %}">МОЛ akti tuzish</a>{% endif %}</div>
 {% endif %}
 
 <div class="row g-4 mt-1">
@@ -110,7 +110,7 @@
     {% include "vositalar/_rasmlar.html" %}
 
     <details class="card mb-4 rekvizitlar">
-      <summary class="card-header fw-semibold">1C rekvizitlari <span class="text-body-secondary fw-normal small">· faqat o'qish</span></summary>
+      <summary class="card-header fw-semibold">1C rekvizitlari <span class="text-body-secondary fw-normal small">· faqat o'qish</span><i class="cil-chevron-bottom" aria-hidden="true"></i></summary>
       <dl class="malumot mb-0">
         <div><dt>Filial (1C rekvizit)</dt><dd>{{ av.filial_rekvizit.nomi|default:"—" }}</dd></div>
         <div><dt>Tashkilot</dt><dd>{{ av.tashkilot.nomi|default:"—" }}</dd></div>

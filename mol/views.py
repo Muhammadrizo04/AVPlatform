@@ -54,12 +54,19 @@ def xodimlar(request):
     sahifa = Paginator(qs, XODIM_SAHIFA_HAJMI).get_page(request.GET.get("page"))
     for x in sahifa:
         x.av_soni, x.qiymat = yigindi.get(x.pk, (NOL, NOL))
+    hammasi = sorovlar.korinadigan_xodimlar(request.user)
+    ushlab = {pk for pk, (soni, _) in yigindi.items() if soni > 0}
+    korsatkichlar = {
+        "faol": hammasi.exclude(KETGAN).count(),
+        "ushlab": len(ushlab),
+        "ketgan_ushlab": hammasi.filter(KETGAN, pk__in=ushlab).count(),
+    }
     params = request.GET.copy()
     params.pop("page", None)
     return render(
         request, "mol/xodimlar.html",
         {"xodimlar": sahifa, "sahifa": sahifa, "query": params.urlencode(), "params": request.GET,
-         "akt_huquqi": huquqi_bor(request.user, "mol_akt")},
+         "akt_huquqi": huquqi_bor(request.user, "mol_akt"), "korsatkichlar": korsatkichlar},
     )
 
 

@@ -1,5 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Yangi МОЛ akti{% endblock %}
+{% block yol %}Yangi МОЛ akti{% endblock %}
 {% block kontent %}
 <a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
 <h1>Yangi МОЛ topshirish-qabul akti</h1>
@@ -39,7 +40,7 @@
         <td>{{ t.av.inv_raqam }}</td>
         <td>{{ t.av.nomi }}</td>
         <td>{{ t.filial.nomi }}</td>
-        <td>{{ t.get_holat_display }}</td>
+        <td><span class="holat-pill h-{{ t.holat }}">{{ t.get_holat_display }}</span></td>
         <td class="son">{{ t.soni|son }}</td>
         <td><input class="form-control form-control-sm" style="max-width:8rem" type="text" inputmode="decimal" name="soni_{{ t.pk }}" id="soni_{{ t.pk }}" value="{{ t.soni|floatformat:"-3u" }}" aria-label="Soni"{% if t.pk not in tanlanganlar %} disabled{% endif %}></td>
       </tr>

@@ -49,6 +49,10 @@ Ikkalasining farqi va mosligi (taqsimot = 1C qoldig'i, «1C bilan mos / farq») 
 
 Kompaniya nomi ko'rinsin (Sozlamalar → Umumiy → «Kompaniya nomi»); majburiy logotip yoki rang yo'q.
 
+Vizual ko'rinish bo'yicha foydalanuvchi qarori (2026-10-22): minimal/quruq uslub rad etildi; panel **rangli, jonli dashboard**
+bo'lishi kerak — sifat darajasi bo'yicha Stripe Dashboard va monday.com yonida tura oladigan (rangli holat belgilari,
+grafiklar, KPI kartochkalari).
+
 ## Evidence on Hand
 
 Haqiqiy ma'lumot lokal bazada (1C sinxroni). Anonimlashtirilgan namunalar: `onec/tests/namunalar/`.
