@@ -10,7 +10,6 @@ def sinxron_holati(request):
     if not request.user.is_authenticated:
         return {}
     oxirgi = oxirgi_muvaffaqiyatli()
-    korish = huquqi_bor(request.user, "korish")
     chiqim_soni = None
     # Kutilayotgan chiqimlar belgisi — faqat ularni tasdiqlay oladiganlarga (HR va rahbar uchun vazifa emas).
     if huquqi_bor(request.user, "taqsimot") and not request.headers.get("HX-Request"):
@@ -18,7 +17,7 @@ def sinxron_holati(request):
             ChiqimHujjat.objects.filter(holat=ChiqimHujjat.Holat.KUTILMOQDA), request.user
         ).count()
     return {
-        "chiqim_huquqi": korish,
+        "chiqim_huquqi": huquqi_bor(request.user, "chiqim_korish"),
         "chiqim_kutilmoqda_soni": chiqim_soni,
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
         "pul_huquqi": huquqi_bor(request.user, "pul_korish"),

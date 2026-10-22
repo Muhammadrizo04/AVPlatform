@@ -23,7 +23,7 @@ def test_admin_hamma_amal(foydalanuvchi):
     admin = foydalanuvchi(Rol.ADMIN)
     assert set(HUQUQLAR) == {
         "korish", "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt",
-        "yorliq", "tozalash", "hisobot", "sozlama", "sinxron", "pul_korish",
+        "yorliq", "tozalash", "hisobot", "sozlama", "sinxron", "pul_korish", "chiqim_korish",
     }
     for amal in HUQUQLAR:
         assert huquqi_bor(admin, amal) is True, amal

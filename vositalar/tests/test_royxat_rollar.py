@@ -62,9 +62,11 @@ def test_mol_ismi_boyicha_qidiruv(client_rol, filial):
 def test_bosh_hr_faqat_ozi_ishlaydigan_bayroqlar(client_rol):
     hr = {b["kalit"] for b in client_rol("hr").get(reverse("panel:bosh")).context["bayroqlar"]}
     assert hr == {"molsiz", "ketgan_xodimda", "bolimsiz"}
-    for rol in ("hisobchi", "rahbar", "admin"):
+    for rol in ("hisobchi", "admin"):
         kalitlar = {b["kalit"] for b in client_rol(rol).get(reverse("panel:bosh")).context["bayroqlar"]}
         assert kalitlar == set(BAYROQLAR), rol
+    rahbar = {b["kalit"] for b in client_rol("rahbar").get(reverse("panel:bosh")).context["bayroqlar"]}
+    assert rahbar == set(BAYROQLAR) - {"chiqim_kutilmoqda"}
 
 
 def test_mol_nazorati_qidiruv_va_filtrlar(client_rol, filial):

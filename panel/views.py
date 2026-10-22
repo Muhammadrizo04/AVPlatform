@@ -13,7 +13,12 @@ XODIM_BAYROQLARI = ("molsiz", "ketgan_xodimda", "bolimsiz")
 @amal_kerak("korish")
 def bosh(request):
     bugun = timezone.localdate()
-    kalitlar = None if huquqi_bor(request.user, "pul_korish") else XODIM_BAYROQLARI
+    if not huquqi_bor(request.user, "pul_korish"):
+        kalitlar = XODIM_BAYROQLARI
+    elif not huquqi_bor(request.user, "chiqim_korish"):  # rahbar: chiqimlar sahifasi yo'q
+        kalitlar = tuple(k for k in BAYROQLAR if k != "chiqim_kutilmoqda")
+    else:
+        kalitlar = None
     sonlar = bayroq_sonlari(request.user, bugun, kalitlar)
     bayroqlar = [{"kalit": k, "nomi": BAYROQLAR[k].nomi, "soni": sonlar[k]} for k in sonlar]
     filiallar = filial_kesimi(request.user, bugun)
