@@ -4,6 +4,7 @@
 Ikkalasi `TEMPLATES.OPTIONS.builtins` orqali hamma shablonda `{% load %}`siz ishlaydi.
 Forma maydonlari qiymatiga (`<input value>`) qo'llanmaydi — u yerda mahalliylashtirilmagan son kerak.
 """
+import re
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
 from django import template
@@ -49,3 +50,15 @@ def pul(qiymat):
         return "" if qiymat is None else qiymat
     matn = _guruhla(d.quantize(Decimal("0.01"), ROUND_HALF_UP), 2)
     return "0,00" if matn == "-0,00" else matn
+
+
+# 16-19 xonali karta raqami (orasida bo'sh joy yoki chiziqcha bo'lishi mumkin); telefon raqamlari (≤12 xona) tegilmaydi.
+KARTA_RAQAMI = re.compile(r"(?<!\d)(?:\d[ -]?){12,15}(\d{4})(?!\d)")
+
+
+@register.filter
+def karta_niqobi(matn):
+    """1C erkin matnidagi bank karta raqamini `**** **** **** 1234` ko'rinishiga keltiradi."""
+    if not matn:
+        return matn
+    return KARTA_RAQAMI.sub(lambda m: f"**** **** **** {m.group(1)}", str(matn))

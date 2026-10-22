@@ -1,13 +1,18 @@
-<section id="tarix" class="card mb-4">
-  <div class="card-header fw-semibold">Tarix</div>
-  <div class="table-responsive"><table class="table table-sm table-hover mb-0">
-    <thead><tr><th>Sana</th><th>Voqea</th><th>Kim</th></tr></thead>
-    <tbody>
+<section id="tarix" class="card mb-4" aria-labelledby="tarix-sarlavha">
+  <div class="card-header fw-semibold" id="tarix-sarlavha">Tarix <span class="text-body-secondary fw-normal small">· {{ tarix|length }} ta voqea</span></div>
+  {% if tarix %}
+  <ol class="tarix-royxat">
     {% for q in tarix %}
-      <tr><td>{{ q.sana|date:"d.m.Y H:i" }}</td><td>{{ q.matn }}</td><td>{{ q.kim }}</td></tr>
-    {% empty %}
-      <tr><td colspan="3">Tarix bo'sh.</td></tr>
+    {% if forloop.counter == 9 %}</ol><details class="tarix-qolgani"><summary>Yana {{ tarix|length|add:"-8" }} ta voqeani ko'rsatish</summary><ol class="tarix-royxat">{% endif %}
+    <li class="tarix-{{ q.tur }}">
+      <time datetime="{{ q.sana|date:'c' }}">{{ q.sana|date:"d.m.Y" }}<span>{{ q.sana|date:"H:i" }}</span></time>
+      <div class="tarix-matn">{{ q.matn }}{% if pul_huquqi and q.summa is not None %} <span class="tarix-summa">{{ q.summa|pul }}</span>{% endif %}</div>
+      <div class="tarix-kim">{{ q.kim|default:"—" }}</div>
+    </li>
     {% endfor %}
-    </tbody>
-  </table></div>
+  </ol>
+  {% if tarix|length > 8 %}</details>{% endif %}
+  {% else %}
+  <div class="card-body text-body-secondary">Tarix bo'sh.</div>
+  {% endif %}
 </section>

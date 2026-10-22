@@ -272,6 +272,6 @@ def akt_bekor(request, pk):
 @amal_kerak("korish")
 def akt_pdf(request, pk):
     a = _akt_yoki_404(request, pk)
-    javob = HttpResponse(akt_pdf_yarat(a), content_type="application/pdf")
+    javob = HttpResponse(akt_pdf_yarat(a, pul=huquqi_bor(request.user, "pul_korish")), content_type="application/pdf")
     javob["Content-Disposition"] = f'inline; filename="{a.nomi}.pdf"'
     return javob

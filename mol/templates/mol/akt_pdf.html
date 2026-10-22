@@ -26,16 +26,16 @@ Qabul qiluvchi: <b>{{ akt.qabul_qiluvchi.ism }}</b></p>
 {% if akt.izoh %}<p>Izoh: {{ akt.izoh }}</p>{% endif %}
 <table>
   <thead>
-    <tr><th>№</th><th>Inv. raqam</th><th>Nomi</th><th>Bo'lim</th><th>Holat</th><th>Soni</th><th>Qiymat</th></tr>
+    <tr><th>№</th><th>Inv. raqam</th><th>Nomi</th><th>Bo'lim</th><th>Holat</th><th>Soni</th>{% if pul_huquqi %}<th>Qiymat</th>{% endif %}</tr>
   </thead>
   <tbody>
     {% for s in satrlar %}
     <tr>
       <td>{{ s.tartib }}</td><td>{{ s.inv }}</td><td>{{ s.nomi }}</td><td>{{ s.bolim }}</td>
-      <td>{{ s.holat }}</td><td class="son">{{ s.soni|son }}</td><td class="son">{{ s.qiymat|pul }}</td>
+      <td>{{ s.holat }}</td><td class="son">{{ s.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ s.qiymat|pul }}</td>{% endif %}
     </tr>
     {% endfor %}
-    <tr><td colspan="6"><b>Jami</b></td><td class="son"><b>{{ jami|pul }}</b></td></tr>
+    {% if pul_huquqi %}<tr><td colspan="6"><b>Jami</b></td><td class="son"><b>{{ jami|pul }}</b></td></tr>{% endif %}
   </tbody>
 </table>
 <table class="imzolar">

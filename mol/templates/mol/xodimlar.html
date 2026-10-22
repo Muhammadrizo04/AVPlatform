@@ -10,15 +10,15 @@
 <div class="card mb-4">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Xodim</th><th>Filial</th><th>Holati</th><th class="son">AV soni</th><th class="son">Qiymat</th></tr></thead>
+  <thead><tr><th>Xodim</th><th>Filial</th><th>Holati</th><th class="son">AV soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for x in xodimlar %}
     <tr>
       <td><a href="{% url 'mol:xodim' x.pk %}" class="fw-semibold text-decoration-none">{{ x.ism }}</a></td>
       <td>{{ x.filial.nomi|default:"—" }}</td>
-      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}<span class="badge bg-danger xato">Ketgan</span>{% else %}<span class="badge bg-success">Faol</span>{% endif %}</td>
+      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}<span class="badge bg-danger">Ketgan</span>{% else %}<span class="badge bg-success">Faol</span>{% endif %}</td>
       <td class="son">{{ x.av_soni|son }}</td>
-      <td class="son">{{ x.qiymat|pul }}</td>
+      {% if pul_huquqi %}<td class="son">{{ x.qiymat|pul }}</td>{% endif %}
     </tr>
   {% empty %}
     <tr><td colspan="5" class="text-body-secondary"><em>Xodim yo'q.</em></td></tr>

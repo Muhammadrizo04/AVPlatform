@@ -6,15 +6,15 @@
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>{{ ustun }}</th><th class="son">Soni</th><th class="son">Boshlang'ich qiymat</th><th class="son">Qoldiq qiymat</th></tr></thead>
+  <thead><tr><th>{{ ustun }}</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Boshlang'ich qiymat</th><th class="son">Qoldiq qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for q in qatorlar %}
-    <tr><td>{{ q.nomi }}</td><td class="son">{{ q.soni|son }}</td><td class="son">{{ q.boshlangich|pul }}</td><td class="son">{{ q.qoldiq|pul }}</td></tr>
+    <tr><td>{{ q.nomi }}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.boshlangich|pul }}</td><td class="son">{{ q.qoldiq|pul }}</td>{% endif %}</tr>
   {% empty %}
     <tr><td colspan="4" class="text-body-secondary">Ma'lumot yo'q.</td></tr>
   {% endfor %}
   </tbody>
-  <tfoot class="table-light"><tr><th>Jami</th><th class="son">{{ jami.soni|son }}</th><th class="son">{{ jami.boshlangich|pul }}</th><th class="son">{{ jami.qoldiq|pul }}</th></tr></tfoot>
+  <tfoot class="table-light"><tr><th>Jami</th><th class="son">{{ jami.soni|son }}</th>{% if pul_huquqi %}<th class="son">{{ jami.boshlangich|pul }}</th><th class="son">{{ jami.qoldiq|pul }}</th>{% endif %}</tr></tfoot>
 </table>
 </div>
 </div>

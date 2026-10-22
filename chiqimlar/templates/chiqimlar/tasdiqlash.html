@@ -9,8 +9,8 @@
   <dt class="col-sm-3">Sana</dt><dd class="col-sm-9">{{ chiqim.sana|date:"d.m.Y H:i" }}</dd>
   <dt class="col-sm-3">AV</dt><dd class="col-sm-9"><a href="{% url 'vositalar:kartochka' chiqim.av_id %}">{{ chiqim.av.nomi }}</a></dd>
   <dt class="col-sm-3">Filial (A)</dt><dd class="col-sm-9">{{ chiqim.filial.nomi }}</dd>
-  <dt class="col-sm-3">Soni</dt><dd class="col-sm-9">{{ chiqim.soni|son }}</dd>
-  <dt class="col-sm-3">Summa</dt><dd class="col-sm-9 mb-0">{{ chiqim.summa|pul }}</dd>
+  <dt class="col-sm-3">Soni</dt><dd class="col-sm-9{% if not pul_huquqi %} mb-0{% endif %}">{{ chiqim.soni|son }}</dd>
+  {% if pul_huquqi %}<dt class="col-sm-3">Summa</dt><dd class="col-sm-9 mb-0">{{ chiqim.summa|pul }}</dd>{% endif %}
 </dl>
 </div></div>
 

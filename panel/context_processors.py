@@ -20,6 +20,7 @@ def sinxron_holati(request):
         "chiqim_huquqi": korish,
         "chiqim_kutilmoqda_soni": chiqim_soni,
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
+        "pul_huquqi": huquqi_bor(request.user, "pul_korish"),
         "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),
         "tozalash_huquqi": huquqi_bor(request.user, "tozalash"),
         "sinxron_holati": {

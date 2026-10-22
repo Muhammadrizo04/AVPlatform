@@ -6,7 +6,7 @@
   <div class="me-auto">
     <h1 class="mb-1">{{ xodim.ism }}</h1>
     <div class="text-body-secondary">Filial: {{ xodim.filial.nomi|default:"—" }}
-    {% if xodim.ishdan_bushagan or xodim.neaktiv or xodim.onec_da_yoq %} · <span class="badge bg-danger xato">Ketgan / faol emas</span>{% endif %}</div>
+    {% if xodim.ishdan_bushagan or xodim.neaktiv or xodim.onec_da_yoq %} · <span class="badge bg-danger">Ketgan / faol emas</span>{% endif %}</div>
   </div>
   {% if akt_huquqi and qatorlar %}<a class="btn btn-primary btn-sm" href="{% url 'mol:akt_yangi' %}?topshiruvchi={{ xodim.pk }}"><i class="cil-transfer me-1"></i>Topshirish aktini yaratish</a>{% endif %}
 </div>
@@ -15,7 +15,7 @@
 <div class="card-header fw-semibold">Biriktirilgan AV'lar</div>
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th><th class="son">Qiymat</th></tr></thead>
+  <thead><tr><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for t in qatorlar %}
     <tr>
@@ -25,12 +25,12 @@
       <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}—{% endif %}</td>
       <td>{{ t.holat_nomi }}</td>
       <td class="son">{{ t.soni|son }}</td>
-      <td class="son">{{ t.qiymat|pul }}</td>
+      {% if pul_huquqi %}<td class="son">{{ t.qiymat|pul }}</td>{% endif %}
     </tr>
   {% empty %}
     <tr><td colspan="7" class="text-body-secondary"><em>AV biriktirilmagan.</em></td></tr>
   {% endfor %}
-  {% if qatorlar %}<tr class="table-light"><th colspan="5">Jami</th><th class="son">{{ jami_soni|son }}</th><th class="son">{{ jami_qiymat|pul }}</th></tr>{% endif %}
+  {% if qatorlar %}<tr class="table-light"><th colspan="5">Jami</th><th class="son">{{ jami_soni|son }}</th>{% if pul_huquqi %}<th class="son">{{ jami_qiymat|pul }}</th>{% endif %}</tr>{% endif %}
   </tbody>
 </table>
 </div>
