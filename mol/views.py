@@ -33,15 +33,33 @@ def _id(qiymat) -> int:
     return son(qiymat) or 0
 
 
+XODIM_SAHIFA_HAJMI = 50
+KETGAN = Q(ishdan_bushagan=True) | Q(neaktiv=True) | Q(onec_da_yoq=True)
+
+
 @amal_kerak("korish")
 def xodimlar(request):
-    royxat = list(sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk"))
+    qs = sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk")
+    q = request.GET.get("q", "").strip()
+    if q:
+        qs = qs.filter(ism__icontains=q)
+    holat = request.GET.get("holat", "")
+    if holat == "faol":
+        qs = qs.exclude(KETGAN)
+    elif holat == "ketgan":
+        qs = qs.filter(KETGAN)
     yigindi = sorovlar.xodim_yigindilari(request.user)
-    for x in royxat:
+    if request.GET.get("av_bor") == "1":
+        qs = qs.filter(pk__in=[pk for pk, (soni, _) in yigindi.items() if soni > 0])
+    sahifa = Paginator(qs, XODIM_SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    for x in sahifa:
         x.av_soni, x.qiymat = yigindi.get(x.pk, (NOL, NOL))
+    params = request.GET.copy()
+    params.pop("page", None)
     return render(
         request, "mol/xodimlar.html",
-        {"xodimlar": royxat, "akt_huquqi": huquqi_bor(request.user, "mol_akt")},
+        {"xodimlar": sahifa, "sahifa": sahifa, "query": params.urlencode(), "params": request.GET,
+         "akt_huquqi": huquqi_bor(request.user, "mol_akt")},
     )
 
 

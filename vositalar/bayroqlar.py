@@ -165,10 +165,12 @@ BAYROQLAR: dict[str, Bayroq] = {
 }
 
 
-def bayroq_sonlari(user, bugun: date) -> dict[str, int]:
-    """Har bayroq bo'yicha obyektlar soni (AV yoki taqsimot qatorlari)."""
+def bayroq_sonlari(user, bugun: date, kalitlar=None) -> dict[str, int]:
+    """Har bayroq (yoki faqat `kalitlar`) bo'yicha obyektlar soni (AV yoki taqsimot qatorlari)."""
     sonlar = {}
     for kalit, bayroq in BAYROQLAR.items():
+        if kalitlar is not None and kalit not in kalitlar:
+            continue
         natija = bayroq.so_rov(user, bugun)
         sonlar[kalit] = len(natija) if isinstance(natija, list) else natija.count()
     return sonlar

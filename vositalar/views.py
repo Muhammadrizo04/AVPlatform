@@ -47,9 +47,31 @@ def _filtr_soz_parametrlari(request) -> str:
     return params.urlencode()
 
 
+def _joylar(avlar, user) -> None:
+    """Ro'yxat qatori uchun har AV'ga `joy`: bo'limlar, МОЛ'lar, holatlar va МОЛ'siz dona (faqat ruxsat etilgan
+    filiallardagi taqsimotdan, bitta so'rov)."""
+    nomlar = dict(Holat.choices)
+    joylar = {av.pk: {"bolimlar": [], "mollar": [], "holatlar": [], "molsiz": NOL} for av in avlar}
+    qatorlar = filial_bilan_chekla(Taqsimot.objects.filter(av_id__in=joylar), user).select_related("bolim", "mol")
+    for t in qatorlar.order_by("pk"):
+        j = joylar[t.av_id]
+        if t.bolim and t.bolim.nomi not in j["bolimlar"]:
+            j["bolimlar"].append(t.bolim.nomi)
+        if t.mol is None:
+            j["molsiz"] += t.soni
+        elif t.mol.ism not in j["mollar"]:
+            j["mollar"].append(t.mol.ism)
+        holat = nomlar.get(t.holat, t.holat)
+        if holat not in j["holatlar"]:
+            j["holatlar"].append(holat)
+    for av in avlar:
+        av.joy = joylar[av.pk]
+
+
 @amal_kerak("korish")
 def royxat(request):
     sahifa = Paginator(_royxat_qs(request), SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    _joylar(sahifa.object_list, request.user)
     taqsim_huquqi = huquqi_bor(request.user, "taqsimot")
     kontekst = {
         "sahifa": sahifa,

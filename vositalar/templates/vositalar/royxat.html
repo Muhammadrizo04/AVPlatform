@@ -5,7 +5,7 @@
 <div class="card mb-3"><div class="card-body">
 
 <form method="get" action="{% url 'vositalar:royxat' %}" hx-get="{% url 'vositalar:royxat' %}" hx-target="#jadval" hx-push-url="true"
-      hx-trigger="change, keyup changed delay:300ms from:input[name=q]" class="filtrlar">
+      hx-trigger="change, keyup changed delay:300ms from:input[name=q], keyup changed delay:400ms from:input[name=mol_ism]" class="filtrlar">
   <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam yoki nomi">
   <select class="form-select form-select-sm" name="filial"><option value="">Barcha filiallar</option>
     {% for f in filiallar %}<option value="{{ f.pk }}" {% if params.filial == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
@@ -21,9 +21,9 @@
   </select>
   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_guruh" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}><label class="form-check-label" for="f_guruh">Guruhlar</label></div>
   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_arxiv" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}><label class="form-check-label" for="f_arxiv">Arxiv</label></div>
-  <select class="form-select form-select-sm" name="mol"><option value="">Barcha MOL</option>
-    {% for x in xodimlar %}<option value="{{ x.pk }}" {% if params.mol == x.pk|stringformat:"s" %}selected{% endif %}>{{ x.ism }}</option>{% endfor %}
-  </select>
+  {% if params.mol %}<input type="hidden" name="mol" value="{{ params.mol }}">{% endif %}
+  <input class="form-control form-control-sm" type="search" name="mol_ism" value="{{ params.mol_ism|default:'' }}" list="mol_royxat" placeholder="МОЛ ismi" aria-label="МОЛ ismi bo'yicha qidirish" autocomplete="off">
+  <datalist id="mol_royxat">{% for x in xodimlar %}<option value="{{ x.ism }}">{% endfor %}</datalist>
   <select class="form-select form-select-sm" name="bayroq"><option value="">Bayroq: hammasi</option>
     {% for kalit, nomi in bayroqlar %}<option value="{{ kalit }}" {% if params.bayroq == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
   </select>

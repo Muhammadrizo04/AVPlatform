@@ -7,7 +7,19 @@
   <a class="btn btn-outline-secondary btn-sm" href="{% url 'mol:ketganlar' %}"><i class="cil-warning me-1"></i>Ketgan xodimlardagi AV'lar</a>
   {% if akt_huquqi %}<a class="btn btn-primary btn-sm tugma" href="{% url 'mol:akt_yangi' %}"><i class="cil-plus me-1"></i>Yangi akt</a>{% endif %}
 </div>
-<div class="card mb-4">
+<div class="card mb-3"><div class="card-body">
+<form method="get" class="filtrlar">
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ params.q|default:'' }}" placeholder="Xodim ismi" aria-label="Xodim ismi">
+  <select class="form-select form-select-sm" name="holat" aria-label="Xodim holati">
+    <option value="">Barcha xodimlar</option>
+    <option value="faol"{% if params.holat == "faol" %} selected{% endif %}>Faol</option>
+    <option value="ketgan"{% if params.holat == "ketgan" %} selected{% endif %}>Ketgan</option>
+  </select>
+  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_av_bor" name="av_bor" value="1"{% if params.av_bor == "1" %} checked{% endif %}><label class="form-check-label" for="f_av_bor">Faqat AV biriktirilganlar</label></div>
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
+</form>
+</div></div>
+<div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
   <thead><tr><th>Xodim</th><th>Filial</th><th>Holati</th><th class="son">AV soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
@@ -27,4 +39,6 @@
 </table>
 </div>
 </div>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+<p class="text-body-secondary small mb-4">Jami: {{ sahifa.paginator.count|son }} xodim.</p>
 {% endblock %}

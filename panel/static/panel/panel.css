@@ -43,12 +43,16 @@ main fieldset { min-width: 0; }
 .filtrlar .form-select, .filtrlar .form-control { width: auto; max-width: 18rem; }
 
 .kartochka-bayroq:hover { box-shadow: var(--cui-box-shadow-sm); }
+.bayroq-bosh { background: transparent; border-style: dashed; }
+.bayroq-bosh .fs-4 { color: var(--cui-secondary-color) !important; font-weight: 400 !important; }
 .bayroq-faol .fs-4 { color: var(--cui-warning-text-emphasis) !important; }
 .active-bolim { background: var(--cui-primary-bg-subtle); }
 
 /* AV ro'yxati (list-group) */
 .av-qator { display: flex; gap: .75rem; align-items: flex-start; }
 .av-qator .av-asosiy { flex: 1 1 auto; min-width: 0; }
+.av-chiplar-kichik { margin-top: .35rem; gap: .3rem; }
+.av-chiplar-kichik .chip { font-size: .75rem; padding: .1rem .5rem; }
 .av-qator .av-raqamlar { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
 /* AV kartochkasi */
