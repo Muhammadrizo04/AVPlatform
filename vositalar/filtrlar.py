@@ -20,7 +20,7 @@ def _bayroq_av_idlari(kalit: str, user) -> list[int]:
 
 
 def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
-    """`qs` (AV) ni foydalanuvchi huquqi va `params` (q, filial, bolim, turi, holat, mol, arxiv, guruh, bayroq) bilan
+    """`qs` (AV) ni foydalanuvchi huquqi va `params` (q, filial, bolim, turi, holat, mol, mol_ism, arxiv, guruh, bayroq) bilan
     chegaralaydi. Arxivsiz: ruxsat etilgan filialda musbat qoldig'i bor faol AV'lar (bayroqlar bilan bir xil qoida);
     `arxiv=1`: arxiv AV'lar, ruxsat etilgan `filial_rekvizit` bo'yicha."""
     arxiv = params.get("arxiv") == "1"
@@ -54,6 +54,9 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
             taqsimot[nom] = qiymat
     if params.get("holat"):
         taqsimot["holat"] = params["holat"]
+    mol_ism = (params.get("mol_ism") or "").strip()
+    if mol_ism:
+        taqsimot["mol__ism__icontains"] = mol_ism
     if taqsimot:
         qatorlar = filial_bilan_chekla(Taqsimot.objects.filter(av=OuterRef("pk"), **taqsimot), user)
         qs = qs.filter(Exists(qatorlar))

@@ -219,7 +219,7 @@ def test_royxat_mol_va_bayroq_boshqaruvlari(client_hisobchi, filial_a):
 
     x = xodim(filial=filial_a)
     matn = client_hisobchi.get(reverse(ROYXAT)).content.decode()
-    assert 'name="mol"' in matn and x.ism in matn
+    assert 'name="mol_ism"' in matn and f'<option value="{x.ism}">' in matn  # МОЛ ismi bo'yicha qidiruv (datalist)
     assert 'name="bayroq"' in matn and 'value="inv_bosh"' in matn
 
 
@@ -240,9 +240,10 @@ def test_ommaviy_faqat_post(client_hisobchi):
 def test_royxat_n_plus_1_yoq(client_hisobchi, filial_a, django_assert_max_num_queries):
     for _ in range(3):
         av_yarat(filial_a)
-    with django_assert_max_num_queries(20):
+    # Qator joylashuvi (bo'lim, МОЛ, holat) — sahifa uchun bitta qo'shimcha so'rov, AV soniga bog'liq emas.
+    with django_assert_max_num_queries(23):
         client_hisobchi.get(reverse(ROYXAT))
     for _ in range(20):
         av_yarat(filial_a)
-    with django_assert_max_num_queries(20):
+    with django_assert_max_num_queries(23):
         client_hisobchi.get(reverse(ROYXAT))
