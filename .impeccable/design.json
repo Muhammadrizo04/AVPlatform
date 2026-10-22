@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T12:00:00Z",
+  "title": "Design System: Asosiy vositalar",
+  "extensions": {
+    "colorMeta": {
+      "siyoh": { "role": "primary", "displayName": "Siyoh", "canonical": "#121417", "tonalRamp": ["#121417", "#23272d", "#2b2f35", "#5b616b", "#8a9099", "#c3c7cd", "#d9dce1", "#f4f5f7"] },
+      "qizil": { "role": "secondary", "displayName": "Signal qizil", "canonical": "#d6281c", "tonalRamp": ["#3d0b08", "#6b1610", "#b11f15", "#d6281c", "#e5675e", "#f1b8b3", "#f7d6d3", "#fbeceb"] },
+      "kok": { "role": "tertiary", "displayName": "Dengiz ko'ki", "canonical": "#2f5d8a", "tonalRamp": ["#0f1e2d", "#1b3550", "#244a6e", "#2f5d8a", "#5b82a8", "#97b1ca", "#c4d3e2", "#eaf0f6"] },
+      "fon": { "role": "neutral", "displayName": "Fon", "canonical": "#f4f5f7", "tonalRamp": ["#121417", "#23272d", "#5b616b", "#8a9099", "#c3c7cd", "#d9dce1", "#eceef1", "#f4f5f7"] },
+      "sirt": { "role": "neutral", "displayName": "Sirt", "canonical": "#ffffff", "tonalRamp": ["#121417", "#23272d", "#5b616b", "#8a9099", "#c3c7cd", "#d9dce1", "#f4f5f7", "#ffffff"] },
+      "chiziq": { "role": "neutral", "displayName": "Chiziq", "canonical": "#d9dce1", "tonalRamp": ["#121417", "#23272d", "#5b616b", "#8a9099", "#c3c7cd", "#d9dce1", "#eceef1", "#f4f5f7"] },
+      "chiziq-och": { "role": "neutral", "displayName": "Och chiziq", "canonical": "#eceef1", "tonalRamp": ["#121417", "#23272d", "#5b616b", "#8a9099", "#c3c7cd", "#d9dce1", "#eceef1", "#f4f5f7"] },
+      "ikkilamchi": { "role": "neutral", "displayName": "Ikkilamchi matn", "canonical": "#5b616b", "tonalRamp": ["#121417", "#23272d", "#3a3f46", "#5b616b", "#8a9099", "#b4b9c0", "#d9dce1", "#f4f5f7"] },
+      "qizil-och": { "role": "secondary", "displayName": "Qizil och", "canonical": "#fbeceb" },
+      "qizil-chegara": { "role": "secondary", "displayName": "Qizil chegara", "canonical": "#f1b8b3" },
+      "qizil-hover": { "role": "secondary", "displayName": "To'q qizil", "canonical": "#b11f15" },
+      "kok-och": { "role": "tertiary", "displayName": "Ko'k och", "canonical": "#eaf0f6" },
+      "siyoh-hover": { "role": "primary", "displayName": "Siyoh hover", "canonical": "#2b2f35" },
+      "maydon-chiziq": { "role": "neutral", "displayName": "Maydon chizig'i", "canonical": "#c3c7cd" },
+      "sokin-kulrang": { "role": "neutral", "displayName": "Sokin kulrang", "canonical": "#8a9099" },
+      "menyu-matn": { "role": "neutral", "displayName": "Menyu matni", "canonical": "#d5d8dc" },
+      "menyu-ikkilamchi": { "role": "neutral", "displayName": "Menyu ikkilamchi", "canonical": "#9aa0a8" },
+      "menyu-hover": { "role": "neutral", "displayName": "Menyu hover", "canonical": "#23272d" },
+      "menyu-chiziq": { "role": "neutral", "displayName": "Menyu chizig'i", "canonical": "#2a2e34" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Sahifa sarlavhasi (h1), AV nomi; <576px da 1.5rem." },
+      "metric": { "displayName": "Metric", "purpose": "Solishtirish qatoridagi 1C / Platforma / Farq raqamlari." },
+      "figure": { "displayName": "Figure", "purpose": "Bayroq sonlari, Inv. raqam." },
+      "title": { "displayName": "Title", "purpose": "h2, kartochka sarlavhasi, harakat kerak matni." },
+      "body": { "displayName": "Body", "purpose": "Barcha matn, jadval, maydon, menyu; tabular raqamlar." },
+      "small": { "displayName": "Small", "purpose": "Yo'l satri, izoh, matnli belgilar, footer." },
+      "label": { "displayName": "Label", "purpose": "UPPERCASE: ustun sarlavhasi, forma yorlig'i, metrika nomi. Kicker emas." }
+    },
+    "shadows": [
+      { "name": "none", "value": "none", "purpose": "Barcha CoreUI soya tokenlari; tizim tekis." },
+      { "name": "focus-halqa", "value": "0 0 0 2px var(--av-kok-och)", "purpose": "Input/select fokusida, ramka siyohga o'tganda." },
+      { "name": "chegara-ichki", "value": "inset 0 0 0 1px #f1b8b3", "purpose": "Ogohlantirish belgisining 1px chegarasi (chiziq vazifasida)." },
+      { "name": "focus-kontur", "value": "outline: 2px solid var(--av-kok); outline-offset: 2px", "purpose": "Global :focus-visible." }
+    ],
+    "motion": [],
+    "breakpoints": [
+      { "name": "sm", "value": "576px" },
+      { "name": "lg", "value": "992px" },
+      { "name": "xl", "value": "1200px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Asosiy tugma",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Siyoh to'ldirilgan asosiy harakat (Saqlash, Bajarish).",
+      "html": "<button class=\"ds-btn-primary\">Saqlash</button>",
+      "css": ".ds-btn-primary { background: var(--av-siyoh, #121417); color: #fff; border: 1px solid var(--av-siyoh, #121417); border-radius: 2px; padding: .4375rem 1rem; font: 600 .8125rem/1.45 \"Helvetica Neue\", Arial, \"Segoe UI\", system-ui, sans-serif; cursor: pointer; } .ds-btn-primary:hover { background: #2b2f35; border-color: #2b2f35; } .ds-btn-primary:active { background: #000; border-color: #000; } .ds-btn-primary:focus-visible { outline: 2px solid var(--av-kok, #2f5d8a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ikkinchi tugma",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Siyoh chiziqli oq tugma (QR-yorliq chop etish).",
+      "html": "<button class=\"ds-btn-secondary\">QR-yorliq chop etish</button>",
+      "css": ".ds-btn-secondary { background: #fff; color: var(--av-siyoh, #121417); border: 1px solid var(--av-siyoh, #121417); border-radius: 2px; padding: .25rem .75rem; font: 600 .75rem/1.45 \"Helvetica Neue\", Arial, \"Segoe UI\", system-ui, sans-serif; cursor: pointer; } .ds-btn-secondary:hover { background: var(--av-siyoh, #121417); color: #fff; } .ds-btn-secondary:active { background: #000; color: #fff; } .ds-btn-secondary:focus-visible { outline: 2px solid var(--av-kok, #2f5d8a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Xavfli tugma",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Qizil tuzatish harakati, faqat harakat kerak qatorida yoki xavfli amalda.",
+      "html": "<button class=\"ds-btn-danger\">МОЛ akti tuzish</button>",
+      "css": ".ds-btn-danger { background: var(--av-qizil, #d6281c); color: #fff; border: 1px solid var(--av-qizil, #d6281c); border-radius: 2px; padding: .25rem .75rem; font: 600 .75rem/1.45 \"Helvetica Neue\", Arial, \"Segoe UI\", system-ui, sans-serif; cursor: pointer; } .ds-btn-danger:hover { background: #b11f15; border-color: #b11f15; } .ds-btn-danger:focus-visible { outline: 2px solid var(--av-kok, #2f5d8a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Matnli tugma",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Jadval qatori amallari: fonsiz, tagiga chizilgan.",
+      "html": "<button class=\"ds-btn-text\">Ko'chirish</button><button class=\"ds-btn-text ds-btn-text-danger\">Moslash</button>",
+      "css": ".ds-btn-text { background: transparent; border: 0; padding: 0 .75rem; color: var(--av-siyoh, #121417); font: 600 .75rem/1.45 \"Helvetica Neue\", Arial, sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; } .ds-btn-text:hover { color: var(--av-kok, #2f5d8a); } .ds-btn-text-danger { color: var(--av-qizil, #d6281c); } .ds-btn-text-danger:hover { color: #b11f15; } .ds-btn-text:focus-visible { outline: 2px solid var(--av-kok, #2f5d8a); outline-offset: 2px; }"
+    },
+    {
+      "name": "Maydon",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Label uslubidagi yorliq va 2px radiusli maydon.",
+      "html": "<label class=\"ds-field\"><span>Ishga tushgan sana</span><input class=\"ds-input\" type=\"text\" value=\"24.01.2026\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: .25rem; font-family: \"Helvetica Neue\", Arial, sans-serif; } .ds-field > span { font-size: .6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--av-ikkilamchi, #5b616b); } .ds-input { background: #fff; color: var(--av-siyoh, #121417); border: 1px solid #c3c7cd; border-radius: 2px; padding: .375rem .75rem; font: .8125rem/1.45 inherit; } .ds-input:focus { outline: none; border-color: var(--av-siyoh, #121417); box-shadow: 0 0 0 2px var(--av-kok-och, #eaf0f6); }"
+    },
+    {
+      "name": "Menyu ustuni",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "220px siyoh ustun; faol band oq fonli teskari blok.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">Bosh sahifa</a><div class=\"ds-nav-title\">Vositalar</div><a href=\"#\" class=\"active\">AV ro'yxati</a><a href=\"#\">Bo'limlar</a><a href=\"#\">1C chiqimlari <b class=\"ds-nav-badge\">1</b></a></nav>",
+      "css": ".ds-nav { width: 220px; background: #121417; padding: .5rem 0; font: .8125rem/1.45 \"Helvetica Neue\", Arial, sans-serif; } .ds-nav a { display: flex; align-items: center; min-height: 2.125rem; padding: .5rem 1.25rem; color: #d5d8dc; text-decoration: none; } .ds-nav a:hover { background: #23272d; color: #fff; } .ds-nav a.active { background: #fff; color: #121417; font-weight: 700; } .ds-nav a:focus-visible { outline: 2px solid #2f5d8a; outline-offset: -2px; } .ds-nav-title { margin-top: .75rem; padding: .35rem 1.25rem; font-size: .6875rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #8a9099; } .ds-nav-badge { margin-inline-start: auto; background: #d6281c; color: #fff; border-radius: 2px; padding: .25rem .45rem; font-size: .6875rem; }"
+    },
+    {
+      "name": "Matnli belgilar",
+      "kind": "chip",
+      "refersTo": "badge-platforma",
+      "description": "Ramkasiz matn yorliqlari: ko'k holat, qizil ogohlantirish, kulrang joy.",
+      "html": "<ul class=\"ds-chips\"><li>Bo'lim 3</li><li class=\"ds-chip-holat\">Ishlatilmoqda</li><li class=\"ds-chip-ogoh\">МОЛ'siz: 15</li></ul>",
+      "css": ".ds-chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: .25rem 1rem; font: .75rem/1.45 \"Helvetica Neue\", Arial, sans-serif; color: #5b616b; } .ds-chip-holat { color: #2f5d8a; font-weight: 600; } .ds-chip-ogoh { color: #d6281c; font-weight: 700; }"
+    },
+    {
+      "name": "Kartochka",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Soyasiz, radiussiz blok; sarlavha ostida siyoh chiziq; ma'lumot qatorlari.",
+      "html": "<section class=\"ds-card\"><div class=\"ds-card-h\">Buxgalteriya</div><dl class=\"ds-dl\"><div><dt>1C qoldiq summasi</dt><dd>6 339 666,64</dd></div><div><dt>Bir dona narxi</dt><dd>422 644,44</dd></div></dl></section>",
+      "css": ".ds-card { background: #fff; border: 1px solid #d9dce1; border-radius: 0; font: .8125rem/1.45 \"Helvetica Neue\", Arial, sans-serif; color: #121417; font-variant-numeric: tabular-nums; } .ds-card-h { padding: .625rem 1rem; font-size: .9375rem; font-weight: 700; border-bottom: 1px solid #121417; } .ds-dl { margin: 0; } .ds-dl > div { display: flex; justify-content: space-between; gap: 1rem; padding: .5625rem 1rem; border-bottom: 1px solid #eceef1; } .ds-dl > div:last-child { border-bottom: 0; } .ds-dl dt { font-weight: 400; color: #5b616b; } .ds-dl dd { margin: 0; font-weight: 600; text-align: right; }"
+    },
+    {
+      "name": "Solishtirish qatori",
+      "kind": "custom",
+      "refersTo": "comparison-cell",
+      "description": "Imzo komponenti: 1C qoldig'i | Platforma taqsimoti | Farq, ostida harakat kerak qatori.",
+      "html": "<section class=\"ds-cmp\"><div><div class=\"ds-cmp-l\">1C qoldig'i</div><div class=\"ds-cmp-v\">15</div></div><div><div class=\"ds-cmp-l\">Platforma taqsimoti</div><div class=\"ds-cmp-v ds-kok\">15</div></div><div><div class=\"ds-cmp-l\">Farq</div><div class=\"ds-cmp-v ds-qizil\">2<em>mos emas</em></div></div><div class=\"ds-cmp-izoh\">Taqsimot 1C qoldig'iga teng emas.</div></section><div class=\"ds-harakat\"><b>МОЛ biriktirilmagan: 15 dona</b><button class=\"ds-harakat-btn\">МОЛ akti tuzish</button></div>",
+      "css": ".ds-cmp { display: grid; grid-template-columns: repeat(3, minmax(9rem, 1fr)) 2fr; background: #fff; border-top: 2px solid #121417; border-bottom: 1px solid #d9dce1; font-family: \"Helvetica Neue\", Arial, sans-serif; color: #121417; font-variant-numeric: tabular-nums; } .ds-cmp > div { padding: .875rem 1.25rem; border-inline-start: 1px solid #d9dce1; } .ds-cmp > div:first-child { border-inline-start: 0; } .ds-cmp-l { font-size: .6875rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: #5b616b; } .ds-cmp-v { font-size: 2rem; font-weight: 700; line-height: 1.15; letter-spacing: -.02em; } .ds-cmp-v em { font-style: normal; font-size: .8125rem; font-weight: 600; letter-spacing: 0; margin-inline-start: .5rem; } .ds-kok { color: #2f5d8a; } .ds-qizil { color: #d6281c; } .ds-cmp-izoh { display: flex; align-items: center; font-size: .75rem; color: #5b616b; } .ds-harakat { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .5rem 1.25rem; background: #fff; border-bottom: 2px solid #d6281c; font-family: \"Helvetica Neue\", Arial, sans-serif; } .ds-harakat b { color: #d6281c; font-size: .9375rem; } .ds-harakat b::before { content: \"\"; display: inline-block; width: 8px; height: 8px; background: #d6281c; margin-inline-end: .625rem; vertical-align: 1px; } .ds-harakat-btn { background: #d6281c; color: #fff; border: 1px solid #d6281c; border-radius: 2px; padding: .25rem .75rem; font: 600 .75rem/1.45 inherit; cursor: pointer; } .ds-harakat-btn:hover { background: #b11f15; border-color: #b11f15; } .ds-harakat-btn:focus-visible { outline: 2px solid #2f5d8a; outline-offset: 2px; }"
+    },
+    {
+      "name": "Bayroq ro'yxati",
+      "kind": "custom",
+      "refersTo": "figure",
+      "description": "Chiziqli ro'yxat: yorliq chapda, son o'ngda; qizil — ish bor, nol — kulrang.",
+      "html": "<ul class=\"ds-bayroq\"><li><a href=\"#\" class=\"faol\"><span>Inv. raqam takror</span><span class=\"ds-son\">126</span></a></li><li><a href=\"#\" class=\"bosh\"><span>Ketgan xodimda</span><span class=\"ds-son\">0</span></a></li></ul>",
+      "css": ".ds-bayroq { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); column-gap: 2rem; font-family: \"Helvetica Neue\", Arial, sans-serif; font-variant-numeric: tabular-nums; } .ds-bayroq a { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid #d9dce1; color: #121417; text-decoration: none; font-size: .8125rem; } .ds-bayroq a:hover span:first-child { text-decoration: underline; } .ds-bayroq a:focus-visible { outline: 2px solid #2f5d8a; outline-offset: 2px; } .ds-son { font-size: 1.25rem; font-weight: 700; letter-spacing: -.01em; } .ds-bayroq .faol .ds-son { color: #d6281c; } .ds-bayroq .bosh { color: #5b616b; } .ds-bayroq .bosh .ds-son { font-weight: 400; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Shveytsariya jadval maktabi",
+    "overview": "Panel xalqaro tipografik uslubdagi ma'lumot varag'i kabi qurilgan: har raqam qat'iy to'rda turadi, ustunlar siljimaydi, bloklar soya bilan emas, aniq 1px chiziqlar bilan ajraladi. Butun sahifa siyoh va kulrangda; rang faqat ma'no tashiydi. Qizil — \"bu yerda ish bor\", ko'k — \"bu platformaning o'z ma'lumoti yoki havola\". 1C'dan kelgan qolgan hamma narsa neytral, faqat o'qish uchun.\n\nZichlik — ofis kompyuteri va katta ekran uchun: asosiy matn 13px, jadval qatori 9px vertikal padding, kichik bosh harfli yorliqlar. Ierarxiya o'lcham va qalinlik bilan, sarlavha ostidagi siyoh chiziq bilan quriladi; bezak, gradient, illyustratsiya yo'q. Imzo elementi — AV kartochkasidagi solishtirish qatori: \"1C qoldig'i | Platforma taqsimoti | Farq\" katta tabular raqamlarda yonma-yon, farq bo'lsa qizil.\n\nRad etilgan standart: qorong'i menyu + soyali, yumaloq oq kartochkalar + binafsha urg'uli umumiy admin paneli. Menyu ustuni qora bo'lib qoladi, lekin u siyohning o'zi (#121417), urg'u rangi emas, faol band esa oq fonli teskari blok.",
+    "keyCharacteristics": [
+      "Siyoh, kulrang va oq; qizil va ko'k faqat ma'no uchun.",
+      "1px chiziqlar standart; 2px faqat yopuvchi va ogohlantiruvchi chiziq uchun.",
+      "Soya yo'q, gradient yo'q, radius 0 (bloklar) yoki 2px (boshqaruv elementlari).",
+      "Tabular raqamlar hamma joyda; sonlar ustunda o'ngga tekislangan.",
+      "Grotesk shrift, qalinlik 400/600/700, katta sarlavhalarda manfiy harf oralig'i."
+    ],
+    "rules": [
+      { "name": "The Bitta Rang, Bitta Ma'no Rule", "body": "Qizil faqat foydalanuvchi bajarishi kerak bo'lgan ish uchun; ko'k faqat platforma ma'lumoti va havola uchun. Hech qaysi biri bezak, kategoriya rangi yoki \"muvaffaqiyat\" belgisi bo'lmaydi: \"mos\" holati siyohda ko'rsatiladi (success tokenlari siyoh/kulrangga yo'naltirilgan).", "section": "colors" },
+      { "name": "The Siyoh Harakat Rule", "body": "Asosiy tugma siyoh to'ldirilgan, ikkinchi darajali tugma siyoh chiziqli oq. Qizil to'ldirilgan tugma faqat qizil ogohlantirish qatori ichidagi tuzatish harakati yoki xavfli amal uchun.", "section": "colors" },
+      { "name": "The Tabular Rule", "body": "Har bir son tabular raqamda va ustunda o'ngga tekislangan (`.son`); raqamlar ustunlar bo'ylab siljimaydi.", "section": "typography" },
+      { "name": "The Yorliq Rule", "body": "11px bosh harfli yorliq faqat o'zi nomlagan qiymat yoki ustunning ustida turadi (ustun sarlavhasi, maydon yorlig'i, metrika nomi). U sarlavha ustidagi \"kicker\" sifatida ishlatilmaydi.", "section": "typography" },
+      { "name": "The Ustun Siljimaydi Rule", "body": "Sonli ustunlar o'ngga, matn chapga; ustun sarlavhalari `nowrap`. Mobil qayta joylashuvda ham son o'z ustunida qoladi.", "section": "layout" },
+      { "name": "The Soyasiz Rule", "body": "Ko'tarilish soyasi, gradient yoki blur yo'q. Blokni ajratish kerak bo'lsa — 1px chiziq yoki fon/sirt almashinuvi.", "section": "elevation" },
+      { "name": "The 2px Rule", "body": "Radius hech qachon 2px dan oshmaydi; chiziq qalinligi 2px faqat blokni yopish yoki ogohlantirish uchun.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do qizilni faqat foydalanuvchi bajarishi kerak bo'lgan ishga bering (farq, МОЛ'siz, kutilayotgan chiqim, xato).",
+      "Do platformada saqlanadigan qiymatlarni (bo'lim, МОЛ, holat) va havolalarni ko'kda ko'rsating; 1C'dan kelganini siyoh yoki kulrangda qoldiring.",
+      "Do har bir sonni tabular va o'ngga tekislangan ustunda bering (`.son`).",
+      "Do bo'lim sarlavhasi va kartochka sarlavhasi ostiga 1px siyoh chiziq qo'ying.",
+      "Do asosiy harakatni siyoh to'ldirilgan tugma bilan, ikkinchisini siyoh chiziqli tugma bilan bering.",
+      "Do yangi CoreUI komponentlarini panel.css'dagi `--av-*` va `--cui-*` tokenlari orqali moslashtiring, ularni klassdan tashqarida qayta bo'yamang."
+    ],
+    "donts": [
+      "Don't ko'tarilish soyasi, gradient yoki blur ishlatmang; `box-shadow` faqat fokus halqasi yoki 1px chegara sifatida.",
+      "Don't 2px dan katta radius, pill yoki doira shaklli konteyner qo'ymang.",
+      "Don't qizil yoki ko'kni bezak, kategoriya yoki \"muvaffaqiyat\" belgisi sifatida ishlatmang; \"mos\" holati siyohda.",
+      "Don't yashil, sariq yoki binafsha urg'u qo'shmang; CoreUI'ning standart warning/success/info ranglariga tayanmang.",
+      "Don't 11px bosh harfli yorliqni sarlavha ustidagi kicker sifatida ishlatmang; u faqat qiymat yoki ustunni nomlaydi.",
+      "Don't tashqi shrift yoki CDN ulamang; fayllar loyiha ichida."
+    ]
+  }
+}

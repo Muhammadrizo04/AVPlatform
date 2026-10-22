@@ -28,7 +28,7 @@
     <tr>
       <td><a href="{% url 'mol:xodim' x.pk %}" class="fw-semibold text-decoration-none">{{ x.ism }}</a></td>
       <td>{{ x.filial.nomi|default:"—" }}</td>
-      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}<span class="badge bg-danger">Ketgan</span>{% else %}<span class="badge bg-success">Faol</span>{% endif %}</td>
+      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}{% if x.av_soni %}<span class="badge bg-danger">Ketgan</span>{% else %}<span class="text-body-secondary">Ketgan</span>{% endif %}{% else %}Faol{% endif %}</td>
       <td class="son">{{ x.av_soni|son }}</td>
       {% if pul_huquqi %}<td class="son">{{ x.qiymat|pul }}</td>{% endif %}
     </tr>

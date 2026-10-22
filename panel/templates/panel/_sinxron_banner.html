@@ -1,5 +1,3 @@
 {% if sinxron_holati.xato %}
 <div class="banner qizil" role="alert">1C bilan aloqa yo'q{% if sinxron_holati.oxirgi %} — oxirgi muvaffaqiyatli sinxron: {{ sinxron_holati.oxirgi|date:"d.m.Y H:i" }}{% endif %}</div>
-{% elif sinxron_holati %}
-<div class="banner kulrang">Oxirgi muvaffaqiyatli sinxron: {% if sinxron_holati.oxirgi %}{{ sinxron_holati.oxirgi|date:"H:i" }}{% else %}hali bo'lmagan{% endif %}</div>
 {% endif %}

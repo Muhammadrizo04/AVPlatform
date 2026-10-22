@@ -4,18 +4,11 @@
 <h1>Bosh sahifa</h1>
 
 <h2>Nazorat va tozalash</h2>
-<div class="row g-3 mb-4">
+<ul class="bayroq-royxat">
   {% for b in bayroqlar %}
-  <div class="col-6 col-md-4 col-xl-3">
-    <a class="card h-100 text-decoration-none kartochka-bayroq{% if b.soni %} bayroq-faol{% else %} bayroq-bosh{% endif %}" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}">
-      <div class="card-body py-2">
-        <div class="fs-4 fw-semibold text-body">{{ b.soni|son }}</div>
-        <div class="small text-body-secondary">{{ b.nomi }}</div>
-      </div>
-    </a>
-  </div>
+  <li><a class="{% if b.soni %}bayroq-faol{% else %}bayroq-bosh{% endif %}" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}"><span class="bayroq-nomi">{{ b.nomi }}</span><span class="bayroq-son">{{ b.soni|son }}</span></a></li>
   {% endfor %}
-</div>
+</ul>
 
 <h2>Filiallar kesimi</h2>
 <div class="card mb-4">

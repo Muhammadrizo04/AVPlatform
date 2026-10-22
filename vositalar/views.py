@@ -256,7 +256,13 @@ def _joylashuv(guruhlar) -> dict:
                 molsiz += t.soni
             if t.bolim and t.bolim not in bolimlar:
                 bolimlar.append(t.bolim)
-    return {"holatlar": holatlar, "mollar": mollar, "bolimlar": bolimlar, "molsiz": molsiz}
+    return {
+        "holatlar": holatlar, "mollar": mollar, "bolimlar": bolimlar, "molsiz": molsiz,
+        # Solishtirish qatori: ko'rinadigan filiallar bo'yicha 1C qoldig'i, platforma taqsimoti va farq.
+        "qoldiq": sum((max(g["qoldiq"], NOL) for g in guruhlar), NOL),
+        "jami": sum((g["jami"] for g in guruhlar), NOL),
+        "farq": sum((g["farq"] for g in guruhlar), NOL),
+    }
 
 
 def _rasmlar_kontekst(user, av, **qoshimcha) -> dict:

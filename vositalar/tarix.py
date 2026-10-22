@@ -40,6 +40,16 @@ MAYDON_NOMLARI = {
 }
 
 
+def _qiymat(matn: str) -> str:
+    """Jurnaldagi ISO sana (YYYY-MM-DD) -> DD.MM.YYYY; bo'sh -> «—»."""
+    if not matn:
+        return "—"
+    try:
+        return date.fromisoformat(matn).strftime("%d.%m.%Y")
+    except ValueError:
+        return matn
+
+
 def maydon_nomi(kalit: str) -> str:
     if kalit.startswith("qoshimcha."):
         return f"Qo'shimcha maydon «{kalit.split('.', 1)[1]}»"
@@ -110,7 +120,7 @@ def tarix(av: AV, user) -> list[TarixQator]:
         shart |= Q(obyekt_turi="vositalar.avkartochka", obyekt_id__in=kartochka_idlar)
     for j in Jurnal.objects.filter(shart):
         natija.append(TarixQator(
-            j.qachon, "jurnal", f"{maydon_nomi(j.maydon)}: «{j.eski or '—'}» → «{j.yangi or '—'}»", j.kim_nomi
+            j.qachon, "jurnal", f"{maydon_nomi(j.maydon)}: «{_qiymat(j.eski)}» → «{_qiymat(j.yangi)}»", j.kim_nomi
         ))
     natija.sort(key=lambda q: q.sana, reverse=True)
     return natija

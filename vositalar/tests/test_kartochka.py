@@ -199,13 +199,13 @@ def test_taqsimot_jadvali_jami_belgisi(client_hisobchi, filial_a):
     mos = av_yarat(filial_a, soni="3")
     qator(mos, filial_a, "3")
     html = client_hisobchi.get(url("kartochka", mos.pk)).content.decode()
-    assert "1C bilan mos" in html and "Farq" not in html
+    assert "1C bilan mos" in html and "Farq:" not in html and "mos emas" not in html
 
     mos_emas = av_yarat(filial_a, soni="3")
     qator(mos_emas, filial_a, "2")
     javob = client_hisobchi.get(url("kartochka", mos_emas.pk))
     html = javob.content.decode()
-    assert "Farq" in html and "1C bilan mos" not in html
+    assert "Farq:" in html and "mos emas" in html and "1C bilan mos" not in html
     assert javob.context["taqsimot_guruhlari"][0]["farq"] == Decimal("1")
 
 
