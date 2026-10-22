@@ -1,58 +1,77 @@
-<section id="taqsimot" class="card mb-4">
-  <div class="card-header fw-semibold">Taqsimot</div>
-  <div class="card-body">
-  {% if xato %}<div class="alert alert-danger py-2 xato" role="alert">{{ xato }}</div>{% endif %}
+<section id="taqsimot" class="card mb-4" aria-labelledby="taqsimot-sarlavha" aria-live="polite">
+  <div class="card-header fw-semibold" id="taqsimot-sarlavha">Joylashuv va javobgar</div>
+  {% if xato %}<div class="alert alert-danger py-2 m-3 mb-0 xato" role="alert">{{ xato }}</div>{% endif %}
   {% for g in taqsimot_guruhlari %}
-  <h3>{{ g.filial }}</h3>
-  <div class="table-responsive"><table class="table table-sm table-hover align-middle">
-    <thead>
-      <tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Soni</th>{% if taqsim_huquqi %}<th>Amal</th>{% endif %}</tr>
-    </thead>
-    <tbody>
-    {% for t in g.qatorlar %}
-      <tr>
-        <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}<em>bo'limsiz</em>{% endif %}</td>
-        <td>{% if t.mol %}{{ t.mol.ism }}{% elif mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}" class="btn btn-sm btn-outline-primary py-0">МОЛ biriktirish</a>{% else %}—{% endif %}</td>
-        <td>{{ t.get_holat_display }}</td>
-        <td class="son">{{ t.soni|son }}</td>
+  <div class="taqsimot-guruh">
+    <div class="taqsimot-guruh-bosh">
+      <span class="fw-semibold">{{ g.filial }}</span>
+      {% if g.farq == 0 %}<span class="holat-belgi holat-mos" title="Taqsimot yig'indisi 1C qoldig'iga teng"><i class="cil-check-circle" aria-hidden="true"></i>1C bilan mos · {{ g.jami|son }} dona</span>
+      {% else %}<span class="holat-belgi holat-farq" title="Taqsimot yig'indisi 1C qoldig'iga teng emas"><i class="cil-warning" aria-hidden="true"></i>Farq: {{ g.farq|son }} (taqsimot {{ g.jami|son }}, 1C qoldig'i {{ g.qoldiq|son }})</span>{% endif %}
+    </div>
+    <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Soni</th>{% if taqsim_huquqi %}<th class="text-end"><span class="visually-hidden">Amallar</span></th>{% endif %}</tr></thead>
+      <tbody>
+      {% for t in g.qatorlar %}
+        <tr>
+          <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}<span class="text-body-secondary">Bo'limsiz</span>{% endif %}</td>
+          <td>{% if t.mol %}<a href="{% url 'mol:xodim' t.mol.pk %}">{{ t.mol.ism }}</a>{% elif mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}" class="btn btn-sm btn-outline-primary py-0">МОЛ biriktirish</a>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
+          <td>{{ t.get_holat_display }}</td>
+          <td class="son fw-semibold">{{ t.soni|son }}</td>
+          {% if taqsim_huquqi %}
+          <td class="text-end text-nowrap">
+            <button type="button" class="btn btn-sm btn-ghost-primary py-0" data-coreui-toggle="collapse" data-coreui-target="#kochir_{{ t.pk }}" aria-expanded="false" aria-controls="kochir_{{ t.pk }}">Ko'chirish</button>
+            <button type="button" class="btn btn-sm btn-ghost-primary py-0" data-coreui-toggle="collapse" data-coreui-target="#holat_{{ t.pk }}" aria-expanded="false" aria-controls="holat_{{ t.pk }}">Holat</button>
+            {% if g.farq < 0 %}<button type="button" class="btn btn-sm btn-ghost-danger py-0" data-coreui-toggle="collapse" data-coreui-target="#moslash_{{ t.pk }}" aria-expanded="false" aria-controls="moslash_{{ t.pk }}">Moslash</button>{% endif %}
+          </td>
+          {% endif %}
+        </tr>
         {% if taqsim_huquqi %}
-        <td>
-          <form class="d-flex flex-wrap gap-1" hx-post="{% url 'vositalar:taqsimot_amal' av.pk %}" hx-target="#taqsimot" hx-swap="outerHTML">
-            <input type="hidden" name="qator" value="{{ t.pk }}">
-            <input type="number" name="soni" value="{{ t.soni|floatformat:"-3u" }}" min="0.001" step="any" class="form-control form-control-sm" style="width:5.5rem" aria-label="Soni">
-            <select class="form-select form-select-sm w-auto" name="amal">
-              <option value="kochir">Ko'chirish</option>
-              <option value="holat">Holat</option>
-              {% if g.farq < 0 %}<option value="kamaytir">1C bilan moslash</option>{% endif %}
-            </select>
-            <select class="form-select form-select-sm w-auto" name="bolim"><option value="">— bo'lim —</option>
-              {% for b in bolimlar %}{% if b.filial_id == t.filial_id %}<option value="{{ b.pk }}">{{ b.toliq_nomi }}</option>{% endif %}{% endfor %}
-            </select>
-            <select class="form-select form-select-sm w-auto" name="holat"><option value="">— holat —</option>
-              {% for kalit, nomi in holatlar %}<option value="{{ kalit }}">{{ nomi }}</option>{% endfor %}
-            </select>
-            <button type="submit" class="btn btn-sm btn-primary">Bajarish</button>
-          </form>
-        </td>
+        <tr class="amal-qatori"><td colspan="5" class="p-0 border-0">
+          <div class="collapse" id="kochir_{{ t.pk }}">
+            <form class="amal-panel" hx-post="{% url 'vositalar:taqsimot_amal' av.pk %}" hx-target="#taqsimot" hx-swap="outerHTML">
+              <input type="hidden" name="qator" value="{{ t.pk }}"><input type="hidden" name="amal" value="kochir">
+              <label>Soni <input class="form-control form-control-sm" type="number" name="soni" value="{{ t.soni|floatformat:"-3u" }}" min="0.001" max="{{ t.soni|floatformat:"-3u" }}" step="any"></label>
+              <label>Qaysi bo'limga
+                <select class="form-select form-select-sm" name="bolim">{% if t.bolim %}<option value="">Bo'limsiz (bo'limdan chiqarish)</option>{% endif %}
+                  {% for b in bolimlar %}{% if b.filial_id == t.filial_id and b.pk != t.bolim_id %}<option value="{{ b.pk }}">{{ b.toliq_nomi }}</option>{% endif %}{% endfor %}
+                </select>
+              </label>
+              <button type="submit" class="btn btn-sm btn-primary">Ko'chirish</button>
+            </form>
+          </div>
+          <div class="collapse" id="holat_{{ t.pk }}">
+            <form class="amal-panel" hx-post="{% url 'vositalar:taqsimot_amal' av.pk %}" hx-target="#taqsimot" hx-swap="outerHTML">
+              <input type="hidden" name="qator" value="{{ t.pk }}"><input type="hidden" name="amal" value="holat">
+              <label>Soni <input class="form-control form-control-sm" type="number" name="soni" value="{{ t.soni|floatformat:"-3u" }}" min="0.001" max="{{ t.soni|floatformat:"-3u" }}" step="any"></label>
+              <label>Yangi holat
+                <select class="form-select form-select-sm" name="holat" required><option value="">— tanlang —</option>
+                  {% for kalit, nomi in holatlar %}{% if kalit != t.holat %}<option value="{{ kalit }}">{{ nomi }}</option>{% endif %}{% endfor %}
+                </select>
+              </label>
+              <button type="submit" class="btn btn-sm btn-primary">Holatni o'zgartirish</button>
+            </form>
+          </div>
+          {% if g.farq < 0 %}
+          <div class="collapse" id="moslash_{{ t.pk }}">
+            <form class="amal-panel" hx-post="{% url 'vositalar:taqsimot_amal' av.pk %}" hx-target="#taqsimot" hx-swap="outerHTML">
+              <input type="hidden" name="qator" value="{{ t.pk }}"><input type="hidden" name="amal" value="kamaytir">
+              <span class="small">Taqsimot 1C qoldig'idan ortiq. Shu qatordan ayirish:</span>
+              <label>Soni <input class="form-control form-control-sm" type="number" name="soni" value="{{ t.soni|floatformat:"-3u" }}" min="0.001" max="{{ t.soni|floatformat:"-3u" }}" step="any"></label>
+              <button type="submit" class="btn btn-sm btn-danger">1C bilan moslash</button>
+            </form>
+          </div>
+          {% endif %}
+        </td></tr>
         {% endif %}
-      </tr>
-    {% empty %}
-      <tr><td colspan="5">Taqsimot qatori yo'q.</td></tr>
-    {% endfor %}
-    </tbody>
-    <tfoot>
-      <tr>
-        <th colspan="3">Jami (1C qoldig'i: {{ g.qoldiq|son }})</th>
-        <th class="son">{{ g.jami|son }}</th>
-        <td>
-          {% if g.farq == 0 %}<span class="badge bg-success" title="Taqsimot 1C bilan mos">✔ mos</span>
-          {% else %}<span class="badge bg-danger" title="Taqsimot 1C bilan mos emas">✖ farq {{ g.farq|son }}</span>{% endif %}
-        </td>
-      </tr>
-    </tfoot>
-  </table></div>
-  {% empty %}
-  <p class="text-body-secondary mb-0">Ko'rsatiladigan taqsimot yo'q.</p>
-  {% endfor %}
+      {% empty %}
+        <tr><td colspan="5" class="text-body-secondary">Taqsimot qatori yo'q.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
   </div>
+  {% empty %}
+  <div class="card-body text-body-secondary">Ko'rsatiladigan taqsimot yo'q.</div>
+  {% endfor %}
 </section>

@@ -25,7 +25,7 @@
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
   <thead>
-    <tr><th>Sana</th><th>1C hujjati</th><th>AV</th><th>Filial</th><th class="son">Soni</th><th class="son">Summa</th><th>Taxmin / tur</th><th>Holat</th><th></th></tr>
+    <tr><th>Sana</th><th>1C hujjati</th><th>AV</th><th>Filial</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Summa</th>{% endif %}<th>Taxmin / tur</th><th>Holat</th><th></th></tr>
   </thead>
   <tbody>
   {% for c in sahifa %}
@@ -35,7 +35,7 @@
       <td>{% if c.av_id in korinadigan_av %}<a href="{% url 'vositalar:kartochka' c.av_id %}">{{ c.av.nomi }}</a>{% else %}{{ c.av.nomi }}{% endif %}</td>
       <td>{{ c.filial.nomi }}</td>
       <td class="son">{{ c.soni|son }}</td>
-      <td class="son">{{ c.summa|pul }}</td>
+      {% if pul_huquqi %}<td class="son">{{ c.summa|pul }}</td>{% endif %}
       <td>{% if c.tur %}{{ c.get_tur_display }}{% else %}{{ c.get_taxmin_tur_display }} <span class="text-body-secondary">(taxmin)</span>{% endif %}</td>
       <td>{% if c.holat == "kutilmoqda" %}<span class="badge bg-warning text-dark">{{ c.get_holat_display }}</span>{% elif c.holat == "tasdiqlangan" %}<span class="badge bg-success">{{ c.get_holat_display }}</span>{% else %}<span class="badge bg-secondary">{{ c.get_holat_display }}</span>{% endif %}</td>
       <td class="text-end">{% if taqsim_huquqi and c.holat == "kutilmoqda" %}<a class="btn btn-sm btn-primary" href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Tasdiqlash</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Ko'rish</a>{% endif %}</td>

@@ -2,7 +2,7 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from hisoblar.huquqlar import amal_kerak
+from hisoblar.huquqlar import amal_kerak, huquqi_bor
 from hisobotlar import servis
 from hisobotlar.excel import jadval_xlsx
 from hisoblar.parametrlar import son
@@ -51,6 +51,8 @@ def kesim(request):
         sarlavhalar = [GURUHLAR[guruh], "Soni", "Boshlang'ich qiymat", "Qoldiq qiymat"]
         satrlar = [(q["nomi"], q["soni"], q["boshlangich"], q["qoldiq"]) for q in qatorlar]
         satrlar.append(("Jami", jami["soni"], jami["boshlangich"], jami["qoldiq"]))
+        if not huquqi_bor(request.user, "pul_korish"):
+            sarlavhalar, satrlar = sarlavhalar[:2], [s[:2] for s in satrlar]
         return _xlsx(f"kesim_{guruh}", sarlavhalar, satrlar)
     kontekst = {"guruh": guruh, "guruhlar": GURUHLAR, "ustun": GURUHLAR[guruh], "qatorlar": qatorlar, "jami": jami}
     return render(request, "hisobotlar/kesim.html", kontekst)
@@ -68,11 +70,13 @@ def mol_qaydnoma(request):
             raise Http404
     qatorlar = servis.mol_qaydnoma(request.user, xodim)
     if _xlsx_so_ralgan(request):
+        ustunlar = 7 if huquqi_bor(request.user, "pul_korish") else 6  # HR — qiymatsiz
         qatorlar_xlsx = (
-            (q["xodim"].ism, q["av"].nomi, q["inv"], q["bolim"], q["holat"], q["soni"], q["qiymat"]) for q in qatorlar
+            (q["xodim"].ism, q["av"].nomi, q["inv"], q["bolim"], q["holat"], q["soni"], q["qiymat"])[:ustunlar]
+            for q in qatorlar
         )
         return _xlsx(
-            "mol_qaydnoma", ["МОЛ", "AV", "Inv. raqam", "Bo'lim", "Holat", "Soni", "Qiymat"], qatorlar_xlsx
+            "mol_qaydnoma", ["МОЛ", "AV", "Inv. raqam", "Bo'lim", "Holat", "Soni", "Qiymat"][:ustunlar], qatorlar_xlsx
         )
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
     return render(request, "hisobotlar/mol_qaydnoma.html", {"qatorlar": qatorlar, "xodim": xodim, "jami": jami})
@@ -82,10 +86,12 @@ def mol_qaydnoma(request):
 def muddat(request):
     tugagan, olti_oy = servis.muddat(request.user, timezone.localdate())
     if _xlsx_so_ralgan(request):
+        ustunlar = 7 if huquqi_bor(request.user, "pul_korish") else 6  # HR — summasiz
         qatorlar = (
-            (holat, *_av_qatori(av)[:3], av.tugash, *_av_qatori(av)[3:])
+            (holat, *_av_qatori(av)[:3], av.tugash, *_av_qatori(av)[3:])[:ustunlar]
             for holat, royxat in (("Tugagan", tugagan), ("6 oyda tugaydi", olti_oy))
             for av in royxat
         )
-        return _xlsx("xizmat_muddati", ["Holat", "Inv. raqam", "Nomi", "Filial", "Tugash sanasi", "Soni", "Summa"], qatorlar)
+        sarlavhalar = ["Holat", "Inv. raqam", "Nomi", "Filial", "Tugash sanasi", "Soni", "Summa"][:ustunlar]
+        return _xlsx("xizmat_muddati", sarlavhalar, qatorlar)
     return render(request, "hisobotlar/muddat.html", {"tugagan": tugagan, "olti_oy": olti_oy})

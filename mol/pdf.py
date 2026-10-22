@@ -10,7 +10,8 @@ from .sorovlar import akt_narxlari
 TIYIN = Decimal("0.01")
 
 
-def akt_pdf(akt) -> bytes:
+def akt_pdf(akt, pul: bool = True) -> bytes:
+    """`pul=False` — qiymat ustuni va jami chiqmaydi (HR)."""
     from weasyprint import HTML  # kech import: Pango faqat PDF kerak bo'lganda yuklanadi
 
     qatorlar = list(akt.qatorlar.select_related("av", "bolim", "filial").order_by("pk"))
@@ -39,6 +40,7 @@ def akt_pdf(akt) -> bytes:
             "kompaniya": Sozlama.ol().kompaniya_nomi,
             "satrlar": satrlar,
             "jami": f"{jami:.2f}",
+            "pul_huquqi": pul,
         },
     )
     return HTML(string=html).write_pdf()

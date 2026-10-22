@@ -5,15 +5,15 @@
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>МОЛ</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th><th class="son">Qiymat</th></tr></thead>
+  <thead><tr><th>МОЛ</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for q in qatorlar %}
-    <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td>{{ q.holat }}</td><td class="son">{{ q.soni|son }}</td><td class="son">{{ q.qiymat|pul }}</td></tr>
+    <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td>{{ q.holat }}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
   {% empty %}
     <tr><td colspan="7" class="text-body-secondary">Ma'lumot yo'q.</td></tr>
   {% endfor %}
   </tbody>
-  <tfoot class="table-light"><tr><th colspan="6">Jami</th><th class="son">{{ jami|pul }}</th></tr></tfoot>
+  {% if pul_huquqi %}<tfoot class="table-light"><tr><th colspan="6">Jami</th><th class="son">{{ jami|pul }}</th></tr></tfoot>{% endif %}
 </table>
 </div>
 </div>

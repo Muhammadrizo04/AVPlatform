@@ -199,13 +199,13 @@ def test_taqsimot_jadvali_jami_belgisi(client_hisobchi, filial_a):
     mos = av_yarat(filial_a, soni="3")
     qator(mos, filial_a, "3")
     html = client_hisobchi.get(url("kartochka", mos.pk)).content.decode()
-    assert "✔" in html and "✖" not in html
+    assert "1C bilan mos" in html and "Farq" not in html
 
     mos_emas = av_yarat(filial_a, soni="3")
     qator(mos_emas, filial_a, "2")
     javob = client_hisobchi.get(url("kartochka", mos_emas.pk))
     html = javob.content.decode()
-    assert "✖" in html and "✔" not in html
+    assert "Farq" in html and "1C bilan mos" not in html
     assert javob.context["taqsimot_guruhlari"][0]["farq"] == Decimal("1")
 
 
@@ -363,7 +363,7 @@ def test_tarix_tartibi(filial_a, hisobchi):
     assert [q.tur for q in qatorlar] == ["jurnal", "rasm", "holat", "mol_akt", "1c"]
     assert [q.sana for q in qatorlar] == sorted((q.sana for q in qatorlar), reverse=True)
     assert all(q.sana.tzinfo is not None for q in qatorlar)
-    assert qatorlar[0].kim and "izoh" in qatorlar[0].matn
+    assert qatorlar[0].kim and "Izoh" in qatorlar[0].matn
     assert "MA-000001" in qatorlar[3].matn
 
 
@@ -434,14 +434,14 @@ def test_tarix_boshqa_filialni_oshkor_qilmaydi(foydalanuvchi, filial_a, filial_b
     akt_a = MolAkt.objects.create(raqam=8, qabul_qiluvchi=a_xodim, tuzdi=hisobchi)
     MolAktQator.objects.create(akt=akt_a, av=av, filial=filial_a, holat=Holat.ISHLATILMOQDA, soni=Decimal("1"))
 
-    matn = " ".join(q.matn for q in tarix(av, user_a))
+    matn = " ".join(f"{q.matn} {q.summa}" for q in tarix(av, user_a))
     for begona in ("Bbolimi", "Bxodimi", "98765", "MA-000007", "Filial B"):
         assert begona not in matn
     for oziniki in ("Axodimi", "111", "MA-000008"):
         assert oziniki in matn
     html = client_user(user_a).get(url("kartochka", av.pk)).content.decode()
     assert "Bxodimi" not in html and "98765" not in html and "MA-000007" not in html
-    hammasi = " ".join(q.matn for q in tarix(av, foydalanuvchi("admin")))
+    hammasi = " ".join(f"{q.matn} {q.summa}" for q in tarix(av, foydalanuvchi("admin")))
     assert "Bxodimi" in hammasi and "98765" in hammasi and "MA-000007" in hammasi
 
 

@@ -14,8 +14,8 @@
         </div>
       </div>
       <div class="av-raqamlar">
-        <div class="fw-semibold">{{ av.jami_summa|pul }}</div>
-        <div class="small text-body-secondary">{{ av.jami_soni|son }} dona</div>
+        {% if pul_huquqi %}<div class="fw-semibold">{{ av.jami_summa|pul }}</div>
+        <div class="small text-body-secondary">{{ av.jami_soni|son }} dona</div>{% else %}<div class="fw-semibold">{{ av.jami_soni|son }} dona</div>{% endif %}
       </div>
     </div>
     {% empty %}

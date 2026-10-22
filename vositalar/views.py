@@ -84,6 +84,7 @@ def _bolimlar(user):
 
 @amal_kerak("hisobot")
 def royxat_excel(request):
+    pul = huquqi_bor(request.user, "pul_korish")
     qatorlar = (
         (
             av.inv_raqam,
@@ -91,12 +92,12 @@ def royxat_excel(request):
             av.turi.nomi if av.turi else "",
             av.filial_rekvizit.nomi if av.filial_rekvizit else "",
             av.jami_soni,
-            av.jami_summa,
+            *((av.jami_summa,) if pul else ()),
         )
         for av in _royxat_qs(request)
     )
     javob = HttpResponse(
-        jadval_xlsx(SARLAVHALAR, qatorlar),
+        jadval_xlsx(SARLAVHALAR if pul else SARLAVHALAR[:-1], qatorlar),
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
     javob["Content-Disposition"] = 'attachment; filename="asosiy_vositalar.xlsx"'
@@ -217,6 +218,23 @@ def _taqsimot_kontekst(user, av, **qoshimcha) -> dict:
     }
     kontekst.update(qoshimcha)
     return kontekst
+
+
+def _joylashuv(guruhlar) -> dict:
+    """Kartochka sarlavhasi uchun qisqa xulosa: holatlar (nomi -> soni), МОЛ'lar, bo'limlar, МОЛ'siz dona."""
+    holatlar, mollar, bolimlar, molsiz = {}, [], [], NOL
+    nomlar = dict(Holat.choices)
+    for g in guruhlar:
+        for t in g["qatorlar"]:
+            nom = nomlar.get(t.holat, t.holat)
+            holatlar[nom] = holatlar.get(nom, NOL) + t.soni
+            if t.mol and t.mol not in mollar:
+                mollar.append(t.mol)
+            if t.mol is None:
+                molsiz += t.soni
+            if t.bolim and t.bolim not in bolimlar:
+                bolimlar.append(t.bolim)
+    return {"holatlar": holatlar, "mollar": mollar, "bolimlar": bolimlar, "molsiz": molsiz}
 
 
 def _rasmlar_kontekst(user, av, **qoshimcha) -> dict:
@@ -347,6 +365,8 @@ def kartochka(request, pk):
         **_taqsimot_kontekst(request.user, av),
         **_rasmlar_kontekst(request.user, av),
     }
+    kontekst["joylashuv"] = _joylashuv(kontekst["taqsimot_guruhlari"])
+    kontekst["asosiy_rasm"] = next((r for r in kontekst["rasmlar"] if r.asosiy), None)
     return render(request, "vositalar/kartochka.html", kontekst, status=status)
 
 
