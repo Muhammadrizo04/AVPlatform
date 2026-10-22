@@ -124,9 +124,18 @@ def test_tasdiqlash_bad_son_400(foydalanuvchi, tayyor, qiymat):
     assert r.status_code == 400
 
 
-def test_hr_rahbar_tasdiqlay_olmaydi(foydalanuvchi, tayyor):
+def test_rahbar_chiqimlarni_kormaydi(foydalanuvchi, tayyor):
     t, c = tayyor
-    for rol in ("hr", "rahbar"):
+    cl = kirgan(foydalanuvchi, "rahbar")
+    assert cl.get(reverse("chiqimlar:royxat")).status_code == 403
+    assert cl.get(reverse("chiqimlar:tasdiqlash", args=[c.pk])).status_code == 403
+    html = cl.get(reverse("panel:bosh")).content.decode()
+    assert reverse("chiqimlar:royxat") not in html and "1C chiqimlari" not in html
+
+
+def test_hr_tasdiqlay_olmaydi(foydalanuvchi, tayyor):
+    t, c = tayyor
+    for rol in ("hr",):
         cl = kirgan(foydalanuvchi, rol)
         assert cl.get(reverse("chiqimlar:royxat")).status_code == 200
         r = cl.post(reverse("chiqimlar:tasdiqlash", args=[c.pk]), {"tur": "sotildi", "kutilgan_soni": "1"})
@@ -195,7 +204,7 @@ def test_menyu_nishon(client_rol, av, fa):
     html = client_rol("hisobchi").get(reverse("panel:bosh")).content.decode()
     assert "1C chiqimlari" in html
     assert 'badge bg-danger ms-auto">1<' in html
-    for rol in ("hr", "rahbar"):  # tasdiqlay olmaydiganlar: menyu bor, belgi yo'q
+    for rol in ("hr",):  # tasdiqlay olmaydi: menyu bor, belgi yo'q
         html = client_rol(rol).get(reverse("panel:bosh")).content.decode()
         assert "1C chiqimlari" in html and 'badge bg-danger ms-auto' not in html, rol
 

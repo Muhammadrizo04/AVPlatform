@@ -52,7 +52,7 @@ def _royxat_qs(request):
     return qs, holat
 
 
-@amal_kerak("korish")
+@amal_kerak("chiqim_korish")
 def royxat(request):
     qs, holat = _royxat_qs(request)
     sahifa = Paginator(qs, SAHIFA_HAJMI).get_page(request.GET.get("page"))
@@ -101,7 +101,7 @@ def _tasdiqlash_kontekst(request, chiqim, qatorlar, **qosh):
     return kontekst
 
 
-@amal_kerak("korish")
+@amal_kerak("chiqim_korish")
 def tasdiqlash(request, pk):
     chiqim = filial_bilan_chekla(ChiqimHujjat.objects.select_related("av", "filial", "qabul_filial", "kim"), request.user).filter(pk=pk).first()
     if chiqim is None:

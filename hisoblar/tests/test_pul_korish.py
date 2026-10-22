@@ -95,8 +95,11 @@ def test_hr_sahifalarda_pul_yoq(foydalanuvchi, dunyo):
 @pytest.mark.parametrize("rol", ["hisobchi", "rahbar"])
 def test_pul_huquqi_borlar_korishadi(foydalanuvchi, dunyo, rol):
     c = _client(foydalanuvchi, rol)
-    for url in [reverse("vositalar:royxat"), reverse("vositalar:kartochka", args=[dunyo["av"].pk]),
-                reverse("chiqimlar:royxat"), reverse("mol:akt", args=[dunyo["akt"].pk])]:
+    urllar = [reverse("vositalar:royxat"), reverse("vositalar:kartochka", args=[dunyo["av"].pk]),
+              reverse("mol:akt", args=[dunyo["akt"].pk])]
+    if rol == "hisobchi":  # rahbar «1C chiqimlari» sahifasini ko'rmaydi
+        urllar.append(reverse("chiqimlar:royxat"))
+    for url in urllar:
         assert _pul_bor(c.get(url).content.decode()), url
 
 

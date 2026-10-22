@@ -19,6 +19,8 @@ HUQUQLAR: dict[str, set[str]] = {
     "hisobot": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
     # Summa, qiymat, dona narxi, amortizatsiya va 1C izohi: sahifa, Excel, PDF va tarixda. HR — faqat soni.
     "pul_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.RAHBAR},
+    # «1C chiqimlari» sahifasi: rahbarga kerak emas (menyuda ham, bosh sahifa plitkasida ham ko'rinmaydi).
+    "chiqim_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR},
     "sozlama": {Rol.ADMIN},
     "sinxron": {Rol.ADMIN},
 }
