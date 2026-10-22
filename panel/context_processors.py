@@ -12,7 +12,8 @@ def sinxron_holati(request):
     oxirgi = oxirgi_muvaffaqiyatli()
     korish = huquqi_bor(request.user, "korish")
     chiqim_soni = None
-    if korish and not request.headers.get("HX-Request"):
+    # Kutilayotgan chiqimlar belgisi — faqat ularni tasdiqlay oladiganlarga (HR va rahbar uchun vazifa emas).
+    if huquqi_bor(request.user, "taqsimot") and not request.headers.get("HX-Request"):
         chiqim_soni = filial_bilan_chekla(
             ChiqimHujjat.objects.filter(holat=ChiqimHujjat.Holat.KUTILMOQDA), request.user
         ).count()

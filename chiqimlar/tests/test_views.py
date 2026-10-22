@@ -194,6 +194,10 @@ def test_menyu_nishon(client_rol, av, fa):
     chiqim(av, fa)
     html = client_rol("hisobchi").get(reverse("panel:bosh")).content.decode()
     assert "1C chiqimlari" in html
+    assert 'badge bg-danger ms-auto">1<' in html
+    for rol in ("hr", "rahbar"):  # tasdiqlay olmaydiganlar: menyu bor, belgi yo'q
+        html = client_rol(rol).get(reverse("panel:bosh")).content.decode()
+        assert "1C chiqimlari" in html and 'badge bg-danger ms-auto' not in html, rol
 
 
 def test_kutilgan_soni_yoq_400(foydalanuvchi, tayyor):
