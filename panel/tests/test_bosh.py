@@ -133,3 +133,9 @@ def test_qisqa_pul(qiymat, kutilgan):
     from panel.templatetags.raqamlar import qisqa_pul
 
     assert qisqa_pul(qiymat) == kutilgan
+
+
+def test_csrf_skripti_panel_va_mobil_sahifalarda(client_hisobchi, client_rol):
+    """HTMX CSRF tokeni har so'rovda cookie'dan olinadi (eski ochiq sahifa ham ishlaydi)."""
+    assert "panel/csrf.js" in client_hisobchi.get(reverse("panel:bosh")).content.decode()
+    assert "panel/csrf.js" in client_rol("revizor").get(reverse("reviziya:mobil")).content.decode()
