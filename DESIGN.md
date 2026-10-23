@@ -339,7 +339,7 @@ Oq matnli pill fonlari uchun shu tuslarning chuqurroq variantlari: **hp-ishlatil
 
 ## Layout
 
-Qobiq: chapda 240px navi menyu ustuni (≥992px doimiy, kichikda ochiladigan), tepada yopishqoq 56px (3.5rem) oq header (92% shaffof, blur): menyu tugmasi (<992px), sahifa yo'li, sinxron chipi (<576px yashirin), avatar doirasi + ism/rol (<992px faqat avatar) + "Chiqish". Sahifa: `max-width: 1400px`, padding 1.75rem 2rem 3rem; <992px da 1.25rem 1rem 2rem.
+Qobiq: chapda 240px navi menyu ustuni (≥992px doimiy, kichikda ochiladigan), tepada yopishqoq 56px (3.5rem) oq header (92% shaffof, blur): menyu tugmasi (<992px), sahifa yo'li, sinxron chipi (<576px yashirin), avatar doirasi + ism/rol (<992px faqat avatar) + "Chiqish". Sahifa: `max-width: 1840px` (keng monitorda ham o'ng tomonda bo'sh joy qolmasin), padding 1.75rem 2rem 3rem; <992px da 1.25rem 1rem 2rem.
 
 Bosh sahifa: gradient band sahifa paddingini yopib to'liq kenglikda (pastki padding 5.5rem), KPI qatori -4rem bilan bandga chiqib turadi: 4 ustun, <1200px da 2, <576px da 1, oraliq 1rem. Ostida 7/5 to'r (`col-xl-7` / `col-xl-5`, 1.5rem oraliq): chapda filiallar bar grafigi, o'ngda holatlar grafigi va "Bajarilishi kerak"; pastda to'liq kenglikdagi filiallar jadvali.
 

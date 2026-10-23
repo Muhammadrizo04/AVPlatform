@@ -161,7 +161,7 @@ a { text-underline-offset: 3px; }
 .banner.qizil { background: var(--av-qizil); color: #fff; font-weight: 600; }
 
 /* ---------- Sahifa ---------- */
-main.av-sahifa { padding: 1.75rem 2rem 3rem; max-width: 1400px; }
+main.av-sahifa { padding: 1.75rem 2rem 3rem; max-width: 1840px; }
 main h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 700; letter-spacing: -.02em; margin: 0 0 1.25rem; }
 main h2 { font-size: 1rem; font-weight: 700; margin: 2rem 0 .75rem; }
 main h2.mt-0 { margin-top: 0; }

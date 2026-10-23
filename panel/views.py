@@ -13,7 +13,7 @@ from vositalar.models import Holat, Taqsimot
 # Buxgalteriya tozalash vazifalarini ko'rmaydigan (pul huquqi yo'q) rol — HR — uchun faqat o'zi hal qiladigan bayroqlar:
 # МОЛ biriktirish (akt orqali), ketgan xodimdagi AV'lar va bo'limsiz qatorlar.
 XODIM_BAYROQLARI = ("molsiz", "ketgan_xodimda", "bolimsiz")
-GRAFIK_FILIALLAR = 12
+GRAFIK_FILIALLAR = 20
 GRAFIK_TURLAR = 8
 # «Bajarilishi kerak» qatorlari bo'lim rangida
 VAZIFA_RANGI = {

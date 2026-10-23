@@ -38,7 +38,6 @@
       {% if filial_qolgan %}<p class="g-izoh">Yana {{ filial_qolgan }} ta filial — pastdagi jadvalda.</p>{% endif %}
       {% else %}<div class="card-body text-body-secondary">Ma'lumot yo'q.</div>{% endif %}
     </section>
-
     {% if qiymat_filial %}
     <section class="card mt-4" aria-labelledby="g-qiymat">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-baseline gap-2">
@@ -62,7 +61,35 @@
       {% if qiymat_filial_qolgan %}<p class="g-izoh">Yana {{ qiymat_filial_qolgan }} ta filial — «Kesim» hisobotida.</p>{% endif %}
     </section>
     {% endif %}
-
+  </div>
+  <div class="col-xl-5">
+    <section class="card" aria-labelledby="g-holat">
+      <div class="card-header d-flex justify-content-between align-items-baseline"><span id="g-holat">Holatlar</span><small>taqsimot, dona</small></div>
+      {% if holatlar %}
+      <div class="holat-yigma" role="img" aria-label="Holatlar ulushi">
+        {% for h in holatlar %}{% if h.soni %}<span style="flex:{{ h.foiz|unlocalize }} 1 0;background:var(--av-h-{% if h.kalit == 'hisobdan_chiqarishga' %}hisobdan{% else %}{{ h.kalit }}{% endif %})" title="{{ h.nomi }}: {{ h.foiz }}%"></span>{% endif %}{% endfor %}
+      </div>
+      <ul class="grafik grafik-ixcham" aria-label="Holatlar bo'yicha AV soni">
+        {% for h in holatlar %}
+        <li class="{% if not h.soni %}g-nol{% endif %}" title="{{ h.nomi }}: {{ h.soni|son }} dona ({{ h.foiz }}%)"><a href="{% url 'vositalar:royxat' %}?holat={{ h.kalit }}">
+          <span class="g-nomi"><span class="holat-pill h-{{ h.kalit }}">{{ h.nomi }}</span></span>
+          <span class="g-yol"><span class="g-bar" style="width:{{ h.ulush|unlocalize }}%;--g-rang:var(--av-h-{% if h.kalit == 'hisobdan_chiqarishga' %}hisobdan{% else %}{{ h.kalit }}{% endif %})"></span></span>
+          <span class="g-qiymat">{{ h.soni|son }}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+      {% else %}<div class="card-body text-body-secondary">Taqsimot hali yo'q.</div>{% endif %}
+    </section>
+    <section class="card mt-4" aria-labelledby="vazifalar">
+      <div class="card-header" id="vazifalar">Bajarilishi kerak</div>
+      <ul class="vazifalar">
+        {% for b in bayroqlar %}
+        <li><a class="v-{{ b.rang }} {% if b.soni %}vazifa-faol{% else %}vazifa-bosh{% endif %}" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}">
+          <span class="vazifa-belgi" aria-hidden="true"></span><span class="vazifa-nomi">{{ b.nomi }}</span><span class="vazifa-son">{{ b.soni|son }}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+    </section>
     {% if qiymat_tur %}
     <section class="card mt-4" aria-labelledby="g-tur">
       <div class="card-header d-flex flex-wrap justify-content-between align-items-baseline gap-2">
@@ -81,35 +108,9 @@
     </section>
     {% endif %}
   </div>
-  <div class="col-xl-5">
-    <section class="card mb-4" aria-labelledby="g-holat">
-      <div class="card-header d-flex justify-content-between align-items-baseline"><span id="g-holat">Holatlar</span><small>taqsimot, dona</small></div>
-      {% if holatlar %}
-      <div class="holat-yigma" role="img" aria-label="Holatlar ulushi">
-        {% for h in holatlar %}{% if h.soni %}<span style="flex:{{ h.foiz|unlocalize }} 1 0;background:var(--av-h-{% if h.kalit == 'hisobdan_chiqarishga' %}hisobdan{% else %}{{ h.kalit }}{% endif %})" title="{{ h.nomi }}: {{ h.foiz }}%"></span>{% endif %}{% endfor %}
-      </div>
-      <ul class="grafik grafik-ixcham" aria-label="Holatlar bo'yicha AV soni">
-        {% for h in holatlar %}
-        <li class="{% if not h.soni %}g-nol{% endif %}" title="{{ h.nomi }}: {{ h.soni|son }} dona ({{ h.foiz }}%)"><a href="{% url 'vositalar:royxat' %}?holat={{ h.kalit }}">
-          <span class="g-nomi"><span class="holat-pill h-{{ h.kalit }}">{{ h.nomi }}</span></span>
-          <span class="g-yol"><span class="g-bar" style="width:{{ h.ulush|unlocalize }}%;--g-rang:var(--av-h-{% if h.kalit == 'hisobdan_chiqarishga' %}hisobdan{% else %}{{ h.kalit }}{% endif %})"></span></span>
-          <span class="g-qiymat">{{ h.soni|son }}</span>
-        </a></li>
-        {% endfor %}
-      </ul>
-      {% else %}<div class="card-body text-body-secondary">Taqsimot hali yo'q.</div>{% endif %}
-    </section>
-    <section class="card" aria-labelledby="vazifalar">
-      <div class="card-header" id="vazifalar">Bajarilishi kerak</div>
-      <ul class="vazifalar">
-        {% for b in bayroqlar %}
-        <li><a class="v-{{ b.rang }} {% if b.soni %}vazifa-faol{% else %}vazifa-bosh{% endif %}" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}">
-          <span class="vazifa-belgi" aria-hidden="true"></span><span class="vazifa-nomi">{{ b.nomi }}</span><span class="vazifa-son">{{ b.soni|son }}</span>
-        </a></li>
-        {% endfor %}
-      </ul>
-    </section>
-  </div>
+</div>
+
+<div class="row g-4 mt-0">
   <div class="col-12">
     <section class="card" aria-labelledby="kesim">
       <div class="card-header" id="kesim">Filiallar kesimi</div>
