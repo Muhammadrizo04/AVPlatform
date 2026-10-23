@@ -192,6 +192,11 @@ main h3 { font-size: .9375rem; font-weight: 700; margin: 1rem 0 .5rem; }
 .table > thead th.son a.saralash { flex-direction: row-reverse; }
 /* Butun qator bosiladi: qatordagi asosiy havola .stretched-link bilan qatorni qoplaydi. */
 .table tr.qator-havola { position: relative; cursor: pointer; }
+/* Qator ichidagi o'z tugmalari qatorni qoplovchi havoladan ustida */
+.table tr.qator-havola form, .table tr.qator-havola .btn { position: relative; z-index: 2; }
+.bolim-nofaol td { background: var(--av-fon); }
+.bolim-forma { display: flex; flex-wrap: wrap; gap: .5rem; align-items: flex-end; }
+.bolim-forma .bolim-maydon { flex: 1 1 12rem; min-width: 0; }
 .table > tbody > tr:last-child > * { border-bottom: 0; }
 .table tfoot th, .table tfoot td, .table .table-light, .table .table-light > * { background: #fafbfd !important; font-weight: 700; border-top: 1px solid var(--av-chiziq); }
 .son { text-align: right !important; font-variant-numeric: tabular-nums; }

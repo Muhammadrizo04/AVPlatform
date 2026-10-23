@@ -2,7 +2,7 @@
 {% block sarlavha %}Bo'limlar{% endblock %}
 {% block yol %}Bo'limlar{% endblock %}
 {% block kontent %}
-<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+<div class="d-flex flex-wrap align-items-center gap-2 mb-2">
   <h1 class="mb-0 me-auto">Bo'limlar</h1>
   <form method="get" class="d-flex align-items-center gap-2">
     <label class="small text-body-secondary" for="filial_tanlov">Filial</label>
@@ -12,27 +12,61 @@
     <noscript><button type="submit" class="btn btn-sm btn-primary">Ko'rsatish</button></noscript>
   </form>
 </div>
+<p class="text-body-secondary small mb-3" style="max-width: 62rem">
+  <b>Bo'lim</b> — filial ichidagi joy: bino, qavat, xona yoki ombor. Bo'limlar bir-birining ichida bo'lishi mumkin
+  (masalan, «Bosh bino / 2-qavat / Buxgalteriya»). Har bir AV kartochkasida qaysi bo'limda turgani belgilanadi,
+  reviziya ham shu bo'limlar bo'yicha xonama-xona o'tkaziladi. Bo'limni bosing — unda turgan AV'lar ochiladi.
+</p>
 {% if filial %}
 <div class="row g-4">
-  <div class="{% if tanlangan %}col-lg-5{% else %}col-12{% endif %}">
+  <div class="{% if tanlangan %}col-xl-6{% else %}col-12{% endif %}">
     {% include "vositalar/_bolim_daraxt.html" %}
   </div>
   {% if tanlangan %}
-  <div class="col-lg-7">
+  <div class="col-xl-6">
   <section class="card mb-4">
-    <div class="card-header fw-semibold">{{ tanlangan.toliq_nomi }} — AV'lar</div>
+    <div class="card-header d-flex flex-wrap align-items-center gap-2">
+      <span class="fw-semibold me-auto">{{ tanlangan.toliq_nomi }}{% if not tanlangan.faol %} <span class="badge text-bg-light">faol emas</span>{% endif %}</span>
+      <a class="btn btn-sm btn-outline-secondary" href="{% url 'vositalar:royxat' %}?bolim={{ tanlangan.pk }}"><i class="cil-list me-1"></i>AV ro'yxatida ochish</a>
+      <a class="btn btn-sm btn-ghost-secondary" href="{% url 'vositalar:bolimlar' %}?filial={{ filial.pk }}" aria-label="Yopish" title="Yopish"><i class="cil-x"></i></a>
+    </div>
+    {% if tahrir_huquqi %}
+    <div class="card-body border-bottom">
+      <form method="post" action="{% url 'vositalar:bolim_saqla' %}" hx-post="{% url 'vositalar:bolim_saqla' %}" hx-target="#daraxt" hx-swap="outerHTML">
+        <div class="fw-semibold small mb-2">Nomini o'zgartirish yoki boshqa joyga ko'chirish</div>
+        <input type="hidden" name="filial" value="{{ filial.pk }}">
+        <input type="hidden" name="bolim" value="{{ tanlangan.pk }}">
+        <div class="bolim-forma">
+          <div class="bolim-maydon">
+            <label class="form-label small mb-1" for="tahrir_nomi">Nomi</label>
+            <input class="form-control form-control-sm" type="text" id="tahrir_nomi" name="nomi" maxlength="255" value="{{ tanlangan.nomi }}" required>
+          </div>
+          <div class="bolim-maydon">
+            <label class="form-label small mb-1" for="tahrir_ota">Qayerda joylashgan</label>
+            <select class="form-select form-select-sm" id="tahrir_ota" name="ota">
+              <option value="">Filialning o'zida (yuqori daraja)</option>
+              {% for b, chuqurlik, toliq in qatorlar %}{% if b.pk != tanlangan.pk and b.faol or b.pk == tanlangan.ota_id %}<option value="{{ b.pk }}"{% if b.pk == tanlangan.ota_id %} selected{% endif %}>{{ toliq }} ichida</option>{% endif %}{% endfor %}
+            </select>
+          </div>
+          <div><button type="submit" class="btn btn-sm btn-primary text-nowrap"><i class="cil-save me-1"></i>Saqlash</button></div>
+        </div>
+        <div class="form-text">Ichki bo'lim qo'shish uchun chapdagi «Yangi bo'lim qo'shish» formasida «Qayerda joylashgan» — shu bo'lim (u oldindan tanlangan).</div>
+      </form>
+    </div>
+    {% endif %}
+    <div class="card-header bg-transparent fw-semibold small">Shu bo'limda turgan AV'lar{% if avlar %} · {{ avlar|length }} ta{% endif %}</div>
     {% if avlar %}
     <div class="table-responsive">
     <table class="table table-hover align-middle mb-0">
       <thead><tr><th>Inv. raqam</th><th>Nomi</th><th class="son">Soni</th></tr></thead>
       <tbody>
       {% for a in avlar %}
-        <tr><td>{{ a.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' a.pk %}">{{ a.nomi }}</a></td><td class="son">{{ a.bolim_soni|son }}</td></tr>
+        <tr class="qator-havola"><td>{{ a.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' a.pk %}" class="stretched-link">{{ a.nomi }}</a></td><td class="son">{{ a.bolim_soni|son }}</td></tr>
       {% endfor %}
       </tbody>
     </table>
     </div>
-    {% else %}<div class="card-body text-body-secondary"><em>Bu bo'limda AV yo'q.</em></div>{% endif %}
+    {% else %}<div class="card-body text-body-secondary">Bu bo'limda hali AV yo'q. AV'ni bo'limga joylash uchun uning kartochkasida «Joylashuv va javobgar → Ko'chirish»ni bosing.</div>{% endif %}
   </section>
   </div>
   {% endif %}

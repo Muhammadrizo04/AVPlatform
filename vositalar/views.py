@@ -505,9 +505,26 @@ def _ruxsat_filiallar(user):
 
 
 def _bolim_kontekst(request, filial, tanlangan=None, xato=""):
+    """Daraxt bo'lagi: har bo'limda AV soni (dona; ichki bo'limlari bilan) va bo'limga joylanmagan dona."""
+    daraxt = bolimlar_xizmat.daraxt(filial.pk)
+    ozida = dict(
+        Taqsimot.objects.filter(filial=filial, av__in=AV.objects.faol().values("pk"))
+        .order_by().values_list("bolim_id").annotate(s=Sum("soni"))
+    )
+    jami = {b.pk: ozida.get(b.pk, NOL) for b, _, _ in daraxt}
+    ichki = {b.pk: 0 for b, _, _ in daraxt}
+    for b, _, _ in reversed(daraxt):  # bola otadan keyin keladi — teskari yurishda yig'indi otaga o'tadi
+        if b.ota_id in jami:
+            jami[b.ota_id] += jami[b.pk]
+            ichki[b.ota_id] += 1
     kontekst = {
         "filial": filial,
-        "qatorlar": bolimlar_xizmat.daraxt(filial.pk),
+        "qatorlar": daraxt,
+        "satrlar": [
+            {"b": b, "chuqurlik": c, "toliq": t, "soni": jami[b.pk], "ozida": ozida.get(b.pk, NOL), "ichki": ichki[b.pk]}
+            for b, c, t in daraxt
+        ],
+        "bolimsiz": ozida.get(None, NOL),
         "tahrir_huquqi": huquqi_bor(request.user, "bolim_tahrir"),
         "xato": xato,
     }
@@ -573,9 +590,12 @@ def bolim_saqla(request):
         xato, status = str(e), 400
     if bolim is not None:
         bolim.refresh_from_db()
-    return render(
+    javob = render(
         request, "vositalar/_bolim_daraxt.html", _bolim_kontekst(request, filial, bolim, xato=xato), status=status
     )
+    if bolim is not None and not xato and request.headers.get("HX-Request"):
+        javob["HX-Refresh"] = "true"  # tahrir o'ng paneldan: sarlavha va AV ro'yxati ham yangilansin
+    return javob
 
 
 @require_POST

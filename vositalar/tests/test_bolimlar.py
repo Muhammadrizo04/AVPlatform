@@ -213,3 +213,33 @@ def test_aniq_joriy_nofaol_ota_qabul_qilinadi(client_hisobchi, filial_a):
     # yangi ota esa faol bo'lishi shart
     boshqa = Bolim.objects.create(filial=filial_a, nomi="Boshqa", faol=False)
     assert saqla(client_hisobchi, filial_a, "Yangi nom", ota=boshqa, bolim=bola).status_code == 400
+
+
+def test_daraxtda_av_soni_va_bolimsiz_ogohlantirish(client_hisobchi, filial_a):
+    bino = Bolim.objects.create(filial=filial_a, nomi="Bino")
+    xona = Bolim.objects.create(filial=filial_a, ota=bino, nomi="Xona")
+    Bolim.objects.create(filial=filial_a, nomi="Bo'sh xona")
+    qator(av_yarat(filial_a, inv="1", soni="3"), filial_a, "3", bolim=xona)
+    qator(av_yarat(filial_a, inv="2", soni="2"), filial_a, "2", bolim=bino)
+    qator(av_yarat(filial_a, inv="3", soni="4"), filial_a, "4")  # bo'limsiz
+
+    javob = client_hisobchi.get(reverse("vositalar:bolimlar"), {"filial": filial_a.pk})
+    satrlar = {s["b"].nomi: s for s in javob.context["satrlar"]}
+    assert (satrlar["Bino"]["soni"], satrlar["Bino"]["ozida"], satrlar["Bino"]["ichki"]) == (5, 2, 1)
+    assert (satrlar["Xona"]["soni"], satrlar["Bo'sh xona"]["soni"]) == (3, 0)
+    assert javob.context["bolimsiz"] == 4
+    html = javob.content.decode().replace("&#x27;", "'")
+    assert "4 dona</b> AV hali hech bir bo'limga joylanmagan" in html
+    assert f"?filial={filial_a.pk}&amp;bayroq=bolimsiz" in html
+    # ichida AV bor bo'lim — tugma o'chirilgan; bo'sh bo'lim — faolsizlantirish mumkin
+    assert html.count("Faolsizlantirish</button>") == 3 and html.count("disabled title=") == 2
+
+
+def test_tahrir_sahifani_yangilaydi(client_hisobchi, filial_a):
+    xona = Bolim.objects.create(filial=filial_a, nomi="Xona")
+    url = reverse("vositalar:bolim_saqla")
+    javob = client_hisobchi.post(url, {"filial": filial_a.pk, "bolim": xona.pk, "nomi": "Kabinet"}, HTTP_HX_REQUEST="true")
+    assert javob.status_code == 200 and javob["HX-Refresh"] == "true"
+    # yangi bo'lim qo'shishda sahifa yangilanmaydi (faqat daraxt bo'lagi)
+    javob = client_hisobchi.post(url, {"filial": filial_a.pk, "nomi": "Ombor", "ota": ""}, HTTP_HX_REQUEST="true")
+    assert javob.status_code == 200 and "HX-Refresh" not in javob
