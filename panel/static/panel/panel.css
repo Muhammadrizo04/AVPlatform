@@ -184,7 +184,8 @@ main h3 { font-size: .9375rem; font-weight: 700; margin: 1rem 0 .5rem; }
 /* Ko'p tanlovli katakchalar ro'yxati (masalan, foydalanuvchi filiallari) — uzun bo'lsa ichida aylanadi. */
 .katakchalar-royxat { max-height: 14rem; overflow-y: auto; background: #fff; }
 /* Saralanadigan ustun sarlavhasi: havola sarlavha rangida, belgi faqat faol yoki hover'da to'q. */
-.table > thead a.saralash { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .3rem; }
+.table > thead a.saralash { color: inherit; text-decoration: none; display: inline-flex; align-items: center; gap: .3rem; vertical-align: middle; line-height: 1; }
+.table > thead th { vertical-align: middle; }
 .table > thead a.saralash i { font-size: .75rem; opacity: .35; }
 .table > thead a.saralash:hover, .table > thead a.saralash.faol { color: var(--av-siyoh); }
 .table > thead a.saralash:hover i, .table > thead a.saralash.faol i { opacity: 1; color: var(--av-indigo); }
