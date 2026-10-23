@@ -254,6 +254,10 @@ def sahifa(request, pk):
         "belgilangan": belgilangan, "kutilgan": kutilgan,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
         "revizorlar": rv.revizorlar.order_by("first_name", "username"),
+        # mobil skan sahifasiga ruxsat bilan bir xil: ochiq, revizor yoki boshqaruvchi (filial cheklovi — yuqorida)
+        "skanerlay_oladi": rv.holat == Reviziya.Holat.OCHIQ and (
+            boshqarish or rv.revizorlar.filter(pk=request.user.pk).exists()
+        ),
         "revizor_forma": (
             RevizorlarForma(user=request.user, filial=rv.filial, initial={"revizorlar": rv.revizorlar.all()})
             if boshqarish and rv.holat == Reviziya.Holat.OCHIQ else None

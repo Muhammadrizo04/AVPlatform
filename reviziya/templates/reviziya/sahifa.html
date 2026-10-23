@@ -8,6 +8,9 @@
   <h1 class="mb-0 me-auto">Reviziya {{ rv.nomi }} {% include "reviziya/_holati.html" with r=rv %}</h1>
   <a href="{% url 'reviziya:excel' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>
   <a href="{% url 'reviziya:pdf' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>Dalolatnoma</a>
+  {% if skanerlay_oladi %}
+  <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Skanerlash</a>
+  {% endif %}
   {% if boshqarish and rv.holat == "ochiq" %}
   <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o‘zgarmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
   <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo‘shib bo‘lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>

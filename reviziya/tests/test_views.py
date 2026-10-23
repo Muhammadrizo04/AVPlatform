@@ -321,3 +321,18 @@ def test_vedomost_va_royxat_saralash(ikki_topilmadi, revizor, hisobchi, fb):
     royxat = c.get(reverse("reviziya:royxat"), {"tartib": "raqam"}).context["sahifa"]
     assert [r.pk for r in royxat] == [rv.pk, ikkinchi.pk]
     assert [r.pk for r in c.get(reverse("reviziya:royxat")).context["sahifa"]] == [ikkinchi.pk, rv.pk]
+
+
+def test_skanerlash_tugmasi_va_menyu(ikki_topilmadi, hisobchi, foydalanuvchi):
+    rv, *_ = ikki_topilmadi
+    sahifa_url, skan_url = reverse("reviziya:sahifa", args=[rv.pk]), reverse("reviziya:mobil_xonalar", args=[rv.pk])
+
+    html = kirgan(hisobchi).get(sahifa_url).content.decode()
+    assert f'href="{skan_url}"' in html and f'href="{reverse("reviziya:mobil")}"' in html  # tugma va menyu
+
+    html = kirgan(foydalanuvchi("hr")).get(sahifa_url).content.decode()
+    assert skan_url not in html and reverse("reviziya:mobil") not in html
+
+    rv.holat = Reviziya.Holat.YAKUNLANGAN
+    rv.save()
+    assert skan_url not in kirgan(hisobchi).get(sahifa_url).content.decode()
