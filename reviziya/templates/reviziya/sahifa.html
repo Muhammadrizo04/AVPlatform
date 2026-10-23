@@ -1,4 +1,5 @@
 {% extends "panel/base.html" %}
+{% load jadval %}
 {% block sarlavha %}{{ rv.nomi }}{% endblock %}
 {% block yol %}Reviziyalar / {{ rv.nomi }}{% endblock %}
 {% block kontent %}
@@ -29,8 +30,25 @@
         <strong>{{ belgilangan|son }} / {{ kutilgan|son }}</strong> dona
         <div class="progress mt-1" style="height: .375rem" role="progressbar" aria-label="Progress" aria-valuenow="{{ foiz }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: {{ foiz }}%"></div></div>
       </div>
-      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
-      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Komissiya</div>{% for a in rv.komissiya %}{{ a.ism }}{% if a.lavozim %} <span class="text-body-secondary small">({{ a.lavozim }})</span>{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+        {% if revizor_forma %}
+        <button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline chop-yoq" data-coreui-toggle="collapse" data-coreui-target="#revizorlar-forma" aria-expanded="false" aria-controls="revizorlar-forma">O'zgartirish</button>
+        {% endif %}
+      </div>
+      {% if revizor_forma %}
+      <div class="col-12 collapse chop-yoq" id="revizorlar-forma">
+        <form method="post" action="{% url 'reviziya:revizorlar' rv.pk %}" class="border rounded p-3">{% csrf_token %}
+          <div class="small text-body-secondary mb-2">Olib tashlangan revizorning qaydlari saqlanadi, lekin u endi skanerlay olmaydi.</div>
+          <div class="d-flex flex-wrap gap-3 mb-3">
+          {% for v in revizor_forma.revizorlar %}
+            <div class="form-check mb-0">{{ v.tag }}<label class="form-check-label" for="{{ v.id_for_label }}">{{ v.choice_label }}</label></div>
+          {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="cil-save me-1"></i>Saqlash</button>
+        </form>
+      </div>
+      {% endif %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Komissiya</div>{% for a in rv.komissiya %}{{ a.ism }}{% if a.rol == "rais" %} <span class="badge text-bg-light">rais</span>{% endif %}{% if a.lavozim %} <span class="text-body-secondary small">({{ a.lavozim }})</span>{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
       {% if rv.izoh %}<div class="col-12"><div class="small text-body-secondary">Izoh</div>{{ rv.izoh }}</div>{% endif %}
     </div>
   </div>
@@ -56,6 +74,7 @@
     <option value="bolimsiz" {% if bolim == "bolimsiz" %}selected{% endif %}>Bo'limsiz</option>
   </select>
   <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="Inv. raqam, nomi yoki QR">
+  {% tartib_maydoni %}
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
 </form>
 </div></div>

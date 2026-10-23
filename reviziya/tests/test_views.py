@@ -73,7 +73,10 @@ def test_yangi_reviziya_formasi(fa, revizor, hisobchi, foydalanuvchi):
     assert r.status_code == 302 and r["Location"] == reverse("reviziya:sahifa", args=[rv.pk])
     assert (rv.filial, rv.bolim, rv.izoh, rv.ochdi) == (fa, bolim, "Yillik", hisobchi)
     assert list(rv.revizorlar.all()) == [revizor]
-    assert rv.komissiya == [{"ism": "Karimov A.", "lavozim": "Rais"}, {"ism": "Valiyev B.", "lavozim": ""}]
+    assert rv.komissiya == [
+        {"xodim_id": None, "ism": "Karimov A.", "lavozim": "Rais", "rol": "azo"},
+        {"xodim_id": None, "ism": "Valiyev B.", "lavozim": "", "rol": "azo"},
+    ]
 
     assert kirgan(foydalanuvchi("hr")).post(reverse("reviziya:yangi"), forma).status_code == 403
     assert Reviziya.objects.count() == 1
@@ -274,3 +277,47 @@ def test_ortiqcha_izohi_sahifa_excel_pdf(ikki_topilmadi, hisobchi, fb):
 
     pdf_matni = matn(c.get(reverse("reviziya:pdf", args=[rv.pk])))
     assert "Ortiqcha (arxivda)" in pdf_matni and "Ortiqcha (boshqa filial)" in pdf_matni
+
+
+def test_revizorlarni_ozgartirish(ikki_topilmadi, revizor, hisobchi, foydalanuvchi, fb):
+    rv, *_ = ikki_topilmadi
+    yangi = foydalanuvchi("revizor")
+    url = reverse("reviziya:revizorlar", args=[rv.pk])
+    c = kirgan(hisobchi)
+    assert "O'zgartirish" in c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+
+    assert c.post(url, {"revizorlar": [yangi.pk]}).status_code == 302
+    assert list(rv.revizorlar.all()) == [yangi]
+
+    # bo'sh ro'yxat va boshqa filial revizori — o'zgarmaydi
+    c.post(url, {})
+    c.post(url, {"revizorlar": [foydalanuvchi("revizor", [fb]).pk]})
+    assert list(rv.revizorlar.all()) == [yangi]
+
+    assert kirgan(foydalanuvchi("hr")).post(url, {"revizorlar": [revizor.pk]}).status_code == 403
+    rv.holat = Reviziya.Holat.YAKUNLANGAN
+    rv.save()
+    c.post(url, {"revizorlar": [revizor.pk]})
+    assert list(rv.revizorlar.all()) == [yangi]
+    assert "O'zgartirish" not in c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+
+
+def test_vedomost_va_royxat_saralash(ikki_topilmadi, revizor, hisobchi, fb):
+    from reviziya.servis import qayd_qosh
+
+    rv, stol, stul = ikki_topilmadi
+    qayd_qosh(rv, Bolim.objects.get(nomi="A xona"), hisobchi, av=stul, soni=3)  # stul: farq +2 (ortiqcha)
+    c = kirgan(hisobchi)
+    url = reverse("reviziya:sahifa", args=[rv.pk])
+
+    invlar = [s["q"].inv for s in c.get(url, {"tartib": "-inv"}).context["satrlar"]]
+    assert invlar == sorted(invlar, reverse=True) and invlar[-1] == "INV-STOL"
+    farqlar = [s["q"].farq for s in c.get(url, {"tartib": "farq"}).context["satrlar"]]
+    assert farqlar == sorted(farqlar)
+    html = c.get(url, {"tartib": "farq", "guruh": "topilmadi"}).content.decode()
+    assert 'name="tartib" value="farq"' in html  # filtr formasi tartibni saqlaydi
+
+    ikkinchi = reviziya_och(fb, None, [revizor], [], hisobchi)
+    royxat = c.get(reverse("reviziya:royxat"), {"tartib": "raqam"}).context["sahifa"]
+    assert [r.pk for r in royxat] == [rv.pk, ikkinchi.pk]
+    assert [r.pk for r in c.get(reverse("reviziya:royxat")).context["sahifa"]] == [ikkinchi.pk, rv.pk]

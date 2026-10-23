@@ -54,10 +54,25 @@ Revizorlar: {% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }
 
 <h2>Komissiya</h2>
 <table class="imzolar">
-  {% for a in rv.komissiya %}
-  <tr><td>{{ a.ism }}</td><td>{{ a.lavozim }}</td><td>Imzo: ______________________</td></tr>
+  {% for a in rais %}
+  <tr><td>Komissiya raisi</td><td>{{ a.ism }}</td><td>{{ a.lavozim }}</td><td>Imzo: ______________________</td></tr>
   {% empty %}
-  <tr><td>______________________</td><td>______________________</td><td>Imzo: ______________________</td></tr>
+  <tr><td>Komissiya raisi</td><td>______________________</td><td>______________________</td><td>Imzo: ______________________</td></tr>
+  {% endfor %}
+  {% for a in azolar %}
+  <tr><td>{% if forloop.first %}Komissiya a'zolari{% endif %}</td><td>{{ a.ism }}</td><td>{{ a.lavozim }}</td><td>Imzo: ______________________</td></tr>
+  {% empty %}
+  <tr><td>Komissiya a'zolari</td><td>______________________</td><td>______________________</td><td>Imzo: ______________________</td></tr>
+  {% endfor %}
+</table>
+
+<h2>Moddiy javobgar shaxslar</h2>
+<p>Inventarizatsiya bizning ishtirokimizda o'tkazildi, natijalari bilan tanishdik:</p>
+<table class="imzolar">
+  {% for m in mollar %}
+  <tr><td>{{ m.ism }}</td><td>Imzo: ______________________</td></tr>
+  {% empty %}
+  <tr><td>______________________</td><td>Imzo: ______________________</td></tr>
   {% endfor %}
 </table>
 </body>

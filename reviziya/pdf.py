@@ -3,10 +3,11 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.template.loader import render_to_string
 
-from onec.models import AV
+from onec.models import AV, Xodim
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Holat, Sozlama
 
+from .servis import KOMISSIYA_RAIS
 from .solishtir import GURUH_NOMLARI, GURUHLAR, bolim_nomlari, guruh_nomi, jamlar, solishtir
 
 TIYIN = Decimal("0.01")
@@ -19,6 +20,11 @@ def _narxlar(qatorlar) -> dict[int, Decimal]:
     return {
         av.pk: dona_narxi(av.jami_summa, av.jami_soni) for av in AV.objects.qoldiq_bilan().filter(pk__in=idlar)
     }
+
+
+def mollar(reviziya):
+    """Qamrovdagi (reviziya ochilgandagi suratdagi) МОЛlar — dalolatnomada imzo qatori uchun."""
+    return Xodim.objects.filter(pk__in=reviziya.kutilganlar.exclude(mol=None).values("mol")).order_by("ism")
 
 
 def dalolatnoma_pdf(reviziya, pul: bool = False) -> bytes:
@@ -59,6 +65,9 @@ def dalolatnoma_pdf(reviziya, pul: bool = False) -> bytes:
         "farqlar": farqlar,
         "jami_qiymat": jami_qiymat,
         "revizorlar": reviziya.revizorlar.order_by("first_name", "username"),
+        "rais": [a for a in reviziya.komissiya if a.get("rol") == KOMISSIYA_RAIS],
+        "azolar": [a for a in reviziya.komissiya if a.get("rol") != KOMISSIYA_RAIS],
+        "mollar": mollar(reviziya),
         "pul_huquqi": pul,
     })
     return HTML(string=html).write_pdf()

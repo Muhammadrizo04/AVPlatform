@@ -154,3 +154,20 @@ def test_bekor_qilingan_akt_tarixda(filial, bobur, aziz, hr):
 def test_menyu_va_xodimlar_sahifasida_havola(client_rol):
     html = client_rol("hr").get(reverse("mol:xodimlar")).content.decode()
     assert f'href="{reverse(ROYXAT)}"' in html
+
+
+def test_royxat_saralash(filial, bobur, aziz, hr):
+    birinchi = _akt(filial, bobur, aziz, hr, "1")
+    ikkinchi = _akt(filial, aziz, bobur, hr, "2")
+    c = client_user(hr)
+
+    javob = c.get(reverse(ROYXAT), {"tartib": "raqam"})
+    assert [a.pk for a in javob.context["sahifa"]] == [birinchi.pk, ikkinchi.pk]
+    # topshiruvchi: Aziz < Bobur
+    javob = c.get(reverse(ROYXAT), {"tartib": "topshiruvchi"})
+    assert [a.pk for a in javob.context["sahifa"]] == [ikkinchi.pk, birinchi.pk]
+    html = javob.content.decode()
+    assert 'aria-sort="ascending"' in html and "tartib=-topshiruvchi" in html
+    # noma'lum kalit — standart (yangisi tepada)
+    javob = c.get(reverse(ROYXAT), {"tartib": "parol"})
+    assert [a.pk for a in javob.context["sahifa"]] == [ikkinchi.pk, birinchi.pk]

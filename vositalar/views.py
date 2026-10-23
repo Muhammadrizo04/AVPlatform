@@ -20,6 +20,7 @@ from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsa
 from hisoblar.parametrlar import son
 from jurnal.yoz import yoz
 from onec.models import AV, AVQoldiq, AVTuri, Filial, Xodim
+from panel.saralash import Saralash
 
 from . import amallar
 from . import bolimlar as bolimlar_xizmat
@@ -35,9 +36,24 @@ SAHIFA_HAJMI = 50
 SARLAVHALAR = ["Inv. raqam", "Nomi", "Turi", "Filial", "Soni", "Summa"]
 
 
+# AV ro'yxati tartiblari: kalit -> (nomi, maydon); summa faqat `pul_korish` huquqi bilan
+AV_TARTIBLARI = {
+    "nomi": ("Nomi", "nomi"),
+    "inv": ("Inv. raqam", "inv_raqam"),
+    "turi": ("Turi", "turi__nomi"),
+    "soni": ("Soni", "jami_soni"),
+    "summa": ("Summa", "jami_summa"),
+}
+
+
+def _av_saralash(request) -> Saralash:
+    tartiblar = {k: v for k, (_, v) in AV_TARTIBLARI.items() if k != "summa" or huquqi_bor(request.user, "pul_korish")}
+    return Saralash(request, tartiblar, standart="nomi")
+
+
 def _royxat_qs(request):
     qs = av_filtrla(AV.objects.all(), request.GET, request.user)
-    return qs.select_related("turi", "filial_rekvizit").order_by("nomi", "pk")
+    return _av_saralash(request).queryset(qs.select_related("turi", "filial_rekvizit"))
 
 
 def _filtr_soz_parametrlari(request) -> str:
@@ -95,6 +111,8 @@ def royxat(request):
         xodimlar=filial_bilan_chekla(Xodim.objects.filter(ochirilgan=False), request.user, "filial").order_by("ism"),
         bayroqlar=[(kalit, b.nomi) for kalit, b in BAYROQLAR.items()],
         bolimlar=_bolimlar(request.user),
+        saralash=(saralash := _av_saralash(request)),
+        tartiblar=[(k, nomi) for k, (nomi, _) in AV_TARTIBLARI.items() if k in saralash.ustunlar],
     )
     javob = render(request, "vositalar/royxat.html", kontekst)
     patch_vary_headers(javob, ["HX-Request"])

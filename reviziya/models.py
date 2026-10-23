@@ -107,3 +107,13 @@ class ReviziyaQollash(models.Model):
                 name="reviziya_qollash_ok_noyob",
             )
         ]
+
+
+class XodimLavozimi(models.Model):
+    """Komissiyada yozilgan lavozim (1C'da lavozim yo'q) — keyingi reviziyada a'zo tanlanganda o'zi to'ladi."""
+
+    xodim = models.OneToOneField("onec.Xodim", on_delete=models.CASCADE, primary_key=True, related_name="+")
+    lavozim = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.lavozim

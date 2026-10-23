@@ -1,7 +1,8 @@
+{% load jadval %}
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr>{% if tanlash %}<th class="text-center chop-yoq"><span class="visually-hidden">Tanlash</span></th>{% endif %}<th>Guruh</th><th>Inv. raqam</th><th>AV</th><th>Bo'lim</th><th>Holat</th><th class="son">Kutilgan</th><th class="son">Topilgan</th><th class="son">Farq</th><th></th></tr></thead>
+  <thead><tr>{% if tanlash %}<th class="text-center chop-yoq"><span class="visually-hidden">Tanlash</span></th>{% endif %}{% saralash_ustuni "guruh" "Guruh" %}{% saralash_ustuni "inv" "Inv. raqam" %}{% saralash_ustuni "av" "AV" %}{% saralash_ustuni "bolim" "Bo'lim" %}{% saralash_ustuni "holat" "Holat" %}{% saralash_ustuni "kutilgan" "Kutilgan" "son" %}{% saralash_ustuni "topilgan" "Topilgan" "son" %}{% saralash_ustuni "farq" "Farq" "son" %}<th></th></tr></thead>
   <tbody>
   {% for s in satrlar %}{% with q=s.q %}
     <tr>

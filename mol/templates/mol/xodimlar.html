@@ -1,4 +1,5 @@
 {% extends "panel/base.html" %}
+{% load jadval %}
 {% block sarlavha %}МОЛ nazorati{% endblock %}
 {% block yol %}МОЛ nazorati{% endblock %}
 {% block kontent %}
@@ -22,13 +23,14 @@
     <option value="ketgan"{% if params.holat == "ketgan" %} selected{% endif %}>Ketgan</option>
   </select>
   <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_av_bor" name="av_bor" value="1"{% if params.av_bor == "1" %} checked{% endif %}><label class="form-check-label" for="f_av_bor">Faqat AV biriktirilganlar</label></div>
+  {% tartib_maydoni %}
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
 </form>
 </div></div>
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Xodim</th><th>Filial</th><th>Holati</th><th class="son">AV soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
+  <thead><tr>{% saralash_ustuni "ism" "Xodim" %}{% saralash_ustuni "filial" "Filial" %}{% saralash_ustuni "holat" "Holati" %}{% saralash_ustuni "av_soni" "AV soni" "son" %}{% if pul_huquqi %}{% saralash_ustuni "qiymat" "Qiymat" "son" %}{% endif %}</tr></thead>
   <tbody>
   {% for x in xodimlar %}
     <tr>
