@@ -25,7 +25,7 @@ from panel.saralash import Saralash
 from . import amallar
 from . import bolimlar as bolimlar_xizmat
 from .amortizatsiya import dona_narxi, hisobla, samarali_muddat
-from .bayroqlar import BAYROQLAR, bayroq_sonlari
+from .bayroqlar import BAYROQLAR
 from .filtrlar import av_filtrla, korinadigan_av
 from .models import AVKartochka, Bolim, Holat, Rasm, Taqsimot
 from .qoshimcha import qoshimcha_tekshir
@@ -84,34 +84,74 @@ def _joylar(avlar, user) -> None:
         av.joy = joylar[av.pk]
 
 
+# Filtr parametrlari (faol filtrlar soni va «Tozalash» uchun); `tartib`, `korinish`, `page` — filtr emas
+FILTR_KALITLARI = ("q", "filial", "bolim", "turi", "holat", "guruh", "arxiv", "mol", "mol_ism", "bayroq")
+# Ko'rsatkich plitkalari — joriy filtrdagi AV'lar bo'yicha (taqsimot qatorlari yoki AV soni)
+KORSATKICH_BAYROQLARI = ("molsiz", "bolimsiz", "mos_emas")
+
+
+def _korsatkichlar(request, qs) -> dict[str, int]:
+    """Filtrdagi AV'lar ichida: МОЛ'siz va bo'limsiz taqsimot qatorlari, 1C bilan mos emas AV'lar."""
+    bugun, avlar = timezone.localdate(), qs.order_by().values("pk")
+    filial = son(request.GET.get("filial"))
+    sonlar = {}
+    for kalit in KORSATKICH_BAYROQLARI:
+        natija = BAYROQLAR[kalit].so_rov(request.user, bugun)
+        if isinstance(natija, list):
+            idlar = set(avlar.values_list("pk", flat=True))
+            sonlar[kalit] = sum(1 for av in natija if av.pk in idlar)
+            continue
+        if natija.model is Taqsimot:
+            natija = natija.filter(av__in=avlar)
+            if filial is not None:
+                natija = natija.filter(filial_id=filial)
+        else:
+            natija = natija.filter(pk__in=avlar)
+        sonlar[kalit] = natija.count()
+    return sonlar
+
+
+def _korinish(request) -> str:
+    return "kartochka" if request.GET.get("korinish") == "kartochka" else "jadval"
+
+
 @amal_kerak("korish")
 def royxat(request):
-    sahifa = Paginator(_royxat_qs(request), SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    qs = _royxat_qs(request)
+    sahifa = Paginator(qs, SAHIFA_HAJMI).get_page(request.GET.get("page"))
     _joylar(sahifa.object_list, request.user)
     taqsim_huquqi = huquqi_bor(request.user, "taqsimot")
+    plitka_params = request.GET.copy()
+    for kalit in ("page", "bayroq"):
+        plitka_params.pop(kalit, None)
+    korinishsiz = request.GET.copy()
+    for kalit in ("page", "korinish"):
+        korinishsiz.pop(kalit, None)
     kontekst = {
         "sahifa": sahifa,
         "params": request.GET,
         "query": _filtr_soz_parametrlari(request),
+        "plitka_query": plitka_params.urlencode(),
+        "korinishsiz_query": korinishsiz.urlencode(),
+        "faol_filtrlar": sum(1 for k in FILTR_KALITLARI if (request.GET.get(k) or "").strip()),
+        "korinish": _korinish(request),
+        "korsatkichlar": _korsatkichlar(request, qs),
+        "saralash": (saralash := _av_saralash(request)),
         "taqsim_huquqi": taqsim_huquqi,
         "yorliq_huquqi": huquqi_bor(request.user, "yorliq"),
         "holatlar": Holat.choices,
+        "bolimlar": _bolimlar(request.user),
     }
     if request.headers.get("HX-Request"):
-        if taqsim_huquqi:
-            kontekst["bolimlar"] = _bolimlar(request.user)
+        kontekst["oob"] = True  # ko'rsatkichlar plitkalari ham filtrga mos yangilanadi
         javob = render(request, "vositalar/_jadval.html", kontekst)
         patch_vary_headers(javob, ["HX-Request"])
         return javob
-    sonlar = bayroq_sonlari(request.user, timezone.localdate(), ("molsiz", "bolimsiz", "mos_emas"))
     kontekst.update(
-        korsatkichlar=sonlar,
         filiallar=filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
         turlar=AVTuri.objects.order_by("nomi"),
         xodimlar=filial_bilan_chekla(Xodim.objects.filter(ochirilgan=False), request.user, "filial").order_by("ism"),
         bayroqlar=[(kalit, b.nomi) for kalit, b in BAYROQLAR.items()],
-        bolimlar=_bolimlar(request.user),
-        saralash=(saralash := _av_saralash(request)),
         tartiblar=[(k, nomi) for k, (nomi, _) in AV_TARTIBLARI.items() if k in saralash.ustunlar],
     )
     javob = render(request, "vositalar/royxat.html", kontekst)

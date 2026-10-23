@@ -3,12 +3,7 @@
 {% block yol %}AV ro'yxati{% endblock %}
 {% block kontent %}
 <h1>Asosiy vositalar</h1>
-<div class="korsatkichlar">
-  <a class="korsatkich" href="?"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ sahifa.paginator.count|son }}</b>AV yozuvi (filtr bo'yicha)</span></a>
-  <a class="korsatkich{% if korsatkichlar.molsiz %} ogoh{% else %} nol{% endif %}" href="?bayroq=molsiz"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-user-unfollow"></i></span><span><b>{{ korsatkichlar.molsiz|son }}</b>МОЛ'siz qator</span></a>
-  <a class="korsatkich{% if not korsatkichlar.bolimsiz %} nol{% endif %}" href="?bayroq=bolimsiz"><span class="kpi-ikonka r-bg-chiqim" aria-hidden="true"><i class="cil-sitemap"></i></span><span><b>{{ korsatkichlar.bolimsiz|son }}</b>bo'limsiz qator</span></a>
-  <a class="korsatkich{% if korsatkichlar.mos_emas %} ogoh{% else %} nol{% endif %}" href="?bayroq=mos_emas"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.mos_emas|son }}</b>1C bilan mos emas</span></a>
-</div>
+{% include "vositalar/_korsatkichlar.html" %}
 <div class="card mb-3"><div class="card-body">
 
 <form method="get" action="{% url 'vositalar:royxat' %}" hx-get="{% url 'vositalar:royxat' %}" hx-target="#jadval" hx-push-url="true"
@@ -40,9 +35,41 @@
     <option value="-{{ kalit }}" {% if saralash.kalit == kalit and saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↓</option>
     {% endfor %}
   </select>
+  {% if korinish == "kartochka" %}<input type="hidden" name="korinish" value="kartochka">{% endif %}
   <noscript><button type="submit" class="btn btn-sm btn-primary">Qidirish</button></noscript>
 </form>
 </div></div>
 
 <div id="jadval">{% include "vositalar/_jadval.html" %}</div>
+<script>
+  // Tanlangan AV'lar soni pastdagi yopishqoq amallar panelida; panel faqat tanlov bo'lganda ko'rinadi.
+  (function () {
+    function yangila() {
+      var panel = document.getElementById("amal-panel");
+      if (!panel) return;
+      var belgilar = document.querySelectorAll('#ommaviy-forma input[name="av"]');
+      var soni = 0;
+      belgilar.forEach(function (k) { if (k.checked) soni++; });
+      panel.hidden = soni === 0;
+      panel.querySelector("[data-tanlangan-soni]").textContent = soni;
+      var hammasi = document.querySelector("#ommaviy-forma [data-hammasi]");
+      if (hammasi) {
+        hammasi.checked = soni > 0 && soni === belgilar.length;
+        hammasi.indeterminate = soni > 0 && soni < belgilar.length;
+      }
+    }
+    document.addEventListener("change", function (e) {
+      if (e.target.matches("#ommaviy-forma [data-hammasi]")) {
+        document.querySelectorAll('#ommaviy-forma input[name="av"]').forEach(function (k) { k.checked = e.target.checked; });
+      }
+      if (e.target.closest("#ommaviy-forma")) yangila();
+    });
+    document.addEventListener("click", function (e) {
+      if (!e.target.closest("[data-tanlovni-tozala]")) return;
+      document.querySelectorAll('#ommaviy-forma input[type="checkbox"]').forEach(function (k) { k.checked = false; });
+      yangila();
+    });
+    document.addEventListener("htmx:afterSwap", yangila);
+  })();
+</script>
 {% endblock %}

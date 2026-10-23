@@ -363,6 +363,25 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .korsatkich.nol .kpi-ikonka { background: var(--av-chiziq-och); color: var(--av-xira); }
 
 /* ---------- AV ro'yxati ---------- */
+/* AV ro'yxati: ko'rinish almashtirgich, ixcham jadval, yopishqoq amallar paneli */
+.av-royxat-bosh { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+.av-jadval td.tanlash, .av-jadval th.tanlash { width: 2.5rem; position: relative; z-index: 2; }
+.av-jadval .av-nomi { min-width: 16rem; }
+.av-jadval .av-nomi > a { color: var(--av-siyoh); }
+.av-jadval .av-nomi > a:hover { color: var(--av-indigo); }
+.av-jadval .av-turi { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.av-jadval > :not(caption) > * > * { padding-top: .5rem; padding-bottom: .5rem; }
+.av-jadval .holat-pill { font-size: .6875rem; }
+.amal-panel { position: sticky; bottom: 1rem; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem;
+  margin: 0 0 1rem; padding: .65rem 1rem; background: var(--av-siyoh); color: #fff; border-radius: var(--av-radius, 10px);
+  box-shadow: 0 12px 32px rgba(10, 37, 64, .28); }
+.amal-panel[hidden] { display: none; }
+.amal-panel .text-body-secondary { color: rgba(255, 255, 255, .65) !important; }
+.amal-panel .btn-ghost-secondary { color: #fff; }
+.amal-panel .btn-outline-primary { color: #fff; border-color: rgba(255, 255, 255, .5); }
+.amal-panel .btn-outline-primary:hover { background: rgba(255, 255, 255, .12); }
+.amal-ajratgich { width: 1px; align-self: stretch; background: rgba(255, 255, 255, .2); margin: 0 .25rem; }
+.belgi-yumshoq { background: var(--av-chiziq-och); color: var(--av-xira); }
 .av-qator { display: flex; gap: .875rem; align-items: flex-start; }
 .av-qator .av-asosiy { flex: 1 1 auto; min-width: 0; }
 .av-qator .av-asosiy > a { color: var(--av-siyoh); font-weight: 600; }

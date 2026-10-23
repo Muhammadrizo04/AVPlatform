@@ -52,7 +52,10 @@ def test_royxatda_kartochkaga_havola(client_hisobchi, client_rol, filial_a, htmx
     sarlavha = {"HTTP_HX_REQUEST": "true"} if htmx else {}
     url = reverse("vositalar:kartochka", args=[av.pk])
     for client in (client_hisobchi, client_rol("rahbar")):
-        html = client.get(reverse(ROYXAT), **sarlavha).content.decode()
+        html = client.get(reverse(ROYXAT), **sarlavha).content.decode()  # standart — ixcham jadval
+        assert f'<a href="{url}" class="fw-semibold text-decoration-none stretched-link">{av.nomi}</a>' in html
+        assert f'<a href="{url}" class="text-body-secondary">ABC-1</a>' in html
+        html = client.get(reverse(ROYXAT), {"korinish": "kartochka"}, **sarlavha).content.decode()
         assert f'<a href="{url}" class="fw-semibold text-decoration-none">{av.nomi}</a>' in html
         assert f'<a href="{url}" class="text-body-secondary">Inv. ABC-1</a>' in html
 
@@ -101,7 +104,8 @@ def test_royxat_htmx_faqat_jadval(client_hisobchi, filial_a):
     toliq = client_hisobchi.get(reverse(ROYXAT)).content.decode()
     qism = client_hisobchi.get(reverse(ROYXAT), HTTP_HX_REQUEST="true").content.decode()
     assert "<html" in toliq
-    assert "<html" not in qism and "list-group" in qism
+    assert "<html" not in qism and "av-jadval" in qism
+    assert 'id="av-korsatkichlar" hx-swap-oob="true"' in qism  # plitkalar filtr bilan yangilanadi
 
 
 def test_royxat_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
@@ -247,3 +251,28 @@ def test_royxat_n_plus_1_yoq(client_hisobchi, filial_a, django_assert_max_num_qu
         av_yarat(filial_a)
     with django_assert_max_num_queries(36):
         client_hisobchi.get(reverse(ROYXAT))
+
+
+def test_korsatkichlar_filtrga_mos(client_hisobchi, filial_a, filial_b):
+    qator(av_yarat(filial_a, inv="A1"), filial_a)  # МОЛ'siz va bo'limsiz
+    qator(av_yarat(filial_b, inv="B1"), filial_b)
+    qator(av_yarat(filial_b, inv="B2"), filial_b)
+
+    hammasi = client_hisobchi.get(reverse(ROYXAT)).context["korsatkichlar"]
+    assert (hammasi["molsiz"], hammasi["bolimsiz"]) == (3, 3)
+    javob = client_hisobchi.get(reverse(ROYXAT), {"filial": filial_a.pk, "tartib": "-soni"})
+    assert (javob.context["korsatkichlar"]["molsiz"], javob.context["korsatkichlar"]["bolimsiz"]) == (1, 1)
+    html = javob.content.decode()
+    # plitka joriy filtrni saqlab bayroq qo'shadi; tozalash tugmasi faol filtrlar soni bilan
+    assert f"?filial={filial_a.pk}&amp;tartib=-soni&amp;bayroq=molsiz" in html
+    assert "Filtrlarni tozalash" in html and 'badge text-bg-secondary ms-1">1<' in html
+    assert "Filtrlarni tozalash" not in client_hisobchi.get(reverse(ROYXAT)).content.decode()
+
+
+def test_amallar_paneli_va_hammasini_tanlash(client_hisobchi, client_rol, filial_a):
+    av_yarat(filial_a)
+    html = client_hisobchi.get(reverse(ROYXAT)).content.decode()
+    assert '<div class="amal-panel" id="amal-panel" hidden>' in html and 'type="checkbox" data-hammasi' in html
+    # rahbar — taqsimot va yorliq huquqi yo'q: tanlov va panel chiqmaydi
+    html = client_rol("rahbar").get(reverse(ROYXAT)).content.decode()
+    assert '<div class="amal-panel"' not in html and 'type="checkbox" data-hammasi' not in html
