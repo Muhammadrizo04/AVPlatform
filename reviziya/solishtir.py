@@ -251,3 +251,23 @@ def jamlar(qatorlar) -> dict[str, Decimal]:
     for q in qatorlar:
         natija[q.guruh] += q.topilgan if q.guruh == "topildi" else abs(q.farq)
     return natija
+
+
+def bolim_boyicha(qatorlar, qiymat: str) -> list[VedomostQator]:
+    """Bo'lim kesimi: `qiymat` — bo'lim id (shu bo'limda kutilgan/topilgan yoki unga ko'chadigan qatorlar) yoki
+    `"bolimsiz"`; boshqa qiymat — filtrsiz."""
+    if qiymat == "bolimsiz":
+        return [q for q in qatorlar if q.bolim_id is None]
+    if qiymat.isdigit():
+        b = int(qiymat)
+        return [q for q in qatorlar if b in (q.bolim_id, q.nishon_bolim_id)]
+    return list(qatorlar)
+
+
+def bolim_kesim_nomi(qiymat: str, nomlar: dict[int, str]) -> str:
+    """`bolim_boyicha` qiymatining nomi (sarlavha, fayl nomi uchun); filtrsiz — bo'sh."""
+    if qiymat == "bolimsiz":
+        return BOLIMSIZ
+    if qiymat.isdigit():
+        return nomlar.get(int(qiymat), "")
+    return ""

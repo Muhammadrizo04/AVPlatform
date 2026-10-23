@@ -8,7 +8,7 @@
   <li>
     <a class="m-qator{% if x.qiymat == tanlangan %} tanlangan{% endif %}" href="{% url 'reviziya:mobil_skan' rv.pk %}?bolim={{ x.qiymat }}"{% if x.chuqurlik %} style="margin-left: {% widthratio x.chuqurlik 1 14 %}px"{% endif %}>
       <span class="m-asosiy">
-        <b>{{ x.nomi }}</b>
+        <b>{{ x.nomi }}{% if x.tugadi %} <span class="m-tugadi">✓ tugadi</span>{% endif %}</b>
         {% if x.toliq != x.nomi %}<span class="m-xira">{{ x.toliq }}</span>{% endif %}
         <span class="m-progress" aria-hidden="true"><i style="width: {% widthratio x.belgilangan x.kutilgan 100 %}%; max-width: 100%"></i></span>
       </span>

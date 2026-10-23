@@ -1,5 +1,7 @@
 """Reviziya panel sahifalari (spec §5–§7): ro'yxat, yangi reviziya, vedomost va amallar, Excel, dalolatnoma."""
+import re
 from decimal import Decimal
+from urllib.parse import quote
 
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -24,8 +26,12 @@ from .servis import (
     KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, reviziya_och,
     revizorlarni_ozgartir, yakunla,
 )
-from .solishtir import BOLIMSIZ, GURUH_NOMLARI, GURUHLAR, bolim_nomlari, guruh_nomi, jamlar, solishtir
+from .kesim import xonalar_kesimi
+from .solishtir import (
+    BOLIMSIZ, GURUH_NOMLARI, GURUHLAR, bolim_boyicha, bolim_kesim_nomi, bolim_nomlari, guruh_nomi, jamlar, solishtir,
+)
 
+NOL = Decimal("0")
 SAHIFA_HAJMI = 50
 KOMISSIYA_NATIJALARI = 15
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -62,6 +68,27 @@ ROYXAT_USTUNLARI = {
     "raqam": "raqam", "filial": "filial__nomi", "bolim": "bolim__nomi", "ochilgan": "ochilgan_vaqt",
     "belgilangan": "belgilangan_jami", "kutilgan": "kutilgan_jami", "holat": "holat",
 }
+
+
+def _bolimlar_kesimi(rv, qatorlar) -> list[dict]:
+    """Panel jadvali: kutilgan yoki belgilangan narsasi bor (yoki tugagan) bo'limlar + kamomad/ortiqcha dona va
+    vedomost filtri qiymati (`bolimsiz` yoki id)."""
+    kamomad, ortiqcha = {}, {}
+    for q in qatorlar:
+        if q.guruh in ("kam", "topilmadi"):
+            kamomad[q.bolim_id] = kamomad.get(q.bolim_id, NOL) + abs(q.farq)
+        elif q.guruh == "ortiqcha":
+            ortiqcha[q.bolim_id] = ortiqcha.get(q.bolim_id, NOL) + q.farq
+    natija = []
+    for x in xonalar_kesimi(rv):
+        if not (x["kutilgan"] or x["belgilangan"] or x["tugadi"]):
+            continue
+        b = x["bolim_id"]
+        natija.append({
+            **x, "filtr": "bolimsiz" if b is None else str(b),
+            "kamomad": kamomad.get(b, NOL), "ortiqcha": ortiqcha.get(b, NOL),
+        })
+    return natija
 
 
 def _reviziya_yoki_404(request, pk) -> Reviziya:
@@ -208,13 +235,9 @@ def _filtrla(qatorlar, params):
     else:
         guruh = ""
     bolim = params.get("bolim", "")
-    if bolim == "bolimsiz":
-        qatorlar = [q for q in qatorlar if q.bolim_id is None]
-    elif bolim.isdigit():
-        b = int(bolim)
-        qatorlar = [q for q in qatorlar if b in (q.bolim_id, q.nishon_bolim_id)]
-    else:
+    if bolim != "bolimsiz" and not bolim.isdigit():
         bolim = ""
+    qatorlar = bolim_boyicha(qatorlar, bolim)
     izla = (params.get("q") or "").strip().casefold()
     if izla:
         qatorlar = [q for q in qatorlar if izla in f"{q.av_nomi}\n{q.inv}\n{q.qr_matn}".casefold()]
@@ -253,6 +276,7 @@ def sahifa(request, pk):
         "boshqarish": boshqarish, "tanlash": tanlash, "tanlanadigan_bor": any(s["tanlash"] for s in satrlar),
         "belgilangan": belgilangan, "kutilgan": kutilgan,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
+        "kesim": _bolimlar_kesimi(rv, hammasi),
         "revizorlar": rv.revizorlar.order_by("first_name", "username"),
         # mobil skan sahifasiga ruxsat bilan bir xil: ochiq, revizor yoki boshqaruvchi (filial cheklovi — yuqorida)
         "skanerlay_oladi": rv.holat == Reviziya.Holat.OCHIQ and (
@@ -343,12 +367,22 @@ def qolla_view(request, pk):
     return redirect("reviziya:sahifa", pk=rv.pk)
 
 
+def _fayl_nomi(tur: str, rv, nomlar, bolim: str, oxiri: str) -> str:
+    """Content-Disposition: bo'lim kesimida fayl nomiga bo'lim nomi qo'shiladi (UTF-8, RFC 5987)."""
+    nomi = rv.nomi
+    kesim = bolim_kesim_nomi(bolim, nomlar)
+    if kesim:
+        nomi += "_" + re.sub(r"[^\w-]+", "_", kesim).strip("_")
+    return f"{tur}; filename=\"{rv.nomi}{oxiri}\"; filename*=UTF-8''{quote(nomi + oxiri)}"
+
+
 @amal_kerak("reviziya_korish")
 def excel(request, pk):
     rv = _reviziya_yoki_404(request, pk)
     nomlar = bolim_nomlari(rv.filial_id)
+    bolim = request.GET.get("bolim", "")
     qatorlar = []
-    for q in solishtir(rv):
+    for q in bolim_boyicha(solishtir(rv), bolim):
         s = _satr(q, nomlar)
         qatorlar.append((
             s["guruh_nomi"], q.inv, q.av_nomi or q.qr_matn, q.bolim_nomi, s["holat_nomi"] or None,
@@ -358,13 +392,16 @@ def excel(request, pk):
         "Guruh", "Inv. raqam", "AV", "Bo'lim", "Holat", "Kutilgan", "Topilgan", "Farq", "Nishon bo'lim", "Nishon holat",
     ]
     javob = HttpResponse(jadval_xlsx(sarlavhalar, qatorlar), content_type=XLSX_TURI)
-    javob["Content-Disposition"] = f'attachment; filename="{rv.nomi}_vedomost.xlsx"'
+    javob["Content-Disposition"] = _fayl_nomi("attachment", rv, nomlar, bolim, "_vedomost.xlsx")
     return javob
 
 
 @amal_kerak("reviziya_korish")
 def pdf(request, pk):
     rv = _reviziya_yoki_404(request, pk)
-    javob = HttpResponse(dalolatnoma_pdf(rv, pul=huquqi_bor(request.user, "pul_korish")), content_type="application/pdf")
-    javob["Content-Disposition"] = f'inline; filename="{rv.nomi}.pdf"'
+    bolim = request.GET.get("bolim", "")
+    javob = HttpResponse(
+        dalolatnoma_pdf(rv, pul=huquqi_bor(request.user, "pul_korish"), bolim=bolim), content_type="application/pdf"
+    )
+    javob["Content-Disposition"] = _fayl_nomi("inline", rv, bolim_nomlari(rv.filial_id), bolim, ".pdf")
     return javob

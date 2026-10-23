@@ -17,7 +17,7 @@ from vositalar.models import Holat as TaqsimotHolat
 from vositalar.models import Taqsimot
 from vositalar.rasmlar import rasm_saqla
 
-from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, XodimLavozimi
+from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaXona, XodimLavozimi
 
 NOL = Decimal("0")
 MAKS_SONI = Decimal("1000000000000")  # DecimalField(max_digits=15, decimal_places=3) chegarasi
@@ -258,6 +258,17 @@ def qayd_tuzat(qayd: ReviziyaQayd, soni, kim) -> ReviziyaQayd | None:
         qayd.soni = soni
         qayd.save(update_fields=["soni", "yangilangan"])
         return qayd
+
+
+def xona_tugadi(reviziya: Reviziya, bolim, kim, tugadi: bool = True) -> None:
+    """Ochiq reviziyada bo'limni (None — bo'limsiz) «sanab bo'lindi» deb belgilaydi yoki belgini olib tashlaydi."""
+    with transaction.atomic():
+        reviziya = _ochiq_qulfla(reviziya.pk)
+        bolim_id = None if bolim is None else bolim.pk
+        if tugadi:
+            ReviziyaXona.objects.get_or_create(reviziya=reviziya, bolim_id=bolim_id, defaults={"tugatdi": kim})
+        else:
+            ReviziyaXona.objects.filter(reviziya=reviziya, bolim_id=bolim_id).delete()
 
 
 def revizorlarni_ozgartir(reviziya: Reviziya, revizorlar, kim) -> None:

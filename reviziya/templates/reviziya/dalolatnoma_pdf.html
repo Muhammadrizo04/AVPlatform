@@ -23,6 +23,7 @@
 <h1>Reviziya dalolatnomasi {{ rv.nomi }}</h1>
 <div class="sana">{{ rv.yakunlangan_vaqt|default:rv.ochilgan_vaqt|date:"d.m.Y" }}</div>
 <p>Filial: <b>{{ rv.filial.nomi }}</b>{% if rv.bolim %}, bo'lim: <b>{{ rv.bolim.toliq_nomi }}</b>{% else %} (butun filial){% endif %}<br>
+{% if kesim_nomi %}Bo'lim kesimi: <b>{{ kesim_nomi }}</b><br>{% endif %}
 Ochilgan: {{ rv.ochilgan_vaqt|date:"d.m.Y H:i" }}{% if rv.yakunlangan_vaqt %} · Yakunlangan: {{ rv.yakunlangan_vaqt|date:"d.m.Y H:i" }}{% endif %} · Holat: {{ rv.get_holat_display }}<br>
 Revizorlar: {% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
 {% if rv.izoh %}<p>Izoh: {{ rv.izoh }}</p>{% endif %}

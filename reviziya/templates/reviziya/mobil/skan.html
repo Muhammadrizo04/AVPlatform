@@ -21,6 +21,7 @@
   .m-kart-bosh .m-asosiy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .m-kart-bosh .m-ikon { color: var(--av-ikkilamchi); font-size: 1.4rem; }
   .m-raqamlar { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0; }
+  .m-xona-tugadi { margin-top: 1.5rem; }
   .m-raqamlar span { padding: .3rem .7rem; border-radius: 999px; background: var(--av-chiziq-och); font-weight: 600; font-size: .9rem; }
 </style>
 {% endblock %}
@@ -48,6 +49,18 @@
 
 {% include "reviziya/mobil/_oxirgilar.html" %}
 {% include "reviziya/mobil/_qolganlar.html" %}
+
+<form method="post" action="{% url 'reviziya:mobil_xona_tugadi' rv.pk %}" class="m-xona-tugadi">{% csrf_token %}
+  <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
+  {% if xona_tugagan %}
+  <p class="m-izoh">Bu xona «tugadi» deb belgilangan.</p>
+  <input type="hidden" name="tugadi" value="0">
+  <button class="m-tugma keng" type="submit">Xonani qayta ochish</button>
+  {% else %}
+  <input type="hidden" name="tugadi" value="1">
+  <button class="m-tugma asosiy keng" type="submit">Xona tugadi</button>
+  {% endif %}
+</form>
 {% endblock %}
 {% block skript %}
 <script src="{% static 'panel/htmx.min.js' %}" defer></script>

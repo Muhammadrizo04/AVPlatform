@@ -64,6 +64,40 @@
 </div>
 {% if rv.holat == "ochiq" %}<p class="small text-body-secondary chop-yoq">Reviziya ochiq — vedomost joriy qaydlar bo'yicha (jonli).</p>{% endif %}
 
+{% if kesim|length > 1 %}
+<div class="card mb-3 chop-yoq">
+  <div class="card-header fw-semibold">Bo'limlar kesimi</div>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Bo'lim</th><th class="son">Kutilgan</th><th class="son">Belgilangan</th><th class="son">Kam / topilmadi</th><th class="son">Ortiqcha</th><th>Holati</th><th class="text-end"><span class="visually-hidden">Hujjatlar</span></th></tr></thead>
+    <tbody>
+    {% for x in kesim %}
+      <tr{% if bolim == x.filtr %} class="table-active"{% endif %}>
+        <td{% if x.chuqurlik %} style="padding-inline-start: calc(1.25rem + {{ x.chuqurlik }} * 1rem)"{% endif %}>
+          <a href="?bolim={{ x.filtr }}" class="text-decoration-none fw-semibold">{{ x.nomi }}</a>
+          {% if x.toliq != x.nomi and not x.chuqurlik %}<div class="small text-body-secondary">{{ x.toliq }}</div>{% endif %}
+        </td>
+        <td class="son">{{ x.kutilgan|son }}</td>
+        <td class="son">{{ x.belgilangan|son }}</td>
+        <td class="son{% if x.kamomad %} text-danger fw-semibold{% endif %}">{{ x.kamomad|son }}</td>
+        <td class="son">{{ x.ortiqcha|son }}</td>
+        <td>
+          {% if x.tugadi %}<span class="badge bg-success" title="{{ x.tugadi.tugatdi.get_full_name|default:x.tugadi.tugatdi.get_username }} · {{ x.tugadi.tugagan_vaqt|date:'d.m.Y H:i' }}">Tugadi</span>
+          {% elif x.belgilangan %}<span class="badge bg-warning text-dark">Sanalmoqda</span>
+          {% else %}<span class="badge text-bg-light">Boshlanmagan</span>{% endif %}
+        </td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-ghost-secondary" href="{% url 'reviziya:excel' rv.pk %}?bolim={{ x.filtr }}" title="Bo'lim vedomosti (Excel)" aria-label="{{ x.nomi }} — Excel"><i class="cil-spreadsheet"></i></a>
+          <a class="btn btn-sm btn-ghost-secondary" href="{% url 'reviziya:pdf' rv.pk %}?bolim={{ x.filtr }}" title="Bo'lim dalolatnomasi (PDF)" aria-label="{{ x.nomi }} — dalolatnoma"><i class="cil-print"></i></a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
 <div class="card mb-3 chop-yoq"><div class="card-body">
 <form method="get" class="filtrlar">
   <select class="form-select form-select-sm" name="guruh" aria-label="Guruh">
