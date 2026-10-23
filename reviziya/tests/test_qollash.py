@@ -1,3 +1,4 @@
+import dataclasses
 from decimal import Decimal
 
 import pytest
@@ -261,3 +262,24 @@ def test_topilmadi_holatidagi_qator_ozgarmaydi(filial, och, hisobchi):
     assert natija.natija == "ok"
     assert taqsimot(stol) == [(a.pk, Holat.TOPILMADI, Decimal("1"))]
     assert not TaqsimotHarakat.objects.filter(av=stol).exists()
+
+
+def test_nishon_bolim_ochirilgan(filial, och, qosh, hisobchi, monkeypatch):
+    import reviziya.qollash as qollash_moduli
+
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    stol = av_yarat(filial)
+    qator(stol, filial, "1", bolim=a)
+    rv = och(filial)
+    qosh(rv, b, av=stol)
+    yakunla(rv, hisobchi)
+    [q] = [q for q in solishtir(rv) if q.guruh == "boshqa_joyda"]
+    # Bo'lim PROTECT bilan himoyalangan; o'chirilgan bo'lim holatini mavjud bo'lmagan pk bilan taqlid qilamiz.
+    yolgon = dataclasses.replace(q, nishon_bolim_id=b.pk + 10_000)
+    monkeypatch.setattr(qollash_moduli, "solishtir", lambda _rv: [yolgon])
+
+    [natija] = qolla(rv, [yolgon.kalit], hisobchi)
+
+    assert (natija.natija, natija.xato) == ("xato", "Nishon bo'lim topilmadi.")
+    assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]

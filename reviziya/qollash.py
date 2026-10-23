@@ -35,6 +35,16 @@ def qolla(reviziya: Reviziya, kalitlar: list[str], kim) -> list[ReviziyaQollash]
     with transaction.atomic():
         reviziya = _yakunlangan_qulfla(reviziya.pk)
         qatorlar = {q.kalit: q for q in solishtir(reviziya)}
+        # Kerakli AV'larning barcha taqsimot qatorlari bitta so'rovda, global pk tartibida qulflanadi
+        # (moslash, mol.servis, chiqimlar.servis bilan bir xil) — AV ma'lumotlari bo'yicha navbat bilan
+        # qulflash deadlock'ga olib kelardi. Keyingi har-kalit qulflari allaqachon bizda.
+        av_idlar = {qatorlar[k].av_id for k in kalitlar if k in qatorlar and qatorlar[k].guruh in QOLLANADI}
+        if av_idlar:
+            list(
+                Taqsimot.objects.select_for_update()
+                .filter(filial_id=reviziya.filial_id, av_id__in=av_idlar)
+                .order_by("pk")
+            )
         for kalit in kalitlar:
             natijalar.append(_kalit_qolla(reviziya, kalit, qatorlar.get(kalit), kim))
     return natijalar
@@ -60,7 +70,8 @@ def _kalit_qolla(reviziya, kalit, q, kim) -> ReviziyaQollash:
 
 def _taqsimotga(reviziya, q, soni, kim) -> None:
     """Bitta vedomost qatorini joriy taqsimotga qo'llaydi; mos qatorlar (har xil МОЛ) pk tartibida sarflanadi."""
-    # (AV, filial) ning barcha qatorlari pk tartibida qulflanadi — `vositalar.amallar` bilan bir xil tartib.
+    # Qatorlar `qolla` da global pk tartibida (moslash/mol/chiqimlar bilan bir xil) allaqachon qulflangan;
+    # bu yerdagi qayta qulflash hech narsa kutmaydi.
     qulflangan = Taqsimot.objects.select_for_update().filter(av_id=q.av_id, filial_id=reviziya.filial_id)
     mos = [t for t in qulflangan.order_by("pk") if t.bolim_id == q.bolim_id and t.holat == q.holat]
     mavjud = sum((t.soni for t in mos), NOL)
@@ -69,7 +80,11 @@ def _taqsimotga(reviziya, q, soni, kim) -> None:
         raise ReviziyaXato(f"Taqsimot o'zgargan: {nomi} — kerak {soni:f}, mavjud {mavjud:f}.")
     if q.guruh in ("kam", "topilmadi") and q.holat == Holat.TOPILMADI:
         return  # allaqachon «topilmadi» holatida
-    nishon_bolim = Bolim.objects.get(pk=q.nishon_bolim_id) if q.guruh == "boshqa_joyda" else None
+    nishon_bolim = None
+    if q.guruh == "boshqa_joyda":
+        nishon_bolim = Bolim.objects.filter(pk=q.nishon_bolim_id).first()
+        if nishon_bolim is None:
+            raise ReviziyaXato("Nishon bo'lim topilmadi.")
     izoh = dict(sabab=REVIZIYA, hujjat_izoh=reviziya.nomi)
     qoldi = soni
     for t in mos:
