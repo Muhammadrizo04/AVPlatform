@@ -1,6 +1,7 @@
 import html
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
@@ -63,8 +64,19 @@ def test_revizor_va_notanish_amalda_huquq_yoq(foydalanuvchi):
     assert huquqi_bor(AnonymousUser(), "korish") is False
 
 
-def test_revizor_panelga_kirolmaydi(foydalanuvchi):
+def test_revizor_kiradi_va_mobilga_tushadi(foydalanuvchi):
     u = foydalanuvchi(Rol.REVIZOR)
+    client = Client()
+    javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL}, follow=True)
+    assert client.session["_auth_user_id"] == str(u.pk)
+    assert javob.redirect_chain[-1][0] == reverse("reviziya:mobil") and javob.status_code == 200
+    # panel sahifalari revizor sessiyasida ham yopiq
+    assert client.get(reverse("vositalar:royxat")).status_code == 403
+
+
+def test_huquqsiz_foydalanuvchi_kirolmaydi(db):
+    # Profilsiz foydalanuvchida na `korish`, na `reviziya_otkazish` bor
+    u = get_user_model().objects.create_user(username="profilsiz", password=PAROL)
     client = Client()
     javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL})
     assert javob.status_code == 200
