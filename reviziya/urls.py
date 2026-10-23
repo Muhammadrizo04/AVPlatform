@@ -19,6 +19,7 @@ urlpatterns = [
     path("<int:pk>/pdf/", views.pdf, name="pdf"),
     # revizorning mobil sahifalari (spec §4)
     path("m/", mobil.reviziyalarim, name="mobil"),
+    path("m/yangi/", mobil.yangi, name="mobil_yangi"),
     path("m/<int:pk>/", mobil.xonalar, name="mobil_xonalar"),
     path("m/<int:pk>/skan/", mobil.skan, name="mobil_skan"),
     path("m/<int:pk>/xona-tugadi/", mobil.xona_tugadi_view, name="mobil_xona_tugadi"),

@@ -1,0 +1,26 @@
+{% extends "reviziya/mobil/base.html" %}
+{% block sarlavha %}Yangi reviziya{% endblock %}
+{% block ust %}Yangi reviziya<small>{{ user.get_full_name|default:user.username }}</small>{% endblock %}
+{% block mazmun %}
+<h1>Qayerni reviziya qilasiz?</h1>
+{% if xato %}<div class="m-xato" role="alert">{{ xato }}</div>{% endif %}
+<form method="post" class="m-blok" style="padding: .25rem 1rem 1rem">{% csrf_token %}
+  <label class="m-yorliq" for="joy">Filial yoki bo'lim</label>
+  <select class="m-maydon" id="joy" name="joy" required>
+    <option value="">— tanlang —</option>
+    {% for guruh, variantlar in tanlovlar %}
+    <optgroup label="{{ guruh }}">
+      {% for qiymat, nomi in variantlar %}<option value="{{ qiymat }}"{% if qiymat == tanlangan %} selected{% endif %}>{{ nomi }}</option>{% endfor %}
+    </optgroup>
+    {% endfor %}
+  </select>
+  <p class="m-xira" style="margin:.4rem 0 0">Bo'lim tanlansa — uning ichki bo'limlari ham reviziyaga kiradi.</p>
+
+  <label class="m-yorliq" for="izoh">Izoh <span class="m-xira">(ixtiyoriy)</span></label>
+  <textarea class="m-maydon" id="izoh" name="izoh" rows="2" maxlength="2000"></textarea>
+
+  <p class="m-xira" style="margin:1rem 0">Siz reviziyaning revizori va komissiya raisi bo'lasiz. Sanab bo'lgach, reviziyani hisobchi
+    yakunlaydi va farqlarni qo'llaydi.</p>
+  <button class="m-tugma asosiy keng" type="submit">Reviziyani boshlash</button>
+</form>
+{% endblock %}

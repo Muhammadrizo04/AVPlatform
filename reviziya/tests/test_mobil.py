@@ -298,3 +298,45 @@ def test_usb_skaner_qr_matni_qidiruvda(muhit, revizor):
     assert stol.nomi in html and 'name="av"' in html
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="DS|99|INV-1")))
     assert "Noma'lum" in html or "noma'lum" in html
+
+
+def test_revizor_ozi_reviziya_boshlaydi(fa, filial_yarat, revizor, foydalanuvchi):
+    from reviziya.models import Reviziya
+
+    revizor.first_name, revizor.last_name = "Ali", "Valiyev"
+    revizor.save()
+    kabinet = Bolim.objects.create(filial=fa, nomi="Kabinet")
+    qator(av_yarat(fa, inv="INV-1"), fa, "1", bolim=kabinet)
+    c = kirgan(revizor)
+
+    html = matn(c.get(url("mobil_yangi")))
+    assert f'value="f:{fa.pk}"' in html and f'value="b:{kabinet.pk}"' in html
+    assert "Yangi reviziya boshlash" in matn(c.get(url("mobil")))
+
+    r = c.post(url("mobil_yangi"), {"joy": f"b:{kabinet.pk}", "izoh": "Oylik"})
+    rv = Reviziya.objects.get()
+    assert r.status_code == 302 and r["Location"] == url("mobil_xonalar", rv.pk)
+    assert (rv.filial, rv.bolim, rv.ochdi, rv.izoh) == (fa, kabinet, revizor, "Oylik")
+    assert list(rv.revizorlar.all()) == [revizor]
+    assert rv.komissiya == [{"xodim_id": None, "ism": "Ali Valiyev", "lavozim": "Revizor", "rol": "rais"}]
+    assert rv.kutilganlar.count() == 1
+
+    # qamrovi kesishgan ochiq reviziya — xato, yangi hujjat yo'q
+    r = c.post(url("mobil_yangi"), {"joy": f"f:{fa.pk}"})
+    assert r.status_code == 400 and "kesishgan" in matn(r) and Reviziya.objects.count() == 1
+    # tanlanmagan / noto'g'ri qiymat
+    assert c.post(url("mobil_yangi"), {"joy": "x:1"}).status_code == 400
+
+
+def test_revizor_faqat_oz_filialida_boshlaydi(fa, filial_yarat, foydalanuvchi):
+    from reviziya.models import Reviziya
+
+    fb = filial_yarat("08")
+    cheklangan = foydalanuvchi("revizor", [fa])
+    c = kirgan(cheklangan)
+    html = matn(c.get(url("mobil_yangi")))
+    assert f'value="f:{fa.pk}"' in html and f'value="f:{fb.pk}"' not in html
+    assert c.post(url("mobil_yangi"), {"joy": f"f:{fb.pk}"}).status_code == 400
+    assert not Reviziya.objects.exists()
+    # HR — reviziya o'tkazish huquqi yo'q
+    assert kirgan(foydalanuvchi("hr")).get(url("mobil_yangi")).status_code == 403

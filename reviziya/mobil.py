@@ -17,8 +17,9 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET, require_POST
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
-from onec.models import AV, AVQoldiq
+from onec.models import AV, AVQoldiq, Filial
 from panel.templatetags.raqamlar import son
+from vositalar.bolimlar import daraxt
 from vositalar.models import Bolim
 from vositalar.models import Holat as TaqsimotHolat
 
@@ -26,12 +27,14 @@ from .kesim import BOLIMSIZ_QIYMATI as BOLIMSIZ, xonalar_kesimi
 from .models import Reviziya, ReviziyaQayd, ReviziyaXona
 from .servis import (
     BOSHQA_FILIAL,
+    KOMISSIYA_RAIS,
     ReviziyaXato,
     progress,
     qamrov_bolim_idlari,
     qayd_qosh,
     qayd_tuzat,
     qr_tahlil,
+    reviziya_och,
     standart_holat,
     xona_tugadi,
 )
@@ -214,6 +217,48 @@ def reviziyalarim(request):
         belgilangan, kutilgan = progress(rv)
         qatorlar.append({"rv": rv, "belgilangan": belgilangan, "kutilgan": kutilgan})
     return render(request, "reviziya/mobil/reviziyalarim.html", {"qatorlar": qatorlar})
+
+
+def _joy_tanlovi(user) -> list[tuple[Filial, list[tuple[Bolim, int, str]]]]:
+    """Revizor reviziya ocha oladigan joylar: ruxsat etilgan filiallar va ularning faol bo'limlari (daraxt tartibida)."""
+    filiallar = filial_bilan_chekla(Filial.objects.all(), user, "pk").order_by("nomi")
+    return [(f, [q for q in daraxt(f.pk) if q[0].faol]) for f in filiallar]
+
+
+@_mobil
+def yangi(request):
+    """Revizorning o'zi reviziya boshlaydi: filial yoki bo'lim tanlanadi; revizor va komissiya raisi — o'zi."""
+    joylar = _joy_tanlovi(request.user)
+    xato, tanlangan = "", request.POST.get("joy", "")
+    if request.method == "POST":
+        filial = bolim = None
+        tur, _, qiymat = tanlangan.partition(":")
+        if tur == "f" and qiymat.isdigit():
+            filial = next((f for f, _ in joylar if f.pk == int(qiymat)), None)
+        elif tur == "b" and qiymat.isdigit():
+            for f, bolimlar in joylar:
+                bolim = next((b for b, _, _ in bolimlar if b.pk == int(qiymat)), None)
+                if bolim is not None:
+                    filial = f
+                    break
+        if filial is None:
+            xato = "Reviziya qilinadigan filial yoki bo'limni tanlang."
+        else:
+            u = request.user
+            rais = {"ism": u.get_full_name() or u.get_username(), "lavozim": "Revizor", "rol": KOMISSIYA_RAIS}
+            try:
+                rv = reviziya_och(filial, bolim, [u], [rais], u, izoh=_matn(request.POST.get("izoh"))[:2000])
+            except ReviziyaXato as e:
+                xato = str(e)
+            else:
+                return redirect("reviziya:mobil_xonalar", pk=rv.pk)
+    tanlovlar = [
+        (f.nomi, [(f"f:{f.pk}", f"{f.nomi} — butun filial")] + [(f"b:{b.pk}", toliq) for b, _, toliq in bolimlar])
+        for f, bolimlar in joylar
+    ]
+    return render(request, "reviziya/mobil/yangi.html", {
+        "tanlovlar": tanlovlar, "xato": xato, "tanlangan": tanlangan,
+    }, status=400 if xato else 200)
 
 
 @_mobil
