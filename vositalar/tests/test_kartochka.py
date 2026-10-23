@@ -383,7 +383,7 @@ def test_kartochka_sahifasi_sorovlar_soni_o_smaydi(client_hisobchi, filial_a, hi
         TaqsimotHarakat.objects.create(
             av=av, filial=filial_a, yangi_holat=Holat.NOSOZ, soni=Decimal("1"), kim=hisobchi, sabab="holat"
         )
-    with django_assert_max_num_queries(30):
+    with django_assert_max_num_queries(32):  # +2: reviziya qaydlari (so'rov + filial cheklovi)
         assert client_hisobchi.get(url("kartochka", av.pk)).status_code == 200
 
 
@@ -464,3 +464,36 @@ def test_molsiz_qatorda_mol_biriktirish_havolasi(client_rol, filial_a):
         assert f'href="{asos}?qator={molsiz.pk}"' in html
         assert f"?qator={molli.pk}" not in html
     assert asos not in client_rol("rahbar").get(url("kartochka", av.pk)).content.decode()
+
+
+def test_tarixda_reviziya_qaydi(filial_a, filial_b, foydalanuvchi):
+    from reviziya.models import Reviziya, ReviziyaQayd
+
+    av = av_yarat(filial_a, "RV1")
+    hisobchi = foydalanuvchi("hisobchi")
+    rv = Reviziya.objects.create(raqam=1, filial=filial_a, ochdi=hisobchi)
+    xona = Bolim.objects.create(filial=filial_a, nomi="Xona 5")
+    ReviziyaQayd.objects.create(
+        reviziya=rv, bolim=xona, av=av, soni=Decimal("2"), holat=Holat.ISHLATILMOQDA, usul="qidiruv", kim=hisobchi
+    )
+    qatorlar = [q for q in tarix(av, hisobchi) if q.tur == "reviziya"]
+    assert len(qatorlar) == 1
+    assert "RV-000001" in qatorlar[0].matn and "Xona 5da topildi" in qatorlar[0].matn
+    assert Holat.ISHLATILMOQDA.label in qatorlar[0].matn
+    boshqa = foydalanuvchi("hisobchi", [filial_b])
+    assert not [q for q in tarix(av, boshqa) if q.tur == "reviziya"]
+
+
+def test_tarixda_bekor_reviziya_qaydi_yoq(filial_a, foydalanuvchi):
+    from reviziya.models import Reviziya, ReviziyaQayd
+
+    av = av_yarat(filial_a, "RV2")
+    hisobchi = foydalanuvchi("hisobchi")
+    bekor = Reviziya.objects.create(raqam=1, filial=filial_a, ochdi=hisobchi, holat=Reviziya.Holat.BEKOR)
+    ochiq = Reviziya.objects.create(raqam=2, filial=filial_a, ochdi=hisobchi)
+    for rv in (bekor, ochiq):
+        ReviziyaQayd.objects.create(
+            reviziya=rv, av=av, soni=Decimal("1"), holat=Holat.ISHLATILMOQDA, usul="qidiruv", kim=hisobchi
+        )
+    qatorlar = [q for q in tarix(av, hisobchi) if q.tur == "reviziya"]
+    assert len(qatorlar) == 1 and "RV-000002" in qatorlar[0].matn

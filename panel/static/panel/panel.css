@@ -415,6 +415,7 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .tarix-royxat li.tarix-1c::before, .tarix-royxat li.tarix-qayta_baholash::before { background: var(--av-xira); }
 .tarix-royxat li.tarix-mol_akt::before { background: var(--av-r-mol); }
 .tarix-royxat li.tarix-kochirish::before { background: var(--av-r-vosita); }
+.tarix-royxat li.tarix-reviziya::before { background: var(--av-r-hisobot); }
 .tarix-royxat li.tarix-holat::before { background: var(--av-h-nosoz); }
 .tarix-royxat time { grid-column: 2; grid-row: 1; color: var(--av-xira); white-space: nowrap; }
 .tarix-royxat time span { margin-inline-start: .375rem; }
@@ -472,4 +473,8 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
   body { background: #fff; }
   .card, .kpi, .list-group { box-shadow: none !important; }
   main.av-sahifa { max-width: none !important; padding: 0 !important; }
+  /* Reviziya vedomosti (spec §6): filtr, tugmalar va tanlash ustuni chop etilmaydi */
+  .chop-yoq, .filtrlar, form button { display: none !important; }
+  .table-responsive { overflow: visible !important; }
+  a.korsatkich { box-shadow: none !important; }
 }

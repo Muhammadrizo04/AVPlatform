@@ -390,3 +390,11 @@ def test_kamaytir_kutilayotgan_chiqim_birliklarini_ayirmaydi_manfiy_qoldiq(av, f
         kamaytir(q, SON("1"), user)
     q.refresh_from_db()
     assert q.soni == SON("2")
+
+
+def test_kochir_sabab_va_izoh(av, filial, ombor, ofis, user):
+    qoldiq(av, filial, 5)
+    t = qator(av, filial, 5, bolim=ombor)
+    kochir(t, SON("2"), ofis, user, sabab=Sabab.REVIZIYA, hujjat_izoh="RV-000001")
+    h = TaqsimotHarakat.objects.get()
+    assert h.sabab == "reviziya" and h.hujjat_izoh == "RV-000001"

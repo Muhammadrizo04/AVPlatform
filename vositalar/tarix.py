@@ -12,6 +12,8 @@ from mol.sorovlar import korinadigan_aktlar
 from onec.models import AV, Harakat1C
 from panel.templatetags.raqamlar import son
 
+from reviziya.models import ReviziyaQayd
+
 from .models import AVKartochka, Holat, Rasm, TaqsimotHarakat
 
 
@@ -104,6 +106,14 @@ def tarix(av: AV, user) -> list[TarixQator]:
     )
     for h in harakatlar:
         natija.append(TarixQator(h.sana, "holat" if h.sabab == "holat" else h.sabab, _taqsimot_matni(h), _kim(h.kim)))
+    qaydlar = filial_bilan_chekla(
+        ReviziyaQayd.objects.filter(av=av).exclude(reviziya__holat="bekor"), user, "reviziya__filial"
+    ).select_related("reviziya", "bolim", "kim")  # bekor qilingan reviziya qaydlari tarixga kirmaydi
+    for r in qaydlar:
+        joy = r.bolim.nomi if r.bolim else "Bo'limsiz"
+        natija.append(TarixQator(
+            r.yangilangan, "reviziya", f"{r.reviziya.nomi}: {joy}da topildi, {son(r.soni)} dona ({_holat(r.holat)})", _kim(r.kim),
+        ))
     aktlar = korinadigan_aktlar(user).filter(qatorlar__av=av).distinct().select_related("tuzdi")
     for akt in aktlar:
         kimdan = akt.topshiruvchi.ism if akt.topshiruvchi else "МОЛ'siz"

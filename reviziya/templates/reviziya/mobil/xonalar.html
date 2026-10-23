@@ -1,0 +1,20 @@
+{% extends "reviziya/mobil/base.html" %}
+{% block sarlavha %}{{ rv.nomi }} — xona{% endblock %}
+{% block ust %}{{ rv.nomi }}<small>{{ rv.filial.nomi }} · {{ belgilangan|son }} / {{ kutilgan|son }} dona</small>{% endblock %}
+{% block mazmun %}
+<h1>Xonani tanlang</h1>
+<ul class="m-royxat">
+  {% for x in qatorlar %}
+  <li>
+    <a class="m-qator{% if x.qiymat == tanlangan %} tanlangan{% endif %}" href="{% url 'reviziya:mobil_skan' rv.pk %}?bolim={{ x.qiymat }}"{% if x.chuqurlik %} style="margin-left: {% widthratio x.chuqurlik 1 14 %}px"{% endif %}>
+      <span class="m-asosiy">
+        <b>{{ x.nomi }}</b>
+        {% if x.toliq != x.nomi %}<span class="m-xira">{{ x.toliq }}</span>{% endif %}
+        <span class="m-progress" aria-hidden="true"><i style="width: {% widthratio x.belgilangan x.kutilgan 100 %}%; max-width: 100%"></i></span>
+      </span>
+      <span class="m-son">{{ x.belgilangan|son }} / {{ x.kutilgan|son }}</span>
+    </a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

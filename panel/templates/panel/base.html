@@ -30,6 +30,9 @@
       {% if chiqim_huquqi %}
       <li class="nav-item"><a class="nav-link r-chiqim{% if ns == 'chiqimlar' %} active{% endif %}" href="{% url 'chiqimlar:royxat' %}"><i class="nav-icon cil-swap-horizontal"></i> 1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="badge bg-danger ms-auto">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a></li>
       {% endif %}
+      {% if reviziya_huquqi %}
+      <li class="nav-item"><a class="nav-link r-hisobot{% if ns == 'reviziya' %} active{% endif %}" href="{% url 'reviziya:royxat' %}"><i class="nav-icon cil-task"></i> Reviziyalar</a></li>
+      {% endif %}
       {% if hisobot_huquqi or tozalash_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
       {% if hisobot_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>
