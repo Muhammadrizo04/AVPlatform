@@ -1,5 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ xodim.ism }}{% endblock %}
+{% block yol %}{{ xodim.ism }}{% endblock %}
 {% block kontent %}
 <a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -23,7 +24,7 @@
       <td><a href="{% url 'vositalar:kartochka' t.av_id %}">{{ t.av.nomi }}</a></td>
       <td>{{ t.filial.nomi }}</td>
       <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}—{% endif %}</td>
-      <td>{{ t.holat_nomi }}</td>
+      <td><span class="holat-pill h-{{ t.holat_nomi|holat_sinfi }}">{{ t.holat_nomi }}</span></td>
       <td class="son">{{ t.soni|son }}</td>
       {% if pul_huquqi %}<td class="son">{{ t.qiymat|pul }}</td>{% endif %}
     </tr>

@@ -14,9 +14,9 @@
       <tbody>
       {% for t in g.qatorlar %}
         <tr>
-          <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}<span class="text-body-secondary">Bo'limsiz</span>{% endif %}</td>
-          <td>{% if t.mol %}<a href="{% url 'mol:xodim' t.mol.pk %}">{{ t.mol.ism }}</a>{% elif mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}" class="btn btn-sm btn-outline-primary py-0">МОЛ biriktirish</a>{% else %}<span class="text-body-secondary">—</span>{% endif %}</td>
-          <td>{{ t.get_holat_display }}</td>
+          <td>{% if t.bolim %}<span class="platforma-qiymat">{{ t.bolim.toliq_nomi }}</span>{% else %}<span class="text-body-secondary">Bo'limsiz</span>{% endif %}</td>
+          <td>{% if t.mol %}<a href="{% url 'mol:xodim' t.mol.pk %}">{{ t.mol.ism }}</a>{% else %}<span class="molsiz">МОЛ'siz{% if mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}">biriktirish</a>{% endif %}</span>{% endif %}</td>
+          <td><span class="holat-pill h-{{ t.holat }}">{{ t.get_holat_display }}</span></td>
           <td class="son fw-semibold">{{ t.soni|son }}</td>
           {% if taqsim_huquqi %}
           <td class="text-end text-nowrap">

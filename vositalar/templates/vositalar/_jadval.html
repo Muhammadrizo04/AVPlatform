@@ -9,15 +9,15 @@
       <div class="av-asosiy">
         <a href="{{ kartochka_url }}" class="fw-semibold text-decoration-none">{{ av.nomi }}</a>
         <div class="small text-body-secondary">
-          {% if av.inv_raqam %}<a href="{{ kartochka_url }}" class="text-body-secondary">Inv. {{ av.inv_raqam }}</a>{% else %}<span class="text-warning">Inv. raqamsiz</span>{% endif %}
+          {% if av.inv_raqam %}<a href="{{ kartochka_url }}" class="text-body-secondary">Inv. {{ av.inv_raqam }}</a>{% else %}<span class="xato">Inv. raqamsiz</span>{% endif %}
           {% if av.turi %} · {{ av.turi.nomi }}{% endif %}{% if av.filial_rekvizit %} · {{ av.filial_rekvizit.nomi }}{% endif %}
         </div>
         {% with j=av.joy %}{% if j %}
-        <ul class="av-chiplar av-chiplar-kichik" aria-label="Joylashuv">
-          {% if j.bolimlar %}<li class="chip"><i class="cil-sitemap" aria-hidden="true"></i>{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} +{{ j.bolimlar|length|add:"-1" }}{% endif %}</li>{% endif %}
-          {% if j.mollar %}<li class="chip"><i class="cil-user" aria-hidden="true"></i>{{ j.mollar.0 }}{% if j.mollar|length > 1 %} +{{ j.mollar|length|add:"-1" }}{% endif %}</li>{% endif %}
-          {% if j.molsiz %}<li class="chip chip-ogoh">МОЛ'siz: {{ j.molsiz|son }}</li>{% endif %}
-          {% for h in j.holatlar %}<li class="chip chip-holat">{{ h }}</li>{% endfor %}
+        <ul class="av-belgilar av-belgilar-kichik" aria-label="Joylashuv">
+          {% if j.bolimlar %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} +{{ j.bolimlar|length|add:"-1" }}{% endif %}</li>{% endif %}
+          {% if j.mollar %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i>{{ j.mollar.0 }}{% if j.mollar|length > 1 %} +{{ j.mollar|length|add:"-1" }}{% endif %}</li>{% endif %}
+          {% if j.molsiz %}<li class="belgi belgi-ogoh">МОЛ'siz: {{ j.molsiz|son }}</li>{% endif %}
+          {% for h in j.holatlar %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ h|holat_sinfi }}">{{ h }}</span></li>{% endfor %}
         </ul>
         {% endif %}{% endwith %}
       </div>

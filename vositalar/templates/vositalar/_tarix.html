@@ -6,7 +6,8 @@
     {% if forloop.counter == 9 %}</ol><details class="tarix-qolgani"><summary>Yana {{ tarix|length|add:"-8" }} ta voqeani ko'rsatish</summary><ol class="tarix-royxat">{% endif %}
     <li class="tarix-{{ q.tur }}">
       <time datetime="{{ q.sana|date:'c' }}">{{ q.sana|date:"d.m.Y" }}<span>{{ q.sana|date:"H:i" }}</span></time>
-      <div class="tarix-matn">{{ q.matn }}{% if pul_huquqi and q.summa is not None %} <span class="tarix-summa">{{ q.summa|pul }}</span>{% endif %}</div>
+      <div class="tarix-matn">{{ q.matn }}</div>
+      <div class="tarix-summa">{% if pul_huquqi and q.summa is not None %}{{ q.summa|pul }}{% endif %}</div>
       <div class="tarix-kim">{{ q.kim|default:"—" }}</div>
     </li>
     {% endfor %}

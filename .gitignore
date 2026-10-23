@@ -9,3 +9,10 @@ staticfiles/
 .pytest_cache/
 *.sqlite3
 *.log
+
+# Impeccable ish fayllari (qaror sahifasi, eskizlar, suratlar)
+.impeccable/questions/
+.impeccable/review/
+.impeccable/live/
+.impeccable/mocks/
+.impeccable/edge-profil/

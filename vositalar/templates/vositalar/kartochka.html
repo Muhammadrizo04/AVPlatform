@@ -1,28 +1,27 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ av.nomi }}{% endblock %}
+{% block yol %}<a href="{% url 'vositalar:royxat' %}" class="text-body-secondary text-decoration-none">AV ro'yxati</a>&nbsp;&nbsp;/&nbsp;&nbsp;{{ av.nomi }}{% endblock %}
 {% block kontent %}
-<a href="{% url 'vositalar:royxat' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; AV ro'yxati</a>
 
 {# Sarlavha: nima, qayerda, kimda, qanday holatda — hamma rol uchun bir xil #}
-<header class="av-sarlavha mb-4">
+<header class="av-sarlavha">
   <div class="av-rasm">
     {% if asosiy_rasm %}<img src="{% url 'vositalar:rasm_fayl' asosiy_rasm.pk %}?mini=1" alt="{{ av.nomi }}">{% else %}<i class="cil-storage" aria-hidden="true"></i>{% endif %}
   </div>
   <div class="av-sarlavha-matn">
-    <h1 class="mb-1">{{ av.nomi }}</h1>
+    <h1>{{ av.nomi }}</h1>
     <div class="av-identifikator">
-      {% if av.inv_raqam %}<span class="av-inv">Inv. {{ av.inv_raqam }}</span>{% else %}<span class="badge bg-warning text-dark">Inv. raqamsiz</span>{% endif %}
+      {% if av.inv_raqam %}<span class="av-inv"><small>Inv.</small>{{ av.inv_raqam }}</span>{% else %}<span class="xato fw-bold">Inv. raqamsiz</span>{% endif %}
       {% if av.turi %}<span>{{ av.turi.nomi }}</span>{% endif %}
       <span>{{ av.jami_soni|son }} dona</span>
+      {% for g in taqsimot_guruhlari %}<span>{{ g.filial }}</span>{% endfor %}
     </div>
-    <ul class="av-chiplar" aria-label="Joylashuv va holat">
-      {% for g in taqsimot_guruhlari %}<li class="chip"><i class="cil-location-pin" aria-hidden="true"></i>{{ g.filial }}</li>{% endfor %}
-      {% for b in joylashuv.bolimlar|slice:":3" %}<li class="chip"><i class="cil-sitemap" aria-hidden="true"></i>{{ b.toliq_nomi }}</li>{% endfor %}
-      {% if joylashuv.bolimlar|length > 3 %}<li class="chip">+{{ joylashuv.bolimlar|length|add:"-3" }} bo'lim</li>{% endif %}
-      {% for m in joylashuv.mollar|slice:":3" %}<li class="chip"><i class="cil-user" aria-hidden="true"></i><a href="{% url 'mol:xodim' m.pk %}">{{ m.ism }}</a></li>{% endfor %}
-      {% if joylashuv.mollar|length > 3 %}<li class="chip">+{{ joylashuv.mollar|length|add:"-3" }} МОЛ</li>{% endif %}
-      {% if joylashuv.molsiz %}<li class="chip chip-ogoh"><i class="cil-warning" aria-hidden="true"></i>МОЛ biriktirilmagan: {{ joylashuv.molsiz|son }} dona</li>{% endif %}
-      {% for nomi, soni in joylashuv.holatlar.items %}<li class="chip chip-holat">{{ nomi }}{% if joylashuv.holatlar|length > 1 %} · {{ soni|son }}{% endif %}</li>{% endfor %}
+    <ul class="av-belgilar" aria-label="Joylashuv va holat">
+      {% for b in joylashuv.bolimlar|slice:":3" %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ b.toliq_nomi }}</li>{% endfor %}
+      {% if joylashuv.bolimlar|length > 3 %}<li class="belgi">+{{ joylashuv.bolimlar|length|add:"-3" }} bo'lim</li>{% endif %}
+      {% for m in joylashuv.mollar|slice:":3" %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i><a href="{% url 'mol:xodim' m.pk %}">{{ m.ism }}</a></li>{% endfor %}
+      {% if joylashuv.mollar|length > 3 %}<li class="belgi">+{{ joylashuv.mollar|length|add:"-3" }} МОЛ</li>{% endif %}
+      {% for nomi, soni in joylashuv.holatlar.items %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ nomi|holat_sinfi }}">{{ nomi }}{% if joylashuv.holatlar|length > 1 %} <span class="son-kichik">{{ soni|son }}</span>{% endif %}</span></li>{% endfor %}
     </ul>
   </div>
   {% if yorliq_huquqi %}
@@ -32,7 +31,20 @@
   {% endif %}
 </header>
 
-<div class="row g-4">
+{# Imzo harakati: 1C qoldig'i va platforma taqsimoti yonma-yon; farq bo'lsa qizil #}
+{% if taqsimot_guruhlari %}
+<section class="solishtirish" aria-label="1C bilan solishtirish">
+  <div><div class="yorliq">1C qoldig'i</div><div class="qiymat">{{ joylashuv.qoldiq|son }}</div></div>
+  <div><div class="yorliq">Platforma taqsimoti</div><div class="qiymat platforma">{{ joylashuv.jami|son }}</div></div>
+  <div><div class="yorliq">Farq</div>{% if joylashuv.farq %}<div class="qiymat farq-bor">{{ joylashuv.farq|son }}<em>mos emas</em></div>{% else %}<div class="qiymat">0<em>mos</em></div>{% endif %}</div>
+  <div class="izoh">{% if joylashuv.farq %}Taqsimot 1C qoldig'iga teng emas — joylashuv jadvalida qatorlarni tuzating yoki «Moslash»dan foydalaning.{% else %}1C qoldig'i va bo'limlar bo'yicha taqsimot bir xil. Farq paydo bo'lsa, shu yerda ko'rinadi.{% endif %}</div>
+</section>
+{% endif %}
+{% if joylashuv.molsiz %}
+<div class="harakat-kerak"><b><i class="cil-warning" aria-hidden="true"></i>МОЛ biriktirilmagan: {{ joylashuv.molsiz|son }} dona</b>{% if mol_akt_huquqi %}<a class="btn btn-danger btn-sm" href="{% url 'mol:akt_yangi' %}">МОЛ akti tuzish</a>{% endif %}</div>
+{% endif %}
+
+<div class="row g-4 mt-1">
   <div class="col-xl-8">
     {% include "vositalar/_taqsimot.html" %}
     {% include "vositalar/_tarix.html" %}
@@ -98,7 +110,7 @@
     {% include "vositalar/_rasmlar.html" %}
 
     <details class="card mb-4 rekvizitlar">
-      <summary class="card-header fw-semibold">1C rekvizitlari <span class="text-body-secondary fw-normal small">· faqat o'qish</span></summary>
+      <summary class="card-header fw-semibold">1C rekvizitlari <span class="text-body-secondary fw-normal small">· faqat o'qish</span><i class="cil-chevron-bottom" aria-hidden="true"></i></summary>
       <dl class="malumot mb-0">
         <div><dt>Filial (1C rekvizit)</dt><dd>{{ av.filial_rekvizit.nomi|default:"—" }}</dd></div>
         <div><dt>Tashkilot</dt><dd>{{ av.tashkilot.nomi|default:"—" }}</dd></div>

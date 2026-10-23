@@ -24,7 +24,7 @@ from onec.models import AV, AVQoldiq, AVTuri, Filial, Xodim
 from . import amallar
 from . import bolimlar as bolimlar_xizmat
 from .amortizatsiya import dona_narxi, hisobla, samarali_muddat
-from .bayroqlar import BAYROQLAR
+from .bayroqlar import BAYROQLAR, bayroq_sonlari
 from .filtrlar import av_filtrla, korinadigan_av
 from .models import AVKartochka, Bolim, Holat, Rasm, Taqsimot
 from .qoshimcha import qoshimcha_tekshir
@@ -87,7 +87,9 @@ def royxat(request):
         javob = render(request, "vositalar/_jadval.html", kontekst)
         patch_vary_headers(javob, ["HX-Request"])
         return javob
+    sonlar = bayroq_sonlari(request.user, timezone.localdate(), ("molsiz", "bolimsiz", "mos_emas"))
     kontekst.update(
+        korsatkichlar=sonlar,
         filiallar=filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
         turlar=AVTuri.objects.order_by("nomi"),
         xodimlar=filial_bilan_chekla(Xodim.objects.filter(ochirilgan=False), request.user, "filial").order_by("ism"),
@@ -256,7 +258,13 @@ def _joylashuv(guruhlar) -> dict:
                 molsiz += t.soni
             if t.bolim and t.bolim not in bolimlar:
                 bolimlar.append(t.bolim)
-    return {"holatlar": holatlar, "mollar": mollar, "bolimlar": bolimlar, "molsiz": molsiz}
+    return {
+        "holatlar": holatlar, "mollar": mollar, "bolimlar": bolimlar, "molsiz": molsiz,
+        # Solishtirish qatori: ko'rinadigan filiallar bo'yicha 1C qoldig'i, platforma taqsimoti va farq.
+        "qoldiq": sum((max(g["qoldiq"], NOL) for g in guruhlar), NOL),
+        "jami": sum((g["jami"] for g in guruhlar), NOL),
+        "farq": sum((g["farq"] for g in guruhlar), NOL),
+    }
 
 
 def _rasmlar_kontekst(user, av, **qoshimcha) -> dict:

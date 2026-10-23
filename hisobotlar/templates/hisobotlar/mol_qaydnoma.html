@@ -1,5 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}МОЛ qaydnomasi{% endblock %}
+{% block yol %}МОЛ qaydnomasi{% endblock %}
 {% block kontent %}
 <h1>МОЛ qaydnomasi{% if xodim %}: {{ xodim.ism }}{% endif %}</h1>
 <div class="card mb-3">
@@ -8,7 +9,7 @@
   <thead><tr><th>МОЛ</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for q in qatorlar %}
-    <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td>{{ q.holat }}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
+    <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
   {% empty %}
     <tr><td colspan="7" class="text-body-secondary">Ma'lumot yo'q.</td></tr>
   {% endfor %}

@@ -1,5 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ akt.nomi }}{% endblock %}
+{% block yol %}{{ akt.nomi }}{% endblock %}
 {% block kontent %}
 <a href="{% url 'mol:akt_royxat' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ aktlari</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
@@ -32,7 +33,7 @@
   {% for q in qatorlar %}
     <tr>
       <td>{{ forloop.counter }}</td><td>{{ q.av.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.filial.nomi }}</td>
-      <td>{% if q.bolim %}{{ q.bolim.toliq_nomi }}{% else %}—{% endif %}</td><td>{{ q.holat_nomi }}</td>
+      <td>{% if q.bolim %}{{ q.bolim.toliq_nomi }}{% else %}—{% endif %}</td><td><span class="holat-pill h-{{ q.holat_nomi|holat_sinfi }}">{{ q.holat_nomi }}</span></td>
       <td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}
     </tr>
   {% endfor %}

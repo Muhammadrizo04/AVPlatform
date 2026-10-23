@@ -1,5 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Chiqimni tasdiqlash{% endblock %}
+{% block yol %}Chiqimni tasdiqlash{% endblock %}
 {% block kontent %}
 <a href="{% url 'chiqimlar:royxat' %}" class="btn btn-sm btn-link px-0 mb-1">‹ Ro'yxatga</a>
 <h1>1C chiqimi: {{ chiqim.hujjat_turi }} {{ chiqim.hujjat_raqami }}</h1>
@@ -36,7 +37,7 @@
   <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Mavjud</th></tr></thead>
   <tbody>
   {% for q in qatorlar %}
-    <tr><td>{{ q.bolim.toliq_nomi|default:"—" }}</td><td>{{ q.mol.ism|default:"—" }}</td><td>{{ q.get_holat_display }}</td><td class="son">{{ q.soni|son }}</td></tr>
+    <tr><td>{{ q.bolim.toliq_nomi|default:"—" }}</td><td>{{ q.mol.ism|default:"—" }}</td><td><span class="holat-pill h-{{ q.holat }}">{{ q.get_holat_display }}</span></td><td class="son">{{ q.soni|son }}</td></tr>
   {% endfor %}
   </tbody>
 </table>
@@ -71,7 +72,7 @@
       <tr>
         <td>{{ q.bolim.toliq_nomi|default:"—" }}</td>
         <td>{{ q.mol.ism|default:"—" }}</td>
-        <td>{{ q.get_holat_display }}</td>
+        <td><span class="holat-pill h-{{ q.holat }}">{{ q.get_holat_display }}</span></td>
         <td class="son">{{ q.soni|son }}</td>
         <td class="son"><input class="form-control form-control-sm ms-auto text-end" style="max-width:8rem" type="text" inputmode="decimal" name="soni_{{ q.pk }}" value="{{ q.kiritilgan }}"></td>
       </tr>

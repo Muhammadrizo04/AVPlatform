@@ -1,7 +1,14 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}AV ro'yxati{% endblock %}
+{% block yol %}AV ro'yxati{% endblock %}
 {% block kontent %}
 <h1>Asosiy vositalar</h1>
+<div class="korsatkichlar">
+  <a class="korsatkich" href="?"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ sahifa.paginator.count|son }}</b>AV yozuvi (filtr bo'yicha)</span></a>
+  <a class="korsatkich{% if korsatkichlar.molsiz %} ogoh{% else %} nol{% endif %}" href="?bayroq=molsiz"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-user-unfollow"></i></span><span><b>{{ korsatkichlar.molsiz|son }}</b>МОЛ'siz qator</span></a>
+  <a class="korsatkich{% if not korsatkichlar.bolimsiz %} nol{% endif %}" href="?bayroq=bolimsiz"><span class="kpi-ikonka r-bg-chiqim" aria-hidden="true"><i class="cil-sitemap"></i></span><span><b>{{ korsatkichlar.bolimsiz|son }}</b>bo'limsiz qator</span></a>
+  <a class="korsatkich{% if korsatkichlar.mos_emas %} ogoh{% else %} nol{% endif %}" href="?bayroq=mos_emas"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.mos_emas|son }}</b>1C bilan mos emas</span></a>
+</div>
 <div class="card mb-3"><div class="card-body">
 
 <form method="get" action="{% url 'vositalar:royxat' %}" hx-get="{% url 'vositalar:royxat' %}" hx-target="#jadval" hx-push-url="true"

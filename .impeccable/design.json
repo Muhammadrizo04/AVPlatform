@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-22T18:00:00Z",
+  "title": "Design System: Asosiy vositalar",
+  "extensions": {
+    "colorMeta": {
+      "indigo": {
+        "role": "primary",
+        "displayName": "Stripe indigo",
+        "canonical": "#635bff",
+        "tonalRamp": [
+          "#1e1a5c",
+          "#2f2a8f",
+          "#4338ca",
+          "#5146e0",
+          "#635bff",
+          "#a49fff",
+          "#d4d1ff",
+          "#efeefe"
+        ]
+      },
+      "indigo-to": {
+        "role": "primary",
+        "displayName": "To'q indigo",
+        "canonical": "#5146e0"
+      },
+      "indigo-och": {
+        "role": "primary",
+        "displayName": "Indigo och",
+        "canonical": "#efeefe"
+      },
+      "siyoh": {
+        "role": "neutral",
+        "displayName": "Navi siyoh",
+        "canonical": "#0a2540",
+        "tonalRamp": [
+          "#0a2540",
+          "#1c3a5a",
+          "#3a5372",
+          "#5b6b82",
+          "#7f93ad",
+          "#c9d3e1",
+          "#e3e8ef",
+          "#f6f8fb"
+        ]
+      },
+      "fon": {
+        "role": "neutral",
+        "displayName": "Fon",
+        "canonical": "#f6f8fb",
+        "tonalRamp": [
+          "#0a2540",
+          "#5b6b82",
+          "#8792a2",
+          "#c4ccd8",
+          "#d5dce6",
+          "#e3e8ef",
+          "#eef2f7",
+          "#f6f8fb"
+        ]
+      },
+      "sirt": {
+        "role": "neutral",
+        "displayName": "Sirt",
+        "canonical": "#ffffff"
+      },
+      "ikkilamchi": {
+        "role": "neutral",
+        "displayName": "Ikkilamchi",
+        "canonical": "#5b6b82"
+      },
+      "xira": {
+        "role": "neutral",
+        "displayName": "Xira",
+        "canonical": "#626f84"
+      },
+      "chiziq": {
+        "role": "neutral",
+        "displayName": "Chiziq",
+        "canonical": "#e3e8ef"
+      },
+      "chiziq-och": {
+        "role": "neutral",
+        "displayName": "Och chiziq",
+        "canonical": "#eef2f7"
+      },
+      "maydon-chiziq": {
+        "role": "neutral",
+        "displayName": "Maydon chizig'i",
+        "canonical": "#d5dce6"
+      },
+      "menyu-matn": {
+        "role": "neutral",
+        "displayName": "Menyu matni",
+        "canonical": "#c9d3e1"
+      },
+      "menyu-bolim": {
+        "role": "neutral",
+        "displayName": "Menyu bo'lim nomi",
+        "canonical": "#7f93ad"
+      },
+      "qizil": {
+        "role": "semantic",
+        "displayName": "Signal qizil",
+        "canonical": "#df1b41",
+        "tonalRamp": [
+          "#5c0618",
+          "#9b0b33",
+          "#b3093a",
+          "#c0123a",
+          "#df1b41",
+          "#f8b9c6",
+          "#f8c6d1",
+          "#fde8ec"
+        ]
+      },
+      "yashil": {
+        "role": "semantic",
+        "displayName": "Yashil",
+        "canonical": "#0e9f6e",
+        "tonalRamp": [
+          "#033324",
+          "#075f44",
+          "#087251",
+          "#0b875d",
+          "#0e9f6e",
+          "#4fd3a3",
+          "#b9e7d4",
+          "#e3f6ee"
+        ]
+      },
+      "sariq-och": {
+        "role": "semantic",
+        "displayName": "Sariq och",
+        "canonical": "#fff4d6",
+        "tonalRamp": [
+          "#3d2a00",
+          "#6e4700",
+          "#8a5a00",
+          "#b87d00",
+          "#eda100",
+          "#f5dc9b",
+          "#fbe9b8",
+          "#fff4d6"
+        ]
+      },
+      "h-ishlatilmoqda": {
+        "role": "secondary",
+        "displayName": "Ishlatilmoqda",
+        "canonical": "#1baf7a",
+        "pillShade": "#0b7a54"
+      },
+      "h-zaxirada": {
+        "role": "secondary",
+        "displayName": "Zaxirada",
+        "canonical": "#eda100",
+        "pillTextColor": "#3d2a00"
+      },
+      "h-tamirda": {
+        "role": "secondary",
+        "displayName": "Ta'mirda",
+        "canonical": "#2a78d6",
+        "pillShade": "#1d5fae"
+      },
+      "h-nosoz": {
+        "role": "secondary",
+        "displayName": "Nosoz",
+        "canonical": "#eb6834",
+        "pillShade": "#b8461a"
+      },
+      "h-hisobdan": {
+        "role": "secondary",
+        "displayName": "Hisobdan chiqarishga",
+        "canonical": "#6250d6",
+        "pillShade": "#5141c0"
+      },
+      "h-topilmadi": {
+        "role": "secondary",
+        "displayName": "Topilmadi",
+        "canonical": "#e34948",
+        "pillShade": "#c0302f"
+      },
+      "r-vosita": {
+        "role": "tertiary",
+        "displayName": "Vositalar bo'limi",
+        "canonical": "#2a78d6",
+        "navIcon": "#6aa8f0",
+        "iconGradient": "linear-gradient(135deg, #4e95ea, #2a78d6)"
+      },
+      "r-mol": {
+        "role": "tertiary",
+        "displayName": "МОЛ bo'limi",
+        "canonical": "#6250d6",
+        "navIcon": "#a99cff",
+        "iconGradient": "linear-gradient(135deg, #8579f0, #6250d6)"
+      },
+      "r-chiqim": {
+        "role": "tertiary",
+        "displayName": "Chiqimlar bo'limi",
+        "canonical": "#eb6834",
+        "navIcon": "#ff9a6e",
+        "iconGradient": "linear-gradient(135deg, #ff8c5a, #eb6834)"
+      },
+      "r-hisobot": {
+        "role": "tertiary",
+        "displayName": "Hisobotlar bo'limi",
+        "canonical": "#1baf7a",
+        "navIcon": "#4fd3a3",
+        "iconGradient": "linear-gradient(135deg, #38c996, #1baf7a)"
+      },
+      "r-tizim": {
+        "role": "tertiary",
+        "displayName": "Tizim bo'limi",
+        "canonical": "#8792a2",
+        "navIcon": "#9fb0c7"
+      }
+    },
+    "holatPaletteValidation": {
+      "order": [
+        "#1baf7a",
+        "#eda100",
+        "#2a78d6",
+        "#eb6834",
+        "#6250d6",
+        "#e34948"
+      ],
+      "names": [
+        "ishlatilmoqda",
+        "zaxirada",
+        "tamirda",
+        "nosoz",
+        "hisobdan_chiqarishga",
+        "topilmadi"
+      ],
+      "validator": "dataviz palette validator, adjacent pairs",
+      "minDeltaE": {
+        "cvd": 9.1,
+        "normal": 22.9
+      },
+      "labelling": "bars always direct-labelled; no legend",
+      "pillContrast": "white-text pills use --av-hp-* shades (>= 4.5:1); zaxirada uses dark text #3d2a00"
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Sahifa h1 va band salomlashuvi; mobil 1.375rem."
+      },
+      "metric": {
+        "displayName": "Metric",
+        "purpose": "Solishtirish kartochkalari raqamlari."
+      },
+      "kpi": {
+        "displayName": "KPI",
+        "purpose": "Bosh sahifa KPI qiymati."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Ko'rsatkich plitasi soni."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "h2 bo'lim sarlavhasi."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Kartochka sarlavhasi, h3."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Umumiy matn, menyu bandlari."
+      },
+      "body-dense": {
+        "displayName": "Body dense",
+        "purpose": "Jadval, grafik, tugma, maydon."
+      },
+      "small": {
+        "displayName": "Small",
+        "purpose": "Yorliqlar, pill matni, izohlar."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Faqat jadval ustun sarlavhalari (UPPERCASE)."
+      }
+    },
+    "shadows": [
+      {
+        "name": "soya",
+        "value": "0 1px 2px rgba(10, 37, 64, .06), 0 4px 14px rgba(10, 37, 64, .06)",
+        "purpose": "Kartochka, plita, ro'yxat guruhi."
+      },
+      {
+        "name": "soya-katta",
+        "value": "0 2px 4px rgba(10, 37, 64, .06), 0 12px 32px rgba(10, 37, 64, .12)",
+        "purpose": "KPI kartochkasi; plita hover'i."
+      },
+      {
+        "name": "kpi-hover",
+        "value": "0 4px 8px rgba(10, 37, 64, .08), 0 16px 36px rgba(10, 37, 64, .14)",
+        "purpose": "KPI kartochkasi hover'i (translateY(-2px) bilan)."
+      },
+      {
+        "name": "indigo-yogdu",
+        "value": "0 1px 2px rgba(99, 91, 255, .25), 0 2px 8px rgba(99, 91, 255, .2)",
+        "purpose": "Asosiy tugma."
+      },
+      {
+        "name": "menyu-faol",
+        "value": "0 4px 12px rgba(99, 91, 255, .35)",
+        "purpose": "Faol menyu bandi."
+      },
+      {
+        "name": "fokus-halqa",
+        "value": "0 0 0 3px rgba(99, 91, 255, .18)",
+        "purpose": "Input/select fokusi."
+      }
+    ],
+    "motion": [
+      {
+        "name": "bar-osish",
+        "value": ".7s cubic-bezier(.16, 1, .3, 1) both; transform scaleX(0) -> 1, origin left",
+        "purpose": "Bar grafik kirishi; qatorlar .04s qadam, ko'pi bilan .2s."
+      },
+      {
+        "name": "hover-standart",
+        "value": ".15s ease",
+        "purpose": "Kartochka/plita ko'tarilishi, bar yorqinlashuvi."
+      },
+      {
+        "name": "chevron",
+        "value": "transform .2s ease",
+        "purpose": "Yig'iladigan rekvizitlar strelkasi."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce) { transition: none; animation: none }",
+        "purpose": "Barcha harakat va o'tishlar o'chadi."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "576px"
+      },
+      {
+        "name": "lg",
+        "value": "992px"
+      },
+      {
+        "name": "xl",
+        "value": "1200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Asosiy tugma",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Indigo to'ldirilgan asosiy harakat, indigo yog'du bilan.",
+      "html": "<button class=\"ds-btn-primary\">Saqlash</button>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-btn-primary{background:var(--av-indigo);color:#fff;border:1px solid var(--av-indigo);border-radius:8px;padding:.5rem 1rem;font-family:inherit;font-weight:600;font-size:.8125rem;cursor:pointer;box-shadow:0 1px 2px rgba(99,91,255,.25),0 2px 8px rgba(99,91,255,.2);transition:background .15s}.ds-btn-primary:hover{background:var(--av-indigo-to);border-color:var(--av-indigo-to)}.ds-btn-primary:active{background:#4338ca;border-color:#4338ca}.ds-btn-primary:focus-visible{outline:2px solid var(--av-indigo);outline-offset:2px}"
+    },
+    {
+      "name": "Outline tugma",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Ikkinchi darajali harakat: oq, chiziq ramka, hover'da indigo matn.",
+      "html": "<button class=\"ds-btn-outline\">Excel</button>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-btn-outline{background:#fff;color:var(--av-siyoh);border:1px solid var(--av-chiziq);border-radius:8px;padding:.5rem 1rem;font-family:inherit;font-weight:600;font-size:.8125rem;cursor:pointer;box-shadow:0 1px 2px rgba(10,37,64,.05)}.ds-btn-outline:hover{background:#f6f8fb;color:var(--av-indigo);border-color:#c9c6ff}.ds-btn-outline:active{background:var(--av-indigo-och)}.ds-btn-outline:focus-visible{outline:2px solid var(--av-indigo);outline-offset:2px}"
+    },
+    {
+      "name": "Maydon",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "8px maydon, fokusda indigo ramka va 3px halqa.",
+      "html": "<label class=\"ds-label\">Inv. raqam<input class=\"ds-input\" placeholder=\"000123\"></label>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-label{display:flex;flex-direction:column;gap:.3rem;font-size:.75rem;font-weight:600;color:var(--av-ikkilamchi);max-width:16rem}.ds-input{border:1px solid #d5dce6;border-radius:8px;padding:.45rem .75rem;font-family:inherit;font-size:.8125rem;color:var(--av-siyoh);box-shadow:0 1px 2px rgba(10,37,64,.04)}.ds-input:focus,.ds-input:focus-visible{outline:none;border-color:var(--av-indigo);box-shadow:0 0 0 3px rgba(99,91,255,.18)}"
+    },
+    {
+      "name": "Holat pill'lari",
+      "kind": "chip",
+      "refersTo": "holat-pill-ishlatilmoqda",
+      "description": "Monday uslubidagi to'liq rangli holat belgilari; chuqur hp-* fonlar; nol holat neytral fon + rangli nuqta.",
+      "html": "<div class=\"ds-pills\"><span class=\"ds-pill ds-p1\">Ishlatilmoqda</span><span class=\"ds-pill ds-p2\">Zaxirada</span><span class=\"ds-pill ds-p3\">Ta'mirda</span><span class=\"ds-pill ds-p4\">Nosoz</span><span class=\"ds-pill ds-p5\">Hisobdan chiqarishga</span><span class=\"ds-pill ds-p6\">Topilmadi</span><span class=\"ds-pill ds-nol\" style=\"--nuqta:#e34948\">Topilmadi (0)</span></div>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-pills{display:flex;flex-wrap:wrap;gap:.5rem}.ds-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .7rem;border-radius:999px;font-size:.75rem;font-weight:600;line-height:1.35;color:#fff;white-space:nowrap}.ds-nol{background:var(--av-chiziq-och);color:var(--av-ikkilamchi);font-weight:500}.ds-nol::before{content:\"\";width:.5rem;height:.5rem;border-radius:50%;background:var(--nuqta)}.ds-p1{background:#0b7a54}.ds-p2{background:#eda100;color:#3d2a00}.ds-p3{background:#1d5fae}.ds-p4{background:#b8461a}.ds-p5{background:#5141c0}.ds-p6{background:#c0302f}"
+    },
+    {
+      "name": "Holat bar grafigi",
+      "kind": "custom",
+      "refersTo": "chart-track",
+      "description": "Kutubxonasiz CSS bar grafik: holat pill | 12px iz | son. Har bar to'g'ridan-to'g'ri yorliqlangan; nol qatori neytral, bar yashirin.",
+      "html": "<ul class=\"ds-grafik\"><li><span><span class=\"ds-pill\" style=\"background:#0b7a54\">Ishlatilmoqda</span></span><span class=\"ds-yol\"><span class=\"ds-bar\" style=\"width:100%;background:#1baf7a\"></span></span><b>1 284</b></li><li><span><span class=\"ds-pill\" style=\"background:#eda100;color:#3d2a00\">Zaxirada</span></span><span class=\"ds-yol\"><span class=\"ds-bar\" style=\"width:22%;background:#eda100;animation-delay:.04s\"></span></span><b>281</b></li><li><span><span class=\"ds-pill\" style=\"background:#1d5fae\">Ta'mirda</span></span><span class=\"ds-yol\"><span class=\"ds-bar\" style=\"width:6%;background:#2a78d6;animation-delay:.08s\"></span></span><b>74</b></li><li class=\"ds-g-nol\"><span><span class=\"ds-pill ds-nol\" style=\"--nuqta:#e34948\">Topilmadi</span></span><span class=\"ds-yol\"></span><b>0</b></li></ul>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-grafik{list-style:none;margin:0;padding:.75rem 1.25rem 1rem;background:#fff;border:1px solid var(--av-chiziq);border-radius:12px;box-shadow:var(--av-soya);max-width:34rem}.ds-grafik li{display:grid;grid-template-columns:10.5rem 1fr auto;gap:.875rem;align-items:center;padding:.2rem 0;font-size:.8125rem}.ds-grafik b{min-width:4.5rem;text-align:right}.ds-yol{height:12px;background:var(--av-chiziq-och);border-radius:0 4px 4px 0;overflow:hidden}.ds-bar{display:block;height:100%;min-width:2px;border-radius:0 4px 4px 0;transform-origin:left center;animation:ds-osish .7s cubic-bezier(.16,1,.3,1) both;transition:filter .15s}.ds-grafik li:hover .ds-bar{filter:brightness(1.12)}.ds-g-nol b{color:var(--av-xira);font-weight:500}.ds-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .7rem;border-radius:999px;font-size:.75rem;font-weight:600;line-height:1.35;color:#fff;white-space:nowrap}.ds-nol{background:var(--av-chiziq-och);color:var(--av-ikkilamchi);font-weight:500}.ds-nol::before{content:\"\";width:.5rem;height:.5rem;border-radius:50%;background:var(--nuqta)}@keyframes ds-osish{from{transform:scaleX(0)}}@media (prefers-reduced-motion:reduce){.ds-bar{animation:none;transition:none}}"
+    },
+    {
+      "name": "KPI kartochkasi",
+      "kind": "card",
+      "refersTo": "kpi-card",
+      "description": "Oq, 12px, katta navi soya, bo'lim gradientli ikonka; butun kartochka havola, hover'da 2px ko'tariladi.",
+      "html": "<a class=\"ds-kpi\" href=\"#\"><span class=\"ds-ikonka\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"1\"/></svg></span><span><span class=\"ds-yorliq\">Asosiy vositalar</span><span class=\"ds-qiymat\">1 639</span><span class=\"ds-izoh\">dona · 12 filial</span></span></a>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-kpi{display:flex;gap:.875rem;align-items:flex-start;padding:1.125rem 1.25rem;background:#fff;border-radius:12px;border:1px solid rgba(227,232,239,.7);box-shadow:var(--av-soya-katta);color:inherit;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease;max-width:18rem}.ds-kpi:hover{transform:translateY(-2px);box-shadow:0 4px 8px rgba(10,37,64,.08),0 16px 36px rgba(10,37,64,.14)}.ds-kpi:focus-visible{outline:2px solid var(--av-indigo);outline-offset:2px}.ds-ikonka{flex:0 0 2.5rem;height:2.5rem;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#4e95ea,#2a78d6)}.ds-yorliq,.ds-qiymat,.ds-izoh{display:block}.ds-yorliq{font-size:.75rem;font-weight:600;color:var(--av-ikkilamchi)}.ds-qiymat{font-size:1.625rem;font-weight:700;letter-spacing:-.02em;line-height:1.2}.ds-izoh{font-size:.75rem;color:var(--av-xira)}@media (prefers-reduced-motion:reduce){.ds-kpi{transition:none}}"
+    },
+    {
+      "name": "Ko'rsatkich plitalari",
+      "kind": "card",
+      "refersTo": "indicator-tile",
+      "description": "Ichki sahifa ko'rsatkich qatori: ogoh holatda son to'q qizil, nol holatda ikonka neytral.",
+      "html": "<div class=\"ds-plitalar\"><a class=\"ds-plita ds-ogoh\" href=\"#\"><span class=\"ds-ik\" style=\"background:linear-gradient(135deg,#ff6b8a,#df1b41)\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 3 2 21h20L12 3z\"/><path d=\"M12 10v5M12 18v.5\"/></svg></span><span><b>14</b>1C bilan mos emas</span></a><a class=\"ds-plita ds-nolp\" href=\"#\"><span class=\"ds-ik\" style=\"background:linear-gradient(135deg,#8579f0,#6250d6)\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 3 2 21h20L12 3z\"/><path d=\"M12 10v5M12 18v.5\"/></svg></span><span><b>0</b>МОЛ'siz qator</span></a></div>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-plitalar{display:grid;grid-template-columns:repeat(auto-fit,minmax(12rem,1fr));gap:.75rem}.ds-plita{display:flex;align-items:center;gap:.75rem;padding:.75rem 1rem;background:#fff;border:1px solid var(--av-chiziq);border-radius:12px;box-shadow:var(--av-soya);color:var(--av-ikkilamchi);font-size:.75rem;font-weight:600;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease}.ds-plita:hover{transform:translateY(-1px);box-shadow:var(--av-soya-katta)}.ds-plita:focus-visible{outline:2px solid var(--av-indigo);outline-offset:2px}.ds-plita b{display:block;font-size:1.25rem;line-height:1.2;color:var(--av-siyoh);font-weight:700}.ds-ogoh b{color:#b3093a}.ds-ik{flex:0 0 2.25rem;height:2.25rem;border-radius:10px;display:grid;place-items:center;color:#fff}.ds-nolp .ds-ik{background:var(--av-chiziq-och)!important;color:var(--av-xira)}"
+    },
+    {
+      "name": "Menyu ustuni",
+      "kind": "nav",
+      "refersTo": "sidebar",
+      "description": "Navi menyu: bo'lim rangidagi ikonkalar, faol band indigo pill + yog'du, kutilayotgan son qizil badge.",
+      "html": "<nav class=\"ds-nav\"><span class=\"ds-guruh\">Vositalar</span><a class=\"ds-link ds-faol\" href=\"#\"><span class=\"ds-ic\" style=\"color:#fff\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"1\"/></svg></span>AV ro'yxati</a><a class=\"ds-link\" href=\"#\"><span class=\"ds-ic\" style=\"color:#a99cff\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"1\"/></svg></span>МОЛ nazorati</a><a class=\"ds-link\" href=\"#\"><span class=\"ds-ic\" style=\"color:#ff9a6e\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"6\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"18\" height=\"6\" rx=\"1\"/></svg></span>1C chiqimlari<span class=\"ds-son\">3</span></a></nav>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-nav{background:#0a2540;padding:.5rem .75rem;width:240px;display:flex;flex-direction:column;gap:2px;border-radius:12px}.ds-guruh{color:#7f93ad;font-size:.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.4rem .75rem;margin-top:.5rem}.ds-link{display:flex;align-items:center;gap:.5rem;padding:.5rem .75rem;border-radius:8px;color:#c9d3e1;font-size:.875rem;font-weight:500;text-decoration:none}.ds-ic{display:inline-grid;width:1.75rem}.ds-link:hover{background:rgba(255,255,255,.07);color:#fff}.ds-link:focus-visible{outline:2px solid #a49fff;outline-offset:2px}.ds-faol{background:var(--av-indigo);color:#fff;font-weight:600;box-shadow:0 4px 12px rgba(99,91,255,.35)}.ds-son{margin-left:auto;background:#ff4d6d;color:#fff;border-radius:999px;padding:.1rem .5rem;font-size:.72rem;font-weight:600}"
+    },
+    {
+      "name": "Harakat kerak chizig'i",
+      "kind": "custom",
+      "refersTo": "action-strip",
+      "description": "Qizil = harakat: МОЛ'siz dona bo'lsa solishtirish kartochkalari ostida chiqadi, o'ngda tuzatish tugmasi.",
+      "html": "<div class=\"ds-harakat\"><b><i><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" aria-hidden=\"true\"><path d=\"M12 3 2 21h20L12 3z\"/><path d=\"M12 10v5M12 18v.5\"/></svg></i>МОЛ biriktirilmagan: 4 dona</b><button class=\"ds-btn-danger\">МОЛ akti tuzish</button></div>",
+      "css": ":host{--av-indigo:#635bff;--av-indigo-to:#5146e0;--av-indigo-och:#efeefe;--av-siyoh:#0a2540;--av-ikkilamchi:#5b6b82;--av-xira:#626f84;--av-chiziq:#e3e8ef;--av-chiziq-och:#eef2f7;--av-sirt:#fff;--av-radius:12px;--av-soya:0 1px 2px rgba(10,37,64,.06),0 4px 14px rgba(10,37,64,.06);--av-soya-katta:0 2px 4px rgba(10,37,64,.06),0 12px 32px rgba(10,37,64,.12);font-family:\"Segoe UI\",system-ui,sans-serif;color:var(--av-siyoh);font-variant-numeric:tabular-nums} .ds-harakat{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:.75rem 1.25rem;background:linear-gradient(90deg,#fff1f4,#fff7f0);border:1px solid #f8c6d1;border-radius:12px}.ds-harakat b{display:inline-flex;align-items:center;gap:.625rem;color:#b3093a;font-size:.9375rem}.ds-harakat i{display:grid;place-items:center;width:1.5rem;height:1.5rem;border-radius:50%;background:#df1b41;color:#fff}.ds-harakat svg{width:.8125rem;height:.8125rem}.ds-btn-danger{background:#df1b41;color:#fff;border:0;border-radius:7px;padding:.3rem .75rem;font-family:inherit;font-size:.75rem;font-weight:600;cursor:pointer}.ds-btn-danger:hover{background:#c0123a}.ds-btn-danger:focus-visible{outline:2px solid var(--av-indigo);outline-offset:2px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Rangli boshqaruv paneli",
+    "overview": "Panel jonli boshqaruv paneli: har sahifa rangli holat belgilari va ko'rsatkichlar bilan \"nima yaxshi, nima ish kutayapti\"ni bir qarashda aytadi. Asos — Stripe Dashboard'ning sokin, aniq qatlami: och kulrang-ko'k fon, oq kartochkalar, to'q navi siyoh matn, yumshoq ikki qatlamli soya, bitta indigo urg'u. Uning ustiga monday.com'ning rang tili qo'yilgan: har AV holati o'z to'liq rangli \"pill\"ida, har bo'lim menyuda va ko'rsatkichlarda o'z rangida.\n\nZichlik ofis kompyuteri va katta ekran uchun: tana matni 14px, jadval va grafik matni 13px, tabular raqamlar hamma joyda. Bosh sahifa jadval emas: indigo→ko'k gradient band, uni pastdan oshib turgan oq KPI kartochkalari, kutubxonasiz CSS bar grafiklar va rangli \"Bajarilishi kerak\" navbati. Ichki sahifalar ko'rsatkich plitalari (indicator tiles) bilan boshlanadi, keyin jadval.\n\nFoydalanuvchi rad etgan: rangsiz, kulrang, faqat jadvaldan iborat \"quruq\" admin paneli (oldingi \"Shveytsariya jadval maktabi\" dunyosi).",
+    "keyCharacteristics": [
+      "Indigo (#635bff) yagona interaktiv urg'u: asosiy tugma, faol menyu, havola, fokus.",
+      "Olti holat rangi va to'rt bo'lim rangi ma'lumot tashiydi; ular doim matn yoki son bilan birga.",
+      "Qizil faqat \"harakat kerak\" uchun.",
+      "Oq kartochkalar, 12px radius, yumshoq navi soyalar; pill va nuqtalar to'liq yumaloq.",
+      "Grafiklar faqat HTML/CSS (kutubxonasiz, oflayn), har bar to'g'ridan-to'g'ri son bilan yorliqlangan."
+    ],
+    "rules": [
+      {
+        "name": "The Qizil = Harakat Rule",
+        "body": "Qizil faqat foydalanuvchi bajarishi kerak bo'lgan ish uchun (farq, МОЛ'siz, kutilayotgan chiqim, xato, uzilish). Holat palitrasidagi \"topilmadi\" qizili ham shu ma'noni tashiydi; qizilni bezak yoki kategoriya sifatida ishlatmang.",
+        "section": "colors"
+      },
+      {
+        "name": "The Rang Doim Matn Bilan Rule",
+        "body": "Holat yoki bo'lim rangi hech qachon yolg'iz ma'no tashimaydi: pill ichida nom, bar yonida nom va son, nuqta yonida matn.",
+        "section": "colors"
+      },
+      {
+        "name": "The Chuqur Pill Rule",
+        "body": "Oq matnli pill fonida grafik tusi emas, uning chuqur `hp-*` varianti turadi (≥4.5:1). Yangi holat qo'shilsa, unga ham shunday juft (grafik tusi + pill tusi) beriladi.",
+        "section": "colors"
+      },
+      {
+        "name": "The Nol Neytral Rule",
+        "body": "Qiymati nol bo'lgan narsa rangni yo'qotadi: nol holat pill'i neytral fon (chiziq-och) + ikkilamchi matn + holat rangidagi kichik nuqta; nol ko'rsatkich plitasining ikonkasi kulrang (chiziq-och fon, xira ikonka); nol vazifa nuqtasi kulrang, soni neytral. Rang faqat bor narsaga beriladi.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Har son tabular va ustunda o'ngga tekislangan (`.son`); grafik qiymatlari ham o'ngda, 700.",
+        "section": "typography"
+      },
+      {
+        "name": "The Yorliq Rule",
+        "body": "Bosh harfli kichik yorliq faqat o'zi nomlagan ustun yoki menyu guruhi ustida turadi; sarlavha ustidagi \"kicker\" sifatida ishlatilmaydi.",
+        "section": "typography"
+      },
+      {
+        "name": "The Navi Soya Rule",
+        "body": "Soya doim yumshoq, ko'p qatlamli va navi tusli; qattiq ofset soya yo'q. Ko'tarilish faqat bosiladigan kartochkalarda hover javobi sifatida.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** qizilni faqat foydalanuvchi bajarishi kerak bo'lgan ishga bering (farq, МОЛ'siz, kutilayotgan chiqim, xato, sinxron uzilishi).",
+      "**Do** holatni har joyda holat pill'i bilan ko'rsating; oq matnli pill fonida chuqur `--av-hp-*` tusini, grafikda `--av-h-*` tusini ishlating.",
+      "**Do** olti holat tusini validatordan o'tgan tartibda saqlang: ishlatilmoqda, zaxirada, ta'mirda, nosoz, hisobdan chiqarishga, topilmadi.",
+      "**Do** har barni to'g'ridan-to'g'ri son bilan yorliqlang; grafiklarni HTML/CSS bilan quring.",
+      "**Do** nol qiymatni neytrallashtiring: nol pill neytral fon + rangli nuqta, nol plita ikonkasi kulrang, nol bar yashirin.",
+      "**Do** har animatsiya va o'tishni `prefers-reduced-motion: reduce` ostida o'chiring.",
+      "**Do** yangi CoreUI komponentlarini panel.css'dagi `--av-*` va `--cui-*` tokenlari orqali moslashtiring.",
+      "**Do** bosiladigan kartochka va plitalarni butunlay havola qiling, hover'da ko'taring."
+    ],
+    "donts": [
+      "**Don't** holat yoki bo'lim rangini matnsiz, yolg'iz ma'no tashuvchi sifatida ishlatmang.",
+      "**Don't** oq matnni grafik tusidagi (`--av-h-*`) och fon ustiga qo'ymang.",
+      "**Don't** chart kutubxonasi, tashqi shrift yoki CDN ulamang; panel oflayn ishlaydi.",
+      "**Don't** palitraga yangi tus qo'shmang; yangi bo'lim yoki holat mavjud tuslardan va ularning chuqur juftidan foydalanadi.",
+      "**Don't** qattiq ofset yoki qora soya ishlatmang; soya navi tusli va yumshoq.",
+      "**Don't** bosh harfli kichik yorliqni sarlavha ustidagi kicker sifatida ishlatmang.",
+      "**Don't** holatlarni rangsiz matn yoki kulrang belgi bilan ko'rsatmang; rangsiz, faqat jadvaldan iborat admin paneli rad etilgan dunyo."
+    ]
+  }
+}
