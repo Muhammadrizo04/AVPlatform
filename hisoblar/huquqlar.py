@@ -21,6 +21,9 @@ HUQUQLAR: dict[str, set[str]] = {
     "pul_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.RAHBAR},
     # «1C chiqimlari» sahifasi: rahbarga kerak emas (menyuda ham, bosh sahifa plitkasida ham ko'rinmaydi).
     "chiqim_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR},
+    "reviziya_boshqarish": {Rol.ADMIN, Rol.HISOBCHI},
+    "reviziya_otkazish": {Rol.ADMIN, Rol.HISOBCHI, Rol.REVIZOR},
+    "reviziya_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
     "sozlama": {Rol.ADMIN},
     "sinxron": {Rol.ADMIN},
 }

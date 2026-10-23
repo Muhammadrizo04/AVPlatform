@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "vositalar",
     "chiqimlar",
     "mol",
+    "reviziya",
     "yorliqlar",
     "hisobotlar",
     "panel",

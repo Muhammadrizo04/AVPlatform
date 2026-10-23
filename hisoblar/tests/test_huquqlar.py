@@ -24,6 +24,7 @@ def test_admin_hamma_amal(foydalanuvchi):
     assert set(HUQUQLAR) == {
         "korish", "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt",
         "yorliq", "tozalash", "hisobot", "sozlama", "sinxron", "pul_korish", "chiqim_korish",
+        "reviziya_boshqarish", "reviziya_otkazish", "reviziya_korish",
     }
     for amal in HUQUQLAR:
         assert huquqi_bor(admin, amal) is True, amal
@@ -31,7 +32,10 @@ def test_admin_hamma_amal(foydalanuvchi):
 
 def test_hisobchi_amallari(foydalanuvchi):
     u = foydalanuvchi(Rol.HISOBCHI)
-    for amal in ("av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt", "yorliq", "tozalash", "hisobot", "korish"):
+    for amal in (
+        "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt", "yorliq", "tozalash", "hisobot", "korish",
+        "reviziya_boshqarish", "reviziya_otkazish", "reviziya_korish",
+    ):
         assert huquqi_bor(u, amal) is True, amal
     for amal in ("sozlama", "sinxron"):
         assert huquqi_bor(u, amal) is False, amal
@@ -39,21 +43,22 @@ def test_hisobchi_amallari(foydalanuvchi):
 
 def test_hr_amallari(foydalanuvchi):
     u = foydalanuvchi(Rol.HR)
-    for amal in ("mol_akt", "hisobot", "korish"):
+    for amal in ("mol_akt", "hisobot", "korish", "reviziya_korish"):
         assert huquqi_bor(u, amal) is True, amal
-    for amal in ("av_tahrir", "taqsimot", "yorliq", "pul_korish"):
+    for amal in ("av_tahrir", "taqsimot", "yorliq", "pul_korish", "reviziya_boshqarish", "reviziya_otkazish"):
         assert huquqi_bor(u, amal) is False, amal
 
 
 def test_rahbar_faqat_korish_va_hisobot(foydalanuvchi):
     u = foydalanuvchi(Rol.RAHBAR)
     for amal in HUQUQLAR:
-        assert huquqi_bor(u, amal) is (amal in {"korish", "hisobot", "pul_korish"}), amal
+        assert huquqi_bor(u, amal) is (amal in {"korish", "hisobot", "pul_korish", "reviziya_korish"}), amal
 
 
 def test_revizor_va_notanish_amalda_huquq_yoq(foydalanuvchi):
     u = foydalanuvchi(Rol.REVIZOR)
-    assert not any(huquqi_bor(u, amal) for amal in HUQUQLAR)
+    for amal in HUQUQLAR:
+        assert huquqi_bor(u, amal) is (amal == "reviziya_otkazish"), amal
     assert huquqi_bor(foydalanuvchi(Rol.ADMIN), "mavjud_emas") is False
     assert huquqi_bor(AnonymousUser(), "korish") is False
 

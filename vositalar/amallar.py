@@ -25,7 +25,9 @@ class AmalXato(Exception):
     """Amalni bajarib bo'lmaydi; matni foydalanuvchiga ko'rsatiladi."""
 
 
-def kochir(qator: Taqsimot, soni: Decimal, bolim, kim) -> Taqsimot:
+def kochir(
+    qator: Taqsimot, soni: Decimal, bolim, kim, *, sabab: str = Sabab.KOCHIRISH, hujjat_izoh: str = ""
+) -> Taqsimot:
     """`soni` donani boshqa bo'limga ko'chiradi. Yangi (yoki birlashgan) qatorni qaytaradi."""
     if bolim is None:
         raise AmalXato("Bo'limni tanlang.")
@@ -33,14 +35,16 @@ def kochir(qator: Taqsimot, soni: Decimal, bolim, kim) -> Taqsimot:
         raise AmalXato("Bo'lim boshqa filialga tegishli.")
     if not bolim.faol:
         raise AmalXato("Bo'lim faol emas.")
-    return _ozgartir(qator, soni, kim, Sabab.KOCHIRISH, bolim=bolim.pk)
+    return _ozgartir(qator, soni, kim, sabab, bolim=bolim.pk, hujjat_izoh=hujjat_izoh[:255])
 
 
-def holat_ozgartir(qator: Taqsimot, soni: Decimal, holat: str, kim) -> Taqsimot:
+def holat_ozgartir(
+    qator: Taqsimot, soni: Decimal, holat: str, kim, *, sabab: str = Sabab.HOLAT, hujjat_izoh: str = ""
+) -> Taqsimot:
     """`soni` donaning holatini o'zgartiradi. Yangi (yoki birlashgan) qatorni qaytaradi."""
     if holat not in Holat.values:
         raise AmalXato("Noma'lum holat.")
-    return _ozgartir(qator, soni, kim, Sabab.HOLAT, holat=holat)
+    return _ozgartir(qator, soni, kim, sabab, holat=holat, hujjat_izoh=hujjat_izoh[:255])
 
 
 def mol_ozgartir(qator: Taqsimot, soni: Decimal, mol, kim, hujjat_izoh: str = "") -> Taqsimot:
