@@ -1,4 +1,5 @@
 {% extends "panel/base.html" %}
+{% load jadval %}
 {% block sarlavha %}МОЛ aktlari{% endblock %}
 {% block yol %}МОЛ aktlari{% endblock %}
 {% block kontent %}
@@ -20,6 +21,7 @@
   <input class="form-control form-control-sm" type="search" name="q" value="{{ params.q|default:'' }}" placeholder="Akt raqami yoki xodim ismi">
   <label class="d-flex align-items-center gap-1 small">Dan <input class="form-control form-control-sm" type="date" name="dan" value="{{ params.dan|default:'' }}"></label>
   <label class="d-flex align-items-center gap-1 small">Gacha <input class="form-control form-control-sm" type="date" name="gacha" value="{{ params.gacha|default:'' }}"></label>
+  {% tartib_maydoni %}
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
 </form>
 </div></div>
@@ -27,7 +29,7 @@
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Akt</th><th>Sana</th><th>Topshiruvchi</th><th>Qabul qiluvchi</th><th>Tuzdi</th><th>Holat</th><th></th></tr></thead>
+  <thead><tr>{% saralash_ustuni "raqam" "Akt" %}{% saralash_ustuni "sana" "Sana" %}{% saralash_ustuni "topshiruvchi" "Topshiruvchi" %}{% saralash_ustuni "qabul" "Qabul qiluvchi" %}{% saralash_ustuni "tuzdi" "Tuzdi" %}{% saralash_ustuni "holat" "Holat" %}<th></th></tr></thead>
   <tbody>
   {% for a in sahifa %}
     <tr>

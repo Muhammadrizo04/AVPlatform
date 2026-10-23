@@ -25,3 +25,9 @@ def cui(maydon):
 @register.filter
 def belgilash_katagi(maydon) -> bool:
     return isinstance(maydon.field.widget, forms.CheckboxInput)
+
+
+@register.filter
+def katakchalar(maydon) -> bool:
+    """Bir nechta tanlov katakchalar ro'yxati (`CheckboxSelectMultiple`)."""
+    return isinstance(maydon.field.widget, forms.CheckboxSelectMultiple)

@@ -1,4 +1,5 @@
 {% extends "panel/base.html" %}
+{% load jadval %}
 {% block sarlavha %}Reviziyalar{% endblock %}
 {% block yol %}Reviziyalar{% endblock %}
 {% block kontent %}
@@ -17,7 +18,7 @@
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Reviziya</th><th>Filial</th><th>Bo'lim</th><th>Ochilgan</th><th class="son">Belgilangan / kutilgan</th><th>Holat</th><th></th></tr></thead>
+  <thead><tr>{% saralash_ustuni "raqam" "Reviziya" %}{% saralash_ustuni "filial" "Filial" %}{% saralash_ustuni "bolim" "Bo'lim" %}{% saralash_ustuni "ochilgan" "Ochilgan" %}{% saralash_ustuni "belgilangan" "Belgilangan" "son" %}{% saralash_ustuni "kutilgan" "Kutilgan" "son" %}{% saralash_ustuni "holat" "Holat" %}<th></th></tr></thead>
   <tbody>
   {% for r in sahifa %}
     <tr class="qator-havola">
@@ -25,12 +26,13 @@
       <td>{{ r.filial.nomi }}</td>
       <td>{% if r.bolim %}{{ r.bolim.toliq_nomi }}{% else %}<span class="text-body-secondary">Butun filial</span>{% endif %}</td>
       <td>{{ r.ochilgan_vaqt|date:"d.m.Y H:i" }}</td>
-      <td class="son">{{ r.belgilangan_jami|son }} / {{ r.kutilgan_jami|son }}</td>
+      <td class="son">{{ r.belgilangan_jami|son }}</td>
+      <td class="son">{{ r.kutilgan_jami|son }}</td>
       <td>{% include "reviziya/_holati.html" %}</td>
       <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'reviziya:sahifa' r.pk %}">Ko'rish</a></td>
     </tr>
   {% empty %}
-    <tr><td colspan="7" class="text-body-secondary">Reviziya topilmadi.</td></tr>
+    <tr><td colspan="8" class="text-body-secondary">Reviziya topilmadi.</td></tr>
   {% endfor %}
   </tbody>
 </table>
@@ -40,9 +42,9 @@
 <div class="amallar justify-content-end mb-4">
   <span class="me-auto text-body-secondary small">Jami: {{ sahifa.paginator.count|son }}</span>
   {% if sahifa.paginator.num_pages > 1 %}
-  {% if sahifa.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?{% if holat %}holat={{ holat }}&amp;{% endif %}page={{ sahifa.previous_page_number }}">‹ Oldingi</a>{% endif %}
+  {% if sahifa.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="{% sahifa_url sahifa.previous_page_number %}">‹ Oldingi</a>{% endif %}
   <span>{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
-  {% if sahifa.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?{% if holat %}holat={{ holat }}&amp;{% endif %}page={{ sahifa.next_page_number }}">Keyingi ›</a>{% endif %}
+  {% if sahifa.has_next %}<a class="btn btn-sm btn-outline-secondary" href="{% sahifa_url sahifa.next_page_number %}">Keyingi ›</a>{% endif %}
   {% endif %}
 </div>
 {% endblock %}

@@ -1,4 +1,5 @@
 {% extends "panel/base.html" %}
+{% load jadval %}
 {% block sarlavha %}1C chiqimlari{% endblock %}
 {% block yol %}1C chiqimlari{% endblock %}
 {% block kontent %}
@@ -18,6 +19,7 @@
   </select>
   <label class="d-flex align-items-center gap-1 small">Dan <input class="form-control form-control-sm" type="date" name="dan" value="{{ params.dan }}"></label>
   <label class="d-flex align-items-center gap-1 small">Gacha <input class="form-control form-control-sm" type="date" name="gacha" value="{{ params.gacha }}"></label>
+  {% tartib_maydoni %}
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
 </form>
 </div></div>
@@ -26,7 +28,7 @@
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
   <thead>
-    <tr><th>Sana</th><th>1C hujjati</th><th>AV</th><th>Filial</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Summa</th>{% endif %}<th>Taxmin / tur</th><th>Holat</th><th></th></tr>
+    <tr>{% saralash_ustuni "sana" "Sana" %}{% saralash_ustuni "hujjat" "1C hujjati" %}{% saralash_ustuni "av" "AV" %}{% saralash_ustuni "filial" "Filial" %}{% saralash_ustuni "soni" "Soni" "son" %}{% if pul_huquqi %}{% saralash_ustuni "summa" "Summa" "son" %}{% endif %}{% saralash_ustuni "tur" "Taxmin / tur" %}{% saralash_ustuni "holat" "Holat" %}<th></th></tr>
   </thead>
   <tbody>
   {% for c in sahifa %}

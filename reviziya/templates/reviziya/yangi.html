@@ -45,13 +45,22 @@
 </div></div>
 
 <div class="card mb-3"><div class="card-body">
-  <h2 class="h6">Komissiya <span class="text-body-secondary small fw-normal">(faqat dalolatnomada; bo'sh qatorlar hisobga olinmaydi)</span></h2>
-  {% for a in komissiya %}
-  <div class="row g-2 mb-2">
-    <div class="col-md-6"><input class="form-control form-control-sm" name="komissiya_ism" value="{{ a.ism }}" placeholder="F.I.Sh." aria-label="Komissiya a'zosi ismi" maxlength="255"></div>
-    <div class="col-md-6"><input class="form-control form-control-sm" name="komissiya_lavozim" value="{{ a.lavozim }}" placeholder="Lavozim" aria-label="Lavozim" maxlength="255"></div>
+  <h2 class="h6 mb-1">Komissiya</h2>
+  <p class="small text-body-secondary mb-2">Xodimni ismi bo'yicha qidirib qo'shing; birinchi qo'shilgan rais bo'ladi. Lavozim keyingi
+    reviziyalar uchun eslab qolinadi. Inventarizatsiya qilinayotgan joylarning МОЛlari dalolatnomaga o'zi qo'shiladi.</p>
+  <div class="vstack gap-2 mb-2" id="komissiya-qatorlar">
+    {% for a in komissiya %}{% include "reviziya/_komissiya_qator.html" %}{% endfor %}
   </div>
-  {% endfor %}
+  <div class="komissiya-qidiruv">
+    <label class="visually-hidden" for="komissiya-qidir">Komissiyaga xodim qidirish</label>
+    <div class="input-group input-group-sm">
+      <span class="input-group-text"><i class="cil-search" aria-hidden="true"></i></span>
+      <input class="form-control" type="search" id="komissiya-qidir" name="q" placeholder="Xodim ismini yozing…" autocomplete="off"
+             hx-get="{% url 'reviziya:komissiya_xodimlar' %}" hx-trigger="input changed delay:250ms, search" hx-target="#komissiya-natija"
+             onkeydown="if (event.key === 'Enter') event.preventDefault()">
+    </div>
+    <div id="komissiya-natija"></div>
+  </div>
 </div></div>
 
 <div class="amallar mb-4">

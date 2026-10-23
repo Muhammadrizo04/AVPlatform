@@ -34,6 +34,12 @@
   <select class="form-select form-select-sm" name="bayroq"><option value="">Bayroq: hammasi</option>
     {% for kalit, nomi in bayroqlar %}<option value="{{ kalit }}" {% if params.bayroq == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
   </select>
+  <select class="form-select form-select-sm" name="tartib" aria-label="Saralash">
+    {% for kalit, nomi in tartiblar %}
+    <option value="{{ kalit }}" {% if saralash.kalit == kalit and not saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↑</option>
+    <option value="-{{ kalit }}" {% if saralash.kalit == kalit and saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↓</option>
+    {% endfor %}
+  </select>
   <noscript><button type="submit" class="btn btn-sm btn-primary">Qidirish</button></noscript>
 </form>
 </div></div>

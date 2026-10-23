@@ -3,11 +3,14 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.template.loader import render_to_string
 
-from onec.models import AV
+from onec.models import AV, Xodim
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Holat, Sozlama
 
-from .solishtir import GURUH_NOMLARI, GURUHLAR, bolim_nomlari, guruh_nomi, jamlar, solishtir
+from .servis import KOMISSIYA_RAIS
+from .solishtir import (
+    GURUH_NOMLARI, GURUHLAR, bolim_boyicha, bolim_kesim_nomi, bolim_nomlari, guruh_nomi, jamlar, solishtir,
+)
 
 TIYIN = Decimal("0.01")
 KAMOMAD = ("kam", "topilmadi")
@@ -21,11 +24,23 @@ def _narxlar(qatorlar) -> dict[int, Decimal]:
     }
 
 
-def dalolatnoma_pdf(reviziya, pul: bool = False) -> bytes:
-    """`pul=False` — «AV qiymati» ustuni va jami chiqmaydi (`pul_korish` huquqi yo'q)."""
+def mollar(reviziya, bolim: str = ""):
+    """Qamrovdagi (reviziya ochilgandagi suratdagi) МОЛlar — dalolatnomada imzo qatori uchun; `bolim` (id yoki
+    "bolimsiz") berilsa — faqat shu bo'limda kutilganlar."""
+    kutilganlar = reviziya.kutilganlar.exclude(mol=None)
+    if bolim == "bolimsiz":
+        kutilganlar = kutilganlar.filter(bolim=None)
+    elif bolim.isdigit():
+        kutilganlar = kutilganlar.filter(bolim_id=int(bolim))
+    return Xodim.objects.filter(pk__in=kutilganlar.values("mol")).order_by("ism")
+
+
+def dalolatnoma_pdf(reviziya, pul: bool = False, bolim: str = "") -> bytes:
+    """`pul=False` — «AV qiymati» ustuni va jami chiqmaydi (`pul_korish` huquqi yo'q). `bolim` (id yoki "bolimsiz")
+    — faqat shu bo'lim kesimi (`bolim_boyicha`)."""
     from weasyprint import HTML  # kech import: Pango faqat PDF kerak bo'lganda yuklanadi
 
-    qatorlar = solishtir(reviziya)
+    qatorlar = bolim_boyicha(solishtir(reviziya), bolim)
     nomlar = bolim_nomlari(reviziya.filial_id)
     holatlar = dict(Holat.choices)
     narxlar = _narxlar(qatorlar) if pul else {}
@@ -59,6 +74,10 @@ def dalolatnoma_pdf(reviziya, pul: bool = False) -> bytes:
         "farqlar": farqlar,
         "jami_qiymat": jami_qiymat,
         "revizorlar": reviziya.revizorlar.order_by("first_name", "username"),
+        "rais": [a for a in reviziya.komissiya if a.get("rol") == KOMISSIYA_RAIS],
+        "azolar": [a for a in reviziya.komissiya if a.get("rol") != KOMISSIYA_RAIS],
+        "mollar": mollar(reviziya, bolim),
+        "kesim_nomi": bolim_kesim_nomi(bolim, nomlar),
         "pul_huquqi": pul,
     })
     return HTML(string=html).write_pdf()

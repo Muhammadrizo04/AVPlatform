@@ -12,6 +12,7 @@ from django.utils.cache import patch_vary_headers
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
 from onec.models import Filial
+from panel.saralash import Saralash
 from vositalar.filtrlar import korinadigan_av_idlari
 from vositalar.models import Bolim, Holat
 
@@ -27,6 +28,12 @@ def _sana(qiymat) -> date | None:
         return date.fromisoformat((qiymat or "").strip())
     except ValueError:
         return None
+
+
+CHIQIM_USTUNLARI = {
+    "sana": "sana", "hujjat": "hujjat_raqami", "av": "av__nomi", "filial": "filial__nomi", "soni": "soni",
+    "summa": "summa", "tur": "taxmin_tur", "holat": "holat",
+}
 
 
 def _royxat_qs(request):
@@ -55,13 +62,15 @@ def _royxat_qs(request):
 @amal_kerak("chiqim_korish")
 def royxat(request):
     qs, holat = _royxat_qs(request)
-    sahifa = Paginator(qs, SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    ustunlar = {k: v for k, v in CHIQIM_USTUNLARI.items() if k != "summa" or huquqi_bor(request.user, "pul_korish")}
+    saralash = Saralash(request, ustunlar)
+    sahifa = Paginator(saralash.queryset(qs), SAHIFA_HAJMI).get_page(request.GET.get("page"))
     params = request.GET.copy()
     params.pop("page", None)
     korinadigan = korinadigan_av_idlari(request.user, {c.av_id for c in sahifa})
     javob = render(request, "chiqimlar/royxat.html", {
         "sahifa": sahifa, "korinadigan_av": korinadigan, "params": request.GET, "holat": holat, "query": params.urlencode(),
-        "taqsim_huquqi": huquqi_bor(request.user, "taqsimot"),
+        "taqsim_huquqi": huquqi_bor(request.user, "taqsimot"), "saralash": saralash,
         "holatlar": ChiqimHujjat.Holat.choices, "turlar": ChiqimHujjat.Tur.choices,
         "filiallar": filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
     })

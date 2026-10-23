@@ -18,11 +18,11 @@ from django.views.decorators.http import require_GET, require_POST
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from onec.models import AV, AVQoldiq
 from panel.templatetags.raqamlar import son
-from vositalar.bolimlar import daraxt
 from vositalar.models import Bolim
 from vositalar.models import Holat as TaqsimotHolat
 
-from .models import Reviziya, ReviziyaQayd
+from .kesim import BOLIMSIZ_QIYMATI as BOLIMSIZ, xonalar_kesimi
+from .models import Reviziya, ReviziyaQayd, ReviziyaXona
 from .servis import (
     BOSHQA_FILIAL,
     ReviziyaXato,
@@ -32,6 +32,7 @@ from .servis import (
     qayd_tuzat,
     qr_tahlil,
     standart_holat,
+    xona_tugadi,
 )
 
 NOL = Decimal("0")
@@ -40,7 +41,6 @@ QR_MAKS = 255  # ReviziyaQayd.qr_matn uzunligi: undan uzun matn kesiladi (noma'l
 QIDIRUV_MAKS = 100
 QIDIRUV_NATIJALARI = 20
 OXIRGILAR_SONI = 10
-BOLIMSIZ = "0"
 NUL = chr(0)
 
 
@@ -181,6 +181,7 @@ def _skan_konteksti(request, rv, xona) -> dict:
         "xona": xona,
         "xona_qiymati": BOLIMSIZ if xona is None else str(xona.pk),
         "xona_progress": _xona_progress(rv, xona),
+        "xona_tugagan": ReviziyaXona.objects.filter(reviziya=rv, bolim=xona).exists(),
         "oxirgilar": _oxirgilar(request, rv, xona),
         "qolganlar": _qolganlar(rv, xona),
     }
@@ -215,24 +216,23 @@ def reviziyalarim(request):
 @require_GET
 def xonalar(request, pk):
     rv = _reviziya(request, pk)
-    kutilgan = dict(rv.kutilganlar.order_by().values_list("bolim_id").annotate(s=Sum("soni")))
-    belgilangan = dict(
-        rv.qaydlar.filter(av__isnull=False).order_by().values_list("bolim_id").annotate(s=Sum("soni"))
-    )
-    qamrov = qamrov_bolim_idlari(rv)
-    qatorlar = [
-        {"qiymat": str(b.pk), "nomi": b.nomi, "toliq": toliq, "chuqurlik": chuqurlik,
-         "belgilangan": belgilangan.get(b.pk, NOL), "kutilgan": kutilgan.get(b.pk, NOL)}
-        for b, chuqurlik, toliq in daraxt(rv.filial_id)
-        if (qamrov is None or b.pk in qamrov) and (b.faol or b.pk in kutilgan or b.pk in belgilangan)
-    ]
-    qatorlar.append({"qiymat": BOLIMSIZ, "nomi": "Bo'limsiz", "toliq": "Bo'limsiz / umumiy joy", "chuqurlik": 0,
-                     "belgilangan": belgilangan.get(None, NOL), "kutilgan": kutilgan.get(None, NOL)})
     jami_belgilangan, jami_kutilgan = progress(rv)
     return render(request, "reviziya/mobil/xonalar.html", {
-        "rv": rv, "qatorlar": qatorlar, "tanlangan": request.session.get(_sessiya_kaliti(rv)),
+        "rv": rv, "qatorlar": xonalar_kesimi(rv), "tanlangan": request.session.get(_sessiya_kaliti(rv)),
         "belgilangan": jami_belgilangan, "kutilgan": jami_kutilgan,
     })
+
+
+@_mobil
+@require_POST
+def xona_tugadi_view(request, pk):
+    """«Xona tugadi» belgisini qo'yadi (`tugadi=1`) yoki olib tashlaydi; xonalar ro'yxatiga qaytadi."""
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        raise Http404
+    xona_tugadi(rv, _xona(rv, qiymat), request.user, tugadi=request.POST.get("tugadi") == "1")
+    return redirect("reviziya:mobil_xonalar", pk=rv.pk)
 
 
 @_mobil

@@ -83,6 +83,20 @@ class ReviziyaQayd(models.Model):
         ]
 
 
+class ReviziyaXona(models.Model):
+    """Bo'lim (xona) sanab bo'lindi belgisi — yozuv bor bo'lsa xona tugagan. Skanerlashni to'xtatmaydi."""
+
+    reviziya = models.ForeignKey(Reviziya, on_delete=models.CASCADE, related_name="tugagan_xonalar")
+    bolim = models.ForeignKey("vositalar.Bolim", null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+    tugatdi = models.ForeignKey(User, on_delete=models.PROTECT, related_name="+")
+    tugagan_vaqt = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["reviziya", "bolim"], nulls_distinct=False, name="reviziya_xona_noyob")
+        ]
+
+
 class ReviziyaQollash(models.Model):
     """Qo'llash jurnali: har guruh (kalit) uchun natija; muvaffaqiyatli kalit takrorlanmaydi."""
 
@@ -107,3 +121,13 @@ class ReviziyaQollash(models.Model):
                 name="reviziya_qollash_ok_noyob",
             )
         ]
+
+
+class XodimLavozimi(models.Model):
+    """Komissiyada yozilgan lavozim (1C'da lavozim yo'q) — keyingi reviziyada a'zo tanlanganda o'zi to'ladi."""
+
+    xodim = models.OneToOneField("onec.Xodim", on_delete=models.CASCADE, primary_key=True, related_name="+")
+    lavozim = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.lavozim

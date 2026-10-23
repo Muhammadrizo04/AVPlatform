@@ -28,6 +28,23 @@ def _filiali_bor(user, filial) -> bool:
     return not filiallar or filial.pk in filiallar
 
 
+def _revizor_tanlovi(user):
+    """Revizor bo'la oladigan faol foydalanuvchilar — faqat so'rovchining filiallarida ishlay oladiganlar (profil
+    filiallari bo'sh — hamma filial)."""
+    revizorlar = get_user_model().objects.filter(is_active=True, profil__rol__in=REVIZOR_ROLLARI)
+    idlar = ruxsat_filial_idlar(user)
+    if idlar is not None:
+        revizorlar = revizorlar.filter(Q(profil__filiallar__isnull=True) | Q(profil__filiallar__in=idlar))
+    return revizorlar.select_related("profil").distinct().order_by("first_name", "last_name", "username")
+
+
+def _begonalarni_tekshir(forma, filial) -> None:
+    begonalar = [u for u in forma.cleaned_data.get("revizorlar") or [] if not _filiali_bor(u, filial)]
+    if begonalar:
+        ismlar = ", ".join(u.get_full_name() or u.get_username() for u in begonalar)
+        forma.add_error("revizorlar", f"Bu filialga ruxsati yo'q: {ismlar}.")
+
+
 class YangiReviziyaForma(forms.Form):
     filial = forms.ModelChoiceField(queryset=Filial.objects.none(), empty_label="Filialni tanlang")
     bolim = _BolimMaydoni(queryset=Bolim.objects.none(), required=False, empty_label="Butun filial")
@@ -42,14 +59,7 @@ class YangiReviziyaForma(forms.Form):
             .select_related("filial", "ota__ota")
             .order_by("filial__nomi", "nomi")
         )
-        revizorlar = get_user_model().objects.filter(is_active=True, profil__rol__in=REVIZOR_ROLLARI)
-        idlar = ruxsat_filial_idlar(user)
-        if idlar is not None:
-            # Faqat so'rovchining filiallarida ishlay oladiganlar (profil filiallari bo'sh — hamma filial)
-            revizorlar = revizorlar.filter(Q(profil__filiallar__isnull=True) | Q(profil__filiallar__in=idlar))
-        self.fields["revizorlar"].queryset = (
-            revizorlar.select_related("profil").distinct().order_by("first_name", "last_name", "username")
-        )
+        self.fields["revizorlar"].queryset = _revizor_tanlovi(user)
         self.fields["revizorlar"].error_messages["required"] = "Kamida bitta revizor tanlang."
 
     def clean(self):
@@ -59,8 +69,22 @@ class YangiReviziyaForma(forms.Form):
             return tozalangan
         if bolim is not None and bolim.filial_id != filial.pk:
             self.add_error("bolim", "Bo'lim tanlangan filialga tegishli emas.")
-        begonalar = [u for u in tozalangan.get("revizorlar") or [] if not _filiali_bor(u, filial)]
-        if begonalar:
-            ismlar = ", ".join(u.get_full_name() or u.get_username() for u in begonalar)
-            self.add_error("revizorlar", f"Bu filialga ruxsati yo'q: {ismlar}.")
+        _begonalarni_tekshir(self, filial)
+        return tozalangan
+
+
+class RevizorlarForma(forms.Form):
+    """Ochiq reviziya revizorlarini o'zgartirish."""
+
+    revizorlar = _RevizorMaydoni(queryset=get_user_model().objects.none(), widget=forms.CheckboxSelectMultiple)
+
+    def __init__(self, *args, user, filial, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.filial = filial
+        self.fields["revizorlar"].queryset = _revizor_tanlovi(user)
+        self.fields["revizorlar"].error_messages["required"] = "Kamida bitta revizor tanlang."
+
+    def clean(self):
+        tozalangan = super().clean()
+        _begonalarni_tekshir(self, self.filial)
         return tozalangan

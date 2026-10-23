@@ -68,7 +68,8 @@ def test_ochish_surat_filial(filial, och, filial_yarat):
     rv = och(filial, izoh="Yillik")
 
     assert rv.raqam == 1 and rv.holat == Reviziya.Holat.OCHIQ and rv.izoh == "Yillik"
-    assert list(rv.revizorlar.all()) and rv.komissiya == [{"ism": "Ali", "lavozim": "Rais"}]
+    assert list(rv.revizorlar.all())
+    assert rv.komissiya == [{"xodim_id": None, "ism": "Ali", "lavozim": "Rais", "rol": "azo"}]
     assert rv.kutilganlar.count() == 3
     k1 = rv.kutilganlar.get(taqsimot_id=q1.pk)
     assert (k1.av_id, k1.bolim_id, k1.soni, k1.holat) == (stol.pk, ombor.pk, Decimal("2"), Holat.ISHLATILMOQDA)

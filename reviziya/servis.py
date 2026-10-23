@@ -17,13 +17,15 @@ from vositalar.models import Holat as TaqsimotHolat
 from vositalar.models import Taqsimot
 from vositalar.rasmlar import rasm_saqla
 
-from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd
+from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaXona, XodimLavozimi
 
 NOL = Decimal("0")
 MAKS_SONI = Decimal("1000000000000")  # DecimalField(max_digits=15, decimal_places=3) chegarasi
 RV_RAQAM_QULFI = 7310003  # reviziya raqami va qamrov tekshiruvi uchun advisory lock (sinxron 7310001, akt 7310002)
 NOMALUM = "noma'lum"
 BOSHQA_FILIAL = "boshqa filial"
+KOMISSIYA_RAIS, KOMISSIYA_AZO = "rais", "azo"
+KOMISSIYA_ROLLARI = ((KOMISSIYA_RAIS, "Rais"), (KOMISSIYA_AZO, "A'zo"))
 _HAMMASI = object()  # progress(): «barcha bo'limlar» belgisi (None — bo'limsiz)
 
 
@@ -62,12 +64,26 @@ def _kesishadi(filial, bolim) -> bool:
 
 
 def _komissiya(komissiya) -> list[dict]:
-    natija = []
+    """A'zolar ro'yxatini tozalaydi: bo'sh ism tashlanadi, bitta xodim bir marta, rais bittadan ko'p emas va birinchi.
+    Element: `{"xodim_id": int | None, "ism", "lavozim", "rol": "rais" | "azo"}` (xodim_id yo'q — 1C'da yo'q odam)."""
+    natija, korilgan = [], set()
     for azo in komissiya or []:
         ism = str(azo.get("ism") or "").strip()
-        if ism:
-            natija.append({"ism": ism, "lavozim": str(azo.get("lavozim") or "").strip()})
-    return natija
+        xodim_id = azo.get("xodim_id") or None
+        if not ism or (xodim_id is not None and xodim_id in korilgan):
+            continue
+        korilgan.add(xodim_id)
+        rol = KOMISSIYA_RAIS if azo.get("rol") == KOMISSIYA_RAIS else KOMISSIYA_AZO
+        natija.append({"xodim_id": xodim_id, "ism": ism, "lavozim": str(azo.get("lavozim") or "").strip(), "rol": rol})
+    if sum(a["rol"] == KOMISSIYA_RAIS for a in natija) > 1:
+        raise ReviziyaXato("Komissiya raisi bitta bo'lishi kerak.")
+    return sorted(natija, key=lambda a: a["rol"] != KOMISSIYA_RAIS)
+
+
+def _lavozimlarni_eslab_qol(komissiya: list[dict]) -> None:
+    for a in komissiya:
+        if a["xodim_id"] is not None and a["lavozim"]:
+            XodimLavozimi.objects.update_or_create(xodim_id=a["xodim_id"], defaults={"lavozim": a["lavozim"]})
 
 
 def reviziya_och(filial, bolim, revizorlar, komissiya, kim, izoh: str = "") -> Reviziya:
@@ -77,6 +93,7 @@ def reviziya_och(filial, bolim, revizorlar, komissiya, kim, izoh: str = "") -> R
     revizorlar = list(revizorlar)
     if not revizorlar:
         raise ReviziyaXato("Kamida bitta revizor tanlang.")
+    komissiya = _komissiya(komissiya)
     with transaction.atomic():
         with connection.cursor() as cursor:
             cursor.execute("SELECT pg_advisory_xact_lock(%s)", [RV_RAQAM_QULFI])
@@ -87,11 +104,12 @@ def reviziya_och(filial, bolim, revizorlar, komissiya, kim, izoh: str = "") -> R
             raqam=1 if oxirgi is None else oxirgi + 1,
             filial=filial,
             bolim=bolim,
-            komissiya=_komissiya(komissiya),
+            komissiya=komissiya,
             izoh=izoh,
             ochdi=kim,
         )
         reviziya.revizorlar.set(revizorlar)
+        _lavozimlarni_eslab_qol(komissiya)
         qatorlar = Taqsimot.objects.filter(filial=filial, av_id__in=AV.objects.faol().values("pk"))
         qamrov = _qamrov(bolim)
         if qamrov is not None:
@@ -240,6 +258,28 @@ def qayd_tuzat(qayd: ReviziyaQayd, soni, kim) -> ReviziyaQayd | None:
         qayd.soni = soni
         qayd.save(update_fields=["soni", "yangilangan"])
         return qayd
+
+
+def xona_tugadi(reviziya: Reviziya, bolim, kim, tugadi: bool = True) -> None:
+    """Ochiq reviziyada bo'limni (None — bo'limsiz) «sanab bo'lindi» deb belgilaydi yoki belgini olib tashlaydi."""
+    with transaction.atomic():
+        reviziya = _ochiq_qulfla(reviziya.pk)
+        bolim_id = None if bolim is None else bolim.pk
+        if tugadi:
+            ReviziyaXona.objects.get_or_create(reviziya=reviziya, bolim_id=bolim_id, defaults={"tugatdi": kim})
+        else:
+            ReviziyaXona.objects.filter(reviziya=reviziya, bolim_id=bolim_id).delete()
+
+
+def revizorlarni_ozgartir(reviziya: Reviziya, revizorlar, kim) -> None:
+    """Ochiq reviziya revizorlarini almashtiradi. Olib tashlangan revizorning qaydlari saqlanadi, lekin u endi
+    skanerlay olmaydi (mobil ruxsat `revizorlar` ro'yxatidan)."""
+    revizorlar = list(revizorlar)
+    if not revizorlar:
+        raise ReviziyaXato("Kamida bitta revizor tanlang.")
+    with transaction.atomic():
+        reviziya = _ochiq_qulfla(reviziya.pk)
+        reviziya.revizorlar.set(revizorlar)
 
 
 def yakunla(reviziya: Reviziya, kim) -> None:

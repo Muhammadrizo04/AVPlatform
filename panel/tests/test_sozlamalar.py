@@ -68,6 +68,22 @@ def test_foydalanuvchi_yaratish_rol_filial(client_admin, filial_yarat):
     assert not Jurnal.objects.filter(yangi__contains="Kuchli-parol").exists()
 
 
+def test_foydalanuvchi_filialini_olib_hammasiga_ruxsat(client_admin, filial_yarat):
+    a = filial_yarat("A")
+    client_admin.post(reverse("panel:foydalanuvchilar"), {
+        "username": "cheklangan", "rol": "hisobchi", "filiallar": [a.pk], "parol": KUCHLI,
+    })
+    user = User.objects.get(username="cheklangan")
+    url = reverse("panel:foydalanuvchi_tahrir", args=[user.pk])
+    html = client_admin.get(url).content.decode()
+    assert 'type="checkbox" name="filiallar"' in html and "Belgilarni tozalash" in html
+
+    # katakchalar belgilanmasa `filiallar` umuman yuborilmaydi — barcha filiallarga ruxsat
+    javob = client_admin.post(url, {"username": "cheklangan", "rol": "hisobchi", "is_active": "on"})
+    assert javob.status_code == 302
+    assert not user.profil.filiallar.exists()
+
+
 def test_foydalanuvchi_zaif_parol_va_takror_nom(client_admin, admin_user):
     url = reverse("panel:foydalanuvchilar")
     javob = client_admin.post(url, {"username": "x1", "rol": "hr", "parol": "12345678"})

@@ -62,7 +62,9 @@ class FoydalanuvchiForma(forms.Form):
     ism = forms.CharField(label="Ism", max_length=150, required=False)
     rol = forms.ChoiceField(label="Rol", choices=Rol.choices)
     filiallar = forms.ModelMultipleChoiceField(
-        label="Filiallar (bo'sh = hammasi)", queryset=Filial.objects.order_by("nomi"), required=False
+        label="Filiallar", queryset=Filial.objects.order_by("nomi"), required=False,
+        widget=forms.CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
+        help_text="Hech biri belgilanmasa — barcha filiallarga ruxsat.",
     )
     parol = forms.CharField(label="Parol", required=False, widget=forms.PasswordInput(render_value=False))
     is_active = forms.BooleanField(label="Faol", required=False, initial=True)

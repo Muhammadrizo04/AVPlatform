@@ -1,0 +1,18 @@
+{% if q %}
+<div class="list-group list-group-flush border rounded mt-1 komissiya-natija">
+  {% for x in xodimlar %}
+  <button type="button" class="list-group-item list-group-item-action py-2"
+          hx-get="{% url 'reviziya:komissiya_qator' %}?xodim={{ x.pk }}" hx-vals='js:{n: document.querySelectorAll(".komissiya-qator").length}'
+          hx-target="#komissiya-qatorlar" hx-swap="beforeend" hx-on:click="document.getElementById('komissiya-qidir').value = ''">
+    <span class="fw-semibold">{{ x.ism }}</span>{% if x.filial %} <span class="small text-body-secondary">· {{ x.filial.nomi }}</span>{% endif %}
+  </button>
+  {% empty %}
+  <div class="list-group-item py-2 text-body-secondary">«{{ q }}» bo'yicha xodim topilmadi.</div>
+  {% endfor %}
+  <button type="button" class="list-group-item list-group-item-action py-2 text-primary"
+          hx-get="{% url 'reviziya:komissiya_qator' %}?ism={{ q|urlencode }}" hx-vals='js:{n: document.querySelectorAll(".komissiya-qator").length}'
+          hx-target="#komissiya-qatorlar" hx-swap="beforeend" hx-on:click="document.getElementById('komissiya-qidir').value = ''">
+    <i class="cil-plus me-1" aria-hidden="true"></i>«{{ q }}» ni 1C ro'yxatisiz qo'shish
+  </button>
+</div>
+{% endif %}

@@ -13,6 +13,7 @@ from django.views.decorators.http import require_POST
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisoblar.parametrlar import son
 from onec.models import AV, Filial
+from panel.saralash import Saralash
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.bayroqlar import BAYROQLAR
 from vositalar.models import Holat
@@ -34,6 +35,17 @@ def _id(qiymat) -> int:
 
 
 XODIM_SAHIFA_HAJMI = 50
+XODIM_USTUNLARI = {
+    "ism": lambda x: x.ism.strip().casefold(),
+    "filial": lambda x: x.filial.nomi.casefold() if x.filial else None,
+    "holat": lambda x: bool(x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq),
+    "av_soni": lambda x: x.av_soni,
+    "qiymat": lambda x: x.qiymat,
+}
+AKT_USTUNLARI = {
+    "raqam": "raqam", "sana": "sana", "topshiruvchi": "topshiruvchi__ism", "qabul": "qabul_qiluvchi__ism",
+    "tuzdi": "tuzdi__username", "holat": "holat",
+}
 KETGAN = Q(ishdan_bushagan=True) | Q(neaktiv=True) | Q(onec_da_yoq=True)
 
 
@@ -51,9 +63,15 @@ def xodimlar(request):
     yigindi = sorovlar.xodim_yigindilari(request.user)
     if request.GET.get("av_bor") == "1":
         qs = qs.filter(pk__in=[pk for pk, (soni, _) in yigindi.items() if soni > 0])
-    sahifa = Paginator(qs, XODIM_SAHIFA_HAJMI).get_page(request.GET.get("page"))
-    for x in sahifa:
+    # AV soni va qiymat Python'da hisoblanadi — xodimlar soni kichik, butun ro'yxat saralanib keyin sahifalanadi
+    xodimlar_royxati = list(qs.select_related("filial"))
+    for x in xodimlar_royxati:
         x.av_soni, x.qiymat = yigindi.get(x.pk, (NOL, NOL))
+    ustunlar = dict(XODIM_USTUNLARI)
+    if not huquqi_bor(request.user, "pul_korish"):
+        ustunlar.pop("qiymat")
+    saralash = Saralash(request, ustunlar)
+    sahifa = Paginator(saralash.royxat(xodimlar_royxati), XODIM_SAHIFA_HAJMI).get_page(request.GET.get("page"))
     hammasi = sorovlar.korinadigan_xodimlar(request.user)
     ushlab = {pk for pk, (soni, _) in yigindi.items() if soni > 0}
     korsatkichlar = {
@@ -66,7 +84,7 @@ def xodimlar(request):
     return render(
         request, "mol/xodimlar.html",
         {"xodimlar": sahifa, "sahifa": sahifa, "query": params.urlencode(), "params": request.GET,
-         "akt_huquqi": huquqi_bor(request.user, "mol_akt"), "korsatkichlar": korsatkichlar},
+         "akt_huquqi": huquqi_bor(request.user, "mol_akt"), "korsatkichlar": korsatkichlar, "saralash": saralash},
     )
 
 
@@ -234,11 +252,13 @@ def akt_royxat(request):
         qs = qs.filter(sana__gte=dan)
     if gacha:
         qs = qs.filter(sana__lte=gacha)
-    sahifa = Paginator(qs, AKT_SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    saralash = Saralash(request, AKT_USTUNLARI, standart="-raqam")
+    sahifa = Paginator(saralash.queryset(qs), AKT_SAHIFA_HAJMI).get_page(request.GET.get("page"))
     params = request.GET.copy()
     params.pop("page", None)
     return render(request, "mol/akt_royxat.html", {
         "sahifa": sahifa, "query": params.urlencode(), "holat": holat, "holatlar": MolAkt.Holat.choices,
+        "saralash": saralash,
         "params": request.GET, "akt_huquqi": huquqi_bor(request.user, "mol_akt"),
     })
 

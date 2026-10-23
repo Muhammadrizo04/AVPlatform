@@ -1,4 +1,5 @@
 {% extends "panel/base.html" %}
+{% load jadval %}
 {% block sarlavha %}{{ rv.nomi }}{% endblock %}
 {% block yol %}Reviziyalar / {{ rv.nomi }}{% endblock %}
 {% block kontent %}
@@ -7,6 +8,9 @@
   <h1 class="mb-0 me-auto">Reviziya {{ rv.nomi }} {% include "reviziya/_holati.html" with r=rv %}</h1>
   <a href="{% url 'reviziya:excel' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>
   <a href="{% url 'reviziya:pdf' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>Dalolatnoma</a>
+  {% if skanerlay_oladi %}
+  <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Skanerlash</a>
+  {% endif %}
   {% if boshqarish and rv.holat == "ochiq" %}
   <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o‘zgarmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
   <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo‘shib bo‘lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
@@ -29,8 +33,25 @@
         <strong>{{ belgilangan|son }} / {{ kutilgan|son }}</strong> dona
         <div class="progress mt-1" style="height: .375rem" role="progressbar" aria-label="Progress" aria-valuenow="{{ foiz }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: {{ foiz }}%"></div></div>
       </div>
-      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
-      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Komissiya</div>{% for a in rv.komissiya %}{{ a.ism }}{% if a.lavozim %} <span class="text-body-secondary small">({{ a.lavozim }})</span>{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+        {% if revizor_forma %}
+        <button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline chop-yoq" data-coreui-toggle="collapse" data-coreui-target="#revizorlar-forma" aria-expanded="false" aria-controls="revizorlar-forma">O'zgartirish</button>
+        {% endif %}
+      </div>
+      {% if revizor_forma %}
+      <div class="col-12 collapse chop-yoq" id="revizorlar-forma">
+        <form method="post" action="{% url 'reviziya:revizorlar' rv.pk %}" class="border rounded p-3">{% csrf_token %}
+          <div class="small text-body-secondary mb-2">Olib tashlangan revizorning qaydlari saqlanadi, lekin u endi skanerlay olmaydi.</div>
+          <div class="d-flex flex-wrap gap-3 mb-3">
+          {% for v in revizor_forma.revizorlar %}
+            <div class="form-check mb-0">{{ v.tag }}<label class="form-check-label" for="{{ v.id_for_label }}">{{ v.choice_label }}</label></div>
+          {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="cil-save me-1"></i>Saqlash</button>
+        </form>
+      </div>
+      {% endif %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Komissiya</div>{% for a in rv.komissiya %}{{ a.ism }}{% if a.rol == "rais" %} <span class="badge text-bg-light">rais</span>{% endif %}{% if a.lavozim %} <span class="text-body-secondary small">({{ a.lavozim }})</span>{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
       {% if rv.izoh %}<div class="col-12"><div class="small text-body-secondary">Izoh</div>{{ rv.izoh }}</div>{% endif %}
     </div>
   </div>
@@ -42,6 +63,40 @@
   {% endfor %}
 </div>
 {% if rv.holat == "ochiq" %}<p class="small text-body-secondary chop-yoq">Reviziya ochiq — vedomost joriy qaydlar bo'yicha (jonli).</p>{% endif %}
+
+{% if kesim|length > 1 %}
+<div class="card mb-3 chop-yoq">
+  <div class="card-header fw-semibold">Bo'limlar kesimi</div>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Bo'lim</th><th class="son">Kutilgan</th><th class="son">Belgilangan</th><th class="son">Kam / topilmadi</th><th class="son">Ortiqcha</th><th>Holati</th><th class="text-end"><span class="visually-hidden">Hujjatlar</span></th></tr></thead>
+    <tbody>
+    {% for x in kesim %}
+      <tr{% if bolim == x.filtr %} class="table-active"{% endif %}>
+        <td{% if x.chuqurlik %} style="padding-inline-start: calc(1.25rem + {{ x.chuqurlik }} * 1rem)"{% endif %}>
+          <a href="?bolim={{ x.filtr }}" class="text-decoration-none fw-semibold">{{ x.nomi }}</a>
+          {% if x.toliq != x.nomi and not x.chuqurlik %}<div class="small text-body-secondary">{{ x.toliq }}</div>{% endif %}
+        </td>
+        <td class="son">{{ x.kutilgan|son }}</td>
+        <td class="son">{{ x.belgilangan|son }}</td>
+        <td class="son{% if x.kamomad %} text-danger fw-semibold{% endif %}">{{ x.kamomad|son }}</td>
+        <td class="son">{{ x.ortiqcha|son }}</td>
+        <td>
+          {% if x.tugadi %}<span class="badge bg-success" title="{{ x.tugadi.tugatdi.get_full_name|default:x.tugadi.tugatdi.get_username }} · {{ x.tugadi.tugagan_vaqt|date:'d.m.Y H:i' }}">Tugadi</span>
+          {% elif x.belgilangan %}<span class="badge bg-warning text-dark">Sanalmoqda</span>
+          {% else %}<span class="badge text-bg-light">Boshlanmagan</span>{% endif %}
+        </td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-ghost-secondary" href="{% url 'reviziya:excel' rv.pk %}?bolim={{ x.filtr }}" title="Bo'lim vedomosti (Excel)" aria-label="{{ x.nomi }} — Excel"><i class="cil-spreadsheet"></i></a>
+          <a class="btn btn-sm btn-ghost-secondary" href="{% url 'reviziya:pdf' rv.pk %}?bolim={{ x.filtr }}" title="Bo'lim dalolatnomasi (PDF)" aria-label="{{ x.nomi }} — dalolatnoma"><i class="cil-print"></i></a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
 
 <div class="card mb-3 chop-yoq"><div class="card-body">
 <form method="get" class="filtrlar">
@@ -56,6 +111,7 @@
     <option value="bolimsiz" {% if bolim == "bolimsiz" %}selected{% endif %}>Bo'limsiz</option>
   </select>
   <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="Inv. raqam, nomi yoki QR">
+  {% tartib_maydoni %}
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
 </form>
 </div></div>
