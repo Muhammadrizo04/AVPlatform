@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 from functools import wraps
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Q, Sum
 from django.db.models.functions import Trim
 from django.http import Http404, HttpResponse
@@ -39,6 +40,8 @@ NOL = Decimal("0")
 SON_CHEGARASI = Decimal("1000000")
 QR_MAKS = 255  # ReviziyaQayd.qr_matn uzunligi: undan uzun matn kesiladi (noma'lum yorliq sifatida saqlanadi)
 QIDIRUV_MAKS = 100
+QR_BOSHI = "DS|"  # yorliq QR formati: DS|<filial kodi>|<inv>
+
 QIDIRUV_NATIJALARI = 20
 OXIRGILAR_SONI = 10
 NUL = chr(0)
@@ -195,6 +198,7 @@ def _yangilanishlar(request, rv, xona, *, oxirgilar_oob=True) -> str:
     return (
         render_to_string("reviziya/mobil/_oxirgilar.html", {**ctx, "oob": oxirgilar_oob}, request=request)
         + render_to_string("reviziya/mobil/_qolganlar.html", ctx, request=request)
+        + render_to_string("reviziya/mobil/_xona_chiziq.html", ctx, request=request)
         + format_html(
             '<span class="m-son" id="xona-progress" hx-swap-oob="true">{} / {}</span>',
             son(p["belgilangan"]), son(p["kutilgan"]),
@@ -283,6 +287,9 @@ def topish(request, pk):
     qr = _matn(request.GET.get("qr"))[:QR_MAKS]
     q = _matn(request.GET.get("q"))[:QIDIRUV_MAKS]
     av_id = (request.GET.get("av") or "").strip()
+    if not qr and q.upper().startswith(QR_BOSHI):
+        # USB skaner QR matnini qidiruv maydoniga «yozadi» — QR sifatida o'qiladi
+        qr, q = _matn(request.GET.get("q"))[:QR_MAKS], ""
     if qr:
         av, sabab = qr_tahlil(qr, rv)
         if av is not None:
@@ -342,6 +349,27 @@ def saqla(request, pk):
         "reviziya/mobil/_kartochka.html", {"tur": "saqlandi", "qayd": qayd, "rv": rv}, request=request
     )
     return HttpResponse(kartochka + _yangilanishlar(request, rv, xona))
+
+
+@_mobil
+@require_POST
+def hammasi_bor(request, pk):
+    """POST `bolim`: shu xonadagi hamma «qolgan» AV'ni kutilgan soni va holati bilan belgilaydi («Hammasi joyida»)."""
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return _xato("Avval xonani tanlang.", "#kartochka")
+    xona = _xona(rv, qiymat)
+    qolganlar = _qolganlar(rv, xona)
+    try:
+        with transaction.atomic():  # hammasi yoki hech biri
+            for q in qolganlar:
+                qayd_qosh(rv, xona, request.user, av=q["av"], soni=q["soni"], usul=ReviziyaQayd.Usul.QIDIRUV)
+    except ReviziyaXato as e:
+        return _xato(str(e), "#kartochka")
+    request.session[_sessiya_kaliti(rv)] = qiymat
+    xabar = format_html('<p class="m-ok" role="status">{} ta AV belgilandi.</p>', len(qolganlar))
+    return HttpResponse(xabar + _yangilanishlar(request, rv, xona))
 
 
 @_mobil

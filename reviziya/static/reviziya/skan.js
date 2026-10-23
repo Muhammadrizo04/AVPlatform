@@ -58,12 +58,29 @@
     });
   }
 
+  var qidiruv = document.getElementById("qidiruv");
+  var kameraYoq = true;  // kamera tugmasi ko'rinmaguncha — klaviatura / USB skaner bilan ishlanadi
+  // Faqat sichqonchali qurilmada (kompyuter) avtofokus: telefonda klaviatura o'z-o'zidan ochilmasin
+  var klaviatura = !!(window.matchMedia && window.matchMedia("(pointer: fine)").matches);
+
+  function qidiruvgaQayt() {
+    // Kamerasiz (kompyuter) rejimda kursor doim qidiruvda: inv. raqam yoki USB skaner -> Enter
+    if (klaviatura && kameraYoq && qidiruv) { qidiruv.value = ""; qidiruv.focus(); }
+  }
+
+  // HTTPS bor, lekin brauzerda QR o'quvchi yo'q (masalan, kompyuterdagi Chrome/Edge) — izoh aniqroq
+  if (izoh && window.isSecureContext) {
+    izoh.textContent = "Bu brauzerda kamera bilan skanerlash yo'q — inv. raqamni kiriting yoki USB skanerdan foydalaning";
+  }
+  qidiruvgaQayt();
+
   // Tugma faqat brauzer `qr_code` formatini qo'llasa ko'rinadi; aks holda HTTPS/inv. raqam izohi qoladi
   if (quti && "BarcodeDetector" in window && window.isSecureContext && navigator.mediaDevices) {
     Promise.resolve().then(function () {
       return BarcodeDetector.getSupportedFormats ? BarcodeDetector.getSupportedFormats() : [];
     }).then(function (formatlar) {
       if (formatlar.indexOf("qr_code") === -1) return;
+      kameraYoq = false;
       tugma.hidden = false;
       izoh.hidden = true;
       tugma.addEventListener("click", function () { if (oqim) toxtat(); else boshla(); });
@@ -81,6 +98,12 @@
     }
   });
 
+  document.addEventListener("keydown", function (e) {
+    // Esc — ochiq kartochkani yopib, qidiruvga qaytish
+    var k = document.getElementById("kartochka");
+    if (e.key === "Escape" && k && k.innerHTML.trim()) { k.innerHTML = ""; qidiruvgaQayt(); }
+  });
+
   document.addEventListener("input", function (e) {
     if (!e.target.matches("[data-qolgan-filtr]")) return;
     var soz = e.target.value.trim().toLowerCase();
@@ -90,7 +113,11 @@
   });
 
   document.addEventListener("htmx:afterSwap", function (e) {
-    if (e.detail.target.id === "kartochka" && e.detail.target.querySelector(".m-ok")) {
+    if (e.detail.target.id !== "kartochka") return;
+    var soni = e.detail.target.querySelector("input[name=soni]");
+    if (soni && klaviatura) soni.select();  // kartochka ochildi: son tayyor, Enter — saqlash
+    if (e.detail.target.querySelector(".m-ok")) {
+      qidiruvgaQayt();
       setTimeout(function () {
         var k = document.getElementById("kartochka");
         if (k.querySelector(".m-ok")) k.innerHTML = "";

@@ -267,3 +267,34 @@ def test_kartochka_standart_holati_boshqa_xonada(muhit, revizor, fa):
     assert javob.status_code == 200
     t = matn(javob)
     assert f'<option value="{Holat.NOSOZ}" selected>' in t
+
+
+def test_bir_bosishda_va_hammasi_joyida(muhit, revizor, foydalanuvchi):
+    rv, xona, stol, stul = muhit
+    c = kirgan(revizor)
+    html = matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert "Hammasi joyida" in html and "✓" in html and 'id="xona-chiziq"' in html
+
+    # ✓ — qolgan soni bilan (stol: 2 dona) saqlaydi
+    r = saqla(c, rv, xona, av=stol.pk, soni="2")
+    assert r.status_code == 200 and ReviziyaQayd.objects.get(av=stol).soni == Decimal("2")
+    assert 'id="xona-chiziq" aria-hidden="true" hx-swap-oob="true"' in r.content.decode()
+
+    r = c.post(url("mobil_hammasi_bor", rv.pk), {"bolim": xona.pk})
+    assert r.status_code == 200 and "1 ta AV belgilandi" in matn(r)
+    assert ReviziyaQayd.objects.get(av=stul).soni == Decimal("1")
+    assert ReviziyaQayd.objects.get(av=stol).soni == Decimal("2")  # allaqachon belgilangan — qo'shilmaydi
+    assert "Bu xonada kutilgan hamma AV belgilangan" in matn(r)
+
+    # boshqa revizor — 404; GET — 405
+    assert kirgan(foydalanuvchi("revizor")).post(url("mobil_hammasi_bor", rv.pk), {"bolim": xona.pk}).status_code == 404
+    assert c.get(url("mobil_hammasi_bor", rv.pk)).status_code == 405
+
+
+def test_usb_skaner_qr_matni_qidiruvda(muhit, revizor):
+    rv, xona, stol, _ = muhit
+    c = kirgan(revizor)
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q=f"DS|{rv.filial.kod}|INV-1")))
+    assert stol.nomi in html and 'name="av"' in html
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="DS|99|INV-1")))
+    assert "Noma'lum" in html or "noma'lum" in html

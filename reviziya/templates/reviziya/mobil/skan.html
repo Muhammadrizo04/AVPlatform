@@ -22,6 +22,19 @@
   .m-kart-bosh .m-ikon { color: var(--av-ikkilamchi); font-size: 1.4rem; }
   .m-raqamlar { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0; }
   .m-xona-tugadi { margin-top: 1.5rem; }
+  .m-xona-chiziq { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: transparent; }
+  .m-xona-chiziq i { display: block; height: 100%; background: var(--av-yashil); transition: width .3s; }
+  .m-sarlavha-qator { display: flex; align-items: center; gap: .5rem; }
+  .m-sarlavha-qator h2 { flex: 1; }
+  .m-kichik { min-height: 40px; padding: 0 .85rem; font-size: .9rem; }
+  .m-qolgan { display: flex; gap: .5rem; align-items: stretch; }
+  .m-qolgan .m-qator { flex: 1; min-width: 0; }
+  .m-bor { min-width: 56px; padding: 0; font-size: 1.35rem; color: #087251; background: var(--av-yashil-och); border-color: #b5e6d2; }
+  .m-bor:active { background: #c8eedd; }
+  @media (min-width: 1024px) {
+    body main { max-width: 1160px; }
+    .m-ustunlar { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  }
   .m-raqamlar span { padding: .3rem .7rem; border-radius: 999px; background: var(--av-chiziq-och); font-weight: 600; font-size: .9rem; }
 </style>
 {% endblock %}
@@ -31,7 +44,11 @@
   <b>{% if xona %}{{ xona.nomi }}{% else %}Bo'limsiz{% endif %}</b>
   <span class="m-son" id="xona-progress">{{ xona_progress.belgilangan|son }} / {{ xona_progress.kutilgan|son }}</span>
   <a class="m-tugma" href="{% url 'reviziya:mobil_xonalar' rv.pk %}">Xona</a>
+  {% include "reviziya/mobil/_xona_chiziq.html" %}
 </div>
+
+<div class="m-ustunlar">
+<div class="m-ustun">
 
 <div id="kamera" data-topish="{% url 'reviziya:mobil_topish' rv.pk %}" data-bolim="{{ xona_qiymati }}">
   <button class="m-tugma asosiy keng" id="kamera-tugma" type="button" hidden>Kamera — QR skanerlash</button>
@@ -41,13 +58,15 @@
 
 <form class="m-qidiruv" hx-get="{% url 'reviziya:mobil_topish' rv.pk %}" hx-target="#kartochka" role="search">
   <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
-  <input class="m-maydon" type="search" name="q" placeholder="Inv. raqam yoki nom" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
+  <input class="m-maydon" type="search" name="q" id="qidiruv" placeholder="Inv. raqam yoki nom" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
   <button class="m-tugma asosiy" type="submit">Topish</button>
 </form>
 
 <div id="kartochka" aria-live="polite"></div>
 
 {% include "reviziya/mobil/_oxirgilar.html" %}
+</div>
+<div class="m-ustun">
 {% include "reviziya/mobil/_qolganlar.html" %}
 
 <form method="post" action="{% url 'reviziya:mobil_xona_tugadi' rv.pk %}" class="m-xona-tugadi">{% csrf_token %}
@@ -61,6 +80,8 @@
   <button class="m-tugma asosiy keng" type="submit">Xona tugadi</button>
   {% endif %}
 </form>
+</div>
+</div>
 {% endblock %}
 {% block skript %}
 <script src="{% static 'panel/htmx.min.js' %}" defer></script>
