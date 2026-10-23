@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 from django.db.models import Sum
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 
 from hisobotlar.servis import filial_kesimi, jami
@@ -45,8 +45,15 @@ def _holatlar(user) -> list[dict]:
     return natija
 
 
-@amal_kerak("korish")
 def bosh(request):
+    # Revizor panelga kirmaydi (`korish` yo'q): uning bosh sahifasi — «Mening reviziyalarim» (spec §3.2)
+    if not huquqi_bor(request.user, "korish") and huquqi_bor(request.user, "reviziya_otkazish"):
+        return redirect("reviziya:mobil")
+    return _bosh(request)
+
+
+@amal_kerak("korish")
+def _bosh(request):
     bugun = timezone.localdate()
     pul = huquqi_bor(request.user, "pul_korish")
     if not pul:

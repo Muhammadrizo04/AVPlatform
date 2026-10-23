@@ -123,8 +123,12 @@ def test_5_xato_urinishdan_keyin_blok(foydalanuvchi):
     assert "_auth_user_id" not in client.session
 
 
-def test_bosh_revizor_sessiyasi_bilan_ham_403(client_rol):
-    assert client_rol(Rol.REVIZOR).get(reverse("panel:bosh")).status_code == 403
+def test_bosh_revizor_sessiyasi_bilan_mobilga(client_rol):
+    # 2-bosqich (reviziya spec §3.2): revizorning bosh sahifasi — «Mening reviziyalarim»; panel sahifalari 403
+    client = client_rol(Rol.REVIZOR)
+    javob = client.get(reverse("panel:bosh"))
+    assert javob.status_code == 302 and javob.url == reverse("reviziya:mobil")
+    assert client.get(reverse("vositalar:royxat")).status_code == 403
 
 
 def test_bosh_rol_sessiya_davomida_o_zgarsa_403(foydalanuvchi):
@@ -134,7 +138,8 @@ def test_bosh_rol_sessiya_davomida_o_zgarsa_403(foydalanuvchi):
     assert client.get(reverse("panel:bosh")).status_code == 200
     u.profil.rol = Rol.REVIZOR
     u.profil.save()
-    assert client.get(reverse("panel:bosh")).status_code == 403
+    assert client.get(reverse("panel:bosh")).url == reverse("reviziya:mobil")
+    assert client.get(reverse("vositalar:royxat")).status_code == 403
 
 
 def test_bir_foydalanuvchi_xatosi_boshqasini_bloklamaydi(foydalanuvchi):

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import mobil, views
 
 app_name = "reviziya"
 
@@ -14,4 +14,11 @@ urlpatterns = [
     path("<int:pk>/yop/", views.yop_view, name="yop"),
     path("<int:pk>/excel/", views.excel, name="excel"),
     path("<int:pk>/pdf/", views.pdf, name="pdf"),
+    # revizorning mobil sahifalari (spec §4)
+    path("m/", mobil.reviziyalarim, name="mobil"),
+    path("m/<int:pk>/", mobil.xonalar, name="mobil_xonalar"),
+    path("m/<int:pk>/skan/", mobil.skan, name="mobil_skan"),
+    path("m/<int:pk>/topish/", mobil.topish, name="mobil_topish"),
+    path("m/<int:pk>/saqla/", mobil.saqla, name="mobil_saqla"),
+    path("m/qayd/<int:qayd_pk>/tuzat/", mobil.tuzat, name="mobil_tuzat"),
 ]

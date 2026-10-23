@@ -1,0 +1,28 @@
+<section id="oxirgilar"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <h2>Oxirgi belgilanganlar</h2>
+  <div id="oxirgilar-xato"></div>
+  {% if oxirgilar %}
+  <ul class="m-royxat">
+    {% for o in oxirgilar %}
+    <li class="m-qator">
+      <span class="m-asosiy">
+        {% if o.q.av %}<b>{{ o.q.av.nomi }}</b><span class="m-xira">{{ o.q.av.inv_raqam|default:"inv. raqamsiz" }} · {{ o.q.get_holat_display }}</span>
+        {% else %}<b>Noma'lum yorliq</b><span class="m-xira">{{ o.q.qr_matn|truncatechars:60 }}</span>{% endif %}
+        <span class="m-xira">{{ o.q.kim.get_full_name|default:o.q.kim.username }} · {{ o.q.yangilangan|date:"H:i" }}</span>
+      </span>
+      {% if o.ozi %}
+      <form hx-post="{% url 'reviziya:mobil_tuzat' o.q.pk %}" hx-target="#oxirgilar" hx-swap="outerHTML" style="display:flex;gap:.35rem;align-items:center">
+        <input class="m-maydon m-son" style="width:5.5rem;text-align:center" name="soni" inputmode="decimal" autocomplete="off" value="{{ o.qiymat }}" aria-label="Topilgan soni">
+        <button class="m-tugma" type="submit" aria-label="Sonni tuzatish">OK</button>
+      </form>
+      {% else %}
+      <span class="m-son">{{ o.q.soni|son }}</span>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="m-xira">Qaydni o'chirish uchun sonni 0 qiling.</p>
+  {% else %}
+  <p class="m-bosh">Bu xonada hali hech narsa belgilanmagan.</p>
+  {% endif %}
+</section>
