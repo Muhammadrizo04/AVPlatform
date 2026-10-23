@@ -18,6 +18,13 @@
 - Taqsimot invarianti: har (AV, filial) uchun Σ `Taqsimot.soni` = `AVQoldiq.soni`.
 - Python 3.12 bilan mos kod yozing (3.13'ga xos imkoniyatlar yo'q).
 
+## Reviziya (2-bosqich)
+- Ilova `reviziya`: inventarizatsiya hujjati `RV-%06d`, raqam advisory lock bilan (kalit `7310003`). Panel: `/reviziya/` (`reviziya_boshqarish`, `reviziya_korish`).
+- Huquqlar: `reviziya_boshqarish` (admin, hisobchi), `reviziya_otkazish` (admin, hisobchi, revizor), `reviziya_korish` (admin, hisobchi, hr, rahbar).
+- Revizor kirgach `/reviziya/m/` ga yo'naltiriladi: QR (`DS|<filial kodi>|<inv>`) skanerlaydi yoki inv bo'yicha qidiradi; qaydlar `+soni` bilan birlashadi.
+- Oqim: hisobchi yakunlaydi -> vedomost -> qo'llash -> yopish. Holatlar: `ochiq`, `yakunlangan`, `qollangan`, `bekor`.
+- Reviziya qaydlari AV tarixida (`tur="reviziya"`) filial cheklovi bilan chiqadi (`vositalar/tarix.py`).
+
 ## Buyruqlar
 - Testlar (Windows, lokal): `venv\Scripts\python.exe -m pytest -q` (`.env` shart emas; `config.settings_test`; PostgreSQL rol `av`/`av`, CREATEDB)
 - Sinxron: `python manage.py sinxron` (keyingi tasklarda qo'shiladi)
