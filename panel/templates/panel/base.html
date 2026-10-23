@@ -33,9 +33,6 @@
       {% if reviziya_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if ns == 'reviziya' %} active{% endif %}" href="{% url 'reviziya:royxat' %}"><i class="nav-icon cil-task"></i> Reviziyalar</a></li>
       {% endif %}
-      {% if skanerlash_huquqi %}
-      <li class="nav-item"><a class="nav-link r-hisobot" href="{% url 'reviziya:mobil' %}"><i class="nav-icon cil-qr-code"></i> Skanerlash</a></li>
-      {% endif %}
       {% if hisobot_huquqi or tozalash_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
       {% if hisobot_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>

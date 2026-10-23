@@ -22,9 +22,7 @@ def sinxron_holati(request):
         "chiqim_kutilmoqda_soni": chiqim_soni,
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
         "pul_huquqi": huquqi_bor(request.user, "pul_korish"),
-        "reviziya_huquqi": huquqi_bor(request.user, "reviziya_korish"),
-        "skanerlash_huquqi": huquqi_bor(request.user, "reviziya_otkazish"),
-        "kompaniya_nomi": Sozlama.ol().kompaniya_nomi,
+        "reviziya_huquqi": huquqi_bor(request.user, "reviziya_korish"),        "kompaniya_nomi": Sozlama.ol().kompaniya_nomi,
         "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),
         "tozalash_huquqi": huquqi_bor(request.user, "tozalash"),
         "sinxron_holati": {
