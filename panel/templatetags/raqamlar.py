@@ -52,6 +52,19 @@ def pul(qiymat):
     return "0,00" if matn == "-0,00" else matn
 
 
+@register.filter
+def qisqa_pul(qiymat):
+    """Grafiklar uchun ixcham summa: 14889668651.05 → «14,89 mlrd», 123456789 → «123,5 mln», 95000 → «95 000»."""
+    d = _decimal(qiymat)
+    if d is None:
+        return "" if qiymat is None else qiymat
+    for chegara, birlik, xona in ((Decimal("1e9"), "mlrd", 2), (Decimal("1e6"), "mln", 1)):
+        if abs(d) >= chegara:
+            matn = _guruhla((d / chegara).quantize(Decimal(1).scaleb(-xona), ROUND_HALF_UP), xona)
+            return f"{matn.rstrip('0').rstrip(',')}\xa0{birlik}"
+    return son(d.quantize(Decimal("1"), ROUND_HALF_UP))
+
+
 # 16-19 xonali karta raqami (orasida bo'sh joy yoki chiziqcha bo'lishi mumkin); telefon raqamlari (≤12 xona) tegilmaydi.
 KARTA_RAQAMI = re.compile(r"(?<!\d)(?:\d[ -]?){12,15}(\d{4})(?!\d)")
 

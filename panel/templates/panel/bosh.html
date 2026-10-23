@@ -38,6 +38,48 @@
       {% if filial_qolgan %}<p class="g-izoh">Yana {{ filial_qolgan }} ta filial — pastdagi jadvalda.</p>{% endif %}
       {% else %}<div class="card-body text-body-secondary">Ma'lumot yo'q.</div>{% endif %}
     </section>
+
+    {% if qiymat_filial %}
+    <section class="card mt-4" aria-labelledby="g-qiymat">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+        <span id="g-qiymat">Filiallar bo'yicha qiymat</span>
+        <small class="g-afsona"><span class="g-afsona-boshlangich"></span>boshlang'ich <span class="g-afsona-qoldiq"></span>qoldiq · so'm</small>
+      </div>
+      <div class="qiymat-jami">
+        <div><span>Boshlang'ich</span><b title="{{ jami.boshlangich|pul }} so'm">{{ jami.boshlangich|qisqa_pul }}</b></div>
+        <div><span>Qoldiq</span><b title="{{ jami.qoldiq|pul }} so'm">{{ jami.qoldiq|qisqa_pul }}</b></div>
+        <div><span>Eskirish</span><b>{{ eskirish_foizi|floatformat:1 }}%</b></div>
+      </div>
+      <ul class="grafik grafik-qiymat" aria-label="Filiallar bo'yicha boshlang'ich va qoldiq qiymat">
+        {% for q in qiymat_filial %}
+        <li title="{{ q.nomi }}: boshlang'ich {{ q.boshlangich|pul }}, qoldiq {{ q.qoldiq|pul }} so'm"><a href="{% url 'hisobotlar:kesim' %}">
+          <span class="g-nomi">{{ q.nomi }}</span>
+          <span class="g-yol"><span class="g-bar g-fon" style="width:{{ q.ulush|unlocalize }}%"><span class="g-bar" style="width:{{ q.qoldiq_ulush|unlocalize }}%"></span></span></span>
+          <span class="g-qiymat">{{ q.qoldiq|qisqa_pul }}{% if q.qoldiq != q.boshlangich %}<small>{{ q.boshlangich|qisqa_pul }}</small>{% endif %}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+      {% if qiymat_filial_qolgan %}<p class="g-izoh">Yana {{ qiymat_filial_qolgan }} ta filial — «Kesim» hisobotida.</p>{% endif %}
+    </section>
+    {% endif %}
+
+    {% if qiymat_tur %}
+    <section class="card mt-4" aria-labelledby="g-tur">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+        <span id="g-tur">AV turlari bo'yicha qiymat</span>
+        <small class="g-afsona"><span class="g-afsona-boshlangich"></span>boshlang'ich <span class="g-afsona-qoldiq"></span>qoldiq · so'm</small>
+      </div>
+      <ul class="grafik grafik-qiymat" aria-label="AV turlari bo'yicha boshlang'ich va qoldiq qiymat">
+        {% for q in qiymat_tur %}
+        <li title="{{ q.nomi }}: boshlang'ich {{ q.boshlangich|pul }}, qoldiq {{ q.qoldiq|pul }} so'm"><a href="{% url 'hisobotlar:kesim' %}?guruh=tur">
+          <span class="g-nomi">{{ q.nomi }}</span>
+          <span class="g-yol"><span class="g-bar g-fon" style="width:{{ q.ulush|unlocalize }}%"><span class="g-bar" style="width:{{ q.qoldiq_ulush|unlocalize }}%"></span></span></span>
+          <span class="g-qiymat">{{ q.qoldiq|qisqa_pul }}{% if q.qoldiq != q.boshlangich %}<small>{{ q.boshlangich|qisqa_pul }}</small>{% endif %}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
   </div>
   <div class="col-xl-5">
     <section class="card mb-4" aria-labelledby="g-holat">

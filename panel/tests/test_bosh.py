@@ -44,8 +44,8 @@ def test_bosh_sonlar_mingliklar_bilan(client_hisobchi, filial_yarat):
     av = av_yarat(filial_yarat("A"), soni="1108")
     av.qoldiqlar.update(summa=Decimal("3485037435.36"))
     html = client_hisobchi.get(reverse("panel:bosh")).content.decode()
-    assert "1 108<" in html
-    assert "3 485 037 435,36" in html
+    assert "1\xa0108<" in html
+    assert "3\xa0485\xa0037\xa0435,36" in html
     assert "1108,000" not in html
 
 
@@ -103,3 +103,33 @@ def test_sinxron_banner_kulrang_oxirgi_vaqt(client_hisobchi):
     )
     matn = html.unescape(client_hisobchi.get(reverse("panel:bosh")).content.decode())
     assert "Oxirgi muvaffaqiyatli sinxron:" in matn
+
+
+def test_bosh_qiymat_grafiklari(client_hisobchi, client_rol, filial_yarat):
+    a, b = filial_yarat("A"), filial_yarat("B")
+    av_yarat(a, soni="2")  # summa 100
+    av2 = av_yarat(b, soni="3")  # summa 100, eskirish 50%
+    AVKartochka.objects.create(av=av2, ishga_tushgan_sana=oy_qosh(timezone.localdate(), -12), xizmat_muddati_oy=24)
+
+    javob = client_hisobchi.get(reverse("panel:bosh"))
+    grafik = {q["filial"].kod: q for q in javob.context["qiymat_filial"]}
+    assert (grafik["A"]["ulush"], grafik["A"]["qoldiq_ulush"]) == (100, 100)
+    assert (grafik["B"]["ulush"], grafik["B"]["qoldiq_ulush"]) == (100, 50)
+    assert javob.context["eskirish_foizi"] == 25
+    assert [q["boshlangich"] for q in javob.context["qiymat_tur"]] == [Decimal("200")]
+    html = javob.content.decode()
+    assert "Filiallar bo'yicha qiymat" in html.replace("&#x27;", "'") and "AV turlari" in html
+
+    # HR summani ko'rmaydi — grafiklar yo'q
+    javob = client_rol("hr").get(reverse("panel:bosh"))
+    assert "qiymat_filial" not in javob.context and "bo&#x27;yicha qiymat" not in javob.content.decode()
+
+
+@pytest.mark.parametrize("qiymat, kutilgan", [
+    (Decimal("14889668651.05"), "14,89\xa0mlrd"), (Decimal("123456789"), "123,5\xa0mln"), (Decimal("2000000"), "2\xa0mln"),
+    (Decimal("95000.4"), "95\xa0000"), (None, ""),
+])
+def test_qisqa_pul(qiymat, kutilgan):
+    from panel.templatetags.raqamlar import qisqa_pul
+
+    assert qisqa_pul(qiymat) == kutilgan

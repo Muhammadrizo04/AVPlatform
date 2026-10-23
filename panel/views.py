@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
-from hisobotlar.servis import filial_kesimi, jami
+from hisobotlar.servis import filial_kesimi, jami, kesim
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from onec.models import AV
 from vositalar.bayroqlar import BAYROQLAR, bayroq_sonlari
@@ -14,6 +14,7 @@ from vositalar.models import Holat, Taqsimot
 # МОЛ biriktirish (akt orqali), ketgan xodimdagi AV'lar va bo'limsiz qatorlar.
 XODIM_BAYROQLARI = ("molsiz", "ketgan_xodimda", "bolimsiz")
 GRAFIK_FILIALLAR = 12
+GRAFIK_TURLAR = 8
 # «Bajarilishi kerak» qatorlari bo'lim rangida
 VAZIFA_RANGI = {
     "molsiz": "mol", "ketgan_xodimda": "mol", "chiqim_kutilmoqda": "chiqim", "mos_emas": "ogoh",
@@ -94,9 +95,29 @@ def _bosh(request):
                     "ikonka": "cil-sitemap", "rang": "vosita", "bayroq": "bolimsiz", "ogoh": False})
 
     holatlar = _holatlar(request.user)
-    return render(
-        request, "panel/bosh.html",
-        {"filiallar": filiallar, "jami": jamlar, "bayroqlar": sorted(bayroqlar, key=lambda b: not b["soni"]),
-         "kpi": kpi[:4], "filial_grafik": filial_grafik, "filial_qolgan": max(len(filiallar) - GRAFIK_FILIALLAR, 0),
-         "holatlar": holatlar, "bugun": bugun},
-    )
+    kontekst = {
+        "filiallar": filiallar, "jami": jamlar, "bayroqlar": sorted(bayroqlar, key=lambda b: not b["soni"]),
+        "kpi": kpi[:4], "filial_grafik": filial_grafik, "filial_qolgan": max(len(filiallar) - GRAFIK_FILIALLAR, 0),
+        "holatlar": holatlar, "bugun": bugun,
+    }
+    if pul:
+        # Summalar grafiklari: boshlang'ich qiymat (yo'lak) va uning ichida qoldiq qiymat (amortizatsiya bilan)
+        filial_qiymat = [{**q, "nomi": q["filial"].nomi} for q in filiallar]
+        kontekst.update(
+            qiymat_filial=_qiymat_grafigi(filial_qiymat),
+            qiymat_filial_qolgan=max(len(filial_qiymat) - GRAFIK_FILIALLAR, 0),
+            qiymat_tur=_qiymat_grafigi(kesim(request.user, "tur", bugun), GRAFIK_TURLAR),
+            eskirish_foizi=_ulush(jamlar["boshlangich"] - jamlar["qoldiq"], jamlar["boshlangich"]),
+        )
+    return render(request, "panel/bosh.html", kontekst)
+
+
+def _qiymat_grafigi(qatorlar, nechta=GRAFIK_FILIALLAR) -> list[dict]:
+    """Boshlang'ich qiymat bo'yicha kamayuvchi; `ulush` — eng kattasiga nisbatan, `qoldiq_ulush` — o'z
+    boshlang'ichiga nisbatan (yo'lak ichidagi to'q qism)."""
+    tartiblangan = sorted((q for q in qatorlar if q["boshlangich"] > 0), key=lambda q: q["boshlangich"], reverse=True)
+    eng_katta = tartiblangan[0]["boshlangich"] if tartiblangan else NOL
+    return [
+        {**q, "ulush": _ulush(q["boshlangich"], eng_katta), "qoldiq_ulush": _ulush(q["qoldiq"], q["boshlangich"])}
+        for q in tartiblangan[:nechta]
+    ]
