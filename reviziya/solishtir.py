@@ -9,7 +9,8 @@ Algoritm har AV bo'yicha:
    (kutilgan holatdan topilgan holatga, `min` miqdor). Soni teng bo'lmasa ham juftlanadigan qismi shu yerda
    juftlanadi, shuning uchun keyin har bo'limda faqat bir tomonlama qoldiq (kamomad yoki ortiqcha) qoladi.
 3. Kamomad bo'limlari pk tartibida ortiqcha bo'limlari bilan `min(kam, ortiqcha)` juftlashadi — `boshqa_joyda`
-   (`bolim_id` — manba, `nishon_bolim_id` — topilgan joy, `holat` — manba holati).
+   (`bolim_id` — manba, `nishon_bolim_id` — topilgan joy, `holat` — manba holati, `nishon_holat` — topilgan
+   holat, agar manbadan farq qilsa, aks holda "").
 4. Qolgan kamomad — `topilmadi` (shu bo'limda AV umuman topilmagan) yoki `kam`; qolgan ortiqcha — `ortiqcha`.
    AV'siz (noma'lum QR) qaydlar — `ortiqcha` (`qr_matn` bilan).
 """
@@ -110,11 +111,11 @@ def _av_hisobi(kutilgan, topilgan):
     kamomad_qoldi = dict(kamomad)
     ortiqcha_qoldi = dict(ortiqcha)
     for (b, h), (nb, nh), m in _juftla(kamomad, ortiqcha):
-        jami_kochgan[(b, h, nb)] += m
+        jami_kochgan[(b, h, nb, "" if nh == h else nh)] += m
         kamomad_qoldi[(b, h)] -= m
         ortiqcha_qoldi[(nb, nh)] -= m
-    for (b, h, nb), m in jami_kochgan.items():
-        natija.append(("boshqa_joyda", b, h, m, nb, ""))
+    for (b, h, nb, nh), m in jami_kochgan.items():
+        natija.append(("boshqa_joyda", b, h, m, nb, nh))
     for (b, h), s in kamomad_qoldi.items():
         if s > 0:
             natija.append(("topilmadi" if topilgan_bolimda[b] == 0 else "kam", b, h, s, None, ""))

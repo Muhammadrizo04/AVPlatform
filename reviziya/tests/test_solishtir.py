@@ -223,3 +223,37 @@ def test_mol_boyicha_qatorlar_yigiladi_va_tartib(filial, och, qosh):
         ("topilmadi", stul.pk, Decimal("1")),
         ("topildi", stol.pk, Decimal("2")),
     ]
+
+
+def test_boshqa_joyda_boshqa_holat(filial, och, qosh):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    stol = av_yarat(filial, soni="2")
+    qator(stol, filial, "2", bolim=a)
+    rv = och(filial)
+    qosh(rv, b, soni="2", av=stol, holat=Holat.NOSOZ)
+
+    qatorlar = solishtir(rv)
+
+    assert len(qatorlar) == 1
+    q = qatorlar[0]
+    assert (q.guruh, q.bolim_id, q.holat, q.nishon_bolim_id, q.nishon_holat, q.farq) == (
+        "boshqa_joyda", a.pk, Holat.ISHLATILMOQDA, b.pk, Holat.NOSOZ, Decimal("2")
+    )
+    assert q.kalit.endswith(f":{b.pk}:nosoz")
+
+
+def test_boshqa_joyda_aralash_holat(filial, och, qosh):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    stol = av_yarat(filial, soni="2")
+    qator(stol, filial, "2", bolim=a)
+    rv = och(filial)
+    qosh(rv, b, av=stol, holat=Holat.NOSOZ)
+    qosh(rv, b, av=stol, holat=Holat.ISHLATILMOQDA)
+
+    qatorlar = solishtir(rv)
+
+    assert {q.guruh for q in qatorlar} == {"boshqa_joyda"}
+    assert sorted((q.nishon_holat, q.farq) for q in qatorlar) == [("", Decimal("1")), (Holat.NOSOZ, Decimal("1"))]
+    assert len({q.kalit for q in qatorlar}) == 2
