@@ -1,6 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ av.nomi }}{% endblock %}
-{% block yol %}<a href="{% url 'vositalar:royxat' %}" class="text-body-secondary text-decoration-none">AV ro'yxati</a>&nbsp;&nbsp;/&nbsp;&nbsp;{{ av.nomi }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a>{% endblock %}
 {% block kontent %}
 
 {# Sarlavha: nima, qayerda, kimda, qanday holatda — hamma rol uchun bir xil #}

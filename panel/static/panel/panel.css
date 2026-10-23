@@ -144,8 +144,11 @@ a { text-underline-offset: 3px; }
   padding: 0 2rem; background: rgba(255, 255, 255, .92); backdrop-filter: saturate(1.4) blur(8px);
   border-bottom: 1px solid var(--av-chiziq); font-size: .8125rem; color: var(--av-ikkilamchi); }
 .av-yol .header-toggler { padding: .25rem; margin-inline-start: -.5rem; color: var(--av-siyoh); }
-.av-yol-sarlavha { flex: 1 1 auto; min-width: 0; color: var(--av-siyoh); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.av-yol-sarlavha a { color: var(--av-ikkilamchi) !important; font-weight: 500; }
+/* Tepadagi yo'l: faqat qayerdaligi (menyu bo'limi / ota sahifa) — joriy sahifa nomi pastdagi h1 da, takrorlanmaydi */
+.av-yol-sarlavha { flex: 1 1 auto; min-width: 0; color: var(--av-xira); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.av-yol-sarlavha a { color: var(--av-siyoh) !important; font-weight: 600; text-decoration: none; }
+.av-yol-sarlavha a:hover { color: var(--av-indigo) !important; }
+.av-yol-sarlavha .yol-ajrat { margin: 0 .5rem; color: var(--av-chiziq); }
 .av-sinxron { display: inline-flex; align-items: center; gap: .5rem; white-space: nowrap; padding: .3rem .75rem; border-radius: 999px;
   background: var(--av-yashil-och); color: #087251; font-weight: 600; font-size: .75rem; }
 .av-sinxron i { width: 8px; height: 8px; border-radius: 50%; background: var(--av-yashil); box-shadow: 0 0 0 3px rgba(14, 159, 110, .2); }

@@ -1,8 +1,7 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ akt.nomi }}{% endblock %}
-{% block yol %}{{ akt.nomi }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:akt_royxat' %}">МОЛ aktlari</a>{% endblock %}
 {% block kontent %}
-<a href="{% url 'mol:akt_royxat' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ aktlari</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <h1 class="mb-0 me-auto">МОЛ akti {{ akt.nomi }} {% include "mol/_akt_holati.html" with a=akt %}</h1>
   <a href="{% url 'mol:akt_pdf' akt.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>PDF</a>

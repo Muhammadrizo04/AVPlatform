@@ -1,8 +1,7 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Yangi МОЛ akti{% endblock %}
-{% block yol %}Yangi МОЛ akti{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
 {% block kontent %}
-<a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
 <h1>Yangi МОЛ topshirish-qabul akti</h1>
 <div class="card mb-3"><div class="card-body">
 <form method="get" class="row g-2 align-items-end">

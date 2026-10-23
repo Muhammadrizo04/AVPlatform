@@ -1,8 +1,7 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}{{ xodim.ism }}{% endblock %}
-{% block yol %}{{ xodim.ism }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
 {% block kontent %}
-<a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <div class="me-auto">
     <h1 class="mb-1">{{ xodim.ism }}</h1>

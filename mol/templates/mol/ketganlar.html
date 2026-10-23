@@ -1,8 +1,7 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Ketgan xodimlardagi AV'lar{% endblock %}
-{% block yol %}Ketgan xodimlardagi AV'lar{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
 {% block kontent %}
-<a href="{% url 'mol:xodimlar' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; МОЛ nazorati</a>
 <h1>Ketgan xodimlardagi AV'lar</h1>
 <p class="text-body-secondary">Ishdan bo'shagan, nofaol yoki 1C'da topilmagan xodimlarda qolgan AV'lar.</p>
 {% for g in guruhlar %}

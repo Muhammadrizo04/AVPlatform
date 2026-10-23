@@ -1,9 +1,8 @@
 {% extends "panel/base.html" %}
 {% load jadval %}
 {% block sarlavha %}{{ rv.nomi }}{% endblock %}
-{% block yol %}Reviziyalar / {{ rv.nomi }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'reviziya:royxat' %}">Reviziyalar</a>{% endblock %}
 {% block kontent %}
-<a href="{% url 'reviziya:royxat' %}" class="btn btn-sm btn-link px-0 mb-1 chop-yoq">&larr; Reviziyalar</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <h1 class="mb-0 me-auto">Reviziya {{ rv.nomi }} {% include "reviziya/_holati.html" with r=rv %}</h1>
   <a href="{% url 'reviziya:excel' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>

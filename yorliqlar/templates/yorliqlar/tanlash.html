@@ -1,8 +1,7 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Yorliq chop etish{% endblock %}
-{% block yol %}Yorliq chop etish{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a>{% endblock %}
 {% block kontent %}
-<a href="{% url 'vositalar:royxat' %}" class="btn btn-sm btn-link px-0 mb-1">← AV ro'yxati</a>
 <h1>QR-yorliq chop etish</h1>
 
 {% if elementlar %}

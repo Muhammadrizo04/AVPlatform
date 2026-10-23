@@ -1,6 +1,6 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Chiqimni tasdiqlash{% endblock %}
-{% block yol %}Chiqimni tasdiqlash{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'chiqimlar:royxat' %}">1C chiqimlari</a>{% endblock %}
 {% block kontent %}
 <a href="{% url 'chiqimlar:royxat' %}" class="btn btn-sm btn-link px-0 mb-1">‹ Ro'yxatga</a>
 <h1>1C chiqimi: {{ chiqim.hujjat_turi }} {{ chiqim.hujjat_raqami }}</h1>
