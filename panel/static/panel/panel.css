@@ -181,6 +181,8 @@ main h3 { font-size: .9375rem; font-weight: 700; margin: 1rem 0 .5rem; }
 .table > :not(caption) > * > * { padding: .7rem .875rem; }
 .table > :not(caption) > * > :first-child { padding-inline-start: 1.25rem; }
 .table > :not(caption) > * > :last-child { padding-inline-end: 1.25rem; }
+/* Butun qator bosiladi: qatordagi asosiy havola .stretched-link bilan qatorni qoplaydi. */
+.table tr.qator-havola { position: relative; cursor: pointer; }
 .table > tbody > tr:last-child > * { border-bottom: 0; }
 .table tfoot th, .table tfoot td, .table .table-light, .table .table-light > * { background: #fafbfd !important; font-weight: 700; border-top: 1px solid var(--av-chiziq); }
 .son { text-align: right !important; font-variant-numeric: tabular-nums; }

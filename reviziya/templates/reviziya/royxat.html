@@ -20,8 +20,8 @@
   <thead><tr><th>Reviziya</th><th>Filial</th><th>Bo'lim</th><th>Ochilgan</th><th class="son">Belgilangan / kutilgan</th><th>Holat</th><th></th></tr></thead>
   <tbody>
   {% for r in sahifa %}
-    <tr>
-      <td class="text-nowrap"><a href="{% url 'reviziya:sahifa' r.pk %}" class="fw-semibold text-decoration-none">{{ r.nomi }}</a></td>
+    <tr class="qator-havola">
+      <td class="text-nowrap"><a href="{% url 'reviziya:sahifa' r.pk %}" class="fw-semibold text-decoration-none stretched-link">{{ r.nomi }}</a></td>
       <td>{{ r.filial.nomi }}</td>
       <td>{% if r.bolim %}{{ r.bolim.toliq_nomi }}{% else %}<span class="text-body-secondary">Butun filial</span>{% endif %}</td>
       <td>{{ r.ochilgan_vaqt|date:"d.m.Y H:i" }}</td>

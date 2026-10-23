@@ -9,7 +9,7 @@
 - Interfeys matnlari — o'zbek (lotin). Kod identifikatorlari — spetsifikatsiyadagi o'zbekcha nomlar.
 - Maxfiy qiymatlar (`SECRET_KEY`, `DATABASE_URL`, `ONEC_URL`, `ONEC_LOGIN`, `ONEC_PAROL`) faqat `.env` da; `.env` git'ga kirmaydi.
 - Testlar ham PostgreSQL'da. Celery ishlatilmaydi.
-- Rollar: `admin`, `hisobchi`, `hr`, `rahbar`, `revizor` (revizor panelga kirmaydi). Rol va filial cheklovi har so'rovda,
+- Rollar: `admin`, `hisobchi`, `hr`, `rahbar`, `revizor` (revizor panelga kirmaydi, faqat `/reviziya/m/` mobil sahifalariga). Rol va filial cheklovi har so'rovda,
   queryset darajasida (`hisoblar.huquqlar`) — faqat sahifalarda emas: Excel, PDF, HTMX bo'laklar, rasm URL'larida ham.
 - Kirish: 5 noto'g'ri urinish -> 15 daqiqa blok; sessiya 8 soat harakatsizlikdan keyin tugaydi.
 - Holatlar: `ishlatilmoqda`, `zaxirada`, `tamirda`, `nosoz`, `hisobdan_chiqarishga`, `topilmadi`.
