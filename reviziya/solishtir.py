@@ -25,6 +25,15 @@ NOL = Decimal("0")
 BOLIMSIZ = "Bo'limsiz"
 GURUHLAR = ("topilmadi", "kam", "boshqa_joyda", "holat_boshqa", "ortiqcha", "topildi")
 _TARTIB = {guruh: i for i, guruh in enumerate(GURUHLAR)}
+# Interfeys nomlari — sahifa, Excel va dalolatnomada bir xil
+GURUH_NOMLARI = {
+    "topildi": "Topildi",
+    "kam": "Kam",
+    "topilmadi": "Topilmadi",
+    "boshqa_joyda": "Boshqa joyda",
+    "holat_boshqa": "Holati boshqa",
+    "ortiqcha": "Ortiqcha",
+}
 
 
 @dataclass(frozen=True)
@@ -188,7 +197,7 @@ def hisobla(kutilganlar, qaydlar, av_malumot, bolim_nomlari) -> list[VedomostQat
     return qatorlar
 
 
-def _bolim_nomlari(filial_id) -> dict[int, str]:
+def bolim_nomlari(filial_id) -> dict[int, str]:
     """Filial bo'limlarining to'liq nomlari («Bino / Xona») — bitta so'rov bilan."""
     satrlar = Bolim.objects.filter(filial_id=filial_id).values_list("pk", "nomi", "ota_id")
     bolimlar = {pk: (nomi, ota_id) for pk, nomi, ota_id in satrlar}
@@ -210,7 +219,7 @@ def solishtir(reviziya) -> list[VedomostQator]:
     av_idlar = {k[0] for k in kutilganlar} | {q[0] for q in qaydlar if q[0] is not None}
     avlar = AV.objects.filter(pk__in=av_idlar).values_list("pk", "nomi", "inv_raqam")
     av_malumot = {pk: (nomi, inv or "") for pk, nomi, inv in avlar}
-    return hisobla(kutilganlar, qaydlar, av_malumot, _bolim_nomlari(reviziya.filial_id))
+    return hisobla(kutilganlar, qaydlar, av_malumot, bolim_nomlari(reviziya.filial_id))
 
 
 def jamlar(qatorlar) -> dict[str, Decimal]:

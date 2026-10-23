@@ -1,0 +1,236 @@
+import io
+
+import pytest
+from django.test import Client
+from django.urls import reverse
+from openpyxl import load_workbook
+from pypdf import PdfReader
+
+from reviziya.models import Reviziya, ReviziyaQollash
+from reviziya.servis import reviziya_och
+from reviziya.solishtir import solishtir
+from vositalar.models import Bolim, Holat, Taqsimot
+from vositalar.tests.test_bayroqlar import av_yarat, qator
+
+pytestmark = pytest.mark.django_db
+
+XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
+@pytest.fixture
+def fa(filial_yarat):
+    return filial_yarat("A")
+
+
+@pytest.fixture
+def fb(filial_yarat):
+    return filial_yarat("B")
+
+
+@pytest.fixture
+def revizor(foydalanuvchi):
+    return foydalanuvchi("revizor")
+
+
+@pytest.fixture
+def hisobchi(foydalanuvchi):
+    return foydalanuvchi("hisobchi")
+
+
+def kirgan(user):
+    c = Client()
+    c.force_login(user)
+    return c
+
+
+def matn(javob) -> str:
+    return "".join(sahifa.extract_text() for sahifa in PdfReader(io.BytesIO(javob.content)).pages)
+
+
+@pytest.fixture
+def ikki_topilmadi(fa, revizor, hisobchi):
+    """`fa` filialida A bo'limida ikkita AV (har biri 1 dona, qoldiq summasi 100); qayd yo'q — ikkalasi «topilmadi»."""
+    a = Bolim.objects.create(filial=fa, nomi="A xona")
+    stol, stul = av_yarat(fa, inv="INV-STOL"), av_yarat(fa, inv="INV-STUL")
+    qator(stol, fa, "1", bolim=a)
+    qator(stul, fa, "1", bolim=a)
+    rv = reviziya_och(fa, None, [revizor], [{"ism": "Karimov A.", "lavozim": "Rais"}], hisobchi)
+    return rv, stol, stul
+
+
+def test_yangi_reviziya_formasi(fa, revizor, hisobchi, foydalanuvchi):
+    bolim = Bolim.objects.create(filial=fa, nomi="Ombor")
+    c = kirgan(hisobchi)
+    assert c.get(reverse("reviziya:yangi")).status_code == 200
+    forma = {
+        "filial": fa.pk, "bolim": bolim.pk, "revizorlar": [revizor.pk], "izoh": "Yillik",
+        "komissiya_ism": ["Karimov A.", "", "Valiyev B."], "komissiya_lavozim": ["Rais", "", ""],
+    }
+
+    r = c.post(reverse("reviziya:yangi"), forma)
+
+    rv = Reviziya.objects.get()
+    assert r.status_code == 302 and r["Location"] == reverse("reviziya:sahifa", args=[rv.pk])
+    assert (rv.filial, rv.bolim, rv.izoh, rv.ochdi) == (fa, bolim, "Yillik", hisobchi)
+    assert list(rv.revizorlar.all()) == [revizor]
+    assert rv.komissiya == [{"ism": "Karimov A.", "lavozim": "Rais"}, {"ism": "Valiyev B.", "lavozim": ""}]
+
+    assert kirgan(foydalanuvchi("hr")).post(reverse("reviziya:yangi"), forma).status_code == 403
+    assert Reviziya.objects.count() == 1
+
+
+def test_yangi_reviziya_xatolari(fa, fb, revizor, hisobchi, foydalanuvchi):
+    c = kirgan(hisobchi)
+    begona_bolim = Bolim.objects.create(filial=fb, nomi="B ombor")
+    r = c.post(reverse("reviziya:yangi"), {"filial": fa.pk, "bolim": begona_bolim.pk, "revizorlar": [revizor.pk]})
+    assert r.status_code == 400
+    r = c.post(reverse("reviziya:yangi"), {"filial": fa.pk})
+    assert r.status_code == 400
+    # boshqa filialga biriktirilgan revizor tanlanmaydi
+    begona = foydalanuvchi("revizor", [fb])
+    r = c.post(reverse("reviziya:yangi"), {"filial": fa.pk, "revizorlar": [begona.pk]})
+    assert r.status_code == 400
+    # ruxsat etilmagan filial
+    cheklangan = kirgan(foydalanuvchi("hisobchi", [fa]))
+    r = cheklangan.post(reverse("reviziya:yangi"), {"filial": fb.pk, "revizorlar": [revizor.pk]})
+    assert r.status_code == 400
+    assert not Reviziya.objects.exists()
+
+
+def test_royxat_filial_cheklovi(fa, fb, revizor, hisobchi, foydalanuvchi):
+    bizniki = reviziya_och(fa, None, [revizor], [], hisobchi)
+    begona = reviziya_och(fb, None, [revizor], [], hisobchi)
+    c = kirgan(foydalanuvchi("hisobchi", [fa]))
+
+    html = c.get(reverse("reviziya:royxat")).content.decode()
+
+    assert bizniki.nomi in html and begona.nomi not in html
+    assert c.get(reverse("reviziya:sahifa", args=[bizniki.pk])).status_code == 200
+    for nom in ("sahifa", "excel", "pdf"):
+        assert c.get(reverse(f"reviziya:{nom}", args=[begona.pk])).status_code == 404
+    for nom in ("yakunla", "bekor", "qolla", "yop"):
+        assert c.post(reverse(f"reviziya:{nom}", args=[begona.pk])).status_code == 404
+    begona.refresh_from_db()
+    assert begona.holat == Reviziya.Holat.OCHIQ
+
+
+def test_royxat_holat_filtri(fa, fb, revizor, hisobchi):
+    ochiq = reviziya_och(fa, None, [revizor], [], hisobchi)
+    bekor = reviziya_och(fb, None, [revizor], [], hisobchi)
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:bekor", args=[bekor.pk]), follow=True)  # xabar shu yerda ko'rsatiladi
+
+    html = c.get(reverse("reviziya:royxat"), {"holat": "ochiq"}).content.decode()
+
+    assert ochiq.nomi in html and bekor.nomi not in html
+
+
+def test_yakunla_va_qolla_oqimi(ikki_topilmadi, hisobchi, foydalanuvchi):
+    rv, stol, stul = ikki_topilmadi
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    # HR ko'radi, lekin boshqarolmaydi
+    hr = kirgan(foydalanuvchi("hr"))
+    assert hr.get(sahifa).status_code == 200
+    assert hr.post(reverse("reviziya:yakunla", args=[rv.pk])).status_code == 403
+
+    assert c.post(reverse("reviziya:yakunla", args=[rv.pk])).status_code == 302
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN
+    html = c.get(sahifa).content.decode()
+    assert html.count('name="kalit"') == 2 and "qollangan-belgi" not in html
+
+    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
+    r = c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]}, follow=True)
+
+    assert "1 ta qo&#x27;llandi, 0 ta xato" in r.content.decode()
+    assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI
+    assert Taqsimot.objects.get(av=stul).holat == Holat.ISHLATILMOQDA
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN  # hali qo'llanmagan qator bor
+    html = c.get(sahifa).content.decode()
+    assert html.count("qollangan-belgi") == 1 and html.count('name="kalit"') == 1
+
+    # takror qo'llash — xato xabari bilan
+    r = c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]}, follow=True)
+    assert "0 ta qo&#x27;llandi, 1 ta xato" in r.content.decode()
+    assert "allaqachon qo&#x27;llangan" in r.content.decode()
+
+    assert c.post(reverse("reviziya:yop", args=[rv.pk])).status_code == 302
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.QOLLANGAN
+    assert ReviziyaQollash.objects.filter(natija="ok").count() == 1
+
+
+def test_hammasi_qollanganda_yopiladi(ikki_topilmadi, hisobchi):
+    rv, _, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    kalitlar = [q.kalit for q in solishtir(rv)]
+
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": kalitlar})
+
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.QOLLANGAN
+
+
+def test_holat_xatosi_xabar_bilan(ikki_topilmadi, hisobchi):
+    rv, _, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+    r = c.post(reverse("reviziya:yop", args=[rv.pk]), follow=True)  # ochiq reviziyani yopib bo'lmaydi
+    assert "alert-danger" in r.content.decode()
+    c.post(reverse("reviziya:bekor", args=[rv.pk]))
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.BEKOR
+
+
+def test_guruh_filtri(ikki_topilmadi, hisobchi, fa):
+    rv, stol, _ = ikki_topilmadi
+    b = Bolim.objects.create(filial=fa, nomi="B xona")
+    from reviziya.servis import qayd_qosh
+
+    qayd_qosh(rv, Bolim.objects.get(nomi="A xona"), hisobchi, av=stol)
+    qayd_qosh(rv, b, hisobchi, qr_matn="NOMALUM-QR")
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+
+    html = c.get(sahifa, {"guruh": "ortiqcha"}).content.decode()
+    assert "NOMALUM-QR" in html and stol.nomi not in html
+    html = c.get(sahifa, {"guruh": "topildi"}).content.decode()
+    assert stol.nomi in html and "NOMALUM-QR" not in html
+
+
+def test_excel_va_pdf(ikki_topilmadi, hisobchi, foydalanuvchi):
+    rv, stol, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+
+    r = c.get(reverse("reviziya:excel", args=[rv.pk]))
+    assert r.status_code == 200 and r["Content-Type"] == XLSX_TURI
+    varaq = load_workbook(io.BytesIO(r.content)).active
+    satrlar = list(varaq.values)
+    assert satrlar[0] == (
+        "Guruh", "Inv. raqam", "AV", "Bo'lim", "Holat", "Kutilgan", "Topilgan", "Farq", "Nishon bo'lim", "Nishon holat",
+    )
+    assert ("Topilmadi", "INV-STOL", stol.nomi, "A xona", "Ishlatilmoqda", 1, 0, -1, None, None) in satrlar
+    assert len(satrlar) == 3
+
+    r = c.get(reverse("reviziya:pdf", args=[rv.pk]))
+    assert r.status_code == 200 and r["Content-Type"] == "application/pdf"
+    hisobchi_matni = matn(r).replace("\xa0", " ")
+    assert rv.nomi in hisobchi_matni and "Karimov A." in hisobchi_matni
+    assert "AV qiymati" in hisobchi_matni and "100,00" in hisobchi_matni and "200,00" in hisobchi_matni
+
+    r = kirgan(foydalanuvchi("hr")).get(reverse("reviziya:pdf", args=[rv.pk]))
+    assert r.status_code == 200 and r["Content-Type"] == "application/pdf"
+    hr_matni = matn(r).replace("\xa0", " ")
+    assert rv.nomi in hr_matni
+    assert "AV qiymati" not in hr_matni and "100,00" not in hr_matni and "200,00" not in hr_matni
+
+
+def test_menyu_bandi(client_rol):
+    havola = reverse("reviziya:royxat")
+    for rol in ("hisobchi", "hr", "rahbar"):
+        r = client_rol(rol).get(reverse("panel:bosh"))
+        assert r.status_code == 200 and f'href="{havola}"' in r.content.decode(), rol
+        assert client_rol(rol).get(havola).status_code == 200, rol
+    assert client_rol("revizor").get(havola).status_code == 403

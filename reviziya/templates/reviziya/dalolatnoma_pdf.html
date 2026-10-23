@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<title>{{ rv.nomi }}</title>
+<style>
+  @page { size: A4 landscape; margin: 14mm 12mm; }
+  body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 9pt; color: #000; }
+  h1 { font-size: 14pt; text-align: center; margin: 4mm 0 2mm; }
+  h2 { font-size: 11pt; margin: 6mm 0 2mm; }
+  .kompaniya { text-align: center; font-weight: bold; }
+  .sana { text-align: center; margin-bottom: 5mm; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #000; padding: 1.5mm 2mm; text-align: left; vertical-align: top; }
+  th { background: #eee; }
+  td.son, th.son { text-align: right; }
+  table.jamlar { width: 50%; }
+  table.imzolar td { border: none; padding-top: 7mm; }
+</style>
+</head>
+<body>
+<div class="kompaniya">{{ kompaniya }}</div>
+<h1>Reviziya dalolatnomasi {{ rv.nomi }}</h1>
+<div class="sana">{{ rv.yakunlangan_vaqt|default:rv.ochilgan_vaqt|date:"d.m.Y" }}</div>
+<p>Filial: <b>{{ rv.filial.nomi }}</b>{% if rv.bolim %}, bo'lim: <b>{{ rv.bolim.toliq_nomi }}</b>{% else %} (butun filial){% endif %}<br>
+Ochilgan: {{ rv.ochilgan_vaqt|date:"d.m.Y H:i" }}{% if rv.yakunlangan_vaqt %} · Yakunlangan: {{ rv.yakunlangan_vaqt|date:"d.m.Y H:i" }}{% endif %} · Holat: {{ rv.get_holat_display }}<br>
+Revizorlar: {% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+{% if rv.izoh %}<p>Izoh: {{ rv.izoh }}</p>{% endif %}
+
+<h2>Natijalar (dona)</h2>
+<table class="jamlar">
+  {% for nomi, soni in jamlar %}<tr><td>{{ nomi }}</td><td class="son">{{ soni|son }}</td></tr>{% endfor %}
+</table>
+
+<h2>Farqlar ro'yxati</h2>
+<table>
+  <thead>
+    <tr><th>№</th><th>Guruh</th><th>Inv. raqam</th><th>AV</th><th>Bo'lim</th><th>Holat</th><th>Nishon bo'lim</th><th>Nishon holat</th><th class="son">Kutilgan</th><th class="son">Topilgan</th><th class="son">Farq</th>{% if pul_huquqi %}<th class="son">AV qiymati</th>{% endif %}</tr>
+  </thead>
+  <tbody>
+    {% for f in farqlar %}
+    <tr>
+      <td>{{ forloop.counter }}</td><td>{{ f.guruh }}</td><td>{{ f.inv }}</td><td>{{ f.nomi }}</td><td>{{ f.bolim }}</td>
+      <td>{{ f.holat }}</td><td>{{ f.nishon_bolim }}</td><td>{{ f.nishon_holat }}</td>
+      <td class="son">{{ f.kutilgan|son }}</td><td class="son">{{ f.topilgan|son }}</td><td class="son">{{ f.farq|son }}</td>
+      {% if pul_huquqi %}<td class="son">{% if f.qiymat is not None %}{{ f.qiymat|pul }}{% endif %}</td>{% endif %}
+    </tr>
+    {% empty %}
+    <tr><td colspan="{% if pul_huquqi %}12{% else %}11{% endif %}">Farq yo'q.</td></tr>
+    {% endfor %}
+    {% if pul_huquqi and farqlar %}<tr><td colspan="11"><b>Jami (kam / topilmadi)</b></td><td class="son"><b>{{ jami_qiymat|pul }}</b></td></tr>{% endif %}
+  </tbody>
+</table>
+
+<h2>Komissiya</h2>
+<table class="imzolar">
+  {% for a in rv.komissiya %}
+  <tr><td>{{ a.ism }}</td><td>{{ a.lavozim }}</td><td>Imzo: ______________________</td></tr>
+  {% empty %}
+  <tr><td>______________________</td><td>______________________</td><td>Imzo: ______________________</td></tr>
+  {% endfor %}
+</table>
+</body>
+</html>
