@@ -23,7 +23,16 @@ from vositalar.models import Bolim
 from vositalar.models import Holat as TaqsimotHolat
 
 from .models import Reviziya, ReviziyaQayd
-from .servis import BOSHQA_FILIAL, ReviziyaXato, progress, qamrov_bolim_idlari, qayd_qosh, qayd_tuzat, qr_tahlil
+from .servis import (
+    BOSHQA_FILIAL,
+    ReviziyaXato,
+    progress,
+    qamrov_bolim_idlari,
+    qayd_qosh,
+    qayd_tuzat,
+    qr_tahlil,
+    standart_holat,
+)
 
 NOL = Decimal("0")
 SON_CHEGARASI = Decimal("1000000")
@@ -32,6 +41,7 @@ QIDIRUV_MAKS = 100
 QIDIRUV_NATIJALARI = 20
 OXIRGILAR_SONI = 10
 BOLIMSIZ = "0"
+NUL = chr(0)
 
 
 class _Yopiq(Exception):
@@ -108,6 +118,11 @@ def _son(qiymat, *, nol_mumkin=False) -> Decimal:
     if soni >= SON_CHEGARASI:
         raise ReviziyaXato("Son juda katta.")
     return soni
+
+
+def _matn(qiymat) -> str:
+    """So'rov matni: NUL baytlarsiz (PostgreSQL matn maydonlari ularni qabul qilmaydi), chetlari kesilgan."""
+    return (qiymat or "").replace(NUL, "").strip()
 
 
 def _xato(xabar: str, nishon: str) -> HttpResponse:
@@ -235,7 +250,7 @@ def skan(request, pk):
 def _av_kartochka(rv, xona, av, usul) -> dict:
     xona_id = None if xona is None else xona.pk
     kutilganlar = rv.kutilganlar.filter(av=av, bolim_id=xona_id)
-    holat = kutilganlar.order_by("pk").values_list("holat", flat=True).first() or TaqsimotHolat.ISHLATILMOQDA
+    holat = standart_holat(rv, av, xona_id)
     jami_soni = AVQoldiq.objects.filter(av=av, filial_id=rv.filial_id).aggregate(s=Sum("soni"))["s"] or NOL
     return {
         "tur": "av", "av": av, "usul": usul, "holat": holat,
@@ -265,8 +280,8 @@ def topish(request, pk):
         return _xato("Avval xonani tanlang.", "#kartochka")
     xona = _xona(rv, qiymat)
     ctx = {"rv": rv, "xona_qiymati": qiymat, "holatlar": TaqsimotHolat.choices}
-    qr = (request.GET.get("qr") or "").strip()[:QR_MAKS]
-    q = (request.GET.get("q") or "").strip()[:QIDIRUV_MAKS]
+    qr = _matn(request.GET.get("qr"))[:QR_MAKS]
+    q = _matn(request.GET.get("q"))[:QIDIRUV_MAKS]
     av_id = (request.GET.get("av") or "").strip()
     if qr:
         av, sabab = qr_tahlil(qr, rv)
@@ -304,7 +319,7 @@ def saqla(request, pk):
     except ReviziyaXato as e:
         return _xato(str(e), "#saqla-xato")
     av_id = (request.POST.get("av") or "").strip()
-    qr = (request.POST.get("qr_matn") or "").strip()[:QR_MAKS]
+    qr = _matn(request.POST.get("qr_matn"))[:QR_MAKS]
     av = None
     if av_id:
         av = _av_doirasi(rv).filter(pk=int(av_id)).first() if av_id.isdigit() else None
@@ -316,7 +331,7 @@ def saqla(request, pk):
         qayd = qayd_qosh(
             rv, xona, request.user, av=av, qr_matn=qr, soni=soni,
             holat=request.POST.get("holat") or None, usul=request.POST.get("usul") or ReviziyaQayd.Usul.QR,
-            izoh=(request.POST.get("izoh") or "").strip(), rasm_fayl=request.FILES.get("rasm"),
+            izoh=_matn(request.POST.get("izoh")), rasm_fayl=request.FILES.get("rasm"),
         )
     except ReviziyaXato as e:
         return _xato(str(e), "#saqla-xato")

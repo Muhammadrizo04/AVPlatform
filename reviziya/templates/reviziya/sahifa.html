@@ -2,16 +2,16 @@
 {% block sarlavha %}{{ rv.nomi }}{% endblock %}
 {% block yol %}Reviziyalar / {{ rv.nomi }}{% endblock %}
 {% block kontent %}
-<a href="{% url 'reviziya:royxat' %}" class="btn btn-sm btn-link px-0 mb-1">&larr; Reviziyalar</a>
+<a href="{% url 'reviziya:royxat' %}" class="btn btn-sm btn-link px-0 mb-1 chop-yoq">&larr; Reviziyalar</a>
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <h1 class="mb-0 me-auto">Reviziya {{ rv.nomi }} {% include "reviziya/_holati.html" with r=rv %}</h1>
-  <a href="{% url 'reviziya:excel' rv.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>
-  <a href="{% url 'reviziya:pdf' rv.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>Dalolatnoma</a>
+  <a href="{% url 'reviziya:excel' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>
+  <a href="{% url 'reviziya:pdf' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>Dalolatnoma</a>
   {% if boshqarish and rv.holat == "ochiq" %}
-  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline" onsubmit="return confirm('Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o‘zgarmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
-  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline" onsubmit="return confirm('Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo‘shib bo‘lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
+  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o‘zgarmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo‘shib bo‘lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
   {% elif boshqarish and rv.holat == "yakunlangan" %}
-  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline" onsubmit="return confirm('Reviziya {{ rv.nomi }} yopilsinmi? Qo‘llanmagan farqlar endi qo‘llanmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
+  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yopilsinmi? Qo‘llanmagan farqlar endi qo‘llanmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
   {% endif %}
 </div>
 
@@ -41,9 +41,9 @@
   <a class="korsatkich{% if not p.soni %} nol{% elif p.ogoh %} ogoh{% endif %}" href="?guruh={{ p.filtr }}"><span class="kpi-ikonka {{ p.rang }}" aria-hidden="true"><i class="{{ p.ikonka }}"></i></span><span><b>{{ p.soni|son }}</b>{{ p.nomi }}</span></a>
   {% endfor %}
 </div>
-{% if rv.holat == "ochiq" %}<p class="small text-body-secondary">Reviziya ochiq — vedomost joriy qaydlar bo'yicha (jonli).</p>{% endif %}
+{% if rv.holat == "ochiq" %}<p class="small text-body-secondary chop-yoq">Reviziya ochiq — vedomost joriy qaydlar bo'yicha (jonli).</p>{% endif %}
 
-<div class="card mb-3"><div class="card-body">
+<div class="card mb-3 chop-yoq"><div class="card-body">
 <form method="get" class="filtrlar">
   <select class="form-select form-select-sm" name="guruh" aria-label="Guruh">
     <option value="">Barcha guruhlar</option>

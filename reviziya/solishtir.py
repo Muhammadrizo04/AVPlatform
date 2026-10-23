@@ -13,6 +13,7 @@ Algoritm har AV bo'yicha:
    holat, agar manbadan farq qilsa, aks holda "").
 4. Qolgan kamomad — `topilmadi` (shu bo'limda AV umuman topilmagan) yoki `kam`; qolgan ortiqcha — `ortiqcha`.
    AV'siz (noma'lum QR) qaydlar — `ortiqcha` (`qr_matn` bilan).
+5. Ortiqcha qatorlarga izoh (`kalit`ga kirmaydi): arxiv AV — «arxivda», boshqa filial yorlig'i — «boshqa filial».
 """
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -20,6 +21,8 @@ from decimal import Decimal
 
 from onec.models import AV
 from vositalar.models import Bolim
+
+from .servis import BOSHQA_FILIAL, qr_tahlil
 
 NOL = Decimal("0")
 BOLIMSIZ = "Bo'limsiz"
@@ -51,6 +54,7 @@ class VedomostQator:
     nishon_bolim_id: int | None = None
     nishon_holat: str = ""
     qr_matn: str = ""
+    izoh: str = ""  # «arxivda» / «boshqa filial» — `kalit`ga kirmaydi
     kalit: str = field(init=False)
 
     def __post_init__(self):
@@ -61,6 +65,15 @@ class VedomostQator:
                 f"{self.guruh}:{self.av_id}:{self.bolim_id}:{self.holat}:{self.nishon_bolim_id}:{self.nishon_holat}"
             )
         object.__setattr__(self, "kalit", kalit)
+
+
+ARXIVDA = "arxivda"
+
+
+def guruh_nomi(q: VedomostQator) -> str:
+    """Interfeys nomi: «Ortiqcha (arxivda)» kabi — sahifa, Excel va dalolatnomada bir xil."""
+    nomi = GURUH_NOMLARI[q.guruh]
+    return f"{nomi} ({q.izoh})" if q.izoh else nomi
 
 
 def _bolim_tartibi(bolim_id):
@@ -146,11 +159,14 @@ def _kesib_qol(qoldiqlar, miqdor):
     return list(reversed(natija))
 
 
-def hisobla(kutilganlar, qaydlar, av_malumot, bolim_nomlari) -> list[VedomostQator]:
+def hisobla(
+    kutilganlar, qaydlar, av_malumot, bolim_nomlari, arxiv_idlar=frozenset(), boshqa_filial_qr=frozenset()
+) -> list[VedomostQator]:
     """Sof hisob.
 
     kutilganlar: [(av_id, bolim_id, holat, soni)]; qaydlar: [(av_id | None, bolim_id, holat, soni, qr_matn)];
-    av_malumot: {av_id: (nomi, inv)}; bolim_nomlari: {bolim_id: nomi}.
+    av_malumot: {av_id: (nomi, inv)}; bolim_nomlari: {bolim_id: nomi}; arxiv_idlar: arxivdagi AV pk'lari;
+    boshqa_filial_qr: boshqa filial yorlig'i bo'lgan QR matnlari.
     """
     kutilgan = defaultdict(lambda: defaultdict(lambda: NOL))
     topilgan = defaultdict(lambda: defaultdict(lambda: NOL))
@@ -183,6 +199,7 @@ def hisobla(kutilganlar, qaydlar, av_malumot, bolim_nomlari) -> list[VedomostQat
                 VedomostQator(
                     guruh=guruh, av_id=av_id, av_nomi=nomi, inv=inv, bolim_id=b, bolim_nomi=bolim_nomi(b),
                     holat=h, kutilgan=k, topilgan=t, farq=farq, nishon_bolim_id=nb, nishon_holat=nh,
+                    izoh=ARXIVDA if guruh == "ortiqcha" and av_id in arxiv_idlar else "",
                 )
             )
     for (qr_matn, b), (soni, holatlar) in qr.items():
@@ -190,7 +207,7 @@ def hisobla(kutilganlar, qaydlar, av_malumot, bolim_nomlari) -> list[VedomostQat
             VedomostQator(
                 guruh="ortiqcha", av_id=None, av_nomi="", inv="", bolim_id=b, bolim_nomi=bolim_nomi(b),
                 holat=next(iter(holatlar)) if len(holatlar) == 1 else "", kutilgan=NOL, topilgan=soni, farq=soni,
-                qr_matn=qr_matn,
+                qr_matn=qr_matn, izoh=BOSHQA_FILIAL if qr_matn in boshqa_filial_qr else "",
             )
         )
     qatorlar.sort(key=lambda q: (_TARTIB[q.guruh], q.av_nomi, q.bolim_nomi, q.kalit))
@@ -219,7 +236,13 @@ def solishtir(reviziya) -> list[VedomostQator]:
     av_idlar = {k[0] for k in kutilganlar} | {q[0] for q in qaydlar if q[0] is not None}
     avlar = AV.objects.filter(pk__in=av_idlar).values_list("pk", "nomi", "inv_raqam")
     av_malumot = {pk: (nomi, inv or "") for pk, nomi, inv in avlar}
-    return hisobla(kutilganlar, qaydlar, av_malumot, bolim_nomlari(reviziya.filial_id))
+    arxiv_idlar = set(AV.objects.arxiv().filter(pk__in=av_idlar).values_list("pk", flat=True))
+    boshqa_filial_qr = {
+        matn for matn in {q[4] for q in qaydlar if q[0] is None} if qr_tahlil(matn, reviziya)[1] == BOSHQA_FILIAL
+    }
+    return hisobla(
+        kutilganlar, qaydlar, av_malumot, bolim_nomlari(reviziya.filial_id), arxiv_idlar, boshqa_filial_qr
+    )
 
 
 def jamlar(qatorlar) -> dict[str, Decimal]:

@@ -482,3 +482,18 @@ def test_tarixda_reviziya_qaydi(filial_a, filial_b, foydalanuvchi):
     assert Holat.ISHLATILMOQDA.label in qatorlar[0].matn
     boshqa = foydalanuvchi("hisobchi", [filial_b])
     assert not [q for q in tarix(av, boshqa) if q.tur == "reviziya"]
+
+
+def test_tarixda_bekor_reviziya_qaydi_yoq(filial_a, foydalanuvchi):
+    from reviziya.models import Reviziya, ReviziyaQayd
+
+    av = av_yarat(filial_a, "RV2")
+    hisobchi = foydalanuvchi("hisobchi")
+    bekor = Reviziya.objects.create(raqam=1, filial=filial_a, ochdi=hisobchi, holat=Reviziya.Holat.BEKOR)
+    ochiq = Reviziya.objects.create(raqam=2, filial=filial_a, ochdi=hisobchi)
+    for rv in (bekor, ochiq):
+        ReviziyaQayd.objects.create(
+            reviziya=rv, av=av, soni=Decimal("1"), holat=Holat.ISHLATILMOQDA, usul="qidiruv", kim=hisobchi
+        )
+    qatorlar = [q for q in tarix(av, hisobchi) if q.tur == "reviziya"]
+    assert len(qatorlar) == 1 and "RV-000002" in qatorlar[0].matn

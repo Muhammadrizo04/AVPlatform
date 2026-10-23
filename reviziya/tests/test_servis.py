@@ -13,9 +13,10 @@ from reviziya.servis import (
     qayd_tuzat,
     qr_tahlil,
     reviziya_och,
+    standart_holat,
     yakunla,
 )
-from vositalar.models import Bolim, Holat
+from vositalar.models import Bolim, Holat, Rasm
 from vositalar.tests.test_bayroqlar import av_yarat, qator
 from vositalar.tests.test_kartochka import rasm_baytlari, yuklama
 
@@ -153,8 +154,9 @@ def test_takror_skan_bitta_qayd(filial, och, revizor, hisobchi):
     assert rv.qaydlar.count() == 1
     qayd = rv.qaydlar.get()
     assert qayd.soni == Decimal("2") and qayd.holat == Holat.ZAXIRADA and qayd.kim == revizor
-    # kutilgan qatori bo'lmagan joyda — ishlatilmoqda
-    assert qayd_qosh(rv, None, revizor, av=av).holat == Holat.ISHLATILMOQDA
+    # kutilgan qatori bo'lmagan joyda — suratdagi boshqa xona holati (I-2); suratda yo'q AV — ishlatilmoqda
+    assert qayd_qosh(rv, None, revizor, av=av).holat == Holat.ZAXIRADA
+    assert qayd_qosh(rv, None, revizor, av=av_yarat(filial, inv="YANGI")).holat == Holat.ISHLATILMOQDA
 
 
 def test_qayd_notogri_soni(filial, och, revizor):
@@ -290,3 +292,73 @@ def test_progress(filial, och, revizor):
     assert progress(rv) == (Decimal("1"), Decimal("3"))
     assert progress(rv, zal.pk) == (Decimal("1"), Decimal("2"))
     assert progress(rv, None) == (Decimal("0"), Decimal("1"))
+
+
+def test_standart_holat_boshqa_xonada_kutilgan_holat(filial, och, revizor):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    av = av_yarat(filial)
+    t = qator(av, filial, "1", bolim=a)
+    t.holat = Holat.NOSOZ
+    t.save()
+    rv = och(filial)
+
+    assert standart_holat(rv, av, b.pk) == Holat.NOSOZ
+    qayd = qayd_qosh(rv, b, revizor, av=av)
+
+    assert qayd.holat == Holat.NOSOZ  # boshqa xonada topildi — holati baholanmagan, kutilgani saqlanadi
+    assert standart_holat(rv, av_yarat(filial, inv="X"), b.pk) == Holat.ISHLATILMOQDA  # suratda yo'q
+
+
+def test_standart_holat_shu_xona_ustun_va_topilmadi_ishlatilmoqda(filial, och, revizor):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    av = av_yarat(filial, soni="2")
+    t1 = qator(av, filial, "1", bolim=a)
+    t1.holat = Holat.TAMIRDA
+    t1.save()
+    t2 = qator(av, filial, "1", bolim=b)
+    t2.holat = Holat.TOPILMADI
+    t2.save()
+    rv = och(filial)
+
+    qayd = qayd_qosh(rv, b, revizor, av=av)
+
+    assert qayd.holat == Holat.ISHLATILMOQDA  # shu xonada «topilmadi» edi — skanerlangan AV topilgan
+    assert standart_holat(rv, av, a.pk) == Holat.TAMIRDA
+
+
+def test_qr_tahlil_nul_bayt(filial, och):
+    rv = och(filial)
+    assert qr_tahlil("DS|" + chr(0) + "|X", rv) == (None, "noma'lum")
+
+
+def _media_fayllari(settings):
+    import os
+
+    return [f for _, _, fayllar in os.walk(settings.MEDIA_ROOT) for f in fayllar]
+
+
+def test_qayd_rasm_son_oshsa_fayl_saqlanmaydi(filial, och, revizor, settings):
+    av = av_yarat(filial)
+    rv = och(filial)
+    qayd_qosh(rv, None, revizor, av=av, soni=Decimal("999999999999"))
+
+    with pytest.raises(ReviziyaXato, match="Son juda katta"):
+        qayd_qosh(rv, None, revizor, av=av, rasm_fayl=yuklama(rasm_baytlari()))
+
+    assert not Rasm.objects.exists() and _media_fayllari(settings) == []
+
+
+def test_qayd_rasm_keyingi_xatoda_fayllar_ochiriladi(filial, och, revizor, settings, monkeypatch):
+    av = av_yarat(filial)
+    rv = och(filial)
+
+    def xato(*args, **kwargs):
+        raise RuntimeError("baza xatosi")
+
+    monkeypatch.setattr(ReviziyaQayd.objects, "create", xato)
+    with pytest.raises(RuntimeError):
+        qayd_qosh(rv, None, revizor, av=av, rasm_fayl=yuklama(rasm_baytlari()))
+
+    assert not Rasm.objects.exists() and _media_fayllari(settings) == []

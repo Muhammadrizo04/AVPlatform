@@ -22,6 +22,11 @@ QOLLANADI = ("boshqa_joyda", "holat_boshqa", "kam", "topilmadi")
 REVIZIYA = TaqsimotHarakat.Sabab.REVIZIYA
 
 
+def qollanadimi(q) -> bool:
+    """Vedomost qatorini taqsimotga qo'llash mumkinmi: «Bo'limsiz» joyga ko'chirish qo'llanmaydi (xona noma'lum)."""
+    return q.guruh in QOLLANADI and not (q.guruh == "boshqa_joyda" and q.nishon_bolim_id is None)
+
+
 def _yakunlangan_qulfla(reviziya_id: int) -> Reviziya:
     reviziya = Reviziya.objects.select_for_update().get(pk=reviziya_id)
     if reviziya.holat != Reviziya.Holat.YAKUNLANGAN:
@@ -72,6 +77,8 @@ def _taqsimotga(reviziya, q, soni, kim) -> None:
     """Bitta vedomost qatorini joriy taqsimotga qo'llaydi; mos qatorlar (har xil МОЛ) pk tartibida sarflanadi."""
     # Qatorlar `qolla` da global pk tartibida (moslash/mol/chiqimlar bilan bir xil) allaqachon qulflangan;
     # bu yerdagi qayta qulflash hech narsa kutmaydi.
+    if q.guruh == "boshqa_joyda" and q.nishon_bolim_id is None:
+        raise ReviziyaXato("Bo'limsiz joyga ko'chirib bo'lmaydi — xonani aniqlang.")
     qulflangan = Taqsimot.objects.select_for_update().filter(av_id=q.av_id, filial_id=reviziya.filial_id)
     mos = [t for t in qulflangan.order_by("pk") if t.bolim_id == q.bolim_id and t.holat == q.holat]
     mavjud = sum((t.soni for t in mos), NOL)

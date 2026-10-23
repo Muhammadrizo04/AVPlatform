@@ -222,3 +222,48 @@ def test_rasm_bilan_saqlash(muhit, revizor):
     assert javob.status_code == 400 and "JPEG yoki PNG" in matn(javob)
     qayd.refresh_from_db()
     assert qayd.soni == 1
+
+
+def test_nul_bayt_500_bermaydi(muhit, revizor):
+    """Middleware NUL baytli so'rovni 400 bilan to'xtatadi; view o'zi ham NUL'ni olib tashlaydi (himoya qatlami)."""
+    from django.contrib.sessions.backends.db import SessionStore
+    from django.test import RequestFactory
+
+    from reviziya import mobil
+
+    rv, xona, *_ = muhit
+    c = kirgan(revizor)
+    assert c.get(url("mobil_topish", rv.pk, qr="DS|%00|X", bolim=xona.pk)).status_code == 400
+
+    nul = chr(0)
+    rf = RequestFactory()
+
+    def sorov(r):
+        r.user, r.session = revizor, SessionStore()
+        return r
+
+    javob = mobil.topish(sorov(rf.get("/", {"qr": f"DS|{nul}|X", "bolim": xona.pk})), rv.pk)
+    assert javob.status_code == 200 and "noma'lum yorliq" in matn(javob).lower()
+    javob = mobil.topish(sorov(rf.get("/", {"q": nul, "bolim": xona.pk})), rv.pk)
+    assert javob.status_code == 200
+    data = {"bolim": xona.pk, "soni": "1", "usul": "qr", "qr_matn": f"DS|{nul}|X", "izoh": f"a{nul}b"}
+    javob = mobil.saqla(sorov(rf.post("/", data)), rv.pk)
+    assert javob.status_code == 200
+    qayd = ReviziyaQayd.objects.get(reviziya=rv)
+    assert (qayd.av, qayd.qr_matn, qayd.izoh) == (None, "DS||X", "ab")
+
+
+def test_kartochka_standart_holati_boshqa_xonada(muhit, revizor, fa):
+    from vositalar.models import Holat, Taqsimot
+
+    rv, xona, stol, _ = muhit
+    Taqsimot.objects.filter(av=stol).update(holat=Holat.NOSOZ)
+    rv.kutilganlar.filter(av=stol).update(holat=Holat.NOSOZ)
+    boshqa = Bolim.objects.create(filial=fa, nomi="Zal")
+    c = kirgan(revizor)
+
+    javob = c.get(url("mobil_topish", rv.pk, bolim=boshqa.pk, av=stol.pk))
+
+    assert javob.status_code == 200
+    t = matn(javob)
+    assert f'<option value="{Holat.NOSOZ}" selected>' in t

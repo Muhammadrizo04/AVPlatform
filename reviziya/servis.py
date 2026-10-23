@@ -107,7 +107,10 @@ def reviziya_och(filial, bolim, revizorlar, komissiya, kim, izoh: str = "") -> R
 
 
 def qr_tahlil(matn: str, reviziya: Reviziya) -> tuple[AV | None, str]:
-    """`DS|<filial kodi>|<inv>` -> (AV, ""), yoki (None, "noma'lum" | "boshqa filial"). Arxiv AV ham qaytadi."""
+    """`DS|<filial kodi>|<inv>` -> (AV, ""), yoki (None, "noma'lum" | "boshqa filial"). Arxiv AV ham qaytadi.
+    NUL bayt bor matn — noma'lum (PostgreSQL matn maydonlari NUL'ni qabul qilmaydi)."""
+    if "\x00" in (matn or ""):
+        return None, NOMALUM
     qismlar = [q.strip() for q in (matn or "").strip().split("|")]
     if len(qismlar) != 3 or qismlar[0] != "DS" or not qismlar[1] or not qismlar[2]:
         return None, NOMALUM
@@ -143,6 +146,21 @@ def _soni_tekshir(soni, *, nol_mumkin: bool) -> Decimal:
     return soni
 
 
+def standart_holat(reviziya: Reviziya, av, bolim_id) -> str:
+    """Skanerlangan AV uchun oldindan tanlanadigan holat: shu xonadagi kutilgan holat, aks holda suratdagi istalgan
+    xonadagi kutilgan holat (eng kichik pk), aks holda «ishlatilmoqda». Skanerlangan AV topilgan — «topilmadi»
+    holati «ishlatilmoqda» ga almashadi."""
+    holat = None
+    if av is not None:
+        kutilganlar = reviziya.kutilganlar.filter(av=av).order_by("pk")
+        holat = kutilganlar.filter(bolim_id=bolim_id).values_list("holat", flat=True).first()
+        if holat is None:
+            holat = kutilganlar.values_list("holat", flat=True).first()
+    if not holat or holat == TaqsimotHolat.TOPILMADI:
+        return TaqsimotHolat.ISHLATILMOQDA
+    return holat
+
+
 def _ochiq_qulfla(reviziya_id: int) -> Reviziya:
     reviziya = Reviziya.objects.select_for_update().get(pk=reviziya_id)
     if reviziya.holat != Reviziya.Holat.OCHIQ:
@@ -171,32 +189,39 @@ def qayd_qosh(
                 raise ReviziyaXato("Bo'lim reviziya qamrovida emas.")
         bolim_id = None if bolim is None else bolim.pk
         if holat is None:
-            kutilgan = None
-            if av is not None:
-                kutilgan = (
-                    reviziya.kutilganlar.filter(av=av, bolim_id=bolim_id).order_by("pk").values_list("holat", flat=True)
-                ).first()
-            holat = kutilgan or TaqsimotHolat.ISHLATILMOQDA
-        rasm = rasm_saqla(av, rasm_fayl, kim) if rasm_fayl is not None and av is not None else None
+            holat = standart_holat(reviziya, av, bolim_id)
         qayd = (
             ReviziyaQayd.objects.select_for_update()
             .filter(reviziya=reviziya, bolim_id=bolim_id, av=av, holat=holat, qr_matn=qr_matn)
             .first()
         )
-        if qayd is None:
-            return ReviziyaQayd.objects.create(
-                reviziya=reviziya, bolim_id=bolim_id, av=av, qr_matn=qr_matn, soni=soni, holat=holat,
-                usul=usul, izoh=izoh, rasm=rasm, kim=kim,
-            )
-        if qayd.soni + soni >= MAKS_SONI:
+        if qayd is not None and qayd.soni + soni >= MAKS_SONI:
             raise ReviziyaXato("Son juda katta.")
-        qayd.soni += soni
-        if izoh:
-            qayd.izoh = izoh
-        if rasm is not None:
-            qayd.rasm = rasm
-        qayd.save()
-        return qayd
+        # Rasm oxirida saqlanadi; keyingi xatoda fayllar o'chiriladi (tranzaksiya bekor bo'lsa ham fayl qolmasin)
+        rasm = rasm_saqla(av, rasm_fayl, kim) if rasm_fayl is not None and av is not None else None
+        try:
+            if qayd is None:
+                return ReviziyaQayd.objects.create(
+                    reviziya=reviziya, bolim_id=bolim_id, av=av, qr_matn=qr_matn, soni=soni, holat=holat,
+                    usul=usul, izoh=izoh, rasm=rasm, kim=kim,
+                )
+            qayd.soni += soni
+            if izoh:
+                qayd.izoh = izoh
+            if rasm is not None:
+                qayd.rasm = rasm
+            qayd.save()
+            return qayd
+        except BaseException:
+            if rasm is not None:
+                _rasm_fayllarini_ochir(rasm)
+            raise
+
+
+def _rasm_fayllarini_ochir(rasm) -> None:
+    for maydon in (rasm.fayl, rasm.miniatyura):
+        if maydon:
+            maydon.delete(save=False)
 
 
 def qayd_tuzat(qayd: ReviziyaQayd, soni, kim) -> ReviziyaQayd | None:

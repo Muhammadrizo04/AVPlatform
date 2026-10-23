@@ -283,3 +283,19 @@ def test_nishon_bolim_ochirilgan(filial, och, qosh, hisobchi, monkeypatch):
 
     assert (natija.natija, natija.xato) == ("xato", "Nishon bo'lim topilmadi.")
     assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]
+
+
+def test_bolimsiz_joyga_kochirish_aniq_xato(filial, och, qosh, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    stol = av_yarat(filial)
+    qator(stol, filial, "1", bolim=a)
+    rv = och(filial)
+    qosh(rv, None, av=stol)  # butun filial reviziyasi: «Bo'limsiz» da topildi
+    yakunla(rv, hisobchi)
+    [q] = [q for q in solishtir(rv) if q.guruh == "boshqa_joyda"]
+    assert q.nishon_bolim_id is None
+
+    [natija] = qolla(rv, [q.kalit], hisobchi)
+
+    assert (natija.natija, natija.xato) == ("xato", "Bo'limsiz joyga ko'chirib bo'lmaydi — xonani aniqlang.")
+    assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]

@@ -16,9 +16,9 @@ from vositalar.models import Holat
 from .forms import YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash
 from .pdf import dalolatnoma_pdf
-from .qollash import QOLLANADI, qolla, reviziya_yop
+from .qollash import qolla, qollanadimi, reviziya_yop
 from .servis import ReviziyaXato, bekor_qil, progress, reviziya_och, yakunla
-from .solishtir import GURUH_NOMLARI, GURUHLAR, bolim_nomlari, jamlar, solishtir
+from .solishtir import BOLIMSIZ, GURUH_NOMLARI, GURUHLAR, bolim_nomlari, guruh_nomi, jamlar, solishtir
 
 SAHIFA_HAJMI = 50
 KOMISSIYA_QATORLARI = 3
@@ -106,12 +106,18 @@ def _qollangan_kalitlar(reviziya) -> set[str]:
     return set(reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.OK).values_list("kalit", flat=True))
 
 
+def _nishon_bolim(q, nomlar) -> str:
+    if q.guruh != "boshqa_joyda":
+        return ""
+    return BOLIMSIZ if q.nishon_bolim_id is None else nomlar.get(q.nishon_bolim_id, "")
+
+
 def _satr(q, nomlar) -> dict:
     return {
         "q": q,
-        "guruh_nomi": GURUH_NOMLARI[q.guruh],
+        "guruh_nomi": guruh_nomi(q),
         "holat_nomi": HOLAT_NOMLARI.get(q.holat, q.holat),
-        "nishon_bolim": "" if q.nishon_bolim_id is None else nomlar.get(q.nishon_bolim_id, ""),
+        "nishon_bolim": _nishon_bolim(q, nomlar),
         "nishon_holat_nomi": HOLAT_NOMLARI.get(q.nishon_holat, q.nishon_holat),
     }
 
@@ -157,7 +163,7 @@ def sahifa(request, pk):
     for q in korinadigan:
         satr = _satr(q, nomlar)
         satr["qollangan"] = q.kalit in qollangan
-        satr["tanlash"] = tanlash and q.guruh in QOLLANADI and not satr["qollangan"]
+        satr["tanlash"] = tanlash and qollanadimi(q) and not satr["qollangan"]
         satrlar.append(satr)
     belgilangan, kutilgan = progress(rv)
     return render(request, "reviziya/sahifa.html", {
@@ -218,8 +224,9 @@ def qolla_view(request, pk):
         messages.warning(request, f"{matn}: " + "; ".join(dict.fromkeys(xatolar)))
     else:
         messages.success(request, f"{matn}.")
-    # Spec §3.1: hamma qo'llanadigan qator qo'llangach reviziya o'zi yopiladi
-    qolganlar = {q.kalit for q in solishtir(rv) if q.guruh in QOLLANADI} - _qollangan_kalitlar(rv)
+    # Spec §3.1: hamma qo'llanadigan qator qo'llangach reviziya o'zi yopiladi («Bo'limsiz» ga ko'chish — hisobga
+    # olinmaydi: uni qo'llab bo'lmaydi)
+    qolganlar = {q.kalit for q in solishtir(rv) if qollanadimi(q)} - _qollangan_kalitlar(rv)
     if not qolganlar:
         try:
             reviziya_yop(rv, request.user)

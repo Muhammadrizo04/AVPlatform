@@ -473,4 +473,8 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
   body { background: #fff; }
   .card, .kpi, .list-group { box-shadow: none !important; }
   main.av-sahifa { max-width: none !important; padding: 0 !important; }
+  /* Reviziya vedomosti (spec §6): filtr, tugmalar va tanlash ustuni chop etilmaydi */
+  .chop-yoq, .filtrlar, form button { display: none !important; }
+  .table-responsive { overflow: visible !important; }
+  a.korsatkich { box-shadow: none !important; }
 }

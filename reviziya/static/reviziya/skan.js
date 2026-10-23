@@ -17,12 +17,26 @@
 
   function topildi(matn) {
     toxtat();
+    matn = String(matn || "").split(String.fromCharCode(0)).join("");  // NUL bayt — server 400 qaytaradi
     var url = quti.dataset.topish + "?qr=" + encodeURIComponent(matn) + "&bolim=" + encodeURIComponent(quti.dataset.bolim);
     htmx.ajax("GET", url, "#kartochka");
   }
 
+  function izohKorsat(matn) {
+    if (matn) izoh.textContent = matn;
+    izoh.hidden = false;
+  }
+
   function boshla() {
-    var detektor = new BarcodeDetector({ formats: ["qr_code"] });
+    var detektor;
+    try {
+      detektor = new BarcodeDetector({ formats: ["qr_code"] });
+    } catch (e) {
+      toxtat();
+      tugma.hidden = true;
+      izohKorsat("Bu brauzer QR kodni o'qiy olmaydi — inv. raqamni kiriting");
+      return;
+    }
     navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } }).then(function (s) {
       oqim = s;
       video.srcObject = s;
@@ -40,15 +54,20 @@
       }, 300);
     }).catch(function () {
       toxtat();
-      izoh.textContent = "Kameraga ruxsat berilmadi — inv. raqamni kiriting";
-      izoh.hidden = false;
+      izohKorsat("Kameraga ruxsat berilmadi — inv. raqamni kiriting");
     });
   }
 
+  // Tugma faqat brauzer `qr_code` formatini qo'llasa ko'rinadi; aks holda HTTPS/inv. raqam izohi qoladi
   if (quti && "BarcodeDetector" in window && window.isSecureContext && navigator.mediaDevices) {
-    tugma.hidden = false;
-    izoh.hidden = true;
-    tugma.addEventListener("click", function () { if (oqim) toxtat(); else boshla(); });
+    Promise.resolve().then(function () {
+      return BarcodeDetector.getSupportedFormats ? BarcodeDetector.getSupportedFormats() : [];
+    }).then(function (formatlar) {
+      if (formatlar.indexOf("qr_code") === -1) return;
+      tugma.hidden = false;
+      izoh.hidden = true;
+      tugma.addEventListener("click", function () { if (oqim) toxtat(); else boshla(); });
+    }).catch(function () {});
   }
 
   document.addEventListener("click", function (e) {

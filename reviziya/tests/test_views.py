@@ -234,3 +234,43 @@ def test_menyu_bandi(client_rol):
         assert r.status_code == 200 and f'href="{havola}"' in r.content.decode(), rol
         assert client_rol(rol).get(havola).status_code == 200, rol
     assert client_rol("revizor").get(havola).status_code == 403
+
+
+def test_bolimsiz_kochish_tanlanmaydi_va_yopilishga_toskinlik_qilmaydi(ikki_topilmadi, hisobchi):
+    from reviziya.servis import qayd_qosh
+
+    rv, stol, stul = ikki_topilmadi
+    qayd_qosh(rv, None, hisobchi, av=stol)  # «Bo'limsiz» da topildi -> boshqa joyda, nishon yo'q
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    qatorlar = solishtir(rv)
+    [bolimsiz] = [q for q in qatorlar if q.guruh == "boshqa_joyda"]
+    [topilmadi] = [q for q in qatorlar if q.guruh == "topilmadi"]
+
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert f'value="{bolimsiz.kalit}"' not in html and f'value="{topilmadi.kalit}"' in html
+
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [topilmadi.kalit]})
+
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.QOLLANGAN
+
+
+def test_ortiqcha_izohi_sahifa_excel_pdf(ikki_topilmadi, hisobchi, fb):
+    from reviziya.servis import qayd_qosh
+
+    rv, *_ = ikki_topilmadi
+    arxiv = av_yarat(rv.filial, inv="INV-ARX", soni="0")
+    qayd_qosh(rv, None, hisobchi, av=arxiv)
+    qayd_qosh(rv, None, hisobchi, qr_matn="DS|B|9")
+    c = kirgan(hisobchi)
+
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode().replace("&#x27;", "'")
+    assert "Ortiqcha (arxivda)" in html and "Ortiqcha (boshqa filial)" in html and "Boshqa filial QR:" in html
+
+    satrlar = list(load_workbook(io.BytesIO(c.get(reverse("reviziya:excel", args=[rv.pk])).content)).active.values)
+    guruhlar = {s[0] for s in satrlar}
+    assert {"Ortiqcha (arxivda)", "Ortiqcha (boshqa filial)"} <= guruhlar
+
+    pdf_matni = matn(c.get(reverse("reviziya:pdf", args=[rv.pk])))
+    assert "Ortiqcha (arxivda)" in pdf_matni and "Ortiqcha (boshqa filial)" in pdf_matni

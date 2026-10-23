@@ -107,8 +107,8 @@ def tarix(av: AV, user) -> list[TarixQator]:
     for h in harakatlar:
         natija.append(TarixQator(h.sana, "holat" if h.sabab == "holat" else h.sabab, _taqsimot_matni(h), _kim(h.kim)))
     qaydlar = filial_bilan_chekla(
-        ReviziyaQayd.objects.filter(av=av), user, "reviziya__filial"
-    ).select_related("reviziya", "bolim", "kim")
+        ReviziyaQayd.objects.filter(av=av).exclude(reviziya__holat="bekor"), user, "reviziya__filial"
+    ).select_related("reviziya", "bolim", "kim")  # bekor qilingan reviziya qaydlari tarixga kirmaydi
     for r in qaydlar:
         joy = r.bolim.nomi if r.bolim else "Bo'limsiz"
         natija.append(TarixQator(

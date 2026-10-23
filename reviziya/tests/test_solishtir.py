@@ -257,3 +257,28 @@ def test_boshqa_joyda_aralash_holat(filial, och, qosh):
     assert {q.guruh for q in qatorlar} == {"boshqa_joyda"}
     assert sorted((q.nishon_holat, q.farq) for q in qatorlar) == [("", Decimal("1")), (Holat.NOSOZ, Decimal("1"))]
     assert len({q.kalit for q in qatorlar}) == 2
+
+
+def test_ortiqcha_izohlari_arxivda_va_boshqa_filial(filial, och, qosh, filial_yarat):
+    from reviziya.solishtir import guruh_nomi
+
+    filial_yarat("08")
+    zal = Bolim.objects.create(filial=filial, nomi="Zal")
+    arxiv = av_yarat(filial, inv="A1", soni="0")
+    yangi = av_yarat(filial, inv="Y1")
+    rv = och(filial)
+    qosh(rv, zal, av=arxiv)
+    qosh(rv, zal, av=yangi)
+    qosh(rv, zal, qr_matn="DS|08|77")
+    qosh(rv, zal, qr_matn="XYZ")
+
+    qatorlar = {(q.av_id, q.qr_matn): q for q in solishtir(rv)}
+
+    q_arxiv = qatorlar[(arxiv.pk, "")]
+    assert (q_arxiv.guruh, q_arxiv.izoh, guruh_nomi(q_arxiv)) == ("ortiqcha", "arxivda", "Ortiqcha (arxivda)")
+    assert q_arxiv.kalit == f"ortiqcha:{arxiv.pk}:{zal.pk}:{Holat.ISHLATILMOQDA}:None:"  # izoh kalitga kirmaydi
+    assert (qatorlar[(yangi.pk, "")].izoh, guruh_nomi(qatorlar[(yangi.pk, "")])) == ("", "Ortiqcha")
+    q_boshqa = qatorlar[(None, "DS|08|77")]
+    assert (q_boshqa.izoh, guruh_nomi(q_boshqa)) == ("boshqa filial", "Ortiqcha (boshqa filial)")
+    assert q_boshqa.kalit == f"ortiqcha:qr:DS|08|77:{zal.pk}"
+    assert qatorlar[(None, "XYZ")].izoh == ""

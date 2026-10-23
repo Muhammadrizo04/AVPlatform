@@ -7,7 +7,7 @@ from onec.models import AV
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Holat, Sozlama
 
-from .solishtir import GURUH_NOMLARI, GURUHLAR, bolim_nomlari, jamlar, solishtir
+from .solishtir import GURUH_NOMLARI, GURUHLAR, bolim_nomlari, guruh_nomi, jamlar, solishtir
 
 TIYIN = Decimal("0.01")
 KAMOMAD = ("kam", "topilmadi")
@@ -39,7 +39,7 @@ def dalolatnoma_pdf(reviziya, pul: bool = False) -> bytes:
             qiymat = (abs(q.farq) * narxlar.get(q.av_id, Decimal("0"))).quantize(TIYIN, ROUND_HALF_UP)
             jami_qiymat += qiymat
         farqlar.append({
-            "guruh": GURUH_NOMLARI[q.guruh],
+            "guruh": guruh_nomi(q),
             "inv": q.inv,
             "nomi": q.av_nomi or q.qr_matn,
             "bolim": q.bolim_nomi,
