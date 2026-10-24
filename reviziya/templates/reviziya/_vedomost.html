@@ -15,7 +15,9 @@
       <td class="son">{{ q.kutilgan|son }}</td>
       <td class="son">{{ q.topilgan|son }}</td>
       <td class="son">{{ q.farq|son }}</td>
-      <td class="text-nowrap">{% if s.qollangan %}<span class="badge bg-success qollangan-belgi"><i class="cil-check-alt me-1"></i>qo'llangan</span>{% endif %}</td>
+      <td class="text-nowrap">{% if s.qollangan %}<span class="badge bg-success qollangan-belgi"><i class="cil-check-alt me-1"></i>qo'llangan</span>{% if tanlash %}
+        <button type="submit" class="btn btn-sm btn-link text-danger p-0 ms-2 align-baseline chop-yoq" formaction="{% url 'reviziya:qolla_bekor' rv.pk %}" name="bekor_kalit" value="{{ q.kalit }}"
+          data-tasdiq="«{{ q.av_nomi }}» uchun qo'llash bekor qilinsinmi? AV avvalgi joyi va holatiga qaytadi; qatorni keyin yana qo'llash mumkin." data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli>bekor qilish</button>{% endif %}{% endif %}</td>
     </tr>
   {% endwith %}{% empty %}
     <tr><td colspan="10" class="text-body-secondary">Qator topilmadi.</td></tr>

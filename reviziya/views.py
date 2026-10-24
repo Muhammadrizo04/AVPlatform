@@ -21,7 +21,7 @@ from vositalar.models import Holat
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
-from .qollash import QOLLANADI, qolla, qollanadimi, reviziya_yop, yakunlanganga_qaytar
+from .qollash import QOLLANADI, qolla, qollanadimi, qollashni_bekor_qil, reviziya_yop, yakunlanganga_qaytar
 from .servis import (
     KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, reviziya_och,
     revizorlarni_ozgartir, yakunla,
@@ -375,6 +375,19 @@ def qolla_view(request, pk):
             pass  # parallel yopilgan
         else:
             messages.info(request, f"Barcha farqlar qo'llandi — reviziya {rv.nomi} yopildi.")
+    return redirect("reviziya:sahifa", pk=rv.pk)
+
+
+@require_POST
+@amal_kerak("reviziya_boshqarish")
+def qolla_bekor_view(request, pk):
+    rv = _reviziya_yoki_404(request, pk)
+    try:
+        qollashni_bekor_qil(rv, request.POST.get("bekor_kalit", ""), request.user)
+    except ReviziyaXato as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, "Qo'llash bekor qilindi — AV avvalgi joyi va holatiga qaytdi.")
     return redirect("reviziya:sahifa", pk=rv.pk)
 
 

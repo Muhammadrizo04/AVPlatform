@@ -1,5 +1,6 @@
 /* Tasdiqlash oynasi: brauzerning tizim confirm() o'rniga ekran o'rtasidagi o'z oynamiz (<dialog>, kutubxonasiz).
-   Oddiy forma: <form data-tasdiq="Matn" [data-tasdiq-tugma="Yopish"] [data-tasdiq-xavfli]>;
+   Oddiy forma: <form data-tasdiq="Matn" [data-tasdiq-tugma="Yopish"] [data-tasdiq-xavfli]>; xuddi shu atributlar
+   yuboruvchi tugmada bo'lsa (masalan, formaction'li ikkinchi amal), tugmaniki ishlatiladi;
    matndagi {n} — forma ichida [data-tasdiq-sanoq] selektoriga mos elementlar soni.
    HTMX: hx-confirm="Matn" ham shu oyna bilan so'raladi. */
 (function () {
@@ -37,14 +38,16 @@
 
   document.addEventListener("submit", function (e) {
     var forma = e.target;
-    if (!forma.dataset || forma.dataset.tasdiq === undefined) return;
+    var yuboruvchi = e.submitter;
+    // Tugmaning o'z data-tasdiq'i (masalan, formaction'li ikkinchi amal) formanikidan ustun
+    var manba = yuboruvchi && yuboruvchi.dataset && yuboruvchi.dataset.tasdiq !== undefined ? yuboruvchi : forma;
+    if (!manba.dataset || manba.dataset.tasdiq === undefined) return;
     if (forma._tasdiqlandi) { forma._tasdiqlandi = false; return; }
     e.preventDefault();
     e.stopImmediatePropagation();
-    var matn = forma.dataset.tasdiq;
-    if (forma.dataset.tasdiqSanoq) matn = matn.replace("{n}", forma.querySelectorAll(forma.dataset.tasdiqSanoq).length);
-    var yuboruvchi = e.submitter;
-    sora(matn, forma.dataset.tasdiqTugma, forma.dataset.tasdiqXavfli !== undefined, function () {
+    var matn = manba.dataset.tasdiq;
+    if (manba.dataset.tasdiqSanoq) matn = matn.replace("{n}", forma.querySelectorAll(manba.dataset.tasdiqSanoq).length);
+    sora(matn, manba.dataset.tasdiqTugma, manba.dataset.tasdiqXavfli !== undefined, function () {
       forma._tasdiqlandi = true;
       if (forma.requestSubmit) forma.requestSubmit(yuboruvchi || undefined); else forma.submit();
     });

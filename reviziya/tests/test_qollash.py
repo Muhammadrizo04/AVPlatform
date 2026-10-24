@@ -330,3 +330,97 @@ def test_bosh_ekran_topilmadi_faqat_qollashdan_keyin(filial, och, qosh, hisobchi
     assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("5"), Holat.TOPILMADI: Decimal("5")}
     h = TaqsimotHarakat.objects.get(av=stol)
     assert (h.sabab, h.hujjat_izoh, h.soni) == ("reviziya", rv.nomi, Decimal("5"))
+
+
+# --- Qo'llashni bekor qilish ---
+from reviziya.qollash import qollashni_bekor_qil  # noqa: E402
+
+
+def test_bekor_kam_qaytadi_va_qayta_qollash_mumkin(filial, och, qosh, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    stol = av_yarat(filial, soni="3")
+    qator(stol, filial, "3", bolim=a)
+    rv = och(filial)
+    qosh(rv, a, av=stol)
+    yakunla(rv, hisobchi)
+    k = kalit(rv, "kam", stol)
+    qolla(rv, [k], hisobchi)
+
+    qollashni_bekor_qil(rv, k, hisobchi)
+
+    assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("3"))]
+    j = ReviziyaQollash.objects.get(reviziya=rv, kalit=k)
+    assert (j.natija, j.bekor_qildi) == ("bekor", hisobchi) and j.bekor_vaqti is not None
+    oxirgi = TaqsimotHarakat.objects.filter(av=stol).first()
+    assert oxirgi.sabab == "reviziya" and "bekor" in oxirgi.hujjat_izoh and oxirgi.soni == Decimal("2")
+    [qayta] = qolla(rv, [k], hisobchi)  # bekor qilingani yana qo'llanadi
+    assert qayta.natija == "ok"
+    assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1")), (a.pk, Holat.TOPILMADI, Decimal("2"))]
+
+
+def test_bekor_boshqa_joyda_holat_bilan(filial, och, qosh, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    stol = av_yarat(filial, soni="1")
+    qator(stol, filial, "1", bolim=a)
+    rv = och(filial)
+    qosh(rv, b, av=stol, holat=Holat.NOSOZ)
+    yakunla(rv, hisobchi)
+    k = kalit(rv, "boshqa_joyda", stol)
+    qolla(rv, [k], hisobchi)
+    assert taqsimot(stol) == [(b.pk, Holat.NOSOZ, Decimal("1"))]
+
+    qollashni_bekor_qil(rv, k, hisobchi)
+
+    assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]
+
+
+def test_bekor_holat_boshqa(filial, och, qosh, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    stol = av_yarat(filial, soni="2")
+    qator(stol, filial, "2", bolim=a)
+    rv = och(filial)
+    qosh(rv, a, av=stol)
+    qosh(rv, a, av=stol, holat=Holat.TAMIRDA)
+    yakunla(rv, hisobchi)
+    k = kalit(rv, "holat_boshqa", stol)
+    qolla(rv, [k], hisobchi)
+
+    qollashni_bekor_qil(rv, k, hisobchi)
+
+    assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("2"))]
+
+
+def test_bekor_keyin_boshqa_amal_bolsa_rad(filial, och, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    stol = av_yarat(filial, soni="2")
+    qator(stol, filial, "2", bolim=a)
+    rv = och(filial)
+    yakunla(rv, hisobchi)
+    k = kalit(rv, "topilmadi", stol)
+    qolla(rv, [k], hisobchi)
+    kochir(Taqsimot.objects.get(av=stol), Decimal("1"), b, hisobchi)  # qo'llashdan keyin qo'lda ko'chirildi
+
+    with pytest.raises(ReviziyaXato, match="boshqa amal"):
+        qollashni_bekor_qil(rv, k, hisobchi)
+
+    assert ReviziyaQollash.objects.get(reviziya=rv, kalit=k).natija == "ok"
+    assert taqsimot(stol) == [(a.pk, Holat.TOPILMADI, Decimal("1")), (b.pk, Holat.TOPILMADI, Decimal("1"))]
+
+
+def test_bekor_faqat_yakunlanganda_va_qollanganda(filial, och, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    stol, stul = av_yarat(filial, soni="1"), av_yarat(filial, soni="1")
+    qator(stol, filial, "1", bolim=a)
+    qator(stul, filial, "1", bolim=a)
+    rv = och(filial)
+    yakunla(rv, hisobchi)
+    k = kalit(rv, "topilmadi", stol)
+    with pytest.raises(ReviziyaXato, match="qo'llanmagan"):
+        qollashni_bekor_qil(rv, k, hisobchi)
+    qolla(rv, [k], hisobchi)
+    reviziya_yop(rv, hisobchi)
+    with pytest.raises(ReviziyaXato, match="Yakunlangan"):
+        qollashni_bekor_qil(rv, k, hisobchi)
+    assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI

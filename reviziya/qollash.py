@@ -10,7 +10,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from onec.models import AV
-from vositalar.amallar import AmalXato, holat_ozgartir, kochir
+from vositalar.amallar import AmalXato, _ozgartir, holat_ozgartir, kochir
 from vositalar.models import Bolim, Holat, Taqsimot, TaqsimotHarakat
 
 from .models import Reviziya, ReviziyaQollash
@@ -132,3 +132,71 @@ def yakunlanganga_qaytar(reviziya: Reviziya, kim) -> None:
         reviziya.qolladi = None
         reviziya.qollangan_vaqt = None
         reviziya.save(update_fields=["holat", "qolladi", "qollangan_vaqt"])
+
+
+def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
+    """Qo'llangan vedomost qatorini teskari amal bilan qaytaradi; jurnal yozuvi «bekor» bo'ladi (yana qo'llash mumkin).
+
+    Qo'llashdan keyin shu AV bilan boshqa amal (qo'lda ko'chirish, МОЛ akti, 1C sinxroni ...) bo'lgan bo'lsa — rad
+    etiladi: teskari amal bu o'zgarishlarni buzishi mumkin, uni AV kartochkasida qo'lda tuzatish kerak.
+    """
+    with transaction.atomic():
+        reviziya = Reviziya.objects.select_for_update().get(pk=reviziya.pk)
+        if reviziya.holat != Reviziya.Holat.YAKUNLANGAN:
+            raise ReviziyaXato("Qo'llashni faqat «Yakunlangan» reviziyada bekor qilish mumkin — avval qaytaring.")
+        jurnal = (
+            reviziya.qollashlar.select_for_update().filter(kalit=kalit, natija=ReviziyaQollash.Natija.OK).first()
+        )
+        if jurnal is None:
+            raise ReviziyaXato("Bu qator qo'llanmagan.")
+        q = next((x for x in solishtir(reviziya) if x.kalit == kalit), None)
+        if q is None:
+            raise ReviziyaXato("Vedomost qatori topilmadi.")
+        list(Taqsimot.objects.select_for_update().filter(filial_id=reviziya.filial_id, av_id=q.av_id).order_by("pk"))
+        keyingi = (
+            TaqsimotHarakat.objects.filter(av_id=q.av_id, filial_id=reviziya.filial_id, sana__gt=jurnal.qachon)
+            .exclude(sabab=REVIZIYA, hujjat_izoh__startswith=reviziya.nomi)
+            .order_by("sana")
+            .first()
+        )
+        if keyingi is not None:
+            raise ReviziyaXato(
+                f"Qo'llashdan keyin bu AV bilan boshqa amal bajarilgan ({keyingi.get_sabab_display()}, "
+                f"{timezone.localtime(keyingi.sana):%d.%m.%Y %H:%M}) — avtomatik bekor qilib bo'lmaydi. "
+                "AV kartochkasida qo'lda tuzating."
+            )
+        try:
+            _teskari(reviziya, q, jurnal.soni, kim)
+        except AmalXato as xato:
+            raise ReviziyaXato(str(xato)) from None
+        jurnal.natija = ReviziyaQollash.Natija.BEKOR
+        jurnal.bekor_qildi = kim
+        jurnal.bekor_vaqti = timezone.now()
+        jurnal.save(update_fields=["natija", "bekor_qildi", "bekor_vaqti"])
+
+
+def _teskari(reviziya, q, soni, kim) -> None:
+    """`_taqsimotga` ning teskarisi: qo'llash natijasidagi (bo'lim, holat) qatorlardan `soni` donani vedomostdagi
+    asl (bo'lim, holat) ga qaytaradi; qatorlar (har xil МОЛ) pk tartibida sarflanadi."""
+    if q.guruh in ("kam", "topilmadi") and q.holat == Holat.TOPILMADI:
+        return  # qo'llashda ham hech narsa o'zgarmagan
+    if q.guruh == "boshqa_joyda":
+        manba = (q.nishon_bolim_id, q.nishon_holat or q.holat)
+    elif q.guruh == "holat_boshqa":
+        manba = (q.bolim_id, q.nishon_holat)
+    else:
+        manba = (q.bolim_id, Holat.TOPILMADI)
+    qatorlar = Taqsimot.objects.filter(av_id=q.av_id, filial_id=reviziya.filial_id).order_by("pk")
+    mos = [t for t in qatorlar if (t.bolim_id, t.holat) == manba]
+    mavjud = sum((t.soni for t in mos), NOL)
+    if mavjud < soni:
+        nomi = AV.objects.filter(pk=q.av_id).values_list("nomi", flat=True).first() or ""
+        raise ReviziyaXato(f"Taqsimot o'zgargan: {nomi} — qaytarish uchun {soni:f} kerak, mavjud {mavjud:f}.")
+    izoh = f"{reviziya.nomi} — qo'llash bekor qilindi"
+    qoldi = soni
+    for t in mos:
+        if qoldi <= 0:
+            break
+        m = min(t.soni, qoldi)
+        qoldi -= m
+        _ozgartir(t, m, kim, REVIZIYA, bolim=q.bolim_id, holat=q.holat, hujjat_izoh=izoh)

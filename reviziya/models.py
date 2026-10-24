@@ -98,11 +98,12 @@ class ReviziyaXona(models.Model):
 
 
 class ReviziyaQollash(models.Model):
-    """Qo'llash jurnali: har guruh (kalit) uchun natija; muvaffaqiyatli kalit takrorlanmaydi."""
+    """Qo'llash jurnali: har guruh (kalit) uchun natija; muvaffaqiyatli kalit takrorlanmaydi (bekor qilinmaguncha)."""
 
     class Natija(models.TextChoices):
         OK = "ok", "OK"
         XATO = "xato", "Xato"
+        BEKOR = "bekor", "Bekor qilingan"
 
     reviziya = models.ForeignKey(Reviziya, on_delete=models.CASCADE, related_name="qollashlar")
     kalit = models.CharField(max_length=255)
@@ -112,6 +113,9 @@ class ReviziyaQollash(models.Model):
     xato = models.TextField(blank=True)
     kim = models.ForeignKey(User, on_delete=models.PROTECT, related_name="+")
     qachon = models.DateTimeField(default=timezone.now)
+    # natija="bekor": qo'llash teskari amal bilan bekor qilingan — kalitni yana qo'llash mumkin
+    bekor_qildi = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
+    bekor_vaqti = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [

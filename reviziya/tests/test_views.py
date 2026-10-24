@@ -406,3 +406,22 @@ def test_qollash_eslatmasi_va_yopishqoq_panel(ikki_topilmadi, hisobchi):
 
     c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [q.kalit for q in solishtir(rv)]})
     assert "qollash-eslatma" not in c.get(sahifa).content.decode()  # hammasi qo'llandi, yopildi
+
+
+def test_qollashni_bekor_qilish_tugmasi_va_view(ikki_topilmadi, hisobchi, foydalanuvchi):
+    rv, stol, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]})
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    bekor_url = reverse("reviziya:qolla_bekor", args=[rv.pk])
+
+    html = c.get(sahifa).content.decode()
+    assert f'formaction="{bekor_url}"' in html and 'name="bekor_kalit"' in html
+    assert kirgan(foydalanuvchi("hr")).post(bekor_url, {"bekor_kalit": kalit}).status_code == 403
+
+    r = c.post(bekor_url, {"bekor_kalit": kalit}, follow=True)
+    assert "bekor qilindi" in r.content.decode()
+    assert Taqsimot.objects.get(av=stol).holat == Holat.ISHLATILMOQDA
+    assert c.get(sahifa).context["farqlar"]["qollangan"] == 0
