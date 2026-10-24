@@ -299,3 +299,34 @@ def test_bolimsiz_joyga_kochirish_aniq_xato(filial, och, qosh, hisobchi):
 
     assert (natija.natija, natija.xato) == ("xato", "Bo'limsiz joyga ko'chirib bo'lmaydi — xonani aniqlang.")
     assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]
+
+
+def test_bosh_ekran_topilmadi_faqat_qollashdan_keyin(filial, och, qosh, hisobchi):
+    """10 dan 5 tasi topilmadi: bosh ekrandagi «Topilmadi» skanerlash va yakunlashda o'zgarmaydi, qo'llashda 5 bo'ladi."""
+    from django.test import Client
+    from django.urls import reverse
+
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    stol = av_yarat(filial, soni="10")
+    qator(stol, filial, "10", bolim=a)
+    client = Client()
+    client.force_login(hisobchi)
+
+    def bosh_ekran():
+        holatlar = client.get(reverse("panel:bosh")).context["holatlar"]
+        return {h["kalit"]: h["soni"] for h in holatlar if h["soni"]}
+
+    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("10")}
+    rv = och(filial)
+    qosh(rv, a, "5", av=stol)
+    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("10")}  # ochiq, 5 tasi skanerlangan
+    yakunla(rv, hisobchi)
+    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("10")}  # yakunlangan, hali qo'llanmagan
+
+    [natija] = qolla(rv, [kalit(rv, "kam", stol)], hisobchi)
+    assert natija.natija == "ok" and natija.soni == Decimal("5")
+    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("5"), Holat.TOPILMADI: Decimal("5")}
+    reviziya_yop(rv, hisobchi)
+    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("5"), Holat.TOPILMADI: Decimal("5")}
+    h = TaqsimotHarakat.objects.get(av=stol)
+    assert (h.sabab, h.hujjat_izoh, h.soni) == ("reviziya", rv.nomi, Decimal("5"))
