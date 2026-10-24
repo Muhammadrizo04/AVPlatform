@@ -158,3 +158,14 @@ def test_csrf_skripti_oddiy_formalar_tokenini_yangilaydi():
 
     with open(finders.find("panel/csrf.js"), encoding="utf-8") as f:
         assert "csrfmiddlewaretoken" in f.read()
+
+
+def test_tasdiq_oynasi_hamma_sahifada_va_tizim_confirm_qolmagan(client_hisobchi, client_rol):
+    """Tasdiqlash — ekran o'rtasidagi o'z oynamiz (tasdiq.js); shablonlarda brauzer confirm() ishlatilmaydi."""
+    import pathlib
+
+    assert "panel/tasdiq.js" in client_hisobchi.get(reverse("panel:bosh")).content.decode()
+    assert "panel/tasdiq.js" in client_rol("revizor").get(reverse("reviziya:mobil")).content.decode()
+    ildiz = pathlib.Path(__file__).resolve().parents[2]
+    qolgan = [str(p) for p in ildiz.glob("*/templates/**/*.html") if "confirm(" in p.read_text(encoding="utf-8")]
+    assert qolgan == []

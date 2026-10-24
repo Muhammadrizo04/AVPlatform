@@ -11,12 +11,12 @@
   <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Skanerlash</a>
   {% endif %}
   {% if boshqarish and rv.holat == "ochiq" %}
-  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o‘zgarmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
-  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo‘shib bo‘lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
+  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o'zgarmaydi." data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo'shib bo'lmaydi." data-tasdiq-tugma="Yakunlash">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
   {% elif boshqarish and rv.holat == "yakunlangan" %}
-  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yopilsinmi?{% if farqlar.qolgan %} {{ farqlar.jami }} ta farqdan {{ farqlar.qolgan }} tasi hali qo‘llanmagan — ular taqsimotga kiritilmaydi.{% endif %}');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
+  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yopilsinmi?{% if farqlar.qolgan %} {{ farqlar.jami }} ta farqdan {{ farqlar.qolgan }} tasi hali qo'llanmagan — ular taqsimotga kiritilmaydi.{% endif %}" data-tasdiq-tugma="Yopish"{% if farqlar.qolgan %} data-tasdiq-xavfli{% endif %}>{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
   {% elif boshqarish and rv.holat == "qollangan" %}
-  <form method="post" action="{% url 'reviziya:qaytar' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} «Yakunlangan» ga qaytarilsinmi? Qo‘llanmagan farqlarni qo‘llash mumkin bo‘ladi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Yakunlanganga qaytarish</button></form>
+  <form method="post" action="{% url 'reviziya:qaytar' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Yakunlangan» ga qaytarilsinmi? Qo'llanmagan farqlarni qo'llash mumkin bo'ladi." data-tasdiq-tugma="Qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Yakunlanganga qaytarish</button></form>
   {% endif %}
 </div>
 
@@ -133,7 +133,7 @@
 </div></div>
 
 {% if tanlash %}
-<form method="post" action="{% url 'reviziya:qolla' rv.pk %}" id="vedomost" onsubmit="return confirm('Tanlangan ' + this.querySelectorAll('input[name=kalit]:checked').length + ' ta farq taqsimotga qo‘llansinmi?');">{% csrf_token %}
+<form method="post" action="{% url 'reviziya:qolla' rv.pk %}" id="vedomost" data-tasdiq="Tanlangan {n} ta farq taqsimotga qo'llansinmi? AV joyi va holati yangilanadi." data-tasdiq-sanoq="input[name=kalit]:checked" data-tasdiq-tugma="Qo'llash">{% csrf_token %}
 {% include "reviziya/_vedomost.html" %}
 {% if tanlanadigan_bor %}
 <div class="amal-panel">

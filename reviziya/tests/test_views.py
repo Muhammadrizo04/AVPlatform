@@ -358,7 +358,7 @@ def test_qollangan_farqlar_hisoblagichi_va_yopish_ogohlantirishi(ikki_topilmadi,
     assert javob.context["farqlar"] == {"jami": 2, "qollangan": 1, "qolgan": 1}
     html = javob.content.decode()
     assert "Qo'llangan farqlar" in html and "1 / 2" in html
-    assert "2 ta farqdan 1 tasi hali qo‘llanmagan" in html
+    assert "2 ta farqdan 1 tasi hali qo'llanmagan" in html and "data-tasdiq-xavfli" in html
 
 
 def test_yopilganni_yakunlanganga_qaytarish(ikki_topilmadi, hisobchi, foydalanuvchi):
