@@ -379,6 +379,11 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
   margin: 0 0 1rem; padding: .65rem 1rem; background: var(--av-siyoh); color: #fff; border-radius: var(--av-radius, 10px);
   box-shadow: 0 12px 32px rgba(10, 37, 64, .28); }
 .amal-panel[hidden] { display: none; }
+/* МОЛ akti: tanlangan qatorlar soni — sahifa aylantirilganda ham ko'rinadi */
+.akt-tanlov { position: sticky; top: 3.75rem; z-index: 15; display: flex; flex-wrap: wrap; align-items: baseline; gap: .25rem .75rem;
+  margin-bottom: .75rem; padding: .6rem 1rem; border-radius: var(--av-radius, 10px); background: var(--av-indigo-och, #efeefe);
+  border: 1px solid #d9d6ff; color: var(--av-siyoh); }
+.akt-tanlov[hidden] { display: none; }
 .amal-panel .text-body-secondary { color: rgba(255, 255, 255, .65) !important; }
 .amal-panel .btn-ghost-secondary { color: #fff; }
 .amal-panel .btn-outline-primary { color: #fff; border-color: rgba(255, 255, 255, .5); }

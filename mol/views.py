@@ -178,13 +178,10 @@ def _korinadigan_qatorlar(qatorlar, manba, tanlanganlar: set[int]):
     filial_id = son(manba.get("filial"))
     if filial_id:
         qs = qs.filter(filial_id=filial_id)
-    royxat = list(qs[: AKT_QATOR_CHEGARASI + 1])
+    royxat = list(qs.exclude(pk__in=tanlanganlar)[: AKT_QATOR_CHEGARASI + 1])
     kesildi = len(royxat) > AKT_QATOR_CHEGARASI
-    royxat = royxat[:AKT_QATOR_CHEGARASI]
-    yetmagan = tanlanganlar - {t.pk for t in royxat}
-    if yetmagan:
-        royxat = list(qatorlar.filter(pk__in=yetmagan)) + royxat
-    return royxat, kesildi
+    # tanlanganlar har doim tepada — qidiruv o'zgarsa ham tanlov yo'qolmaydi
+    return list(qatorlar.filter(pk__in=tanlanganlar)) + royxat[:AKT_QATOR_CHEGARASI], kesildi
 
 
 @amal_kerak("mol_akt")
@@ -203,6 +200,9 @@ def akt_yangi(request):
             return redirect("mol:akt", pk=akt.pk)
         tanlanganlar = {pk for pk in (son(v) for v in request.POST.getlist("tanlangan")) if pk}
     else:
+        # Qidiruvda avval belgilangan qatorlar (`tanlangan`) saqlanadi — faqat topshiruvchining qatorlari
+        idlar = {pk for pk in (son(v) for v in request.GET.getlist("tanlangan")) if pk}
+        tanlanganlar = set(qatorlar.filter(pk__in=idlar).values_list("pk", flat=True)) if idlar else set()
         # `?qator=<pk>` (AV kartochkasidan): shu AV qatorlari ko'rsatiladi, ko'rsatilgan qator oldindan belgilanadi.
         pk = son(request.GET.get("qator"))
         tanlangan = qatorlar.filter(pk=pk).first() if pk else None
@@ -210,6 +210,8 @@ def akt_yangi(request):
             tanlanganlar = {tanlangan.pk}
             qatorlar = qatorlar.filter(av_id=tanlangan.av_id)
     korinadigan, kesildi = _korinadigan_qatorlar(qatorlar, manba, tanlanganlar)
+    for t in korinadigan:  # foydalanuvchi kiritgan son qidiruvdan keyin ham saqlanadi
+        t.tanlangan_soni = (manba.get(f"soni_{t.pk}") or "").strip()
     kontekst = {
         "topshiruvchi": top,
         "qatorlar": korinadigan,

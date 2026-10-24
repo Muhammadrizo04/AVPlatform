@@ -52,6 +52,23 @@
   <p><button class="m-tugma asosiy keng" type="submit">Saqlash</button></p>
 </form>
 {% if tur == "av" %}
+<details class="m-tarix-qism">
+  <summary>Javobgar shaxsni (МОЛ) biriktirish</summary>
+  <form hx-post="{% url 'reviziya:mobil_mol' rv.pk %}" hx-target="#mol-natija" class="m-mol-forma">
+    <input type="hidden" name="av" value="{{ av.pk }}">
+    <label class="m-yorliq" for="k-xodim">Kimga biriktiriladi</label>
+    <select class="m-maydon" id="k-xodim" name="xodim" required>
+      <option value="">— xodimni tanlang —</option>
+      {% for guruh, xodimlar in xodim_tanlovi %}{% if xodimlar %}
+      <optgroup label="{{ guruh }}">{% for x in xodimlar %}<option value="{{ x.pk }}">{{ x.ism }}</option>{% endfor %}</optgroup>
+      {% endif %}{% endfor %}
+    </select>
+    <p class="m-xira" style="margin:.4rem 0">Qoralama МОЛ akti tuziladi (bitta xodimga tanlanganlar bitta aktga yig'iladi). U hisobchi yoki HR
+      tasdiqlagach kuchga kiradi.</p>
+    <div id="mol-natija"></div>
+    <button class="m-tugma keng" type="submit">Aktga qo'shish</button>
+  </form>
+</details>
 <details class="m-tarix-qism" hx-get="{% url 'reviziya:mobil_tarix' rv.pk %}?av={{ av.pk }}" hx-trigger="toggle once" hx-target="find .m-tarix-ichi">
   <summary>AV tarixi — qayerdan kelgan, kim ko'chirgan</summary>
   <div class="m-tarix-ichi"><p class="m-xira">Yuklanmoqda…</p></div>

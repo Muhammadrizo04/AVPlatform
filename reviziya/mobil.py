@@ -18,6 +18,8 @@ from django.views.decorators.http import require_GET, require_POST
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisoblar.parametrlar import son as son_id
+from mol.servis import AktXato, qoralamaga_qosh
+from mol.sorovlar import faol_xodimlar
 from onec.models import AV, AVQoldiq, Filial
 from panel.templatetags.raqamlar import son
 from vositalar.bolimlar import daraxt
@@ -381,6 +383,14 @@ def _av_kartochka(rv, xona, av, usul) -> dict:
     }
 
 
+def _xodim_tanlovi(request, rv) -> list[tuple[str, list]]:
+    """МОЛ biriktirish uchun faol xodimlar: avval reviziya filialiniki, keyin qolganlari."""
+    xodimlar = list(faol_xodimlar(request.user).order_by(Trim("ism"), "pk"))
+    shu = [x for x in xodimlar if x.filial_id == rv.filial_id]
+    boshqa = [x for x in xodimlar if x.filial_id != rv.filial_id]
+    return [(rv.filial.nomi, shu), ("Boshqa filiallar", boshqa)]
+
+
 def _qidir(rv, q: str):
     doira = _av_doirasi(rv)
     aniq = list(doira.annotate(inv=Trim("inv_raqam")).filter(inv__iexact=q).order_by("nomi", "pk")[:QIDIRUV_NATIJALARI])
@@ -429,6 +439,8 @@ def topish(request, pk):
             ctx.update({"tur": "royxat", "topilganlar": topilganlar, "q": q})
     else:
         return HttpResponse("")
+    if ctx.get("tur") == "av":
+        ctx["xodim_tanlovi"] = _xodim_tanlovi(request, rv)
     return render(request, "reviziya/mobil/_kartochka.html", ctx)
 
 
@@ -469,6 +481,41 @@ def saqla(request, pk):
         "reviziya/mobil/_kartochka.html", {"tur": "saqlandi", "qayd": qayd, "rv": rv}, request=request
     )
     return HttpResponse(kartochka + _yangilanishlar(request, rv, xona))
+
+
+@_mobil
+@require_POST
+def mol_biriktir(request, pk):
+    """AV'ni tanlangan xodimga (МОЛ) biriktirish uchun qoralama МОЛ aktiga qo'shadi: reviziya filialidagi
+    AV qatorlari joriy МОЛ'lari bo'yicha guruhlanadi (har topshiruvchi — alohida akt). Taqsimot o'zgarmaydi:
+    akt hisobchi yoki HR tasdiqlagach kuchga kiradi. Bitta xodimga tanlangan AV'lar bitta aktga yig'iladi."""
+    rv = _reviziya(request, pk)
+    av = _av_doirasi(rv).filter(pk=son_id(request.POST.get("av"))).first()
+    xodim = faol_xodimlar(request.user).filter(pk=son_id(request.POST.get("xodim"))).first()
+    if av is None:
+        raise Http404
+    if xodim is None:
+        return _xato("Javobgar xodimni tanlang.", "#mol-natija")
+    guruhlar: dict = {}
+    for t in Taqsimot.objects.filter(filial_id=rv.filial_id, av=av).exclude(mol=xodim).select_related("mol"):
+        guruhlar.setdefault(t.mol, []).append((t, t.soni))
+    if not guruhlar:
+        return _xato(f"Bu AV allaqachon {xodim.ism.strip()} da.", "#mol-natija")
+    izoh = f"{rv.nomi} reviziyasi bo'yicha"
+    aktlar = []
+    try:
+        with transaction.atomic():
+            for top, qatorlar in guruhlar.items():
+                akt, qoshildi = qoralamaga_qosh(top, xodim, qatorlar, request.user, izoh)
+                aktlar.append((akt, qoshildi))
+    except AktXato as e:
+        return _xato(str(e), "#mol-natija")
+    nomlar = ", ".join(a.nomi for a, _ in aktlar)
+    if not any(q for _, q in aktlar):
+        matn = f"Bu AV allaqachon qoralama aktda: {nomlar}."
+    else:
+        matn = f"{xodim.ism.strip()} ga biriktirish uchun qoralama aktga qo'shildi: {nomlar}. Hisobchi yoki HR tasdiqlaydi."
+    return HttpResponse(format_html('<p class="m-ok" role="status">{}</p>', matn))
 
 
 @_mobil

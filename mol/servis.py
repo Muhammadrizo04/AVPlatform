@@ -30,6 +30,21 @@ class AktXato(Exception):
 def akt_yarat(topshiruvchi, qabul_qiluvchi, qatorlar, kim, izoh: str = "") -> MolAkt:
     """Qoralama akt. `qatorlar` — [(Taqsimot, soni)]; har qatorning `mol` i topshiruvchiga teng bo'lishi shart.
     Taqsimot bu yerda o'zgarmaydi."""
+    tekshirilgan = _qatorlarni_tekshir(topshiruvchi, qabul_qiluvchi, qatorlar)
+    with transaction.atomic():
+        akt = MolAkt.objects.create(
+            raqam=_keyingi_raqam(), topshiruvchi=topshiruvchi, qabul_qiluvchi=qabul_qiluvchi, izoh=izoh, tuzdi=kim
+        )
+        MolAktQator.objects.bulk_create(
+            MolAktQator(
+                akt=akt, av_id=t.av_id, filial_id=t.filial_id, bolim_id=t.bolim_id, holat=t.holat, soni=soni
+            )
+            for t, soni in tekshirilgan
+        )
+    return akt
+
+
+def _qatorlarni_tekshir(topshiruvchi, qabul_qiluvchi, qatorlar) -> list[tuple]:
     if not qatorlar:
         raise AktXato("Aktga kamida bitta qator qo'shing.")
     if topshiruvchi is not None and topshiruvchi.pk == qabul_qiluvchi.pk:
@@ -48,18 +63,30 @@ def akt_yarat(topshiruvchi, qabul_qiluvchi, qatorlar, kim, izoh: str = "") -> Mo
         if soni > taqsimot.soni:
             raise AktXato(f"Soni qatordagi miqdordan ({taqsimot.soni:f}) oshib ketdi.")
         tekshirilgan.append((taqsimot, soni))
+    return tekshirilgan
 
+
+def qoralamaga_qosh(topshiruvchi, qabul_qiluvchi, qatorlar, kim, izoh: str) -> tuple[MolAkt, int]:
+    """Shu `kim` tuzgan, topshiruvchi, qabul qiluvchi va `izoh`i bir xil qoralama akt bo'lsa — qatorlar unga
+    qo'shiladi (aktda allaqachon bor AV/filial/bo'lim/holat qatori takrorlanmaydi), bo'lmasa yangi qoralama.
+    Masalan, reviziya paytida bitta xodimga tanlangan AV'lar bitta aktga yig'iladi. (akt, qo'shilgan qatorlar)."""
+    tekshirilgan = _qatorlarni_tekshir(topshiruvchi, qabul_qiluvchi, qatorlar)
     with transaction.atomic():
-        akt = MolAkt.objects.create(
-            raqam=_keyingi_raqam(), topshiruvchi=topshiruvchi, qabul_qiluvchi=qabul_qiluvchi, izoh=izoh, tuzdi=kim
+        akt = (
+            MolAkt.objects.select_for_update()
+            .filter(holat=MolAkt.Holat.QORALAMA, topshiruvchi=topshiruvchi, qabul_qiluvchi=qabul_qiluvchi,
+                    tuzdi=kim, izoh=izoh)
+            .order_by("-raqam").first()
         )
-        MolAktQator.objects.bulk_create(
-            MolAktQator(
-                akt=akt, av_id=t.av_id, filial_id=t.filial_id, bolim_id=t.bolim_id, holat=t.holat, soni=soni
-            )
-            for t, soni in tekshirilgan
-        )
-    return akt
+        if akt is None:
+            return akt_yarat(topshiruvchi, qabul_qiluvchi, qatorlar, kim, izoh=izoh), len(tekshirilgan)
+        bor = set(akt.qatorlar.values_list("av_id", "filial_id", "bolim_id", "holat"))
+        yangilar = [
+            MolAktQator(akt=akt, av_id=t.av_id, filial_id=t.filial_id, bolim_id=t.bolim_id, holat=t.holat, soni=soni)
+            for t, soni in tekshirilgan if (t.av_id, t.filial_id, t.bolim_id, t.holat) not in bor
+        ]
+        MolAktQator.objects.bulk_create(yangilar)
+    return akt, len(yangilar)
 
 
 def _keyingi_raqam() -> int:

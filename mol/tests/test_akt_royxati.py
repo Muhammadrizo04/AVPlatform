@@ -171,3 +171,23 @@ def test_royxat_saralash(filial, bobur, aziz, hr):
     # noma'lum kalit — standart (yangisi tepada)
     javob = c.get(reverse(ROYXAT), {"tartib": "parol"})
     assert [a.pk for a in javob.context["sahifa"]] == [ikkinchi.pk, birinchi.pk]
+
+
+def test_akt_yangi_qidiruvda_tanlov_saqlanadi(filial, bobur, aziz, foydalanuvchi):
+    stol = qator(av_yarat(filial, "3", "300", "1", "Stol"), filial, "3", bobur)
+    stul = qator(av_yarat(filial, "2", "200", "2", "Stul"), filial, "2", bobur)
+    c = client_user(foydalanuvchi("hisobchi"))
+    url = reverse("mol:akt_yangi")
+
+    # stol belgilangan (soni 2), keyin «stul» qidirildi — stol tepada, belgilangan, kiritilgan soni bilan
+    javob = c.get(url, {"topshiruvchi": bobur.pk, "q": "stul", "tanlangan": [stol.pk], f"soni_{stol.pk}": "2"})
+    qatorlar = javob.context["qatorlar"]
+    assert [t.pk for t in qatorlar] == [stol.pk, stul.pk]
+    assert javob.context["tanlanganlar"] == {stol.pk}
+    html = javob.content.decode()
+    assert f'name="soni_{stol.pk}" id="soni_{stol.pk}" value="2"' in html and "1</span> ta qator tanlangan" in html
+
+    # begona (boshqa topshiruvchining) qator tanlovga kirmaydi
+    begona = qator(av_yarat(filial, "1", "100", "3", "Begona"), filial, "1", aziz)
+    javob = c.get(url, {"topshiruvchi": bobur.pk, "tanlangan": [begona.pk]})
+    assert javob.context["tanlanganlar"] == set() and begona.pk not in [t.pk for t in javob.context["qatorlar"]]
