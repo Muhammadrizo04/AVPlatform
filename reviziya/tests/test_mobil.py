@@ -432,3 +432,18 @@ def test_reviziyadan_keyin_biriktirilgan_mol_korinadi(fa, revizor, hisobchi):
     assert "МОЛ: Akbarov Burxonjon (kassir)" in matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="akbarov")))
     assert pc.nomi in html and "МОЛ: Akbarov Burxonjon (kassir)" in html
+
+
+def test_boshqaning_qaydi_qulf_va_izoh_bilan(muhit, revizor, hisobchi, foydalanuvchi):
+    rv, xona, stol, _ = muhit
+    ikkinchi = foydalanuvchi("revizor")
+    rv.revizorlar.add(ikkinchi)
+    qayd_qosh(rv, xona, hisobchi, av=stol, soni=Decimal("2"))  # boshqa foydalanuvchi qaydi
+
+    html = matn(kirgan(ikkinchi).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    ism = hisobchi.get_full_name() or hisobchi.username
+    assert "🔒" in html and f"{ism} kiritgan — faqat o'zi yoki hisobchi o'zgartiradi" in html
+    assert 'name="soni" inputmode="decimal"' not in html  # tuzatish maydoni yo'q
+    # hisobchining o'zida — tuzatish maydoni bor, qulf yo'q
+    html = matn(kirgan(hisobchi).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert "🔒" not in html and 'aria-label="Topilgan soni"' in html

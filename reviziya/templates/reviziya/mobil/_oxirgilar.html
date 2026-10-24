@@ -16,7 +16,10 @@
         <button class="m-tugma" type="submit" aria-label="Sonni tuzatish">OK</button>
       </form>
       {% else %}
-      <span class="m-son">{{ o.q.soni|son }}</span>
+      <span class="m-begona" title="{{ o.q.kim.get_full_name|default:o.q.kim.username }} kiritgan — faqat o'zi yoki hisobchi o'zgartira oladi">
+        <span class="m-son"><span aria-hidden="true">🔒</span> {{ o.q.soni|son }}</span>
+        <span class="m-xira">{{ o.q.kim.get_full_name|default:o.q.kim.username }} kiritgan — faqat o'zi yoki hisobchi o'zgartiradi</span>
+      </span>
       {% endif %}
     </li>
     {% endfor %}
