@@ -117,3 +117,18 @@ def reviziya_yop(reviziya: Reviziya, kim) -> None:
         reviziya.qolladi = kim
         reviziya.qollangan_vaqt = timezone.now()
         reviziya.save(update_fields=["holat", "qolladi", "qollangan_vaqt"])
+
+
+def yakunlanganga_qaytar(reviziya: Reviziya, kim) -> None:
+    """Yopilgan reviziyani «Yakunlangan» ga qaytaradi: qo'llanmay qolgan farqlarni qo'llash uchun.
+
+    Avval qo'llangan qatorlar jurnalda qoladi va qayta qo'llanmaydi.
+    """
+    with transaction.atomic():
+        reviziya = Reviziya.objects.select_for_update().get(pk=reviziya.pk)
+        if reviziya.holat != Reviziya.Holat.QOLLANGAN:
+            raise ReviziyaXato("Faqat yopilgan reviziyani «Yakunlangan» ga qaytarish mumkin.")
+        reviziya.holat = Reviziya.Holat.YAKUNLANGAN
+        reviziya.qolladi = None
+        reviziya.qollangan_vaqt = None
+        reviziya.save(update_fields=["holat", "qolladi", "qollangan_vaqt"])

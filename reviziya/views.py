@@ -21,7 +21,7 @@ from vositalar.models import Holat
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
-from .qollash import qolla, qollanadimi, reviziya_yop
+from .qollash import qolla, qollanadimi, reviziya_yop, yakunlanganga_qaytar
 from .servis import (
     KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, reviziya_och,
     revizorlarni_ozgartir, yakunla,
@@ -270,11 +270,14 @@ def sahifa(request, pk):
         satrlar.append(satr)
     satrlar = saralash.royxat(satrlar)
     belgilangan, kutilgan = progress(rv)
+    farq_kalitlari = {q.kalit for q in hammasi if qollanadimi(q)}
+    farqlar = {"jami": len(farq_kalitlari), "qollangan": len(farq_kalitlari & qollangan)}
+    farqlar["qolgan"] = farqlar["jami"] - farqlar["qollangan"]
     return render(request, "reviziya/sahifa.html", {
         "rv": rv, "plitkalar": plitkalar, "satrlar": satrlar, "guruh": guruh, "bolim": bolim, "saralash": saralash,
         "q": request.GET.get("q", ""), "bolimlar": bolimlar, "guruh_nomlari": GURUH_NOMLARI.items(),
         "boshqarish": boshqarish, "tanlash": tanlash, "tanlanadigan_bor": any(s["tanlash"] for s in satrlar),
-        "belgilangan": belgilangan, "kutilgan": kutilgan,
+        "belgilangan": belgilangan, "kutilgan": kutilgan, "farqlar": farqlar,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
         "kesim": _bolimlar_kesimi(rv, hammasi),
         "revizorlar": rv.revizorlar.order_by("first_name", "username"),
@@ -333,6 +336,14 @@ def bekor_view(request, pk):
 @amal_kerak("reviziya_boshqarish")
 def yop_view(request, pk):
     return _amal(request, pk, reviziya_yop, "Reviziya {nomi} yopildi.")
+
+
+@require_POST
+@amal_kerak("reviziya_boshqarish")
+def qaytar_view(request, pk):
+    return _amal(
+        request, pk, yakunlanganga_qaytar, "Reviziya {nomi} «Yakunlangan» ga qaytarildi — farqlarni qo'llash mumkin."
+    )
 
 
 @require_POST

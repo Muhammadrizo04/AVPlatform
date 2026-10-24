@@ -14,7 +14,9 @@
   <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o‘zgarmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
   <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo‘shib bo‘lmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
   {% elif boshqarish and rv.holat == "yakunlangan" %}
-  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yopilsinmi? Qo‘llanmagan farqlar endi qo‘llanmaydi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
+  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} yopilsinmi?{% if farqlar.qolgan %} {{ farqlar.jami }} ta farqdan {{ farqlar.qolgan }} tasi hali qo‘llanmagan — ular taqsimotga kiritilmaydi.{% endif %}');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
+  {% elif boshqarish and rv.holat == "qollangan" %}
+  <form method="post" action="{% url 'reviziya:qaytar' rv.pk %}" class="d-inline chop-yoq" onsubmit="return confirm('Reviziya {{ rv.nomi }} «Yakunlangan» ga qaytarilsinmi? Qo‘llanmagan farqlarni qo‘llash mumkin bo‘ladi.');">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Yakunlanganga qaytarish</button></form>
   {% endif %}
 </div>
 
@@ -32,6 +34,12 @@
         <strong>{{ belgilangan|son }} / {{ kutilgan|son }}</strong> dona
         <div class="progress mt-1" style="height: .375rem" role="progressbar" aria-label="Progress" aria-valuenow="{{ foiz }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: {{ foiz }}%"></div></div>
       </div>
+      {% if rv.holat == "yakunlangan" or rv.holat == "qollangan" %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Qo'llangan farqlar</div>
+        <strong>{{ farqlar.qollangan }} / {{ farqlar.jami }}</strong> qator
+        {% if farqlar.qolgan %}<span class="badge {% if rv.holat == 'qollangan' %}bg-danger-subtle text-danger-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %} ms-1">{{ farqlar.qolgan }} tasi qo'llanmagan</span>{% elif farqlar.jami %}<span class="badge bg-success-subtle text-success-emphasis ms-1">hammasi</span>{% endif %}
+      </div>
+      {% endif %}
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
         {% if revizor_forma %}
         <button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline chop-yoq" data-coreui-toggle="collapse" data-coreui-target="#revizorlar-forma" aria-expanded="false" aria-controls="revizorlar-forma">O'zgartirish</button>

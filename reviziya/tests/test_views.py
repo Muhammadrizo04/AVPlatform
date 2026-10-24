@@ -343,3 +343,48 @@ def test_qollangan_holat_yorligi_yopilgan():
     from reviziya.models import Reviziya
 
     assert dict(Reviziya.Holat.choices)["qollangan"] == "Yopilgan"
+
+
+def test_qollangan_farqlar_hisoblagichi_va_yopish_ogohlantirishi(ikki_topilmadi, hisobchi):
+    """Sahifada «Qo'llangan farqlar: X / Y»; yopish tasdig'ida qo'llanmaganlar soni aytiladi."""
+    rv, stol, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]})
+
+    javob = c.get(sahifa)
+    assert javob.context["farqlar"] == {"jami": 2, "qollangan": 1, "qolgan": 1}
+    html = javob.content.decode()
+    assert "Qo'llangan farqlar" in html and "1 / 2" in html
+    assert "2 ta farqdan 1 tasi hali qo‘llanmagan" in html
+
+
+def test_yopilganni_yakunlanganga_qaytarish(ikki_topilmadi, hisobchi, foydalanuvchi):
+    rv, stol, stul = ikki_topilmadi
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    c.post(reverse("reviziya:yop", args=[rv.pk]))  # hech narsa qo'llanmasdan yopilgan
+    qaytar = reverse("reviziya:qaytar", args=[rv.pk])
+    assert 'action="%s"' % qaytar in c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert kirgan(foydalanuvchi("hr")).post(qaytar).status_code == 403
+
+    assert c.post(qaytar).status_code == 302
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN and rv.qollangan_vaqt is None and rv.qolladi is None
+
+    # endi farqlarni qo'llash mumkin
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [q.kalit for q in solishtir(rv)]})
+    assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI
+    assert Taqsimot.objects.get(av=stul).holat == Holat.TOPILMADI
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.QOLLANGAN  # hammasi qo'llangach o'zi yopildi
+
+
+def test_ochiq_reviziyani_qaytarib_bolmaydi(ikki_topilmadi, hisobchi):
+    rv, _, _ = ikki_topilmadi
+    r = kirgan(hisobchi).post(reverse("reviziya:qaytar", args=[rv.pk]), follow=True)
+    assert "alert-danger" in r.content.decode()
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.OCHIQ
