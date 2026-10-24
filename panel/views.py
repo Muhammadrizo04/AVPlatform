@@ -2,6 +2,7 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
 
 from hisobotlar.servis import filial_kesimi, jami, kesim
@@ -121,3 +122,11 @@ def _qiymat_grafigi(qatorlar, nechta=GRAFIK_FILIALLAR) -> list[dict]:
         {**q, "ulush": _ulush(q["boshlangich"], eng_katta), "qoldiq_ulush": _ulush(q["qoldiq"], q["boshlangich"])}
         for q in tartiblangan[:nechta]
     ]
+
+
+def csrf_xato(request, reason=""):
+    """CSRF rad etilganda (sahifa eskirgan: boshqa oynada qayta kirilgan yoki sessiya tugagan) — tushunarli sahifa."""
+    orqaga = request.META.get("HTTP_REFERER", "")
+    if not url_has_allowed_host_and_scheme(orqaga, allowed_hosts={request.get_host()}):
+        orqaga = "/"
+    return render(request, "panel/csrf_xato.html", {"orqaga": orqaga}, status=403)

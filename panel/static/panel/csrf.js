@@ -1,4 +1,4 @@
-/* HTMX so'rovlari uchun CSRF tokeni har so'rovda cookie'dan olinadi: boshqa oynada qayta kirilgandan keyin
+/* HTMX so'rovlari va oddiy POST formalar uchun CSRF tokeni har so'rovda cookie'dan olinadi: boshqa oynada qayta kirilgandan keyin
    (Django tokenni yangilaydi) ochiq turgan eski sahifa ham ishlayveradi. Baribir rad etilsa — Django'ning texnik
    sahifasi o'rniga tushunarli xabar va sahifa qayta yuklanadi. */
 (function () {
@@ -13,6 +13,13 @@
     var t = token();
     if (t) e.detail.headers["X-CSRFToken"] = t;
   });
+
+  // Oddiy (HTMX'siz) POST forma: sahifa ochilgandagi yashirin token o'rniga cookie'dagi joriysi yuboriladi
+  document.addEventListener("submit", function (e) {
+    var maydon = e.target.querySelector && e.target.querySelector("input[name=csrfmiddlewaretoken]");
+    var t = token();
+    if (maydon && t) maydon.value = t;
+  }, true);
 
   document.addEventListener("htmx:beforeSwap", function (e) {
     var xhr = e.detail.xhr;

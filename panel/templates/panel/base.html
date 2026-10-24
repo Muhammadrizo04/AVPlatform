@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="{% static 'panel/panel.css' %}">
   <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-  <script src="{% static 'panel/csrf.js' %}" defer></script>
+  <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated %}

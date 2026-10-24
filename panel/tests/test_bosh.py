@@ -139,3 +139,22 @@ def test_csrf_skripti_panel_va_mobil_sahifalarda(client_hisobchi, client_rol):
     """HTMX CSRF tokeni har so'rovda cookie'dan olinadi (eski ochiq sahifa ham ishlaydi)."""
     assert "panel/csrf.js" in client_hisobchi.get(reverse("panel:bosh")).content.decode()
     assert "panel/csrf.js" in client_rol("revizor").get(reverse("reviziya:mobil")).content.decode()
+
+
+def test_csrf_rad_etilsa_tushunarli_sahifa(foydalanuvchi):
+    """Eskirgan token bilan oddiy forma yuborilsa — Django texnik sahifasi o'rniga o'zbekcha izoh va qaytish havolasi."""
+    client = Client(enforce_csrf_checks=True)
+    client.force_login(foydalanuvchi("revizor"))
+    javob = client.post(reverse("reviziya:mobil_yangi"), {}, HTTP_REFERER="/reviziya/m/")
+    assert javob.status_code == 403
+    matn = javob.content.decode()
+    assert "Sahifa eskirgan" in matn and "CSRF" in matn
+    assert 'href="/reviziya/m/"' in matn
+
+
+def test_csrf_skripti_oddiy_formalar_tokenini_yangilaydi():
+    """Oddiy (HTMX'siz) POST formalarda ham yuborishdan oldin token cookie'dan olinadi."""
+    from django.contrib.staticfiles import finders
+
+    with open(finders.find("panel/csrf.js"), encoding="utf-8") as f:
+        assert "csrfmiddlewaretoken" in f.read()

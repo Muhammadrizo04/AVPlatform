@@ -83,6 +83,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+CSRF_FAILURE_VIEW = "panel.views.csrf_xato"
 WSGI_APPLICATION = "config.wsgi.application"
 
 TEMPLATES = [
