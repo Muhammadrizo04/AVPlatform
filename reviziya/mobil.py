@@ -8,7 +8,7 @@ from functools import wraps
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Q, Sum
+from django.db.models import Count, Q, Sum
 from django.db.models.functions import Trim
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
@@ -20,7 +20,7 @@ from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from onec.models import AV, AVQoldiq, Filial
 from panel.templatetags.raqamlar import son
 from vositalar.bolimlar import daraxt
-from vositalar.models import Bolim
+from vositalar.models import Bolim, Taqsimot
 from vositalar.models import Holat as TaqsimotHolat
 
 from .kesim import BOLIMSIZ_QIYMATI as BOLIMSIZ, xonalar_kesimi
@@ -219,31 +219,87 @@ def reviziyalarim(request):
     return render(request, "reviziya/mobil/reviziyalarim.html", {"qatorlar": qatorlar})
 
 
-def _joy_tanlovi(user) -> list[tuple[Filial, list[tuple[Bolim, int, str]]]]:
-    """Revizor reviziya ocha oladigan joylar: ruxsat etilgan filiallar va ularning faol bo'limlari (daraxt tartibida)."""
-    filiallar = filial_bilan_chekla(Filial.objects.all(), user, "pk").order_by("nomi")
-    return [(f, [q for q in daraxt(f.pk) if q[0].faol]) for f in filiallar]
+def _ruxsat_filiallar(user):
+    return filial_bilan_chekla(Filial.objects.all(), user, "pk").order_by("nomi")
+
+
+def _av_sonlari(filial_idlar, maydon: str) -> dict:
+    """Faol AV'lar taqsimoti bo'yicha dona: `maydon` — "filial_id" yoki "bolim_id"."""
+    qs = Taqsimot.objects.filter(filial_id__in=filial_idlar, av__in=AV.objects.faol().values("pk"))
+    return dict(qs.order_by().values_list(maydon).annotate(s=Sum("soni")))
+
+
+def _filial_variantlari(user) -> list[dict]:
+    """1-qadam: ruxsat etilgan filiallar — AV soni, bo'limlar soni va butun filial ochiq reviziyadami."""
+    filiallar = list(_ruxsat_filiallar(user))
+    idlar = [f.pk for f in filiallar]
+    sonlar = _av_sonlari(idlar, "filial_id")
+    bolimlar = dict(
+        Bolim.objects.filter(filial_id__in=idlar, faol=True).order_by().values_list("filial_id").annotate(n=Count("pk"))
+    )
+    ochiq = set(Reviziya.objects.filter(filial_id__in=idlar, holat=Reviziya.Holat.OCHIQ).values_list("filial_id", flat=True))
+    return [
+        {"f": f, "soni": sonlar.get(f.pk, NOL), "bolimlar": bolimlar.get(f.pk, 0), "ochiq": f.pk in ochiq}
+        for f in filiallar
+    ]
+
+
+def _bolim_variantlari(filial) -> list[dict]:
+    """2-qadam: «butun filial» + faol bo'limlar daraxti; har birida AV soni (ichki bo'limlari bilan) va qamrovi
+    ochiq reviziya bilan kesishadimi (shunday joyni tanlab bo'lmaydi)."""
+    qatorlar = [q for q in daraxt(filial.pk) if q[0].faol]
+    ozida = _av_sonlari([filial.pk], "bolim_id")
+    otasi = {b.pk: b.ota_id for b, _, _ in qatorlar}
+    jami = {b.pk: ozida.get(b.pk, NOL) for b, _, _ in qatorlar}
+    for b, _, _ in reversed(qatorlar):
+        if otasi[b.pk] in jami:
+            jami[otasi[b.pk]] += jami[b.pk]
+
+    def zanjir(bolim_id) -> set:  # o'zi va barcha otalari
+        natija = set()
+        while bolim_id is not None and bolim_id not in natija:
+            natija.add(bolim_id)
+            bolim_id = otasi.get(bolim_id)
+        return natija
+
+    ochiqlar = list(
+        Reviziya.objects.filter(filial=filial, holat=Reviziya.Holat.OCHIQ).values_list("bolim_id", flat=True)
+    )
+    butun_ochiq = None in ochiqlar
+    variantlar = [{
+        "qiymat": f"f:{filial.pk}", "nomi": "Butun filial", "izoh": "barcha bo'limlar va bo'limsiz AV'lar",
+        "chuqurlik": 0, "soni": sum(ozida.values(), NOL), "band": bool(ochiqlar),
+    }]
+    for b, chuqurlik, toliq in qatorlar:
+        band = butun_ochiq or any(o in zanjir(b.pk) or b.pk in zanjir(o) for o in ochiqlar)
+        variantlar.append({
+            "qiymat": f"b:{b.pk}", "nomi": b.nomi, "izoh": "", "chuqurlik": chuqurlik, "soni": jami[b.pk], "band": band,
+        })
+    return variantlar
 
 
 @_mobil
 def yangi(request):
-    """Revizorning o'zi reviziya boshlaydi: filial yoki bo'lim tanlanadi; revizor va komissiya raisi — o'zi."""
-    joylar = _joy_tanlovi(request.user)
+    """Revizorning o'zi reviziya boshlaydi: 1) filial, 2) butun filial yoki bo'lim; revizor va komissiya raisi —
+    o'zi. Bitta filiali bor revizor to'g'ridan-to'g'ri 2-qadamga tushadi."""
+    filiallar = list(_ruxsat_filiallar(request.user))
+    manba = request.POST if request.method == "POST" else request.GET
+    filial = next((f for f in filiallar if str(f.pk) == manba.get("filial", "")), None)
+    if filial is None and len(filiallar) == 1:
+        filial = filiallar[0]
     xato, tanlangan = "", request.POST.get("joy", "")
     if request.method == "POST":
-        filial = bolim = None
+        bolim, joy_filial = None, None
         tur, _, qiymat = tanlangan.partition(":")
         if tur == "f" and qiymat.isdigit():
-            filial = next((f for f, _ in joylar if f.pk == int(qiymat)), None)
+            joy_filial = next((f for f in filiallar if f.pk == int(qiymat)), None)
         elif tur == "b" and qiymat.isdigit():
-            for f, bolimlar in joylar:
-                bolim = next((b for b, _, _ in bolimlar if b.pk == int(qiymat)), None)
-                if bolim is not None:
-                    filial = f
-                    break
-        if filial is None:
-            xato = "Reviziya qilinadigan filial yoki bo'limni tanlang."
+            bolim = Bolim.objects.filter(pk=int(qiymat), faol=True, filial__in=filiallar).select_related("filial").first()
+            joy_filial = bolim.filial if bolim else None
+        if joy_filial is None:
+            xato = "Reviziya qilinadigan joyni tanlang."
         else:
+            filial = joy_filial
             u = request.user
             rais = {"ism": u.get_full_name() or u.get_username(), "lavozim": "Revizor", "rol": KOMISSIYA_RAIS}
             try:
@@ -252,13 +308,13 @@ def yangi(request):
                 xato = str(e)
             else:
                 return redirect("reviziya:mobil_xonalar", pk=rv.pk)
-    tanlovlar = [
-        (f.nomi, [(f"f:{f.pk}", f"{f.nomi} — butun filial")] + [(f"b:{b.pk}", toliq) for b, _, toliq in bolimlar])
-        for f, bolimlar in joylar
-    ]
-    return render(request, "reviziya/mobil/yangi.html", {
-        "tanlovlar": tanlovlar, "xato": xato, "tanlangan": tanlangan,
-    }, status=400 if xato else 200)
+    kontekst = {"xato": xato, "tanlangan": tanlangan, "filial": filial, "bitta_filial": len(filiallar) == 1}
+    if filial is None:
+        kontekst["filiallar"] = _filial_variantlari(request.user)
+    else:
+        kontekst["variantlar"] = _bolim_variantlari(filial)
+        kontekst["hammasi_band"] = all(v["band"] for v in kontekst["variantlar"])
+    return render(request, "reviziya/mobil/yangi.html", kontekst, status=400 if xato else 200)
 
 
 @_mobil

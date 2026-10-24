@@ -340,3 +340,38 @@ def test_revizor_faqat_oz_filialida_boshlaydi(fa, filial_yarat, foydalanuvchi):
     assert not Reviziya.objects.exists()
     # HR — reviziya o'tkazish huquqi yo'q
     assert kirgan(foydalanuvchi("hr")).get(url("mobil_yangi")).status_code == 403
+
+
+def test_yangi_reviziya_ikki_qadamli_tanlov(fa, filial_yarat, revizor, hisobchi):
+    fb = filial_yarat("08")
+    bino = Bolim.objects.create(filial=fa, nomi="Bino")
+    xona = Bolim.objects.create(filial=fa, ota=bino, nomi="Xona")
+    ombor = Bolim.objects.create(filial=fa, nomi="Ombor")
+    qator(av_yarat(fa, inv="INV-1", soni="3"), fa, "3", bolim=xona)
+    c = kirgan(revizor)
+
+    # 1-qadam: bir nechta filial — ro'yxat
+    javob = c.get(url("mobil_yangi"))
+    assert {v["f"] for v in javob.context["filiallar"]} == {fa, fb}
+    assert "1-qadam" in matn(javob) and f'href="?filial={fa.pk}"' in matn(javob)
+
+    # 2-qadam: tanlangan filial — butun filial + bo'limlar (AV soni ichki bo'limlari bilan)
+    reviziya_och(fa, xona, [revizor], [], hisobchi)  # «Xona» band
+    javob = c.get(url("mobil_yangi", filial=fa.pk))
+    v = {x["nomi"]: x for x in javob.context["variantlar"]}
+    assert (v["Bino"]["soni"], v["Xona"]["soni"], v["Ombor"]["soni"]) == (3, 3, 0)
+    # ochiq reviziya bilan kesishadiganlar: butun filial, Bino (otasi), Xona; Ombor — bo'sh
+    assert (v["Butun filial"]["band"], v["Bino"]["band"], v["Xona"]["band"], v["Ombor"]["band"]) == (True, True, True, False)
+    html = matn(javob)
+    assert f'value="b:{ombor.pk}" required' in html and f'value="b:{xona.pk}" disabled' in html
+    assert "ochiq reviziya bor" in html
+
+    r = c.post(url("mobil_yangi"), {"filial": fa.pk, "joy": f"b:{ombor.pk}"})
+    assert r.status_code == 302
+
+
+def test_yangi_reviziya_hammasi_band(fa, filial_yarat, revizor, hisobchi):
+    fb = filial_yarat("08")
+    reviziya_och(fb, None, [revizor], [], hisobchi)
+    html = matn(kirgan(revizor).get(url("mobil_yangi", filial=fb.pk)))
+    assert "hamma joyida ochiq reviziya bor" in html and "Reviziyani boshlash</button>" not in html
