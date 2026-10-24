@@ -413,3 +413,22 @@ def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi):
     assert "Kabinet" in html and "m-tarix" in html
     assert c.get(url("mobil_tarix", rv.pk, av=999999)).status_code == 404
     assert kirgan(foydalanuvchi("revizor")).get(url("mobil_tarix", rv.pk, av=stol.pk)).status_code == 404
+
+
+def test_reviziyadan_keyin_biriktirilgan_mol_korinadi(fa, revizor, hisobchi):
+    """МОЛ reviziya suratidan emas, joriy taqsimotdan: reviziya ochilgach akt bilan biriktirilgan ham ko'rinadi."""
+    import uuid
+
+    from onec.models import Xodim
+
+    xona = Bolim.objects.create(filial=fa, nomi="Prixod")
+    pc = av_yarat(fa, inv="INV_100392")
+    q = qator(pc, fa, "1", bolim=xona)
+    rv = reviziya_och(fa, None, [revizor], [], hisobchi)
+    q.mol = Xodim.objects.create(ref_1c=uuid.uuid4(), ism="Akbarov Burxonjon (kassir)", filial=fa)
+    q.save()
+    c = kirgan(revizor)
+
+    assert "МОЛ: Akbarov Burxonjon (kassir)" in matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="akbarov")))
+    assert pc.nomi in html and "МОЛ: Akbarov Burxonjon (kassir)" in html

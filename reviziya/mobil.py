@@ -50,7 +50,6 @@ QR_BOSHI = "DS|"  # yorliq QR formati: DS|<filial kodi>|<inv>
 QIDIRUV_NATIJALARI = 20
 OXIRGILAR_SONI = 10
 NUL = chr(0)
-_HAMMASI_XONA = object()  # _mollar(): xona bo'yicha cheklanmaydi
 
 
 class _Yopiq(Exception):
@@ -180,16 +179,15 @@ def _qolganlar(rv, xona) -> list[dict]:
     )
     qolgan = {av_id: s - topilgan.get(av_id, NOL) for av_id, s in kutilgan.items() if s > topilgan.get(av_id, NOL)}
     avlar = AV.objects.in_bulk(qolgan)
-    mollar = _mollar(rv, qolgan, xona_id)
+    mollar = _mollar(rv, qolgan)
     natija = [{"av": avlar[i], "soni": s, "mollar": mollar.get(i, [])} for i, s in qolgan.items()]
     return sorted(natija, key=lambda q: (q["av"].nomi.casefold(), q["av"].pk))
 
 
-def _mollar(rv, av_idlar, bolim_id=_HAMMASI_XONA) -> dict[int, list[str]]:
-    """Reviziya suratidagi javobgar shaxslar (МОЛ) ismlari: AV -> [ism, ...] (xona berilsa — faqat shu xonada)."""
-    qs = rv.kutilganlar.filter(av_id__in=av_idlar, mol__isnull=False)
-    if bolim_id is not _HAMMASI_XONA:
-        qs = qs.filter(bolim_id=bolim_id)
+def _mollar(rv, av_idlar) -> dict[int, list[str]]:
+    """Javobgar shaxslar (МОЛ) ismlari: AV -> [ism, ...] — reviziya filialidagi joriy taqsimotdan (reviziya
+    ochilgandan keyin akt bilan biriktirilgan МОЛ ham ko'rinsin)."""
+    qs = Taqsimot.objects.filter(filial_id=rv.filial_id, av_id__in=av_idlar, mol__isnull=False)
     natija: dict[int, list[str]] = {}
     for av_id, ism in qs.order_by("mol__ism").values_list("av_id", "mol__ism"):
         ism = ism.strip()
@@ -388,8 +386,8 @@ def _qidir(rv, q: str):
     aniq = list(doira.annotate(inv=Trim("inv_raqam")).filter(inv__iexact=q).order_by("nomi", "pk")[:QIDIRUV_NATIJALARI])
     if aniq:
         return aniq
-    # nomi, inv. raqam yoki javobgar shaxs (reviziya suratidagi МОЛ) ismi bo'yicha
-    mol_boyicha = rv.kutilganlar.filter(mol__ism__icontains=q).values("av_id")
+    # nomi, inv. raqam yoki javobgar shaxs (filialdagi joriy МОЛ) ismi bo'yicha
+    mol_boyicha = Taqsimot.objects.filter(filial_id=rv.filial_id, mol__ism__icontains=q).values("av_id")
     return list(
         doira.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q) | Q(pk__in=mol_boyicha))
         .order_by("nomi", "pk")[:QIDIRUV_NATIJALARI]
