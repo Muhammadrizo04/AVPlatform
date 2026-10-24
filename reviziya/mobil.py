@@ -17,11 +17,13 @@ from django.utils.html import format_html
 from django.views.decorators.http import require_GET, require_POST
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
+from hisoblar.parametrlar import son as son_id
 from onec.models import AV, AVQoldiq, Filial
 from panel.templatetags.raqamlar import son
 from vositalar.bolimlar import daraxt
 from vositalar.models import Bolim, Taqsimot
 from vositalar.models import Holat as TaqsimotHolat
+from vositalar.tarix import tarix as av_tarixi
 
 from .kesim import BOLIMSIZ_QIYMATI as BOLIMSIZ, xonalar_kesimi
 from .models import Reviziya, ReviziyaQayd, ReviziyaXona
@@ -48,6 +50,7 @@ QR_BOSHI = "DS|"  # yorliq QR formati: DS|<filial kodi>|<inv>
 QIDIRUV_NATIJALARI = 20
 OXIRGILAR_SONI = 10
 NUL = chr(0)
+_HAMMASI_XONA = object()  # _mollar(): xona bo'yicha cheklanmaydi
 
 
 class _Yopiq(Exception):
@@ -177,8 +180,22 @@ def _qolganlar(rv, xona) -> list[dict]:
     )
     qolgan = {av_id: s - topilgan.get(av_id, NOL) for av_id, s in kutilgan.items() if s > topilgan.get(av_id, NOL)}
     avlar = AV.objects.in_bulk(qolgan)
-    natija = [{"av": avlar[i], "soni": s} for i, s in qolgan.items()]
+    mollar = _mollar(rv, qolgan, xona_id)
+    natija = [{"av": avlar[i], "soni": s, "mollar": mollar.get(i, [])} for i, s in qolgan.items()]
     return sorted(natija, key=lambda q: (q["av"].nomi.casefold(), q["av"].pk))
+
+
+def _mollar(rv, av_idlar, bolim_id=_HAMMASI_XONA) -> dict[int, list[str]]:
+    """Reviziya suratidagi javobgar shaxslar (МОЛ) ismlari: AV -> [ism, ...] (xona berilsa — faqat shu xonada)."""
+    qs = rv.kutilganlar.filter(av_id__in=av_idlar, mol__isnull=False)
+    if bolim_id is not _HAMMASI_XONA:
+        qs = qs.filter(bolim_id=bolim_id)
+    natija: dict[int, list[str]] = {}
+    for av_id, ism in qs.order_by("mol__ism").values_list("av_id", "mol__ism"):
+        ism = ism.strip()
+        if ism not in natija.setdefault(av_id, []):
+            natija[av_id].append(ism)
+    return natija
 
 
 def _skan_konteksti(request, rv, xona) -> dict:
@@ -362,6 +379,7 @@ def _av_kartochka(rv, xona, av, usul) -> dict:
         "kutilgan": kutilganlar.aggregate(s=Sum("soni"))["s"] or NOL,
         "topilgan": rv.qaydlar.filter(av=av, bolim_id=xona_id).aggregate(s=Sum("soni"))["s"] or NOL,
         "guruh": jami_soni if jami_soni > 1 else None,
+        "mollar": _mollar(rv, [av.pk]).get(av.pk, []),
     }
 
 
@@ -370,8 +388,11 @@ def _qidir(rv, q: str):
     aniq = list(doira.annotate(inv=Trim("inv_raqam")).filter(inv__iexact=q).order_by("nomi", "pk")[:QIDIRUV_NATIJALARI])
     if aniq:
         return aniq
+    # nomi, inv. raqam yoki javobgar shaxs (reviziya suratidagi МОЛ) ismi bo'yicha
+    mol_boyicha = rv.kutilganlar.filter(mol__ism__icontains=q).values("av_id")
     return list(
-        doira.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q)).order_by("nomi", "pk")[:QIDIRUV_NATIJALARI]
+        doira.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q) | Q(pk__in=mol_boyicha))
+        .order_by("nomi", "pk")[:QIDIRUV_NATIJALARI]
     )
 
 
@@ -450,6 +471,18 @@ def saqla(request, pk):
         "reviziya/mobil/_kartochka.html", {"tur": "saqlandi", "qayd": qayd, "rv": rv}, request=request
     )
     return HttpResponse(kartochka + _yangilanishlar(request, rv, xona))
+
+
+@_mobil
+@require_GET
+def tarix_view(request, pk):
+    """HTMX: AV tarixi (qayerdan kelgan, kim ko'chirgan, aktlar, reviziyalar) — kartochkada «Tarix» ochilganda.
+    Filial cheklovi `tarix()` ichida; summa faqat `pul_korish` bilan."""
+    rv = _reviziya(request, pk)
+    av = _av_doirasi(rv).filter(pk=son_id(request.GET.get("av"))).first()
+    if av is None:
+        raise Http404
+    return render(request, "reviziya/mobil/_tarix.html", {"tarix": av_tarixi(av, request.user)})
 
 
 @_mobil

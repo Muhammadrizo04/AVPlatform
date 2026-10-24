@@ -24,6 +24,7 @@ urlpatterns = [
     path("m/<int:pk>/skan/", mobil.skan, name="mobil_skan"),
     path("m/<int:pk>/xona-tugadi/", mobil.xona_tugadi_view, name="mobil_xona_tugadi"),
     path("m/<int:pk>/hammasi-bor/", mobil.hammasi_bor, name="mobil_hammasi_bor"),
+    path("m/<int:pk>/tarix/", mobil.tarix_view, name="mobil_tarix"),
     path("m/<int:pk>/topish/", mobil.topish, name="mobil_topish"),
     path("m/<int:pk>/saqla/", mobil.saqla, name="mobil_saqla"),
     path("m/qayd/<int:qayd_pk>/tuzat/", mobil.tuzat, name="mobil_tuzat"),

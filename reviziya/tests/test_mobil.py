@@ -375,3 +375,41 @@ def test_yangi_reviziya_hammasi_band(fa, filial_yarat, revizor, hisobchi):
     reviziya_och(fb, None, [revizor], [], hisobchi)
     html = matn(kirgan(revizor).get(url("mobil_yangi", filial=fb.pk)))
     assert "hamma joyida ochiq reviziya bor" in html and "Reviziyani boshlash</button>" not in html
+
+
+def test_mol_korinadi_va_mol_boyicha_qidiriladi(fa, revizor, hisobchi):
+    import uuid
+
+    from onec.models import Xodim
+
+    xona = Bolim.objects.create(filial=fa, nomi="Kabinet")
+    bobur = Xodim.objects.create(ref_1c=uuid.uuid4(), ism=" Bobur Aliyev", filial=fa)
+    stol, stul = av_yarat(fa, inv="INV-1"), av_yarat(fa, inv="INV-2")
+    qator(stol, fa, "1", bolim=xona, mol=bobur)
+    qator(stul, fa, "1", bolim=xona)
+    rv = reviziya_och(fa, None, [revizor], [], hisobchi)
+    c = kirgan(revizor)
+
+    html = matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert "МОЛ: Bobur Aliyev" in html and "МОЛ'siz" in html
+    assert 'data-qolgan="' in html and "bobur aliyev" in html  # ro'yxat filtri МОЛ ismi bo'yicha ham
+
+    # asosiy qidiruv: МОЛ ismi bo'yicha — yagona natija kartochkasi, unda МОЛ ko'rinadi
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="bobur")))
+    assert stol.nomi in html and "МОЛ: Bobur Aliyev" in html and "AV tarixi" in html
+
+
+def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi):
+    xona = Bolim.objects.create(filial=fa, nomi="Kabinet")
+    stol = av_yarat(fa, inv="INV-1")
+    q = qator(stol, fa, "1")
+    from vositalar import amallar
+
+    amallar.kochir(q, "1", xona, hisobchi)
+    rv = reviziya_och(fa, None, [revizor], [], hisobchi)
+    c = kirgan(revizor)
+
+    html = matn(c.get(url("mobil_tarix", rv.pk, av=stol.pk)))
+    assert "Kabinet" in html and "m-tarix" in html
+    assert c.get(url("mobil_tarix", rv.pk, av=999999)).status_code == 404
+    assert kirgan(foydalanuvchi("revizor")).get(url("mobil_tarix", rv.pk, av=stol.pk)).status_code == 404

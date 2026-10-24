@@ -1,6 +1,7 @@
 <div class="m-kart-bosh">
   <div class="m-asosiy">
   {% if tur == "av" %}<b>{{ av.nomi }}</b><div class="m-xira">Inv. {{ av.inv_raqam|default:"—" }}{% if guruh %} · guruh × {{ guruh|son }}{% endif %}</div>
+  <div class="m-xira">МОЛ: {% if mollar %}{{ mollar|join:", " }}{% else %}biriktirilmagan{% endif %}</div>
   {% elif tur == "nomalum" %}<b>{% if boshqa_filial %}Boshqa filial yorlig'i{% else %}Noma'lum yorliq{% endif %}</b><div class="m-xira">{{ qr_matn|truncatechars:80 }}</div>
   {% elif tur == "royxat" %}<b>«{{ q }}» bo'yicha</b>
   {% elif tur == "saqlandi" %}<p class="m-ok" role="status">Saqlandi: {% if qayd.av %}{{ qayd.av.nomi }}{% else %}noma'lum yorliq{% endif %} — jami {{ qayd.soni|son }}</p>
@@ -50,4 +51,10 @@
   <div id="saqla-xato"></div>
   <p><button class="m-tugma asosiy keng" type="submit">Saqlash</button></p>
 </form>
+{% if tur == "av" %}
+<details class="m-tarix-qism" hx-get="{% url 'reviziya:mobil_tarix' rv.pk %}?av={{ av.pk }}" hx-trigger="toggle once" hx-target="find .m-tarix-ichi">
+  <summary>AV tarixi — qayerdan kelgan, kim ko'chirgan</summary>
+  <div class="m-tarix-ichi"><p class="m-xira">Yuklanmoqda…</p></div>
+</details>
+{% endif %}
 {% endif %}
