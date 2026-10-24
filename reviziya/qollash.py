@@ -154,7 +154,7 @@ def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
             raise ReviziyaXato("Vedomost qatori topilmadi.")
         list(Taqsimot.objects.select_for_update().filter(filial_id=reviziya.filial_id, av_id=q.av_id).order_by("pk"))
         keyingi = (
-            TaqsimotHarakat.objects.filter(av_id=q.av_id, filial_id=reviziya.filial_id, sana__gt=jurnal.qachon)
+            TaqsimotHarakat.objects.filter(av_id=q.av_id, filial_id=reviziya.filial_id, sana__gte=jurnal.qachon)
             .exclude(sabab=REVIZIYA, hujjat_izoh__startswith=reviziya.nomi)
             .order_by("sana")
             .first()

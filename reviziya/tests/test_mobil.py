@@ -82,7 +82,8 @@ def test_hisobchi_boshda_qoladi(muhit, hisobchi):
 
 def test_faqat_biriktirilgan(muhit, foydalanuvchi, hisobchi, fa, filial_yarat):
     rv, xona, *_ = muhit
-    begona = kirgan(foydalanuvchi("revizor"))
+    # revizor reviziyani o'z filiallarida boshqaradi: boshqa filialdagi revizor — 404
+    begona = kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")]))
     assert begona.get(url("mobil_skan", rv.pk, bolim=xona.pk)).status_code == 404
     assert begona.get(url("mobil_topish", rv.pk, q="INV-1")).status_code == 404
     assert saqla(begona, rv, xona, av=muhit[2].pk).status_code == 404
@@ -177,7 +178,7 @@ def test_vergulli_son(muhit, revizor):
     assert ReviziyaQayd.objects.get(reviziya=rv).soni == Decimal("1.5")
 
 
-def test_tuzatish(muhit, revizor, foydalanuvchi):
+def test_tuzatish(muhit, revizor, foydalanuvchi, filial_yarat):
     rv, xona, stol, _ = muhit
     qayd = qayd_qosh(rv, xona, revizor, av=stol)
     c = kirgan(revizor)
@@ -187,8 +188,10 @@ def test_tuzatish(muhit, revizor, foydalanuvchi):
     assert c.post(url("mobil_tuzat", qayd.pk), {"soni": "-2"}).status_code == 400
     ikkinchi = foydalanuvchi("revizor")
     rv.revizorlar.add(ikkinchi)
-    assert kirgan(ikkinchi).post(url("mobil_tuzat", qayd.pk), {"soni": "1"}).status_code == 400
-    assert kirgan(foydalanuvchi("revizor")).post(url("mobil_tuzat", qayd.pk), {"soni": "1"}).status_code == 404
+    # revizor reviziyani boshqaradi — boshqa revizor qaydini ham tuzata oladi; boshqa filialdagisi — 404
+    assert kirgan(ikkinchi).post(url("mobil_tuzat", qayd.pk), {"soni": "3"}).status_code == 200
+    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(url("mobil_tuzat", qayd.pk), {"soni": "1"}).status_code == 404
+    assert kirgan(foydalanuvchi("hr")).post(url("mobil_tuzat", qayd.pk), {"soni": "1"}).status_code == 403
     assert c.post(url("mobil_tuzat", qayd.pk), {"soni": "0"}).status_code == 200
     assert not ReviziyaQayd.objects.exists()
 
@@ -269,7 +272,7 @@ def test_kartochka_standart_holati_boshqa_xonada(muhit, revizor, fa):
     assert f'<option value="{Holat.NOSOZ}" selected>' in t
 
 
-def test_bir_bosishda_va_hammasi_joyida(muhit, revizor, foydalanuvchi):
+def test_bir_bosishda_va_hammasi_joyida(muhit, revizor, foydalanuvchi, filial_yarat):
     rv, xona, stol, stul = muhit
     c = kirgan(revizor)
     html = matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
@@ -286,8 +289,8 @@ def test_bir_bosishda_va_hammasi_joyida(muhit, revizor, foydalanuvchi):
     assert ReviziyaQayd.objects.get(av=stol).soni == Decimal("2")  # allaqachon belgilangan — qo'shilmaydi
     assert "Bu xonada kutilgan hamma AV belgilangan" in matn(r)
 
-    # boshqa revizor — 404; GET — 405
-    assert kirgan(foydalanuvchi("revizor")).post(url("mobil_hammasi_bor", rv.pk), {"bolim": xona.pk}).status_code == 404
+    # boshqa filialdagi revizor — 404; GET — 405
+    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(url("mobil_hammasi_bor", rv.pk), {"bolim": xona.pk}).status_code == 404
     assert c.get(url("mobil_hammasi_bor", rv.pk)).status_code == 405
 
 
@@ -399,7 +402,7 @@ def test_mol_korinadi_va_mol_boyicha_qidiriladi(fa, revizor, hisobchi):
     assert stol.nomi in html and "МОЛ: Bobur Aliyev" in html and "AV tarixi" in html
 
 
-def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi):
+def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi, filial_yarat):
     xona = Bolim.objects.create(filial=fa, nomi="Kabinet")
     stol = av_yarat(fa, inv="INV-1")
     q = qator(stol, fa, "1")
@@ -412,7 +415,7 @@ def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi):
     html = matn(c.get(url("mobil_tarix", rv.pk, av=stol.pk)))
     assert "Kabinet" in html and "m-tarix" in html
     assert c.get(url("mobil_tarix", rv.pk, av=999999)).status_code == 404
-    assert kirgan(foydalanuvchi("revizor")).get(url("mobil_tarix", rv.pk, av=stol.pk)).status_code == 404
+    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).get(url("mobil_tarix", rv.pk, av=stol.pk)).status_code == 404
 
 
 def test_reviziyadan_keyin_biriktirilgan_mol_korinadi(fa, revizor, hisobchi):
@@ -434,22 +437,18 @@ def test_reviziyadan_keyin_biriktirilgan_mol_korinadi(fa, revizor, hisobchi):
     assert pc.nomi in html and "МОЛ: Akbarov Burxonjon (kassir)" in html
 
 
-def test_boshqaning_qaydi_qulf_va_izoh_bilan(muhit, revizor, hisobchi, foydalanuvchi):
+def test_boshqaning_qaydi_revizor_ham_tuzatadi(muhit, revizor, hisobchi, foydalanuvchi):
+    """Revizor reviziyani boshqaradi: boshqa foydalanuvchi qaydi ham qulfsiz, tuzatish maydoni bilan."""
     rv, xona, stol, _ = muhit
     ikkinchi = foydalanuvchi("revizor")
     rv.revizorlar.add(ikkinchi)
     qayd_qosh(rv, xona, hisobchi, av=stol, soni=Decimal("2"))  # boshqa foydalanuvchi qaydi
 
     html = matn(kirgan(ikkinchi).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
-    ism = hisobchi.get_full_name() or hisobchi.username
-    assert "🔒" in html and f"{ism} kiritgan — faqat o'zi yoki hisobchi o'zgartiradi" in html
-    assert 'name="soni" inputmode="decimal"' not in html  # tuzatish maydoni yo'q
-    # hisobchining o'zida — tuzatish maydoni bor, qulf yo'q
-    html = matn(kirgan(hisobchi).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
     assert "🔒" not in html and 'aria-label="Topilgan soni"' in html
 
 
-def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalanuvchi):
+def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalanuvchi, filial_yarat):
     import uuid
 
     from mol.models import MolAkt
@@ -479,6 +478,6 @@ def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalan
     # takror — qator ikki marta qo'shilmaydi
     r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk})
     assert "allaqachon qoralama aktda" in matn(r) and akt.qatorlar.count() == 2
-    # xodim tanlanmagan — 400; biriktirilmagan revizor — 404
+    # xodim tanlanmagan — 400; boshqa filialdagi revizor — 404
     assert c.post(url("mobil_mol", rv.pk), {"av": pc.pk}).status_code == 400
-    assert kirgan(foydalanuvchi("revizor")).post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk}).status_code == 404
+    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk}).status_code == 404

@@ -261,7 +261,7 @@ def test_qayd_tuzat_boshqaniki(filial, och, revizor, hisobchi, foydalanuvchi):
     rv = och(filial)
     qayd = qayd_qosh(rv, None, revizor, av=av_yarat(filial))
     with pytest.raises(ReviziyaXato):
-        qayd_tuzat(qayd, Decimal("2"), foydalanuvchi("revizor"))
+        qayd_tuzat(qayd, Decimal("2"), foydalanuvchi("hr"))  # reviziya_boshqarish yo'q
     assert qayd_tuzat(qayd, Decimal("2"), hisobchi).soni == Decimal("2")
 
 

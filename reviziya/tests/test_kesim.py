@@ -34,7 +34,7 @@ def muhit(filial_yarat, foydalanuvchi):
     return rv, kabinet, ombor, revizor, hisobchi
 
 
-def test_xona_tugadi_belgisi(muhit, foydalanuvchi):
+def test_xona_tugadi_belgisi(muhit, foydalanuvchi, filial_yarat):
     rv, kabinet, ombor, revizor, hisobchi = muhit
     manzil = reverse("reviziya:mobil_xona_tugadi", args=[rv.pk])
     c = kirgan(revizor)
@@ -51,8 +51,8 @@ def test_xona_tugadi_belgisi(muhit, foydalanuvchi):
     c.post(manzil, {"bolim": kabinet.pk, "tugadi": "0"})
     assert not ReviziyaXona.objects.filter(bolim=kabinet).exists()
 
-    # biriktirilmagan revizor — 404; GET — 405; yakunlangan — 403
-    assert kirgan(foydalanuvchi("revizor")).post(manzil, {"bolim": kabinet.pk, "tugadi": "1"}).status_code == 404
+    # boshqa filialdagi revizor — 404; GET — 405; yakunlangan — 403
+    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(manzil, {"bolim": kabinet.pk, "tugadi": "1"}).status_code == 404
     assert c.get(manzil).status_code == 405
     yakunla(rv, hisobchi)
     assert c.post(manzil, {"bolim": ombor.pk, "tugadi": "1"}).status_code == 403

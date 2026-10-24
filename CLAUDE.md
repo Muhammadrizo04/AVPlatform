@@ -9,7 +9,7 @@
 - Interfeys matnlari — o'zbek (lotin). Kod identifikatorlari — spetsifikatsiyadagi o'zbekcha nomlar.
 - Maxfiy qiymatlar (`SECRET_KEY`, `DATABASE_URL`, `ONEC_URL`, `ONEC_LOGIN`, `ONEC_PAROL`) faqat `.env` da; `.env` git'ga kirmaydi.
 - Testlar ham PostgreSQL'da. Celery ishlatilmaydi.
-- Rollar: `admin`, `hisobchi`, `hr`, `rahbar`, `revizor` (revizor panelga kirmaydi, faqat `/reviziya/m/` mobil sahifalariga). Rol va filial cheklovi har so'rovda,
+- Rollar: `admin`, `hisobchi`, `hr`, `rahbar`, `revizor` (revizor panelda faqat «Reviziyalar» ni ko'radi va `/reviziya/m/` mobil sahifalariga kiradi). Rol va filial cheklovi har so'rovda,
   queryset darajasida (`hisoblar.huquqlar`) — faqat sahifalarda emas: Excel, PDF, HTMX bo'laklar, rasm URL'larida ham.
 - Kirish: 5 noto'g'ri urinish -> 15 daqiqa blok; sessiya 8 soat harakatsizlikdan keyin tugaydi.
 - Holatlar: `ishlatilmoqda`, `zaxirada`, `tamirda`, `nosoz`, `hisobdan_chiqarishga`, `topilmadi`.
@@ -20,7 +20,7 @@
 
 ## Reviziya (2-bosqich)
 - Ilova `reviziya`: inventarizatsiya hujjati `RV-%06d`, raqam advisory lock bilan (kalit `7310003`). Panel: `/reviziya/` (`reviziya_boshqarish`, `reviziya_korish`).
-- Huquqlar: `reviziya_boshqarish` (admin, hisobchi), `reviziya_otkazish` (admin, hisobchi, revizor), `reviziya_korish` (admin, hisobchi, hr, rahbar).
+- Huquqlar: `reviziya_boshqarish` (admin, hisobchi, revizor), `reviziya_otkazish` (admin, hisobchi, revizor), `reviziya_korish` (admin, hisobchi, hr, rahbar, revizor). Revizor — faqat o'z filiallarida (`filial_bilan_chekla`).
 - Revizor kirgach `/reviziya/m/` ga yo'naltiriladi: QR (`DS|<filial kodi>|<inv>`) skanerlaydi yoki inv bo'yicha qidiradi; qaydlar `+soni` bilan birlashadi.
 - Oqim: hisobchi yakunlaydi -> vedomost -> qo'llash -> yopish. Holatlar: `ochiq`, `yakunlangan`, `qollangan`, `bekor`.
 - Reviziya qaydlari AV tarixida (`tur="reviziya"`) filial cheklovi bilan chiqadi (`vositalar/tarix.py`).

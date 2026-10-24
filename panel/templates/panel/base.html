@@ -18,17 +18,22 @@
   {% with ns=request.resolver_match.namespace nom=request.resolver_match.url_name %}
   <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
     <div class="sidebar-header border-bottom">
-      <div class="av-brend"><span class="av-logo" aria-hidden="true"><i class="cil-storage"></i></span><div><a href="{% url 'panel:bosh' %}"><b>Asosiy vositalar</b></a>{% if kompaniya_nomi %}<span>{{ kompaniya_nomi }}</span>{% elif sozlama_huquqi %}<a class="av-brend-bosh" href="{% url 'panel:umumiy' %}">Kompaniya nomi kiritilmagan</a>{% endif %}</div></div>
+      <div class="av-brend"><span class="av-logo" aria-hidden="true"><i class="cil-storage"></i></span><div><a href="{% if korish_huquqi %}{% url 'panel:bosh' %}{% else %}{% url 'reviziya:royxat' %}{% endif %}"><b>Asosiy vositalar</b></a>{% if kompaniya_nomi %}<span>{{ kompaniya_nomi }}</span>{% elif sozlama_huquqi %}<a class="av-brend-bosh" href="{% url 'panel:umumiy' %}">Kompaniya nomi kiritilmagan</a>{% endif %}</div></div>
       <button class="btn-close btn-close-white d-lg-none" type="button" aria-label="Yopish" data-sidebar-toggle></button>
     </div>
     <ul class="sidebar-nav">
       {% block menyu %}
+      {% if korish_huquqi %}
       <li class="nav-item"><a class="nav-link{% if ns == 'panel' and nom == 'bosh' %} active{% endif %}" href="{% url 'panel:bosh' %}"><i class="nav-icon cil-speedometer"></i> Bosh sahifa</a></li>
       <li class="nav-title">Vositalar</li>
       <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom != 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:royxat' %}"><i class="nav-icon cil-list"></i> AV ro'yxati</a></li>
       <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom == 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:bolimlar' %}"><i class="nav-icon cil-sitemap"></i> Bo'limlar</a></li>
       <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom != 'akt_royxat' and nom != 'akt' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> МОЛ nazorati</a></li>
       <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> МОЛ aktlari</a></li>
+      {% else %}
+      <li class="nav-title">Reviziya</li>
+      <li class="nav-item"><a class="nav-link" href="{% url 'reviziya:mobil' %}"><i class="nav-icon cil-qr-code"></i> Skanerlash (telefon)</a></li>
+      {% endif %}
       {% if chiqim_huquqi %}
       <li class="nav-item"><a class="nav-link r-chiqim{% if ns == 'chiqimlar' %} active{% endif %}" href="{% url 'chiqimlar:royxat' %}"><i class="nav-icon cil-swap-horizontal"></i> 1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="badge bg-danger ms-auto">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a></li>
       {% endif %}

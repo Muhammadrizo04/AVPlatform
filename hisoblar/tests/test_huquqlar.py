@@ -59,7 +59,8 @@ def test_rahbar_faqat_korish_va_hisobot(foydalanuvchi):
 def test_revizor_va_notanish_amalda_huquq_yoq(foydalanuvchi):
     u = foydalanuvchi(Rol.REVIZOR)
     for amal in HUQUQLAR:
-        assert huquqi_bor(u, amal) is (amal == "reviziya_otkazish"), amal
+        # revizor reviziyani o'z filiallarida to'liq boshqaradi (panel «Reviziyalar»), boshqa panel bo'limlari yopiq
+        assert huquqi_bor(u, amal) is (amal in {"reviziya_otkazish", "reviziya_boshqarish", "reviziya_korish"}), amal
     assert huquqi_bor(foydalanuvchi(Rol.ADMIN), "mavjud_emas") is False
     assert huquqi_bor(AnonymousUser(), "korish") is False
 

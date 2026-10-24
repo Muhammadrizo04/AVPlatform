@@ -7,7 +7,7 @@ from django.db.models import QuerySet
 
 from .models import Rol
 
-# amal -> shu amalga ruxsati bor rollar. Revizor 1-bosqichda panelga kirmaydi.
+# amal -> shu amalga ruxsati bor rollar. Revizor panelda faqat «Reviziyalar» ni ko'radi (o'z filiallarida boshqaradi).
 HUQUQLAR: dict[str, set[str]] = {
     "korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
     "av_tahrir": {Rol.ADMIN, Rol.HISOBCHI},
@@ -21,9 +21,9 @@ HUQUQLAR: dict[str, set[str]] = {
     "pul_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.RAHBAR},
     # «1C chiqimlari» sahifasi: rahbarga kerak emas (menyuda ham, bosh sahifa plitkasida ham ko'rinmaydi).
     "chiqim_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR},
-    "reviziya_boshqarish": {Rol.ADMIN, Rol.HISOBCHI},
+    "reviziya_boshqarish": {Rol.ADMIN, Rol.HISOBCHI, Rol.REVIZOR},
     "reviziya_otkazish": {Rol.ADMIN, Rol.HISOBCHI, Rol.REVIZOR},
-    "reviziya_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
+    "reviziya_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR, Rol.REVIZOR},
     "sozlama": {Rol.ADMIN},
     "sinxron": {Rol.ADMIN},
 }

@@ -236,7 +236,11 @@ def test_menyu_bandi(client_rol):
         r = client_rol(rol).get(reverse("panel:bosh"))
         assert r.status_code == 200 and f'href="{havola}"' in r.content.decode(), rol
         assert client_rol(rol).get(havola).status_code == 200, rol
-    assert client_rol("revizor").get(havola).status_code == 403
+    # revizor: panel «Reviziyalar» ochiladi, menyuda faqat shu bo'lim (boshqa panel bo'limlari unga yopiq)
+    javob = client_rol("revizor").get(havola)
+    html = javob.content.decode()
+    assert javob.status_code == 200 and f'href="{havola}"' in html
+    assert f'href="{reverse("vositalar:royxat")}"' not in html and f'href="{reverse("panel:bosh")}"' not in html
 
 
 def test_bolimsiz_kochish_tanlanmaydi_va_yopilishga_toskinlik_qilmaydi(ikki_topilmadi, hisobchi):
@@ -425,3 +429,16 @@ def test_qollashni_bekor_qilish_tugmasi_va_view(ikki_topilmadi, hisobchi, foydal
     assert "bekor qilindi" in r.content.decode()
     assert Taqsimot.objects.get(av=stol).holat == Holat.ISHLATILMOQDA
     assert c.get(sahifa).context["farqlar"]["qollangan"] == 0
+
+
+def test_revizor_oz_filialida_boshqaradi(fa, fb, foydalanuvchi, hisobchi):
+    """Revizor o'z filialidagi reviziyani yakunlaydi; boshqa filialdagisi unga ko'rinmaydi (404)."""
+    revizor = foydalanuvchi("revizor", filiallar=[fa])
+    o_zi = reviziya_och(fa, None, [revizor], [], hisobchi)
+    begona = reviziya_och(fb, None, [foydalanuvchi("revizor", filiallar=[fb])], [], hisobchi)
+    c = kirgan(revizor)
+    assert c.post(reverse("reviziya:yakunla", args=[o_zi.pk])).status_code == 302
+    o_zi.refresh_from_db()
+    assert o_zi.holat == Reviziya.Holat.YAKUNLANGAN
+    assert c.post(reverse("reviziya:yakunla", args=[begona.pk])).status_code == 404
+    assert begona.nomi not in c.get(reverse("reviziya:royxat")).content.decode()
