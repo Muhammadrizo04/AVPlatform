@@ -104,6 +104,45 @@
     if (e.key === "Escape" && k && k.innerHTML.trim()) { k.innerHTML = ""; qidiruvgaQayt(); }
   });
 
+  // МОЛ biriktirish: xodimni ism bo'yicha qidirish (ko'pi bilan 15 ta natija), tanlangani yashirin maydonga
+  var XODIM_NATIJALARI = 15;
+  document.addEventListener("input", function (e) {
+    if (!e.target.matches("[data-xodim-qidir]")) return;
+    var forma = e.target.closest("form");
+    var soz = e.target.value.trim().toLowerCase();
+    var korsatildi = 0;
+    forma.querySelectorAll("[data-xodim-ism]").forEach(function (li) {
+      var mos = soz.length >= 2 && korsatildi < XODIM_NATIJALARI && li.dataset.xodimIsm.indexOf(soz) !== -1;
+      li.hidden = !mos;
+      if (mos) korsatildi++;
+    });
+    var izoh = forma.querySelector("[data-xodim-izoh]");
+    izoh.textContent = soz.length < 2 ? "Kamida 2 harf yozing." : (korsatildi ? "" : "Bunday xodim topilmadi.");
+  });
+  document.addEventListener("click", function (e) {
+    var tugma = e.target.closest("[data-xodim]");
+    var bekor = e.target.closest("[data-xodim-bekor]");
+    if (!tugma && !bekor) return;
+    var forma = (tugma || bekor).closest("form");
+    var chip = forma.querySelector("[data-xodim-tanlangan]");
+    var qidir = forma.querySelector("[data-xodim-qidir]");
+    forma.querySelector("[data-xodim-id]").value = tugma ? tugma.dataset.xodim : "";
+    chip.hidden = !tugma;
+    chip.innerHTML = "";
+    if (tugma) {
+      var nom = document.createElement("b");
+      nom.textContent = tugma.dataset.xodimNomi;
+      var x = document.createElement("button");
+      x.type = "button"; x.className = "m-ikon"; x.dataset.xodimBekor = "1"; x.setAttribute("aria-label", "Boshqa xodim"); x.textContent = "×";
+      chip.append(nom, x);
+    }
+    qidir.hidden = !!tugma;
+    qidir.value = "";
+    forma.querySelectorAll("[data-xodim-ism]").forEach(function (li) { li.hidden = true; });
+    forma.querySelector("[data-xodim-izoh]").textContent = tugma ? "" : "Kamida 2 harf yozing.";
+    if (!tugma) qidir.focus();
+  });
+
   document.addEventListener("input", function (e) {
     if (!e.target.matches("[data-qolgan-filtr]")) return;
     var soz = e.target.value.trim().toLowerCase();

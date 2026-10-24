@@ -464,7 +464,7 @@ def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalan
     c = kirgan(revizor)
 
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, av=pc.pk)))
-    assert "Javobgar shaxsni (МОЛ) biriktirish" in html and f'<option value="{kassir.pk}">' in html
+    assert "Javobgar shaxsni (МОЛ) biriktirish" in html and f'data-xodim="{kassir.pk}" data-xodim-nomi="Akbarov Burxonjon (kassir)"' in html
 
     r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk})
     assert r.status_code == 200 and "qoralama aktga qo'shildi" in matn(r)

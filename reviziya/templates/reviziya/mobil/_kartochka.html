@@ -57,12 +57,19 @@
   <form hx-post="{% url 'reviziya:mobil_mol' rv.pk %}" hx-target="#mol-natija" class="m-mol-forma">
     <input type="hidden" name="av" value="{{ av.pk }}">
     <label class="m-yorliq" for="k-xodim">Kimga biriktiriladi</label>
-    <select class="m-maydon" id="k-xodim" name="xodim" required>
-      <option value="">— xodimni tanlang —</option>
-      {% for guruh, xodimlar in xodim_tanlovi %}{% if xodimlar %}
-      <optgroup label="{{ guruh }}">{% for x in xodimlar %}<option value="{{ x.pk }}">{{ x.ism }}</option>{% endfor %}</optgroup>
-      {% endif %}{% endfor %}
-    </select>
+    <input type="hidden" name="xodim" value="" data-xodim-id>
+    <div class="m-tanlangan-xodim" data-xodim-tanlangan hidden></div>
+    <input class="m-maydon" type="search" id="k-xodim" data-xodim-qidir placeholder="Xodim ismini yozing…" autocomplete="off">
+    <ul class="m-royxat m-xodimlar" data-xodim-royxat>
+      {% for guruh, xodimlar in xodim_tanlovi %}{% for x in xodimlar %}
+      <li data-xodim-ism="{{ x.ism|lower }}" hidden>
+        <button type="button" class="m-qator" data-xodim="{{ x.pk }}" data-xodim-nomi="{{ x.ism }}">
+          <span class="m-asosiy"><b>{{ x.ism }}</b><span class="m-xira">{{ guruh }}</span></span>
+        </button>
+      </li>
+      {% endfor %}{% endfor %}
+    </ul>
+    <p class="m-xira" data-xodim-izoh style="margin:.3rem 0 0">Kamida 2 harf yozing.</p>
     <p class="m-xira" style="margin:.4rem 0">Qoralama МОЛ akti tuziladi (bitta xodimga tanlanganlar bitta aktga yig'iladi). U hisobchi yoki HR
       tasdiqlagach kuchga kiradi.</p>
     <div id="mol-natija"></div>
