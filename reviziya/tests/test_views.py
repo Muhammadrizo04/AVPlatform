@@ -336,3 +336,10 @@ def test_skanerlash_tugmasi(ikki_topilmadi, hisobchi, foydalanuvchi):
     rv.holat = Reviziya.Holat.YAKUNLANGAN
     rv.save()
     assert skan_url not in kirgan(hisobchi).get(sahifa_url).content.decode()
+
+
+def test_qollangan_holat_yorligi_yopilgan():
+    """«qollangan» holati foydalanuvchiga «Yopilgan» deb ko'rinadi (farqlarning bir qismi qo'llanmagan bo'lishi mumkin)."""
+    from reviziya.models import Reviziya
+
+    assert dict(Reviziya.Holat.choices)["qollangan"] == "Yopilgan"

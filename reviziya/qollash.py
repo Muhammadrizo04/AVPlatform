@@ -110,7 +110,7 @@ def _taqsimotga(reviziya, q, soni, kim) -> None:
 
 
 def reviziya_yop(reviziya: Reviziya, kim) -> None:
-    """Yakunlangan reviziyani «qo'llangan» holatiga o'tkazadi."""
+    """Yakunlangan reviziyani yopadi («Yopilgan», qiymati `qollangan`)."""
     with transaction.atomic():
         reviziya = _yakunlangan_qulfla(reviziya.pk)
         reviziya.holat = Reviziya.Holat.QOLLANGAN

@@ -9,12 +9,12 @@ User = settings.AUTH_USER_MODEL
 
 
 class Reviziya(models.Model):
-    """Inventarizatsiya (reviziya) hujjati: ochiq -> yakunlangan -> qo'llangan yoki bekor."""
+    """Inventarizatsiya (reviziya) hujjati: ochiq -> yakunlangan -> yopilgan («qollangan») yoki bekor."""
 
     class Holat(models.TextChoices):
         OCHIQ = "ochiq", "Ochiq"
         YAKUNLANGAN = "yakunlangan", "Yakunlangan"
-        QOLLANGAN = "qollangan", "Qo'llangan"
+        QOLLANGAN = "qollangan", "Yopilgan"  # qiymat o'zgarmaydi (bazadagi yozuvlar)
         BEKOR = "bekor", "Bekor qilingan"
 
     raqam = models.PositiveIntegerField(unique=True)
