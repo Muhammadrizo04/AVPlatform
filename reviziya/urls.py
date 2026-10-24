@@ -14,6 +14,7 @@ urlpatterns = [
     path("<int:pk>/bekor/", views.bekor_view, name="bekor"),
     path("<int:pk>/qolla/", views.qolla_view, name="qolla"),
     path("<int:pk>/qolla/bekor/", views.qolla_bekor_view, name="qolla_bekor"),
+    path("<int:pk>/belgila/", views.belgila_view, name="belgila"),
     path("<int:pk>/yop/", views.yop_view, name="yop"),
     path("<int:pk>/qaytar/", views.qaytar_view, name="qaytar"),
     path("<int:pk>/revizorlar/", views.revizorlar_view, name="revizorlar"),

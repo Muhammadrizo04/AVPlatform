@@ -132,40 +132,62 @@
 </form>
 </div></div>
 
-{% if tanlash %}
-<form method="post" action="{% url 'reviziya:qolla' rv.pk %}" id="vedomost" data-tasdiq="Tanlangan {n} ta farq taqsimotga qo'llansinmi? AV joyi va holati yangilanadi." data-tasdiq-sanoq="input[name=kalit]:checked" data-tasdiq-tugma="Qo'llash">{% csrf_token %}
+{% if tanlash or belgilash %}
+<form method="post" id="vedomost"{% if tanlash %} action="{% url 'reviziya:qolla' rv.pk %}" data-tasdiq="Tanlangan {n} ta farq taqsimotga qo'llansinmi? AV joyi va holati yangilanadi." data-tasdiq-sanoq="input[name=kalit]:checked" data-tasdiq-tugma="Qo'llash"{% else %} action="{% url 'reviziya:belgila' rv.pk %}"{% endif %}>{% csrf_token %}
+<input type="hidden" name="keyingi" value="{{ keyingi }}">
 {% include "reviziya/_vedomost.html" %}
 {% if tanlanadigan_bor %}
 <div class="amal-panel">
-  <b><span data-tanlangan-soni>0</span> ta farq tanlandi</b>
+  {% if tanlash %}
+  <b><span data-soni="kalit">0</span> ta qo'llashga · <span data-soni="bekor_kalit">0</span> ta bekor qilishga tanlandi</b>
   <span class="small text-body-secondary me-auto">Ortiqcha qatorlar faqat qayd: taqsimot soni 1C'dan keladi.</span>
-  <button type="submit" class="btn btn-primary btn-sm" data-qollash disabled><i class="cil-check-alt me-1"></i>Qo'llash</button>
+  <button type="submit" class="btn btn-danger btn-sm" formaction="{% url 'reviziya:qolla_bekor' rv.pk %}" data-kerak="bekor_kalit" data-bekor-tugma disabled
+    data-tasdiq="Tanlangan {n} ta qatorning qo'llashi bekor qilinsinmi? AV'lar avvalgi joyi va holatiga qaytadi; keyin yana qo'llash mumkin." data-tasdiq-sanoq="input[name=bekor_kalit]:checked" data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli><i class="cil-action-undo me-1"></i>Qo'llashni bekor qilish</button>
+  <button type="submit" class="btn btn-primary btn-sm" data-kerak="kalit" data-qollash disabled><i class="cil-check-alt me-1"></i>Qo'llash</button>
+  {% else %}
+  <b><span data-soni="belgi">0</span> ta AV tanlandi</b>
+  <span class="small text-body-secondary me-auto">«Soni» ustunida topilgan sonni o'zgartirish mumkin.</span>
+  <button type="submit" class="btn btn-success btn-sm" data-kerak="belgi" disabled><i class="cil-check-alt me-1"></i>Joyida deb belgilash</button>
+  {% endif %}
 </div>
 {% endif %}
 </form>
 <script>
-  // Vedomost: tanlanganlar soni yopishqoq panelda; sarlavhadagi belgi — ko'rinayotgan hamma farqni tanlash
+  // Vedomost: tanlanganlar soni yopishqoq panelda (har tur alohida); sarlavhadagi belgi — ko'rinayotgan hammasini tanlash
   (function () {
     var forma = document.getElementById("vedomost");
     var hammasi = forma.querySelector("[data-hammasini-tanla]");
+    var tanlovlar = forma.querySelectorAll("[data-tanlov]");
     function yangila() {
-      var belgilar = forma.querySelectorAll("input[name=kalit]");
-      var n = forma.querySelectorAll("input[name=kalit]:checked").length;
-      var soni = forma.querySelector("[data-tanlangan-soni]");
-      if (soni) soni.textContent = n;
-      var tugma = forma.querySelector("[data-qollash]");
-      if (tugma) tugma.disabled = n === 0;
+      var jami = 0;
+      forma.querySelectorAll("[data-soni]").forEach(function (el) {
+        el.textContent = forma.querySelectorAll("input[name='" + el.dataset.soni + "']:checked").length;
+      });
+      forma.querySelectorAll("[data-kerak]").forEach(function (t) {
+        t.disabled = !forma.querySelector("input[name='" + t.dataset.kerak + "']:checked");
+      });
+      tanlovlar.forEach(function (b) { if (b.checked) jami++; });
       if (hammasi) {
-        hammasi.checked = n > 0 && n === belgilar.length;
-        hammasi.indeterminate = n > 0 && n < belgilar.length;
+        hammasi.checked = jami > 0 && jami === tanlovlar.length;
+        hammasi.indeterminate = jami > 0 && jami < tanlovlar.length;
       }
     }
     forma.addEventListener("change", function (e) {
       if (e.target === hammasi) {
-        forma.querySelectorAll("input[name=kalit]").forEach(function (b) { b.checked = hammasi.checked; });
+        tanlovlar.forEach(function (b) {
+          b.checked = hammasi.checked;
+          b.closest("tr").classList.toggle("table-active", b.checked);
+        });
+      } else if (e.target.matches("[data-tanlov]")) {
+        e.target.closest("tr").classList.toggle("table-active", e.target.checked);
       }
-      if (e.target.name === "kalit") e.target.closest("tr").classList.toggle("table-active", e.target.checked);
       yangila();
+    });
+    forma.addEventListener("input", function (e) {
+      // son o'zgartirilsa — shu qator o'zi tanlanadi
+      if (!e.target.matches("[data-soni-maydon]")) return;
+      var belgi = e.target.closest("tr").querySelector("[data-tanlov]");
+      if (belgi && !belgi.checked) { belgi.checked = true; belgi.closest("tr").classList.add("table-active"); yangila(); }
     });
     yangila();
   })();

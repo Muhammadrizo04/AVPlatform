@@ -1,29 +1,32 @@
 """Reviziya panel sahifalari (spec §5–§7): ro'yxat, yangi reviziya, vedomost va amallar, Excel, dalolatnoma."""
 import re
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import DecimalField, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce, Lower, Trim
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisoblar.parametrlar import son
 from hisobotlar.excel import jadval_xlsx
 from mol.sorovlar import faol_xodimlar
+from onec.models import AV
 from panel.saralash import Saralash
-from vositalar.models import Holat
+from vositalar.models import Bolim, Holat
 
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
 from .qollash import QOLLANADI, qolla, qollanadimi, qollashni_bekor_qil, reviziya_yop, yakunlanganga_qaytar
 from .servis import (
-    KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, reviziya_och,
+    KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qayd_qosh, reviziya_och,
     revizorlarni_ozgartir, yakunla,
 )
 from .kesim import xonalar_kesimi
@@ -262,11 +265,19 @@ def sahifa(request, pk):
     boshqarish = huquqi_bor(request.user, "reviziya_boshqarish")
     tanlash = boshqarish and rv.holat == Reviziya.Holat.YAKUNLANGAN
     saralash = Saralash(request, VEDOMOST_USTUNLARI)
+    skanerlay_oladi = rv.holat == Reviziya.Holat.OCHIQ and (
+        boshqarish or rv.revizorlar.filter(pk=request.user.pk).exists()
+    )
     satrlar = []
     for q in korinadigan:
         satr = _satr(q, nomlar)
         satr["qollangan"] = q.kalit in qollangan
         satr["tanlash"] = tanlash and qollanadimi(q) and not satr["qollangan"]
+        satr["bekor"] = tanlash and satr["qollangan"]
+        # ochiq reviziya: hali topilmagan qatorni sahifaning o'zidan «joyida» deb belgilash (skanerlashsiz)
+        if skanerlay_oladi and q.av_id and q.guruh in ("kam", "topilmadi"):
+            satr["belgi"] = f"{q.av_id}:{q.bolim_id or ''}:{q.holat}"
+            satr["qolgan"] = -q.farq
         satrlar.append(satr)
     satrlar = saralash.royxat(satrlar)
     belgilangan, kutilgan = progress(rv)
@@ -276,15 +287,15 @@ def sahifa(request, pk):
     return render(request, "reviziya/sahifa.html", {
         "rv": rv, "plitkalar": plitkalar, "satrlar": satrlar, "guruh": guruh, "bolim": bolim, "saralash": saralash,
         "q": request.GET.get("q", ""), "bolimlar": bolimlar, "guruh_nomlari": GURUH_NOMLARI.items(),
-        "boshqarish": boshqarish, "tanlash": tanlash, "tanlanadigan_bor": any(s["tanlash"] for s in satrlar),
+        "boshqarish": boshqarish, "tanlash": tanlash, "belgilash": skanerlay_oladi,
+        "tanlanadigan_bor": any(s["tanlash"] or s["bekor"] or s.get("belgi") for s in satrlar),
+        "keyingi": request.get_full_path(),
         "belgilangan": belgilangan, "kutilgan": kutilgan, "farqlar": farqlar,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
         "kesim": _bolimlar_kesimi(rv, hammasi),
         "revizorlar": rv.revizorlar.order_by("first_name", "username"),
         # mobil skan sahifasiga ruxsat bilan bir xil: ochiq, revizor yoki boshqaruvchi (filial cheklovi — yuqorida)
-        "skanerlay_oladi": rv.holat == Reviziya.Holat.OCHIQ and (
-            boshqarish or rv.revizorlar.filter(pk=request.user.pk).exists()
-        ),
+        "skanerlay_oladi": skanerlay_oladi,
         "revizor_forma": (
             RevizorlarForma(user=request.user, filial=rv.filial, initial={"revizorlar": rv.revizorlar.all()})
             if boshqarish and rv.holat == Reviziya.Holat.OCHIQ else None
@@ -381,14 +392,66 @@ def qolla_view(request, pk):
 @require_POST
 @amal_kerak("reviziya_boshqarish")
 def qolla_bekor_view(request, pk):
+    """Tanlangan qo'llangan qatorlar (`bekor_kalit`) — har biri alohida: bittasi rad etilsa, boshqalari bekor bo'ladi."""
     rv = _reviziya_yoki_404(request, pk)
+    kalitlar = list(dict.fromkeys(k for k in request.POST.getlist("bekor_kalit") if k))
+    if not kalitlar:
+        messages.warning(request, "Bekor qilish uchun qator tanlanmagan.")
+        return redirect("reviziya:sahifa", pk=rv.pk)
+    xatolar = []
+    for kalit in kalitlar:
+        try:
+            qollashni_bekor_qil(rv, kalit, request.user)
+        except ReviziyaXato as e:
+            xatolar.append(str(e))
+    matn = f"{len(kalitlar) - len(xatolar)} ta bekor qilindi — AV'lar avvalgi joyi va holatiga qaytdi"
+    if xatolar:
+        messages.warning(request, f"{matn}; {len(xatolar)} ta rad etildi: " + "; ".join(dict.fromkeys(xatolar)))
+    else:
+        messages.success(request, f"{matn}.")
+    return redirect("reviziya:sahifa", pk=rv.pk)
+
+
+@require_POST
+@amal_kerak("reviziya_otkazish")
+def belgila_view(request, pk):
+    """Ochiq reviziya sahifasidan: tanlangan `belgi` (av:bolim:holat) qatorlarini `soni_<belgi>` soni bilan qayd qiladi
+    (mobil «Hammasi joyida» kabi; hammasi yoki hech biri)."""
+    rv = _reviziya_yoki_404(request, pk)
+    keyingi = request.POST.get("keyingi", "")
+    if not url_has_allowed_host_and_scheme(keyingi, allowed_hosts={request.get_host()}):
+        keyingi = ""
+    orqaga = redirect(keyingi) if keyingi else redirect("reviziya:sahifa", pk=rv.pk)
+    if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
+        raise Http404
+    belgilar = list(dict.fromkeys(b for b in request.POST.getlist("belgi") if b))
+    if not belgilar:
+        messages.warning(request, "Belgilash uchun qator tanlanmagan.")
+        return orqaga
+    kutilgan = set(ReviziyaKutilgan.objects.filter(reviziya=rv).values_list("av_id", "bolim_id", "holat"))
     try:
-        qollashni_bekor_qil(rv, request.POST.get("bekor_kalit", ""), request.user)
+        with transaction.atomic():
+            for belgi in belgilar:
+                av_id, bolim_id, holat = belgi.split(":", 2)
+                av_id, bolim_id = int(av_id), int(bolim_id) if bolim_id else None
+                if (av_id, bolim_id, holat) not in kutilgan:
+                    raise ReviziyaXato("Tanlangan qator reviziyada kutilmagan.")
+                try:
+                    soni = Decimal(request.POST.get(f"soni_{belgi}", "").replace(",", ".").strip())
+                except InvalidOperation:
+                    raise ReviziyaXato("Sonni to'g'ri kiriting.") from None
+                bolim = Bolim.objects.get(pk=bolim_id) if bolim_id else None
+                qayd_qosh(
+                    rv, bolim, request.user, av=AV.objects.get(pk=av_id), soni=soni, holat=holat,
+                    usul=ReviziyaQayd.Usul.QIDIRUV,
+                )
+    except (ValueError, Bolim.DoesNotExist, AV.DoesNotExist):
+        messages.error(request, "Noto'g'ri so'rov.")
     except ReviziyaXato as e:
         messages.error(request, str(e))
     else:
-        messages.success(request, "Qo'llash bekor qilindi — AV avvalgi joyi va holatiga qaytdi.")
-    return redirect("reviziya:sahifa", pk=rv.pk)
+        messages.success(request, f"{len(belgilar)} ta AV joyida deb belgilandi.")
+    return orqaga
 
 
 def _fayl_nomi(tur: str, rv, nomlar, bolim: str, oxiri: str) -> str:

@@ -442,3 +442,47 @@ def test_revizor_oz_filialida_boshqaradi(fa, fb, foydalanuvchi, hisobchi):
     assert o_zi.holat == Reviziya.Holat.YAKUNLANGAN
     assert c.post(reverse("reviziya:yakunla", args=[begona.pk])).status_code == 404
     assert begona.nomi not in c.get(reverse("reviziya:royxat")).content.decode()
+
+
+def test_ochiq_reviziyada_sahifadan_belgilash(ikki_topilmadi, hisobchi, foydalanuvchi):
+    """Ochiq reviziya sahifasida qatorlarni belgilab, sonini kiritib «Joyida» — qayd qo'shiladi (skanerlashsiz)."""
+    from reviziya.models import ReviziyaQayd
+
+    rv, stol, stul = ikki_topilmadi
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    html = c.get(sahifa).content.decode()
+    belgila = reverse("reviziya:belgila", args=[rv.pk])
+    assert f'action="{belgila}"' in html and 'name="belgi"' in html and "data-hammasini-tanla" in html
+
+    a = Bolim.objects.get(nomi="A xona")
+    kalit = f"{stol.pk}:{a.pk}:ishlatilmoqda"
+    r = c.post(belgila, {"belgi": [kalit], f"soni_{kalit}": "1", "keyingi": sahifa + "?guruh=kamomad"})
+    assert r.status_code == 302 and r.url == sahifa + "?guruh=kamomad"
+    qayd = ReviziyaQayd.objects.get(av=stol)
+    assert (qayd.bolim, qayd.soni, qayd.holat, qayd.kim) == (a, 1, "ishlatilmoqda", hisobchi)
+    assert not ReviziyaQayd.objects.filter(av=stul).exists()
+    # noto'g'ri son — hech narsa qo'shilmaydi
+    kalit2 = f"{stul.pk}:{a.pk}:ishlatilmoqda"
+    r = c.post(belgila, {"belgi": [kalit2], f"soni_{kalit2}": "abc"}, follow=True)
+    assert "alert-danger" in r.content.decode() and not ReviziyaQayd.objects.filter(av=stul).exists()
+    # HR — huquq yo'q; yakunlangan — xato
+    assert kirgan(foydalanuvchi("hr")).post(belgila, {"belgi": [kalit2]}).status_code == 403
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    r = c.post(belgila, {"belgi": [kalit2], f"soni_{kalit2}": "1"}, follow=True)
+    assert "alert-danger" in r.content.decode() and not ReviziyaQayd.objects.filter(av=stul).exists()
+
+
+def test_qollashni_belgilab_ommaviy_bekor_qilish(ikki_topilmadi, hisobchi):
+    rv, stol, stul = ikki_topilmadi
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    kalitlar = [q.kalit for q in solishtir(rv)]
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": kalitlar})
+    c.post(reverse("reviziya:qaytar", args=[rv.pk]))  # hammasi qo'llanib yopilgan edi
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert html.count('name="bekor_kalit"') == 2 and "data-bekor-tugma" in html
+
+    r = c.post(reverse("reviziya:qolla_bekor", args=[rv.pk]), {"bekor_kalit": kalitlar}, follow=True)
+    assert "2 ta bekor qilindi" in r.content.decode()
+    assert {t.holat for t in Taqsimot.objects.filter(av__in=[stol, stul])} == {Holat.ISHLATILMOQDA}
