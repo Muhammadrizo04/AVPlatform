@@ -20,6 +20,14 @@
   {% endif %}
 </div>
 
+{% if tanlash and farqlar.qolgan %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 qollash-eslatma chop-yoq" role="status">
+  <i class="cil-warning" aria-hidden="true"></i>
+  <span class="me-auto"><b>{{ farqlar.qolgan }} ta farq hali qo'llanmagan.</b> Vedomostda belgilab «Qo'llash» ni bosing — AV joyi va holati yangilanadi.</span>
+  <a class="btn btn-sm btn-warning" href="?guruh=farqlar#vedomost"><i class="cil-chevron-bottom me-1"></i>Farqlarni ko'rsatish</a>
+</div>
+{% endif %}
+
 <div class="card mb-3">
   <div class="card-body">
     <div class="row g-3">
@@ -109,6 +117,7 @@
 <form method="get" class="filtrlar">
   <select class="form-select form-select-sm" name="guruh" aria-label="Guruh">
     <option value="">Barcha guruhlar</option>
+    <option value="farqlar" {% if guruh == "farqlar" %}selected{% endif %}>Qo'llanadigan farqlar</option>
     <option value="kamomad" {% if guruh == "kamomad" %}selected{% endif %}>Kam / topilmadi</option>
     {% for kalit, nomi in guruh_nomlari %}<option value="{{ kalit }}" {% if guruh == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
   </select>
@@ -124,15 +133,43 @@
 </div></div>
 
 {% if tanlash %}
-<form method="post" action="{% url 'reviziya:qolla' rv.pk %}" onsubmit="return confirm('Tanlangan farqlar taqsimotga qo‘llansinmi?');">{% csrf_token %}
+<form method="post" action="{% url 'reviziya:qolla' rv.pk %}" id="vedomost" onsubmit="return confirm('Tanlangan ' + this.querySelectorAll('input[name=kalit]:checked').length + ' ta farq taqsimotga qo‘llansinmi?');">{% csrf_token %}
 {% include "reviziya/_vedomost.html" %}
 {% if tanlanadigan_bor %}
-<div class="amallar mb-4">
-  <button type="submit" class="btn btn-primary"><i class="cil-check-alt me-1"></i>Qo'llash</button>
-  <span class="small text-body-secondary">Ortiqcha qatorlar faqat qayd: taqsimot soni 1C'dan keladi.</span>
+<div class="amal-panel">
+  <b><span data-tanlangan-soni>0</span> ta farq tanlandi</b>
+  <span class="small text-body-secondary me-auto">Ortiqcha qatorlar faqat qayd: taqsimot soni 1C'dan keladi.</span>
+  <button type="submit" class="btn btn-primary btn-sm" data-qollash disabled><i class="cil-check-alt me-1"></i>Qo'llash</button>
 </div>
 {% endif %}
 </form>
+<script>
+  // Vedomost: tanlanganlar soni yopishqoq panelda; sarlavhadagi belgi — ko'rinayotgan hamma farqni tanlash
+  (function () {
+    var forma = document.getElementById("vedomost");
+    var hammasi = forma.querySelector("[data-hammasini-tanla]");
+    function yangila() {
+      var belgilar = forma.querySelectorAll("input[name=kalit]");
+      var n = forma.querySelectorAll("input[name=kalit]:checked").length;
+      var soni = forma.querySelector("[data-tanlangan-soni]");
+      if (soni) soni.textContent = n;
+      var tugma = forma.querySelector("[data-qollash]");
+      if (tugma) tugma.disabled = n === 0;
+      if (hammasi) {
+        hammasi.checked = n > 0 && n === belgilar.length;
+        hammasi.indeterminate = n > 0 && n < belgilar.length;
+      }
+    }
+    forma.addEventListener("change", function (e) {
+      if (e.target === hammasi) {
+        forma.querySelectorAll("input[name=kalit]").forEach(function (b) { b.checked = hammasi.checked; });
+      }
+      if (e.target.name === "kalit") e.target.closest("tr").classList.toggle("table-active", e.target.checked);
+      yangila();
+    });
+    yangila();
+  })();
+</script>
 {% else %}
 {% include "reviziya/_vedomost.html" %}
 {% endif %}

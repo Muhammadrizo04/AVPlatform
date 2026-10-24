@@ -21,7 +21,7 @@ from vositalar.models import Holat
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
-from .qollash import qolla, qollanadimi, reviziya_yop, yakunlanganga_qaytar
+from .qollash import QOLLANADI, qolla, qollanadimi, reviziya_yop, yakunlanganga_qaytar
 from .servis import (
     KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, reviziya_och,
     revizorlarni_ozgartir, yakunla,
@@ -37,7 +37,7 @@ KOMISSIYA_NATIJALARI = 15
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 HOLAT_NOMLARI = dict(Holat.choices)
 # Guruh filtri: har guruh alohida, `kamomad` — kam va topilmadi birga (ko'rsatkich plitkasi)
-GURUH_FILTRLARI = {**{g: {g} for g in GURUHLAR}, "kamomad": {"kam", "topilmadi"}}
+GURUH_FILTRLARI = {**{g: {g} for g in GURUHLAR}, "kamomad": {"kam", "topilmadi"}, "farqlar": set(QOLLANADI)}
 # Ko'rsatkich plitkalari (spec §5.1: beshta guruh): (filtr, nomi, ikonka, rang sinfi, ogohlantiruvchi)
 PLITKALAR = (
     ("topildi", "topildi", "cil-check-circle", "r-bg-pul", False),

@@ -2,7 +2,7 @@
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr>{% if tanlash %}<th class="text-center chop-yoq"><span class="visually-hidden">Tanlash</span></th>{% endif %}{% saralash_ustuni "guruh" "Guruh" %}{% saralash_ustuni "inv" "Inv. raqam" %}{% saralash_ustuni "av" "AV" %}{% saralash_ustuni "bolim" "Bo'lim" %}{% saralash_ustuni "holat" "Holat" %}{% saralash_ustuni "kutilgan" "Kutilgan" "son" %}{% saralash_ustuni "topilgan" "Topilgan" "son" %}{% saralash_ustuni "farq" "Farq" "son" %}<th></th></tr></thead>
+  <thead><tr>{% if tanlash %}<th class="text-center chop-yoq">{% if tanlanadigan_bor %}<input class="form-check-input" type="checkbox" data-hammasini-tanla aria-label="Ko'rinayotgan hamma farqni tanlash" title="Hammasini tanlash">{% else %}<span class="visually-hidden">Tanlash</span>{% endif %}</th>{% endif %}{% saralash_ustuni "guruh" "Guruh" %}{% saralash_ustuni "inv" "Inv. raqam" %}{% saralash_ustuni "av" "AV" %}{% saralash_ustuni "bolim" "Bo'lim" %}{% saralash_ustuni "holat" "Holat" %}{% saralash_ustuni "kutilgan" "Kutilgan" "son" %}{% saralash_ustuni "topilgan" "Topilgan" "son" %}{% saralash_ustuni "farq" "Farq" "son" %}<th></th></tr></thead>
   <tbody>
   {% for s in satrlar %}{% with q=s.q %}
     <tr>

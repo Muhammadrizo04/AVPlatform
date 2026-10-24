@@ -388,3 +388,21 @@ def test_ochiq_reviziyani_qaytarib_bolmaydi(ikki_topilmadi, hisobchi):
     assert "alert-danger" in r.content.decode()
     rv.refresh_from_db()
     assert rv.holat == Reviziya.Holat.OCHIQ
+
+
+def test_qollash_eslatmasi_va_yopishqoq_panel(ikki_topilmadi, hisobchi):
+    """Yakunlanganda tepada «N ta farq qo'llanmagan» eslatmasi (vedomostga havola), Qo'llash — yopishqoq panelda."""
+    rv, _, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+
+    html = c.get(sahifa).content.decode()
+    assert "qollash-eslatma" in html and "2 ta farq hali qo" in html and 'href="?guruh=farqlar#vedomost"' in html
+    assert 'id="vedomost"' in html and 'class="amal-panel"' in html and "data-hammasini-tanla" in html
+
+    filtrlangan = c.get(sahifa, {"guruh": "farqlar"}).context["satrlar"]
+    assert len(filtrlangan) == 2
+
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [q.kalit for q in solishtir(rv)]})
+    assert "qollash-eslatma" not in c.get(sahifa).content.decode()  # hammasi qo'llandi, yopildi
