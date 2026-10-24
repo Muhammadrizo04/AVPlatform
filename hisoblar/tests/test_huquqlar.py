@@ -1,6 +1,7 @@
 import html
 
 import pytest
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied
 from django.http import HttpResponse
@@ -23,7 +24,8 @@ def test_admin_hamma_amal(foydalanuvchi):
     admin = foydalanuvchi(Rol.ADMIN)
     assert set(HUQUQLAR) == {
         "korish", "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt",
-        "yorliq", "tozalash", "hisobot", "sozlama", "sinxron",
+        "yorliq", "tozalash", "hisobot", "sozlama", "sinxron", "pul_korish", "chiqim_korish",
+        "reviziya_boshqarish", "reviziya_otkazish", "reviziya_korish",
     }
     for amal in HUQUQLAR:
         assert huquqi_bor(admin, amal) is True, amal
@@ -31,7 +33,10 @@ def test_admin_hamma_amal(foydalanuvchi):
 
 def test_hisobchi_amallari(foydalanuvchi):
     u = foydalanuvchi(Rol.HISOBCHI)
-    for amal in ("av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt", "yorliq", "tozalash", "hisobot", "korish"):
+    for amal in (
+        "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt", "yorliq", "tozalash", "hisobot", "korish",
+        "reviziya_boshqarish", "reviziya_otkazish", "reviziya_korish",
+    ):
         assert huquqi_bor(u, amal) is True, amal
     for amal in ("sozlama", "sinxron"):
         assert huquqi_bor(u, amal) is False, amal
@@ -39,27 +44,39 @@ def test_hisobchi_amallari(foydalanuvchi):
 
 def test_hr_amallari(foydalanuvchi):
     u = foydalanuvchi(Rol.HR)
-    for amal in ("mol_akt", "hisobot", "korish"):
+    for amal in ("mol_akt", "hisobot", "korish", "reviziya_korish"):
         assert huquqi_bor(u, amal) is True, amal
-    for amal in ("av_tahrir", "taqsimot", "yorliq"):
+    for amal in ("av_tahrir", "taqsimot", "yorliq", "pul_korish", "reviziya_boshqarish", "reviziya_otkazish"):
         assert huquqi_bor(u, amal) is False, amal
 
 
 def test_rahbar_faqat_korish_va_hisobot(foydalanuvchi):
     u = foydalanuvchi(Rol.RAHBAR)
     for amal in HUQUQLAR:
-        assert huquqi_bor(u, amal) is (amal in {"korish", "hisobot"}), amal
+        assert huquqi_bor(u, amal) is (amal in {"korish", "hisobot", "pul_korish", "reviziya_korish"}), amal
 
 
 def test_revizor_va_notanish_amalda_huquq_yoq(foydalanuvchi):
     u = foydalanuvchi(Rol.REVIZOR)
-    assert not any(huquqi_bor(u, amal) for amal in HUQUQLAR)
+    for amal in HUQUQLAR:
+        assert huquqi_bor(u, amal) is (amal == "reviziya_otkazish"), amal
     assert huquqi_bor(foydalanuvchi(Rol.ADMIN), "mavjud_emas") is False
     assert huquqi_bor(AnonymousUser(), "korish") is False
 
 
-def test_revizor_panelga_kirolmaydi(foydalanuvchi):
+def test_revizor_kiradi_va_mobilga_tushadi(foydalanuvchi):
     u = foydalanuvchi(Rol.REVIZOR)
+    client = Client()
+    javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL}, follow=True)
+    assert client.session["_auth_user_id"] == str(u.pk)
+    assert javob.redirect_chain[-1][0] == reverse("reviziya:mobil") and javob.status_code == 200
+    # panel sahifalari revizor sessiyasida ham yopiq
+    assert client.get(reverse("vositalar:royxat")).status_code == 403
+
+
+def test_huquqsiz_foydalanuvchi_kirolmaydi(db):
+    # Profilsiz foydalanuvchida na `korish`, na `reviziya_otkazish` bor
+    u = get_user_model().objects.create_user(username="profilsiz", password=PAROL)
     client = Client()
     javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL})
     assert javob.status_code == 200
@@ -73,7 +90,7 @@ def test_hisobchi_kira_oladi_va_chiqadi(foydalanuvchi):
     javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL})
     assert javob.status_code == 302
     assert client.session["_auth_user_id"] == str(u.pk)
-    assert client.get(reverse("bosh")).status_code == 200
+    assert client.get(reverse("panel:bosh")).status_code == 200
     javob = client.post(reverse("hisoblar:chiqish"))
     assert javob.status_code == 302
     assert "_auth_user_id" not in client.session
@@ -118,18 +135,23 @@ def test_5_xato_urinishdan_keyin_blok(foydalanuvchi):
     assert "_auth_user_id" not in client.session
 
 
-def test_bosh_revizor_sessiyasi_bilan_ham_403(client_rol):
-    assert client_rol(Rol.REVIZOR).get(reverse("bosh")).status_code == 403
+def test_bosh_revizor_sessiyasi_bilan_mobilga(client_rol):
+    # 2-bosqich (reviziya spec §3.2): revizorning bosh sahifasi — «Mening reviziyalarim»; panel sahifalari 403
+    client = client_rol(Rol.REVIZOR)
+    javob = client.get(reverse("panel:bosh"))
+    assert javob.status_code == 302 and javob.url == reverse("reviziya:mobil")
+    assert client.get(reverse("vositalar:royxat")).status_code == 403
 
 
 def test_bosh_rol_sessiya_davomida_o_zgarsa_403(foydalanuvchi):
     u = foydalanuvchi(Rol.HISOBCHI)
     client = Client()
     client.force_login(u)
-    assert client.get(reverse("bosh")).status_code == 200
+    assert client.get(reverse("panel:bosh")).status_code == 200
     u.profil.rol = Rol.REVIZOR
     u.profil.save()
-    assert client.get(reverse("bosh")).status_code == 403
+    assert client.get(reverse("panel:bosh")).url == reverse("reviziya:mobil")
+    assert client.get(reverse("vositalar:royxat")).status_code == 403
 
 
 def test_bir_foydalanuvchi_xatosi_boshqasini_bloklamaydi(foydalanuvchi):

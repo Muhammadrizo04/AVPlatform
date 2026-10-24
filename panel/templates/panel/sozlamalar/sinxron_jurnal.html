@@ -1,0 +1,26 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Sinxron jurnali{% endblock %}
+{% block yol %}Tizim{% endblock %}
+{% block kontent %}
+<h1>Sozlamalar</h1>
+{% include "panel/sozlamalar/_menyu.html" %}
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Boshlandi</th><th>Tugadi</th><th>Natija</th><th>To'liq</th><th>Xato</th></tr></thead>
+  <tbody>
+  {% for j in sahifa %}
+    <tr>
+      <td class="text-nowrap">{{ j.boshlandi|date:"d.m.Y H:i:s" }}</td><td>{{ j.tugadi|date:"H:i:s" }}</td>
+      <td>{% if j.natija == "xato" %}<span class="badge bg-danger">{{ j.get_natija_display }}</span>{% elif j.natija == "ok" %}<span class="badge bg-success">{{ j.get_natija_display }}</span>{% else %}<span class="badge bg-secondary">{{ j.get_natija_display }}</span>{% endif %}</td>
+      <td>{% if j.toliq %}ha{% endif %}</td><td class="small">{{ j.xato_matni }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="5" class="text-body-secondary">Jurnal bo'sh.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+{% endblock %}

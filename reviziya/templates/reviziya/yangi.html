@@ -1,0 +1,70 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Yangi reviziya{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'reviziya:royxat' %}">Reviziyalar</a>{% endblock %}
+{% block kontent %}
+<h1>Yangi reviziya</h1>
+{% if xato %}<div class="alert alert-danger py-2" role="alert">{{ xato }}</div>{% endif %}
+{% if forma.non_field_errors %}<div class="alert alert-danger py-2" role="alert">{{ forma.non_field_errors|join:" " }}</div>{% endif %}
+
+<form method="post" action="{% url 'reviziya:yangi' %}">{% csrf_token %}
+<div class="card mb-3"><div class="card-body">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label" for="id_filial">Filial</label>
+      <select class="form-select{% if forma.filial.errors %} is-invalid{% endif %}" name="filial" id="id_filial" required>
+        <option value="">Filialni tanlang</option>
+        {% for f in forma.fields.filial.queryset %}<option value="{{ f.pk }}" {% if forma.filial.value|stringformat:"s" == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+      </select>
+      {% for e in forma.filial.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="col-md-6">
+      <label class="form-label" for="id_bolim">Bo'lim <span class="text-body-secondary small">(bo'sh — butun filial; ichki bo'limlari bilan)</span></label>
+      <select class="form-select{% if forma.bolim.errors %} is-invalid{% endif %}" name="bolim" id="id_bolim">
+        <option value="">Butun filial</option>
+        {% for b in forma.fields.bolim.queryset %}<option value="{{ b.pk }}" {% if forma.bolim.value|stringformat:"s" == b.pk|stringformat:"s" %}selected{% endif %}>{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
+      </select>
+      {% for e in forma.bolim.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="col-12">
+      <div class="form-label">Revizorlar</div>
+      <div class="d-flex flex-wrap gap-3">
+      {% for v in forma.revizorlar %}
+        <div class="form-check mb-0">{{ v.tag }}<label class="form-check-label" for="{{ v.id_for_label }}">{{ v.choice_label }}</label></div>
+      {% empty %}
+        <span class="text-body-secondary">Revizor topilmadi — «Sozlamalar»da foydalanuvchiga «Revizor» rolini bering.</span>
+      {% endfor %}
+      </div>
+      {% for e in forma.revizorlar.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+    </div>
+    <div class="col-12">
+      <label class="form-label" for="id_izoh">Izoh</label>
+      <textarea class="form-control" name="izoh" id="id_izoh" rows="2" maxlength="2000">{{ forma.izoh.value|default:"" }}</textarea>
+    </div>
+  </div>
+</div></div>
+
+<div class="card mb-3"><div class="card-body">
+  <h2 class="h6 mb-1">Komissiya</h2>
+  <p class="small text-body-secondary mb-2">Xodimni ismi bo'yicha qidirib qo'shing; birinchi qo'shilgan rais bo'ladi. Lavozim keyingi
+    reviziyalar uchun eslab qolinadi. Inventarizatsiya qilinayotgan joylarning МОЛlari dalolatnomaga o'zi qo'shiladi.</p>
+  <div class="vstack gap-2 mb-2" id="komissiya-qatorlar">
+    {% for a in komissiya %}{% include "reviziya/_komissiya_qator.html" %}{% endfor %}
+  </div>
+  <div class="komissiya-qidiruv">
+    <label class="visually-hidden" for="komissiya-qidir">Komissiyaga xodim qidirish</label>
+    <div class="input-group input-group-sm">
+      <span class="input-group-text"><i class="cil-search" aria-hidden="true"></i></span>
+      <input class="form-control" type="search" id="komissiya-qidir" name="q" placeholder="Xodim ismini yozing…" autocomplete="off"
+             hx-get="{% url 'reviziya:komissiya_xodimlar' %}" hx-trigger="input changed delay:250ms, search" hx-target="#komissiya-natija"
+             onkeydown="if (event.key === 'Enter') event.preventDefault()">
+    </div>
+    <div id="komissiya-natija"></div>
+  </div>
+</div></div>
+
+<div class="amallar mb-4">
+  <button type="submit" class="btn btn-primary"><i class="cil-check-alt me-1"></i>Reviziyani ochish</button>
+  <a class="btn btn-outline-secondary" href="{% url 'reviziya:royxat' %}">Bekor</a>
+</div>
+</form>
+{% endblock %}

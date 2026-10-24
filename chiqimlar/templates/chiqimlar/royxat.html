@@ -1,0 +1,61 @@
+{% extends "panel/base.html" %}
+{% load jadval %}
+{% block sarlavha %}1C chiqimlari{% endblock %}
+{% block yol %}Vositalar{% endblock %}
+{% block kontent %}
+<h1>1C chiqimlari</h1>
+
+<div class="card mb-3"><div class="card-body">
+<form method="get" action="{% url 'chiqimlar:royxat' %}" class="filtrlar">
+  <select class="form-select form-select-sm" name="holat">
+    <option value="" {% if not holat %}selected{% endif %}>Barcha holatlar</option>
+    {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
+  <select class="form-select form-select-sm" name="tur"><option value="">Barcha turlar</option>
+    {% for kalit, nomi in turlar %}<option value="{{ kalit }}" {% if params.tur == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
+  <select class="form-select form-select-sm" name="filial"><option value="">Barcha filiallar</option>
+    {% for f in filiallar %}<option value="{{ f.pk }}" {% if params.filial == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+  </select>
+  <label class="d-flex align-items-center gap-1 small">Dan <input class="form-control form-control-sm" type="date" name="dan" value="{{ params.dan }}"></label>
+  <label class="d-flex align-items-center gap-1 small">Gacha <input class="form-control form-control-sm" type="date" name="gacha" value="{{ params.gacha }}"></label>
+  {% tartib_maydoni %}
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
+</form>
+</div></div>
+
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead>
+    <tr>{% saralash_ustuni "sana" "Sana" %}{% saralash_ustuni "hujjat" "1C hujjati" %}{% saralash_ustuni "av" "AV" %}{% saralash_ustuni "filial" "Filial" %}{% saralash_ustuni "soni" "Soni" "son" %}{% if pul_huquqi %}{% saralash_ustuni "summa" "Summa" "son" %}{% endif %}{% saralash_ustuni "tur" "Taxmin / tur" %}{% saralash_ustuni "holat" "Holat" %}<th></th></tr>
+  </thead>
+  <tbody>
+  {% for c in sahifa %}
+    <tr>
+      <td>{{ c.sana|date:"d.m.Y" }}</td>
+      <td>{{ c.hujjat_turi }} {{ c.hujjat_raqami }}</td>
+      <td>{% if c.av_id in korinadigan_av %}<a href="{% url 'vositalar:kartochka' c.av_id %}">{{ c.av.nomi }}</a>{% else %}{{ c.av.nomi }}{% endif %}</td>
+      <td>{{ c.filial.nomi }}</td>
+      <td class="son">{{ c.soni|son }}</td>
+      {% if pul_huquqi %}<td class="son">{{ c.summa|pul }}</td>{% endif %}
+      <td>{% if c.tur %}{{ c.get_tur_display }}{% else %}{{ c.get_taxmin_tur_display }} <span class="text-body-secondary">(taxmin)</span>{% endif %}</td>
+      <td>{% if c.holat == "kutilmoqda" %}<span class="badge bg-warning text-dark">{{ c.get_holat_display }}</span>{% elif c.holat == "tasdiqlangan" %}<span class="badge bg-success">{{ c.get_holat_display }}</span>{% else %}<span class="badge bg-secondary">{{ c.get_holat_display }}</span>{% endif %}</td>
+      <td class="text-end">{% if taqsim_huquqi and c.holat == "kutilmoqda" %}<a class="btn btn-sm btn-primary" href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Tasdiqlash</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Ko'rish</a>{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="9" class="text-body-secondary">Chiqim topilmadi.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+
+{% if sahifa.paginator.num_pages > 1 %}
+<div class="amallar justify-content-end">
+  {% if sahifa.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.previous_page_number }}">‹ Oldingi</a>{% endif %}
+  <span>{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
+  {% if sahifa.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.next_page_number }}">Keyingi ›</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

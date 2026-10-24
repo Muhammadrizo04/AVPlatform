@@ -1,0 +1,44 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ akt.nomi }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:akt_royxat' %}">МОЛ aktlari</a>{% endblock %}
+{% block kontent %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">МОЛ akti {{ akt.nomi }} {% include "mol/_akt_holati.html" with a=akt %}</h1>
+  <a href="{% url 'mol:akt_pdf' akt.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>PDF</a>
+  {% if tasdiqlash_mumkin %}
+  <form method="post" action="{% url 'mol:akt_bekor' akt.pk %}" class="d-inline" data-tasdiq="Akt {{ akt.nomi }} bekor qilinsinmi? Bu amalni qaytarib bo'lmaydi." data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'mol:akt_tasdiqla' akt.pk %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Tasdiqlash</button></form>
+  {% endif %}
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Sana</div>{{ akt.sana|date:"d.m.Y" }}</div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Topshiruvchi</div><strong>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</strong></div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Qabul qiluvchi</div><strong>{{ akt.qabul_qiluvchi.ism }}</strong></div>
+      {% if akt.tasdiq_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Tasdiqlangan</div>{{ akt.tasdiq_vaqti|date:"d.m.Y H:i" }}</div>{% endif %}
+      {% if akt.bekor_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Bekor qilingan</div>{{ akt.bekor_vaqti|date:"d.m.Y H:i" }}{% if akt.bekor_qildi %} · {{ akt.bekor_qildi.get_full_name|default:akt.bekor_qildi.get_username }}{% endif %}</div>{% endif %}
+      {% if akt.izoh %}<div class="col-12"><div class="small text-body-secondary">Izoh</div>{{ akt.izoh }}</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card mb-4">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>№</th><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for q in qatorlar %}
+    <tr>
+      <td>{{ forloop.counter }}</td><td>{{ q.av.inv_raqam }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.filial.nomi }}</td>
+      <td>{% if q.bolim %}{{ q.bolim.toliq_nomi }}{% else %}—{% endif %}</td><td><span class="holat-pill h-{{ q.holat_nomi|holat_sinfi }}">{{ q.holat_nomi }}</span></td>
+      <td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}
+    </tr>
+  {% endfor %}
+    {% if pul_huquqi %}<tr class="table-light"><th colspan="7">Jami</th><th class="son">{{ jami_qiymat|pul }}</th></tr>{% endif %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endblock %}

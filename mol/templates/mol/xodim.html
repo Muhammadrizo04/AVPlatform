@@ -1,0 +1,60 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ xodim.ism }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
+{% block kontent %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <div class="me-auto">
+    <h1 class="mb-1">{{ xodim.ism }}</h1>
+    <div class="text-body-secondary">Filial: {{ xodim.filial.nomi|default:"—" }}
+    {% if xodim.ishdan_bushagan or xodim.neaktiv or xodim.onec_da_yoq %} · <span class="badge bg-danger">Ketgan / faol emas</span>{% endif %}</div>
+  </div>
+  {% if akt_huquqi and qatorlar %}<a class="btn btn-primary btn-sm" href="{% url 'mol:akt_yangi' %}?topshiruvchi={{ xodim.pk }}"><i class="cil-transfer me-1"></i>Topshirish aktini yaratish</a>{% endif %}
+</div>
+
+<div class="card mb-4">
+<div class="card-header fw-semibold">Biriktirilgan AV'lar</div>
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for t in qatorlar %}
+    <tr>
+      <td>{{ t.av.inv_raqam }}</td>
+      <td><a href="{% url 'vositalar:kartochka' t.av_id %}">{{ t.av.nomi }}</a></td>
+      <td>{{ t.filial.nomi }}</td>
+      <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}—{% endif %}</td>
+      <td><span class="holat-pill h-{{ t.holat_nomi|holat_sinfi }}">{{ t.holat_nomi }}</span></td>
+      <td class="son">{{ t.soni|son }}</td>
+      {% if pul_huquqi %}<td class="son">{{ t.qiymat|pul }}</td>{% endif %}
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-body-secondary"><em>AV biriktirilmagan.</em></td></tr>
+  {% endfor %}
+  {% if qatorlar %}<tr class="table-light"><th colspan="5">Jami</th><th class="son">{{ jami_soni|son }}</th>{% if pul_huquqi %}<th class="son">{{ jami_qiymat|pul }}</th>{% endif %}</tr>{% endif %}
+  </tbody>
+</table>
+</div>
+</div>
+
+<div class="card mb-4">
+<div class="card-header fw-semibold">Aktlar</div>
+{% if aktlar %}
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Akt</th><th>Sana</th><th>Topshiruvchi</th><th>Qabul qiluvchi</th><th>Holat</th></tr></thead>
+  <tbody>
+  {% for a in aktlar %}
+    <tr>
+      <td><a href="{% url 'mol:akt' a.pk %}">{{ a.nomi }}</a></td>
+      <td>{{ a.sana|date:"d.m.Y" }}</td>
+      <td>{{ a.topshiruvchi.ism|default:"—" }}</td>
+      <td>{{ a.qabul_qiluvchi.ism }}</td>
+      <td>{% include "mol/_akt_holati.html" %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}<div class="card-body text-body-secondary"><em>Akt yo'q.</em></div>{% endif %}
+</div>
+{% endblock %}

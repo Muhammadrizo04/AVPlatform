@@ -1,0 +1,46 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Yorliq chop etish{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a>{% endblock %}
+{% block kontent %}
+<h1>QR-yorliq chop etish</h1>
+
+{% if elementlar %}
+<form method="post" action="{% url 'yorliqlar:pdf' %}" target="_blank">
+  {% csrf_token %}
+  <div class="card mb-3"><div class="card-body d-flex flex-wrap align-items-center gap-2">
+    <label class="mb-0" for="olcham_tanlov">Yorliq o'lchami</label>
+    <select class="form-select form-select-sm w-auto" id="olcham_tanlov" name="olcham" required>
+      {% for o in olchamlar %}<option value="{{ o.pk }}" {% if o.pk == standart %}selected{% endif %}>{{ o.nomi }}</option>{% endfor %}
+    </select>
+  </div></div>
+  <div class="card mb-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th class="son">Nusxa</th></tr></thead>
+    <tbody>
+    {% for e in elementlar %}
+      <tr>
+        <td>{{ e.av.inv_raqam }}</td><td>{{ e.av.nomi }}</td><td>{{ e.av.filial_rekvizit.nomi|default:"" }}</td>
+        <td class="son">
+          {% if e.kalitsiz %}<span class="badge bg-danger error">Inv. raqam yoki filial yo'q — chop etib bo'lmaydi</span>
+          {% else %}
+          <input type="hidden" name="av" value="{{ e.av.pk }}">
+          <input class="form-control form-control-sm ms-auto text-end" style="max-width:6rem" type="number" name="nusxa_{{ e.av.pk }}" value="{{ e.nusxa }}" min="1" max="{{ max_nusxa }}" required>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  </div>
+  <button type="submit" class="btn btn-primary mb-4" {% if not olchamlar %}disabled{% endif %}><i class="cil-print me-1"></i>PDF yaratish</button>
+</form>
+{% else %}
+<div class="alert alert-secondary">Chop etiladigan AV topilmadi. AV ro'yxatidan tanlang yoki bo'lim / bayroq bo'yicha oching.</div>
+<div class="list-group mb-4" style="max-width:32rem">
+  <a class="list-group-item list-group-item-action" href="{% url 'yorliqlar:tanlash' %}?bayroq=yorliq_yoq">Yorlig'i chop etilmaganlar</a>
+  <a class="list-group-item list-group-item-action" href="{% url 'yorliqlar:tanlash' %}?bayroq=yorliq_almashtirish">Yorliqni almashtirish kerak bo'lganlar</a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}O'zgarishlar jurnali{% endblock %}
+{% block yol %}Tizim{% endblock %}
+{% block kontent %}
+<h1>Sozlamalar</h1>
+{% include "panel/sozlamalar/_menyu.html" %}
+<div class="card mb-3"><div class="card-body">
+<form method="get" class="filtrlar">
+  <input class="form-control form-control-sm" name="kim" value="{{ kim }}" placeholder="Kim">
+  <input class="form-control form-control-sm" name="obyekt_turi" value="{{ obyekt_turi }}" placeholder="Obyekt (masalan, auth.user)">
+  <input class="form-control form-control-sm" type="date" name="dan" value="{{ dan|date:'Y-m-d' }}">
+  <input class="form-control form-control-sm" type="date" name="gacha" value="{{ gacha|date:'Y-m-d' }}">
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Saralash</button>
+</form>
+</div></div>
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Qachon</th><th>Kim</th><th>Obyekt</th><th>Maydon</th><th>Eski</th><th>Yangi</th></tr></thead>
+  <tbody>
+  {% for j in sahifa %}
+    <tr>
+      <td class="text-nowrap">{{ j.qachon|date:"d.m.Y H:i" }}</td><td>{{ j.kim_nomi }}</td><td>{{ j.obyekt_turi }} #{{ j.obyekt_id }}</td>
+      <td>{{ j.maydon }}</td><td>{{ j.eski }}</td><td>{{ j.yangi }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="text-body-secondary">Yozuv yo'q.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% load static %}<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sahifa eskirgan — Asosiy vositalar</title>
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}">
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 1rem; background: var(--av-fon);
+      color: var(--av-siyoh); font: 16px/1.5 var(--av-shrift); }
+    .quti { max-width: 460px; padding: 1.5rem; background: var(--av-sirt); border: 1px solid var(--av-chiziq);
+      border-radius: var(--av-radius); box-shadow: var(--av-soya); }
+    h1 { font-size: 1.25rem; margin: 0 0 .5rem; }
+    p { margin: 0 0 1rem; color: var(--av-ikkilamchi); }
+    a { display: inline-flex; align-items: center; min-height: 48px; padding: 0 1.1rem; border-radius: 12px;
+      background: var(--av-indigo); color: #fff; font-weight: 600; text-decoration: none; }
+    small { display: block; margin-top: 1rem; color: var(--av-xira); }
+  </style>
+</head>
+<body>
+  <main class="quti">
+    <h1>Sahifa eskirgan</h1>
+    <p>Amal bajarilmadi: tizimga boshqa oynada qayta kirilgan yoki sessiya tugagan bo'lishi mumkin.
+      Sahifaga qayting va amalni qaytadan bajaring.</p>
+    <a href="{{ orqaga }}">Sahifaga qaytish</a>
+    <small>CSRF tekshiruvi</small>
+  </main>
+</body>
+</html>

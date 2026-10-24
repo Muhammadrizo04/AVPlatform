@@ -1,0 +1,6 @@
+<div class="korsatkichlar" id="av-korsatkichlar"{% if oob %} hx-swap-oob="true"{% endif %}>
+  <span class="korsatkich"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ sahifa.paginator.count|son }}</b>AV{% if faol_filtrlar %} — filtr bo'yicha{% endif %}</span></span>
+  <a class="korsatkich{% if korsatkichlar.molsiz %} ogoh{% else %} nol{% endif %}" href="?{% if plitka_query %}{{ plitka_query }}&amp;{% endif %}bayroq=molsiz"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-user-unfollow"></i></span><span><b>{{ korsatkichlar.molsiz|son }}</b>МОЛ'siz qator</span></a>
+  <a class="korsatkich{% if not korsatkichlar.bolimsiz %} nol{% endif %}" href="?{% if plitka_query %}{{ plitka_query }}&amp;{% endif %}bayroq=bolimsiz"><span class="kpi-ikonka r-bg-chiqim" aria-hidden="true"><i class="cil-sitemap"></i></span><span><b>{{ korsatkichlar.bolimsiz|son }}</b>bo'limsiz qator</span></a>
+  <a class="korsatkich{% if korsatkichlar.mos_emas %} ogoh{% else %} nol{% endif %}" href="?{% if plitka_query %}{{ plitka_query }}&amp;{% endif %}bayroq=mos_emas"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.mos_emas|son }}</b>1C bilan mos emas</span></a>
+</div>

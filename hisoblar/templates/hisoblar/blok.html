@@ -1,6 +1,15 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Kirish bloklandi{% endblock %}
+{% block yol %}Kirish bloklandi{% endblock %}
 {% block kontent %}
-<h1>Kirish vaqtincha bloklandi</h1>
-<p class="xato">Juda ko'p noto'g'ri urinish. 15 daqiqadan keyin qayta urinib ko'ring.</p>
+<div class="row justify-content-center pt-5">
+  <div class="col-sm-9 col-md-6 col-lg-5">
+    <div class="card border-danger">
+      <div class="card-body p-4">
+        <h1 class="h4 mb-3"><i class="cil-ban text-danger me-2"></i>Kirish vaqtincha bloklandi</h1>
+        <p class="xato mb-0">Juda ko'p noto'g'ri urinish. 15 daqiqadan keyin qayta urinib ko'ring.</p>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}

@@ -3,31 +3,88 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"400|409|422","swap":true,"error":false},{"code":"[45]..","swap":false,"error":true}]}'>
   <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
+  <link rel="stylesheet" href="{% static 'panel/vendor/coreui/coreui.min.css' %}">
+  <link rel="stylesheet" href="{% static 'panel/vendor/coreui-icons/css/free.min.css' %}">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}">
+  <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 0; color: #1f2933; background: #f5f7fa; }
-    .yuqori { display: flex; align-items: center; gap: 1.5rem; padding: .6rem 1.2rem; background: #243b53; color: #fff; }
-    .yuqori a { color: #fff; text-decoration: none; }
-    .yuqori .bosh { margin-left: auto; display: flex; gap: .8rem; align-items: center; }
-    .yuqori button { background: none; border: 1px solid #9fb3c8; color: #fff; padding: .25rem .7rem; border-radius: 4px; cursor: pointer; }
-    main { max-width: 72rem; margin: 1.5rem auto; padding: 0 1rem; }
-    .xato { color: #b8302a; }
-  </style>
+  <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
+  <script src="{% static 'panel/tasdiq.js' %}?v=2" defer></script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated %}
-  <header class="yuqori">
-    <strong>Asosiy vositalar</strong>
-    <nav>
-      {% block menyu %}<a href="{% url 'bosh' %}">Bosh sahifa</a>{% endblock %}
-    </nav>
-    <div class="bosh">
-      <span>{{ user.get_username }}{% if user.profil %} · {{ user.profil.get_rol_display }}{% endif %}</span>
-      <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button type="submit">Chiqish</button></form>
+  {% with ns=request.resolver_match.namespace nom=request.resolver_match.url_name %}
+  <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
+    <div class="sidebar-header border-bottom">
+      <div class="av-brend"><span class="av-logo" aria-hidden="true"><i class="cil-storage"></i></span><div><a href="{% url 'panel:bosh' %}"><b>Asosiy vositalar</b></a>{% if kompaniya_nomi %}<span>{{ kompaniya_nomi }}</span>{% elif sozlama_huquqi %}<a class="av-brend-bosh" href="{% url 'panel:umumiy' %}">Kompaniya nomi kiritilmagan</a>{% endif %}</div></div>
+      <button class="btn-close btn-close-white d-lg-none" type="button" aria-label="Yopish" data-sidebar-toggle></button>
     </div>
-  </header>
+    <ul class="sidebar-nav">
+      {% block menyu %}
+      <li class="nav-item"><a class="nav-link{% if ns == 'panel' and nom == 'bosh' %} active{% endif %}" href="{% url 'panel:bosh' %}"><i class="nav-icon cil-speedometer"></i> Bosh sahifa</a></li>
+      <li class="nav-title">Vositalar</li>
+      <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom != 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:royxat' %}"><i class="nav-icon cil-list"></i> AV ro'yxati</a></li>
+      <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom == 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:bolimlar' %}"><i class="nav-icon cil-sitemap"></i> Bo'limlar</a></li>
+      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom != 'akt_royxat' and nom != 'akt' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> МОЛ nazorati</a></li>
+      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> МОЛ aktlari</a></li>
+      {% if chiqim_huquqi %}
+      <li class="nav-item"><a class="nav-link r-chiqim{% if ns == 'chiqimlar' %} active{% endif %}" href="{% url 'chiqimlar:royxat' %}"><i class="nav-icon cil-swap-horizontal"></i> 1C chiqimlari{% if chiqim_kutilmoqda_soni %} <span class="badge bg-danger ms-auto">{{ chiqim_kutilmoqda_soni }}</span>{% endif %}</a></li>
+      {% endif %}
+      {% if reviziya_huquqi %}
+      <li class="nav-item"><a class="nav-link r-hisobot{% if ns == 'reviziya' %} active{% endif %}" href="{% url 'reviziya:royxat' %}"><i class="nav-icon cil-task"></i> Reviziyalar</a></li>
+      {% endif %}
+      {% if hisobot_huquqi or tozalash_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
+      {% if hisobot_huquqi %}
+      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>
+      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'mol_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:mol_qaydnoma' %}"><i class="nav-icon cil-notes"></i> МОЛ qaydnomasi</a></li>
+      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'muddat' %} active{% endif %}" href="{% url 'hisobotlar:muddat' %}"><i class="nav-icon cil-clock"></i> Xizmat muddati</a></li>
+      {% endif %}
+      {% if tozalash_huquqi %}
+      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'tozalash' %} active{% endif %}" href="{% url 'hisobotlar:tozalash' %}"><i class="nav-icon cil-task"></i> Tozalash</a></li>
+      {% endif %}
+      {% if sozlama_huquqi %}
+      <li class="nav-title">Tizim</li>
+      <li class="nav-item"><a class="nav-link r-tizim{% if ns == 'panel' and nom != 'bosh' %} active{% endif %}" href="{% url 'panel:foydalanuvchilar' %}"><i class="nav-icon cil-settings"></i> Sozlamalar</a></li>
+      {% endif %}
+      {% endblock %}
+    </ul>
+  </div>
+  {% endwith %}
   {% endif %}
-  <main>{% block kontent %}{% endblock %}</main>
+
+  <div class="wrapper d-flex flex-column min-vh-100">
+    {% if user.is_authenticated %}
+    <header class="av-yol">
+      <button class="header-toggler d-lg-none" type="button" aria-label="Menyu" data-sidebar-toggle><i class="cil-menu fs-5"></i></button>
+      <span class="av-yol-sarlavha">{% block yol %}{% endblock %}</span>
+      {% if sinxron_holati and not sinxron_holati.xato %}<span class="av-sinxron"><i aria-hidden="true"></i>Oxirgi muvaffaqiyatli sinxron: {% if sinxron_holati.oxirgi %}{{ sinxron_holati.oxirgi|date:"H:i" }}{% else %}hali bo'lmagan{% endif %}</span>{% endif %}
+      <div class="av-foydalanuvchi">
+        <span class="av-avatar" aria-hidden="true">{{ user.get_username|slice:":1" }}</span>
+        <span class="ism-blok"><span class="ism">{{ user.get_full_name|default:user.get_username }}</span>{% if user.profil %}<span class="rol">{{ user.profil.get_rol_display }}</span>{% endif %}</span>
+        <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button type="submit"><i class="cil-account-logout me-1"></i>Chiqish</button></form>
+      </div>
+    </header>
+    {% include 'panel/_sinxron_banner.html' %}
+    {% endif %}
+    <div class="body flex-grow-1">
+      <main class="av-sahifa">
+        {% if messages %}<div class="xabarlar">{% for m in messages %}<div class="alert {% if m.tags == 'error' %}alert-danger{% elif m.tags %}alert-{{ m.tags }}{% else %}alert-secondary{% endif %} py-2 {{ m.tags }}" role="alert">{{ m }}</div>{% endfor %}</div>{% endif %}{% block kontent %}{% endblock %}</main>
+    </div>
+    <footer class="footer px-4">
+      <div>1C «КСБ» ma'lumotlari faqat o'qish uchun</div>
+    </footer>
+  </div>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      var el = document.getElementById("sidebar");
+      if (!el || !window.coreui) return;
+      var sidebar = coreui.Sidebar.getOrCreateInstance(el);
+      document.querySelectorAll("[data-sidebar-toggle]").forEach(function (b) {
+        b.addEventListener("click", function () { sidebar.toggle(); });
+      });
+    });
+  </script>
 </body>
 </html>
