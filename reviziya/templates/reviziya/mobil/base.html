@@ -1,0 +1,80 @@
+{% load static %}<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0a2540">
+  <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"400|403|409|422","swap":true,"error":false},{"code":"[45]..","swap":false,"error":true}]}'>
+  <title>{% block sarlavha %}Reviziya{% endblock %} — Asosiy vositalar</title>
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}">
+  <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
+  <script src="{% static 'panel/tasdiq.js' %}?v=3" defer></script>
+  <style>
+    /* Revizor uchun yengil mobil qatlam: panel tokenlari (--av-*), yon menyusiz, tegish nishonlari ≥ 44px. */
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--av-fon); color: var(--av-siyoh); font: 16px/1.45 var(--av-shrift); }
+    a { color: var(--av-indigo); text-decoration: none; }
+    .m-ust { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: .5rem; min-height: 56px;
+      padding: .25rem .75rem; padding-top: max(.25rem, env(safe-area-inset-top)); background: var(--av-navi); color: #fff; }
+    .m-ust a, .m-ust button { color: #fff; }
+    .m-ust .m-nom { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .m-ust .m-nom small { display: block; font-weight: 500; opacity: .75; font-size: .8rem; }
+    .m-ust form { margin: 0; }
+    .m-ikon { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px;
+      border: 0; background: transparent; font: inherit; font-size: .875rem; cursor: pointer; border-radius: 10px; }
+    .m-ikon:hover { background: rgba(255, 255, 255, .1); }
+    main { max-width: 640px; margin: 0 auto; padding: .75rem .75rem 6rem; }
+    h1 { font-size: 1.25rem; margin: .5rem 0 .75rem; }
+    h2 { font-size: 1rem; margin: 1.25rem 0 .5rem; color: var(--av-ikkilamchi); }
+    .m-blok { background: var(--av-sirt); border: 1px solid var(--av-chiziq); border-radius: var(--av-radius);
+      box-shadow: var(--av-soya); }
+    .m-royxat { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+    .m-qator { display: flex; align-items: center; gap: .75rem; min-height: 56px; padding: .65rem .85rem; width: 100%;
+      background: var(--av-sirt); border: 1px solid var(--av-chiziq); border-radius: var(--av-radius); color: var(--av-siyoh);
+      font: inherit; text-align: left; cursor: pointer; }
+    .m-qator:active { background: var(--av-indigo-och); }
+    .m-qator.tanlangan { border-color: var(--av-indigo); box-shadow: 0 0 0 2px var(--av-indigo-och); }
+    .m-qator .m-asosiy { flex: 1; min-width: 0; }
+    .m-qator .m-asosiy b, .m-qator .m-asosiy span { display: block; overflow-wrap: anywhere; }
+    .m-xira { color: var(--av-xira); font-size: .85rem; }
+    .m-tugadi, .m-qator .m-asosiy .m-tugadi { display: inline-block; font-size: .75rem; font-weight: 700; color: #087251; background: var(--av-yashil-och); padding: .1rem .45rem; border-radius: 999px; white-space: nowrap; }
+    .m-son { font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
+    .m-progress { height: 6px; border-radius: 999px; background: var(--av-chiziq-och); overflow: hidden; margin-top: .35rem; }
+    .m-progress i { display: block; height: 100%; background: var(--av-yashil); }
+    .m-tugma { display: inline-flex; align-items: center; justify-content: center; gap: .4rem; min-height: 48px; padding: 0 1.1rem;
+      border: 1px solid var(--av-chiziq); border-radius: 12px; background: var(--av-sirt); color: var(--av-siyoh);
+      font: inherit; font-weight: 600; cursor: pointer; }
+    .m-tugma.asosiy { background: var(--av-indigo); border-color: var(--av-indigo); color: #fff; }
+    .m-tugma.asosiy:active { background: var(--av-indigo-to); }
+    .m-tugma.keng { width: 100%; }
+    .m-maydon { width: 100%; min-height: 48px; padding: .6rem .8rem; border: 1px solid var(--av-chiziq); border-radius: 12px;
+      background: var(--av-sirt); color: var(--av-siyoh); font: inherit; }
+    .m-maydon:focus, .m-tugma:focus-visible, .m-qator:focus-visible { outline: 3px solid rgba(99, 91, 255, .35); outline-offset: 1px; }
+    textarea.m-maydon { min-height: 72px; resize: vertical; }
+    label.m-yorliq { display: block; font-size: .85rem; font-weight: 600; color: var(--av-ikkilamchi); margin: .75rem 0 .3rem; }
+    .m-xato { margin: .5rem 0; padding: .75rem .9rem; border-radius: 12px; background: var(--av-qizil-och); color: #b3093a; font-weight: 600; }
+    .m-ok { margin: 0; padding: .75rem .9rem; border-radius: 12px; background: var(--av-yashil-och); color: #087251; font-weight: 600; }
+    .m-izoh { margin: .5rem 0; padding: .6rem .8rem; border-radius: 12px; background: var(--av-sariq-och); color: #8a5a00; font-size: .9rem; }
+    .m-bosh { text-align: center; padding: 2rem 1rem; color: var(--av-xira); }
+    [hidden] { display: none !important; }
+  </style>
+  {% block bosh %}{% endblock %}
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <header class="m-ust">
+    {% block orqaga %}<a class="m-ikon" href="{% url 'reviziya:mobil' %}" aria-label="Reviziyalarim">&#8962;</a>{% endblock %}
+    <div class="m-nom">{% block ust %}Reviziya{% endblock %}</div>
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button class="m-ikon" type="submit">Chiqish</button></form>
+    {% endif %}
+  </header>
+  <main>
+    {% block mazmun %}
+    {% if xabar %}<div class="m-xato" role="alert">{{ xabar }}</div>
+    <p><a class="m-tugma keng" href="{% url 'reviziya:mobil' %}">Reviziyalarim</a></p>{% endif %}
+    {% endblock %}
+  </main>
+  {% block skript %}{% endblock %}
+</body>
+</html>

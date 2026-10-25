@@ -1,0 +1,52 @@
+{% extends "panel/base.html" %}
+{% load jadval %}
+{% block sarlavha %}МОЛ nazorati{% endblock %}
+{% block yol %}Vositalar{% endblock %}
+{% block kontent %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">МОЛ nazorati</h1>
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'mol:akt_royxat' %}"><i class="cil-description me-1"></i>Aktlar</a>
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'mol:ketganlar' %}"><i class="cil-warning me-1"></i>Ketgan xodimlardagi AV'lar</a>
+  {% if akt_huquqi %}<a class="btn btn-primary btn-sm tugma" href="{% url 'mol:akt_yangi' %}"><i class="cil-plus me-1"></i>Yangi akt</a>{% endif %}
+</div>
+<div class="korsatkichlar">
+  <a class="korsatkich" href="?holat=faol"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-people"></i></span><span><b>{{ korsatkichlar.faol|son }}</b>faol xodim</span></a>
+  <a class="korsatkich" href="?av_bor=1"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ korsatkichlar.ushlab|son }}</b>AV ushlab turgan</span></a>
+  <a class="korsatkich{% if korsatkichlar.ketgan_ushlab %} ogoh{% else %} nol{% endif %}" href="{% url 'mol:ketganlar' %}"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.ketgan_ushlab|son }}</b>ketgan, lekin AV'si bor</span></a>
+</div>
+<div class="card mb-3"><div class="card-body">
+<form method="get" class="filtrlar">
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ params.q|default:'' }}" placeholder="Xodim ismi" aria-label="Xodim ismi">
+  <select class="form-select form-select-sm" name="holat" aria-label="Xodim holati">
+    <option value="">Barcha xodimlar</option>
+    <option value="faol"{% if params.holat == "faol" %} selected{% endif %}>Faol</option>
+    <option value="ketgan"{% if params.holat == "ketgan" %} selected{% endif %}>Ketgan</option>
+  </select>
+  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_av_bor" name="av_bor" value="1"{% if params.av_bor == "1" %} checked{% endif %}><label class="form-check-label" for="f_av_bor">Faqat AV biriktirilganlar</label></div>
+  {% tartib_maydoni %}
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
+</form>
+</div></div>
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr>{% saralash_ustuni "ism" "Xodim" %}{% saralash_ustuni "filial" "Filial" %}{% saralash_ustuni "holat" "Holati" %}{% saralash_ustuni "av_soni" "AV soni" "son" %}{% if pul_huquqi %}{% saralash_ustuni "qiymat" "Qiymat" "son" %}{% endif %}</tr></thead>
+  <tbody>
+  {% for x in xodimlar %}
+    <tr>
+      <td><a href="{% url 'mol:xodim' x.pk %}" class="fw-semibold text-decoration-none">{{ x.ism }}</a></td>
+      <td>{{ x.filial.nomi|default:"—" }}</td>
+      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}{% if x.av_soni %}<span class="badge bg-danger">Ketgan</span>{% else %}<span class="badge bg-secondary">Ketgan</span>{% endif %}{% else %}<span class="badge bg-success">Faol</span>{% endif %}</td>
+      <td class="son">{{ x.av_soni|son }}</td>
+      {% if pul_huquqi %}<td class="son">{{ x.qiymat|pul }}</td>{% endif %}
+    </tr>
+  {% empty %}
+    <tr><td colspan="5" class="text-body-secondary"><em>Xodim yo'q.</em></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+<p class="text-body-secondary small mb-4">Jami: {{ sahifa.paginator.count|son }} xodim.</p>
+{% endblock %}

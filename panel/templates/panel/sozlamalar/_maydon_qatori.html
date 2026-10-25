@@ -1,0 +1,7 @@
+<tr>
+  <td><input class="form-control form-control-sm" name="maydon_kalit" value="{{ m.kalit }}" maxlength="50"></td>
+  <td><input class="form-control form-control-sm" name="maydon_nomi" value="{{ m.nomi }}" maxlength="100"></td>
+  <td><select class="form-select form-select-sm" name="maydon_tip">{% for t in tiplar %}<option value="{{ t }}"{% if m.tip == t %} selected{% endif %}>{{ t }}</option>{% endfor %}</select></td>
+  <td><select class="form-select form-select-sm" name="maydon_majburiy"><option value="yoq">yo'q</option><option value="ha"{% if m.majburiy %} selected{% endif %}>ha</option></select></td>
+  <td><input class="form-control form-control-sm" name="maydon_tanlov" value="{{ m.tanlov }}"></td>
+</tr>

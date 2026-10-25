@@ -1,0 +1,60 @@
+{% extends "panel/base.html" %}
+{% load jadval %}
+{% block sarlavha %}МОЛ aktlari{% endblock %}
+{% block yol %}Vositalar{% endblock %}
+{% block kontent %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">МОЛ aktlari</h1>
+  {% if akt_huquqi %}<a class="btn btn-primary btn-sm" href="{% url 'mol:akt_yangi' %}"><i class="cil-plus me-1"></i>Yangi akt</a>{% endif %}
+</div>
+
+<ul class="nav nav-pills mb-3 amallar">
+  <li class="nav-item"><a class="nav-link py-1{% if not holat %} active{% endif %}" href="?{% if params.q %}q={{ params.q|urlencode }}{% endif %}">Hammasi</a></li>
+  {% for kalit, nomi in holatlar %}
+  <li class="nav-item"><a class="nav-link py-1{% if holat == kalit %} active{% endif %}" href="?holat={{ kalit }}{% if params.q %}&amp;q={{ params.q|urlencode }}{% endif %}">{{ nomi }}</a></li>
+  {% endfor %}
+</ul>
+
+<div class="card mb-3"><div class="card-body">
+<form method="get" class="filtrlar">
+  {% if holat %}<input type="hidden" name="holat" value="{{ holat }}">{% endif %}
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ params.q|default:'' }}" placeholder="Akt raqami yoki xodim ismi">
+  <label class="d-flex align-items-center gap-1 small">Dan <input class="form-control form-control-sm" type="date" name="dan" value="{{ params.dan|default:'' }}"></label>
+  <label class="d-flex align-items-center gap-1 small">Gacha <input class="form-control form-control-sm" type="date" name="gacha" value="{{ params.gacha|default:'' }}"></label>
+  {% tartib_maydoni %}
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
+</form>
+</div></div>
+
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr>{% saralash_ustuni "raqam" "Akt" %}{% saralash_ustuni "sana" "Sana" %}{% saralash_ustuni "topshiruvchi" "Topshiruvchi" %}{% saralash_ustuni "qabul" "Qabul qiluvchi" %}{% saralash_ustuni "tuzdi" "Tuzdi" %}{% saralash_ustuni "holat" "Holat" %}<th></th></tr></thead>
+  <tbody>
+  {% for a in sahifa %}
+    <tr>
+      <td class="text-nowrap"><a href="{% url 'mol:akt' a.pk %}" class="fw-semibold text-decoration-none">{{ a.nomi }}</a></td>
+      <td>{{ a.sana|date:"d.m.Y" }}</td>
+      <td>{{ a.topshiruvchi.ism|default:"— (МОЛ'siz)" }}</td>
+      <td>{{ a.qabul_qiluvchi.ism }}</td>
+      <td class="small">{{ a.tuzdi.get_full_name|default:a.tuzdi.get_username }}</td>
+      <td>{% include "mol/_akt_holati.html" %}</td>
+      <td class="text-end">{% if akt_huquqi and a.holat == "qoralama" %}<a class="btn btn-sm btn-primary" href="{% url 'mol:akt' a.pk %}">Ko'rib tasdiqlash</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'mol:akt' a.pk %}">Ko'rish</a>{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-body-secondary">Akt topilmadi.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+
+<div class="amallar justify-content-end mb-4">
+  <span class="me-auto text-body-secondary small">Jami: {{ sahifa.paginator.count|son }}</span>
+  {% if sahifa.paginator.num_pages > 1 %}
+  {% if sahifa.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.previous_page_number }}">‹ Oldingi</a>{% endif %}
+  <span>{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
+  {% if sahifa.has_next %}<a class="btn btn-sm btn-outline-secondary" href="?{% if query %}{{ query }}&amp;{% endif %}page={{ sahifa.next_page_number }}">Keyingi ›</a>{% endif %}
+  {% endif %}
+</div>
+{% endblock %}

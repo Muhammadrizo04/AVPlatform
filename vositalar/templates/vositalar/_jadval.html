@@ -1,0 +1,116 @@
+{% load jadval %}{% if oob %}{% include "vositalar/_korsatkichlar.html" %}{% endif %}
+<div class="av-royxat-bosh">
+  <span class="text-body-secondary small">Jami: <b>{{ sahifa.paginator.count|son }}</b> ta AV</span>
+  {% if faol_filtrlar %}
+  <a class="btn btn-sm btn-outline-secondary" href="?{% if korinish == 'kartochka' %}korinish=kartochka{% endif %}"><i class="cil-x me-1"></i>Filtrlarni tozalash <span class="badge text-bg-secondary ms-1">{{ faol_filtrlar }}</span></a>
+  {% endif %}
+  <div class="btn-group btn-group-sm ms-auto" role="group" aria-label="Ko'rinish">
+    <a class="btn {% if korinish == 'jadval' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?{% if korinishsiz_query %}{{ korinishsiz_query }}&amp;{% endif %}korinish=jadval" aria-pressed="{% if korinish == 'jadval' %}true{% else %}false{% endif %}"><i class="cil-list me-1"></i>Jadval</a>
+    <a class="btn {% if korinish == 'kartochka' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?{% if korinishsiz_query %}{{ korinishsiz_query }}&amp;{% endif %}korinish=kartochka" aria-pressed="{% if korinish == 'kartochka' %}true{% else %}false{% endif %}"><i class="cil-view-module me-1"></i>Kartochka</a>
+  </div>
+</div>
+
+<form method="post" action="{% url 'vositalar:ommaviy' %}" id="ommaviy-forma">
+  {% csrf_token %}
+  <input type="hidden" name="keyingi" value="{{ request.get_full_path }}">
+  {% if korinish == "kartochka" %}
+  <div class="list-group mb-3">
+    {% for av in sahifa %}
+    {% url 'vositalar:kartochka' av.pk as kartochka_url %}
+    <div class="list-group-item av-qator">
+      {% if taqsim_huquqi or yorliq_huquqi %}<input class="form-check-input mt-1" type="checkbox" name="av" value="{{ av.pk }}" aria-label="Tanlash">{% endif %}
+      <div class="av-asosiy">
+        <a href="{{ kartochka_url }}" class="fw-semibold text-decoration-none">{{ av.nomi }}</a>
+        <div class="small text-body-secondary">
+          {% if av.inv_raqam %}<a href="{{ kartochka_url }}" class="text-body-secondary">Inv. {{ av.inv_raqam }}</a>{% else %}<span class="xato">Inv. raqamsiz</span>{% endif %}
+          {% if av.turi %} · {{ av.turi.nomi }}{% endif %}{% if av.filial_rekvizit %} · {{ av.filial_rekvizit.nomi }}{% endif %}
+        </div>
+        {% with j=av.joy %}{% if j %}
+        <ul class="av-belgilar av-belgilar-kichik" aria-label="Joylashuv">
+          {% if j.bolimlar %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} +{{ j.bolimlar|length|add:"-1" }}{% endif %}</li>{% endif %}
+          {% if j.mollar %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i>{{ j.mollar.0 }}{% if j.mollar|length > 1 %} +{{ j.mollar|length|add:"-1" }}{% endif %}</li>{% endif %}
+          {% if j.molsiz %}<li class="belgi belgi-yumshoq">МОЛ'siz: {{ j.molsiz|son }}</li>{% endif %}
+          {% for h in j.holatlar %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ h|holat_sinfi }}">{{ h }}</span></li>{% endfor %}
+        </ul>
+        {% endif %}{% endwith %}
+      </div>
+      <div class="av-raqamlar">
+        {% if pul_huquqi %}<div class="fw-semibold">{{ av.jami_summa|pul }}</div>
+        <div class="small text-body-secondary">{{ av.jami_soni|son }} dona</div>{% else %}<div class="fw-semibold">{{ av.jami_soni|son }} dona</div>{% endif %}
+      </div>
+    </div>
+    {% empty %}
+    <div class="list-group-item text-body-secondary">AV topilmadi.</div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card mb-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0 av-jadval">
+    <thead><tr>
+      {% if taqsim_huquqi or yorliq_huquqi %}<th class="tanlash"><input class="form-check-input" type="checkbox" data-hammasi aria-label="Sahifadagi hammasini tanlash"></th>{% endif %}
+      {% saralash_ustuni "inv" "Inv. raqam" %}{% saralash_ustuni "nomi" "Nomi" %}{% saralash_ustuni "turi" "Turi" %}
+      <th>Bo'lim</th><th>МОЛ</th><th>Holat</th>
+      {% saralash_ustuni "soni" "Soni" "son" %}{% if pul_huquqi %}{% saralash_ustuni "summa" "Summa" "son" %}{% endif %}
+    </tr></thead>
+    <tbody>
+    {% for av in sahifa %}
+    {% url 'vositalar:kartochka' av.pk as kartochka_url %}
+      <tr class="qator-havola">
+        {% if taqsim_huquqi or yorliq_huquqi %}<td class="tanlash"><input class="form-check-input" type="checkbox" name="av" value="{{ av.pk }}" aria-label="Tanlash: {{ av.nomi }}"></td>{% endif %}
+        <td class="text-nowrap">{% if av.inv_raqam %}<a href="{{ kartochka_url }}" class="text-body-secondary">{{ av.inv_raqam }}</a>{% else %}<span class="xato small">raqamsiz</span>{% endif %}</td>
+        <td class="av-nomi"><a href="{{ kartochka_url }}" class="fw-semibold text-decoration-none stretched-link">{{ av.nomi }}</a>{% if av.filial_rekvizit and not params.filial %}<div class="small text-body-secondary">{{ av.filial_rekvizit.nomi }}</div>{% endif %}</td>
+        <td class="small av-turi" title="{{ av.turi.nomi }}">{{ av.turi.nomi|default:"—" }}</td>
+        {% with j=av.joy %}
+        <td class="small">{% if j.bolimlar %}{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} <span class="text-body-secondary">+{{ j.bolimlar|length|add:"-1" }}</span>{% endif %}{% else %}<span class="text-body-tertiary">—</span>{% endif %}</td>
+        <td class="small">{% if j.mollar %}{{ j.mollar.0 }}{% if j.mollar|length > 1 %} <span class="text-body-secondary">+{{ j.mollar|length|add:"-1" }}</span>{% endif %}{% endif %}{% if j.molsiz %}{% if j.mollar %}<br>{% endif %}<span class="text-body-tertiary text-nowrap">МОЛ'siz{% if j.mollar or j.molsiz != av.jami_soni %}: {{ j.molsiz|son }}{% endif %}</span>{% endif %}</td>
+        <td>{% for h in j.holatlar %}<span class="holat-pill h-{{ h|holat_sinfi }}">{{ h }}</span> {% endfor %}</td>
+        {% endwith %}
+        <td class="son text-nowrap">{{ av.jami_soni|son }}</td>
+        {% if pul_huquqi %}<td class="son text-nowrap">{{ av.jami_summa|pul }}</td>{% endif %}
+      </tr>
+    {% empty %}
+      <tr><td colspan="10" class="text-body-secondary">AV topilmadi.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  </div>
+  {% endif %}
+
+  {% if taqsim_huquqi or yorliq_huquqi %}
+  <div class="amal-panel" id="amal-panel" hidden>
+    <b><span data-tanlangan-soni>0</span> ta tanlandi</b>
+    {% if taqsim_huquqi %}
+    <span class="amal-ajratgich" aria-hidden="true"></span>
+    <select class="form-select form-select-sm w-auto" name="amal" aria-label="Amal">
+      <option value="kochirish">Bo'limga ko'chirish</option>
+      <option value="holat">Holatni o'zgartirish</option>
+    </select>
+    <select class="form-select form-select-sm w-auto" name="bolim" aria-label="Bo'lim"><option value="">— bo'lim —</option>
+      {% for b in bolimlar %}<option value="{{ b.pk }}">{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
+    </select>
+    <select class="form-select form-select-sm w-auto" name="holat" aria-label="Holat"><option value="">— holat —</option>
+      {% for kalit, nomi in holatlar %}<option value="{{ kalit }}">{{ nomi }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-sm btn-primary">Bajarish</button>
+    <span class="small text-body-secondary">faqat 1 donali AV'lar</span>
+    {% endif %}
+    {% if yorliq_huquqi %}
+    <span class="amal-ajratgich" aria-hidden="true"></span>
+    <button type="submit" class="btn btn-sm btn-outline-primary" formaction="{% url 'yorliqlar:tanlash' %}" formmethod="post"><i class="cil-print me-1"></i>Yorliq chop etish</button>
+    {% endif %}
+    <button type="button" class="btn btn-sm btn-ghost-secondary ms-auto" data-tanlovni-tozala>Bekor qilish</button>
+  </div>
+  {% endif %}
+</form>
+
+<div class="amallar mt-3">
+  <a href="{% url 'vositalar:royxat_excel' %}?{{ query }}" class="btn btn-sm btn-outline-success"><i class="cil-spreadsheet me-1"></i>Excel</a>
+  {% if yorliq_huquqi and params.bolim or yorliq_huquqi and params.bayroq %}
+  <a href="{% url 'yorliqlar:tanlash' %}?{% if params.bolim %}bolim={{ params.bolim|urlencode }}{% endif %}{% if params.bolim and params.bayroq %}&{% endif %}{% if params.bayroq %}bayroq={{ params.bayroq|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary"><i class="cil-print me-1"></i>Filtrdagi hammasiga yorliq</a>
+  {% endif %}
+  <span class="ms-auto">{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
+  {% if sahifa.has_previous %}<a href="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-get="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-target="#jadval" hx-push-url="true" class="btn btn-sm btn-outline-secondary">« Oldingi</a>{% endif %}
+  {% if sahifa.has_next %}<a href="?{{ query }}&page={{ sahifa.next_page_number }}" hx-get="?{{ query }}&page={{ sahifa.next_page_number }}" hx-target="#jadval" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Keyingi »</a>{% endif %}
+</div>

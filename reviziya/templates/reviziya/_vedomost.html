@@ -1,0 +1,26 @@
+{% load jadval %}
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr>{% if tanlash or belgilash %}<th class="text-center chop-yoq">{% if tanlanadigan_bor %}<input class="form-check-input" type="checkbox" data-hammasini-tanla aria-label="Ko'rinayotgan hamma farqni tanlash" title="Hammasini tanlash">{% else %}<span class="visually-hidden">Tanlash</span>{% endif %}</th>{% endif %}{% saralash_ustuni "guruh" "Guruh" %}{% saralash_ustuni "inv" "Inv. raqam" %}{% saralash_ustuni "av" "AV" %}{% saralash_ustuni "bolim" "Bo'lim" %}{% saralash_ustuni "holat" "Holat" %}{% saralash_ustuni "kutilgan" "Kutilgan" "son" %}{% saralash_ustuni "topilgan" "Topilgan" "son" %}{% saralash_ustuni "farq" "Farq" "son" %}<th class="chop-yoq">{% if belgilash %}Soni{% endif %}</th></tr></thead>
+  <tbody>
+  {% for s in satrlar %}{% with q=s.q %}
+    <tr>
+      {% if tanlash or belgilash %}<td class="text-center chop-yoq">{% if s.tanlash %}<input class="form-check-input" type="checkbox" name="kalit" value="{{ q.kalit }}" data-tanlov aria-label="Qo'llash uchun tanlash">{% elif s.bekor %}<input class="form-check-input" type="checkbox" name="bekor_kalit" value="{{ q.kalit }}" data-tanlov aria-label="Qo'llashni bekor qilish uchun tanlash" title="Qo'llashni bekor qilish uchun">{% elif s.belgi %}<input class="form-check-input" type="checkbox" name="belgi" value="{{ s.belgi }}" data-tanlov aria-label="Joyida deb belgilash uchun tanlash">{% endif %}</td>{% endif %}
+      <td class="text-nowrap">{% if q.guruh == "topildi" %}<span class="badge bg-success">{% elif q.guruh == "kam" or q.guruh == "topilmadi" %}<span class="badge bg-danger">{% elif q.guruh == "boshqa_joyda" %}<span class="badge bg-info text-dark">{% elif q.guruh == "holat_boshqa" %}<span class="badge bg-warning text-dark">{% else %}<span class="badge bg-secondary">{% endif %}{{ s.guruh_nomi }}</span></td>
+      <td class="text-nowrap">{{ q.inv }}</td>
+      <td>{% if q.av_id %}<a href="{% url 'vositalar:kartochka' q.av_id %}">{{ q.av_nomi }}</a> <a href="{% url 'vositalar:kartochka' q.av_id %}#tarix" class="small text-body-secondary text-nowrap ms-1 chop-yoq" title="AV tarixi: qayerdan kelgan, kim ko'chirgan"><i class="cil-history" aria-hidden="true"></i> tarix</a>{% else %}<span class="text-body-secondary">{% if q.izoh %}Boshqa filial QR:{% else %}Noma'lum QR:{% endif %}</span> <code>{{ q.qr_matn }}</code>{% endif %}</td>
+      <td>{{ q.bolim_nomi }}{% if q.guruh == "boshqa_joyda" %} &rarr; <strong>{{ s.nishon_bolim }}</strong>{% endif %}</td>
+      <td>{% if q.holat %}<span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ s.holat_nomi }}</span>{% endif %}{% if q.nishon_holat %} &rarr; <span class="holat-pill h-{{ q.nishon_holat|holat_sinfi }}">{{ s.nishon_holat_nomi }}</span>{% endif %}</td>
+      <td class="son">{{ q.kutilgan|son }}</td>
+      <td class="son">{{ q.topilgan|son }}</td>
+      <td class="son">{{ q.farq|son }}</td>
+      <td class="text-nowrap">{% if s.qollangan %}<span class="badge bg-success qollangan-belgi"><i class="cil-check-alt me-1"></i>qo'llangan</span>{% elif s.belgi %}<input class="form-control form-control-sm chop-yoq" type="number" name="soni_{{ s.belgi }}" value="{{ s.qolgan|floatformat:'-3u' }}" min="0.001" step="any" style="width: 6rem" data-soni-maydon aria-label="Topilgan soni">{% endif %}</td>
+    </tr>
+  {% endwith %}{% empty %}
+    <tr><td colspan="10" class="text-body-secondary">Qator topilmadi.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>

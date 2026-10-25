@@ -1,0 +1,96 @@
+{% extends "reviziya/mobil/base.html" %}
+{% block sarlavha %}Yangi reviziya{% endblock %}
+{% block bosh %}
+<style>
+  .m-qadam { font-size: .8rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--av-ikkilamchi); margin: .25rem 0 .5rem; }
+  .m-joy { display: flex; align-items: center; gap: .75rem; min-height: 56px; padding: .6rem .85rem; width: 100%;
+    background: var(--av-sirt); border: 1px solid var(--av-chiziq); border-radius: 12px; color: inherit; text-decoration: none; cursor: pointer; }
+  .m-joy:active { background: var(--av-indigo-och); }
+  .m-joy .m-asosiy { flex: 1; min-width: 0; }
+  .m-joy .m-asosiy b, .m-joy .m-asosiy span { display: block; overflow-wrap: anywhere; }
+  .m-joy input[type=radio] { width: 22px; height: 22px; accent-color: var(--av-indigo); flex: none; }
+  .m-joy:has(input:checked) { border-color: var(--av-indigo); box-shadow: 0 0 0 2px var(--av-indigo-och); }
+  .m-joy.band { opacity: .55; cursor: not-allowed; }
+  .m-joy .m-asosiy .m-belgi-band { display: inline-block; font-size: .72rem; font-weight: 700; color: #8a5a00; background: var(--av-sariq-och); padding: .1rem .45rem; border-radius: 999px; margin-top: .2rem; }
+  .m-filial-bosh { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+  .m-filial-bosh b { flex: 1; min-width: 0; font-size: 1.05rem; }
+  .m-kichik { min-height: 40px; padding: 0 .85rem; font-size: .9rem; }
+  .m-pastki { position: sticky; bottom: 0; padding: .75rem 0 calc(.75rem + env(safe-area-inset-bottom)); background: var(--av-fon); }
+  details.m-izoh-qism summary { cursor: pointer; color: var(--av-indigo); font-weight: 600; margin: .75rem 0 .25rem; }
+</style>
+{% endblock %}
+{% block ust %}Yangi reviziya<small>{{ user.get_full_name|default:user.username }}</small>{% endblock %}
+{% block mazmun %}
+{% if xato %}<div class="m-xato" role="alert">{{ xato }}</div>{% endif %}
+
+{% if not filial %}
+<p class="m-qadam">1-qadam · Filialni tanlang</p>
+{% if filiallar|length > 6 %}
+<input class="m-maydon" type="search" data-joy-filtr placeholder="Filial nomi bo'yicha qidirish" aria-label="Filial qidirish" autocomplete="off" style="margin-bottom:.5rem">
+{% endif %}
+<ul class="m-royxat">
+  {% for v in filiallar %}
+  <li data-joy="{{ v.f.nomi|lower }}">
+    <a class="m-joy" href="?filial={{ v.f.pk }}">
+      <span class="m-asosiy">
+        <b>{{ v.f.nomi }}</b>
+        <span class="m-xira">{{ v.soni|son }} dona AV{% if v.bolimlar %} · {{ v.bolimlar }} ta bo'lim{% else %} · bo'lim yo'q{% endif %}</span>
+        {% if v.ochiq %}<span class="m-belgi-band">ochiq reviziya bor</span>{% endif %}
+      </span>
+      <span class="m-xira" aria-hidden="true">›</span>
+    </a>
+  </li>
+  {% empty %}
+  <li class="m-bosh">Sizga ruxsat etilgan filial yo'q.</li>
+  {% endfor %}
+</ul>
+<script>
+  document.addEventListener("input", function (e) {
+    if (!e.target.matches("[data-joy-filtr]")) return;
+    var soz = e.target.value.trim().toLowerCase();
+    document.querySelectorAll("[data-joy]").forEach(function (li) { li.hidden = soz !== "" && li.dataset.joy.indexOf(soz) === -1; });
+  });
+</script>
+
+{% else %}
+<form method="post">{% csrf_token %}
+  <input type="hidden" name="filial" value="{{ filial.pk }}">
+  <div class="m-filial-bosh">
+    <b>{{ filial.nomi }}</b>
+    {% if not bitta_filial %}<a class="m-tugma m-kichik" href="?">Boshqa filial</a>{% endif %}
+  </div>
+  <p class="m-qadam">{% if not bitta_filial %}2-qadam · {% endif %}Qayerni reviziya qilasiz?</p>
+  <ul class="m-royxat">
+    {% for v in variantlar %}
+    <li>
+      <label class="m-joy{% if v.band %} band{% endif %}"{% if v.chuqurlik %} style="margin-left: {% widthratio v.chuqurlik 1 16 %}px; width: calc(100% - {% widthratio v.chuqurlik 1 16 %}px)"{% endif %}>
+        <input type="radio" name="joy" value="{{ v.qiymat }}"{% if v.qiymat == tanlangan %} checked{% endif %}{% if v.band %} disabled{% endif %} required>
+        <span class="m-asosiy">
+          <b>{{ v.nomi }}</b>
+          <span class="m-xira">{{ v.soni|son }} dona AV{% if v.izoh %} · {{ v.izoh }}{% endif %}</span>
+          {% if v.band %}<span class="m-belgi-band">ochiq reviziya bor</span>{% endif %}
+        </span>
+      </label>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if variantlar|length == 1 %}<p class="m-xira">Bu filialda bo'lim yo'q — butun filial bo'yicha reviziya qilinadi.</p>
+  {% else %}<p class="m-xira">Bo'lim tanlansa — uning ichki bo'limlari ham reviziyaga kiradi.</p>{% endif %}
+
+  <details class="m-izoh-qism">
+    <summary>Izoh qo'shish</summary>
+    <textarea class="m-maydon" name="izoh" rows="2" maxlength="2000" aria-label="Izoh"></textarea>
+  </details>
+
+  <div class="m-pastki">
+    {% if hammasi_band %}
+    <p class="m-izoh" style="margin:0">Bu filialning hamma joyida ochiq reviziya bor. Unga qo'shilish uchun hisobchiga murojaat qiling
+      yoki boshqa filialni tanlang.</p>
+    {% else %}
+    <p class="m-xira" style="margin:0 0 .5rem">Siz revizor va komissiya raisi bo'lasiz. Yakunlash va qo'llash — hisobchida.</p>
+    <button class="m-tugma asosiy keng" type="submit">Reviziyani boshlash</button>
+    {% endif %}
+  </div>
+</form>
+{% endif %}
+{% endblock %}

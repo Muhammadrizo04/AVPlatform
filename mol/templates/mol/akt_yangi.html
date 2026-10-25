@@ -1,0 +1,101 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Yangi МОЛ akti{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
+{% block kontent %}
+<h1>Yangi МОЛ topshirish-qabul akti</h1>
+<div class="card mb-3"><div class="card-body">
+<form method="get" class="row g-2 align-items-end" id="qidiruv-forma">
+  <div class="col-md-4"><label class="form-label w-100 mb-0">Topshiruvchi
+    <select class="form-select form-select-sm" name="topshiruvchi" onchange="this.form.dataset.tozala = '1'; this.form.requestSubmit()">
+      <option value="">— МОЛ'siz qatorlar —</option>
+      {% for x in xodimlar %}<option value="{{ x.pk }}"{% if topshiruvchi and x.pk == topshiruvchi.pk %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+    </select>
+  </label></div>
+  <div class="col-md-3"><label class="form-label w-100 mb-0">Qidiruv <input class="form-control form-control-sm" type="search" name="q" value="{{ params.q|default:'' }}" placeholder="Inv. raqam yoki nomi"></label></div>
+  <div class="col-md-3"><label class="form-label w-100 mb-0">Filial
+    <select class="form-select form-select-sm" name="filial">
+      <option value="">Barcha filiallar</option>
+      {% for f in filiallar %}<option value="{{ f.pk }}"{% if params.filial == f.pk|stringformat:"s" %} selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+    </select>
+  </label></div>
+  <div class="col-md-2"><button type="submit" class="btn btn-sm btn-outline-primary w-100">Ko'rsatish</button></div>
+</form>
+</div></div>
+{% if kesildi %}<div class="alert alert-warning py-2 ogohlantirish">Faqat birinchi {{ chegara }} ta qator ko'rsatildi. Filtrni toraytiring (inv. raqam, nom yoki filial).</div>{% endif %}
+{% if xato %}<div class="alert alert-danger py-2 xato" role="alert">{{ xato }}</div>{% endif %}
+<div class="akt-tanlov" id="akt-tanlov"{% if not tanlanganlar %} hidden{% endif %}>
+  <b><span data-tanlangan-soni>{{ tanlanganlar|length }}</span> ta qator tanlangan</b>
+  <span class="text-body-secondary small">Qidiruvni o'zgartirsangiz ham tanlov saqlanadi — tanlanganlar jadval tepasida turadi.</span>
+</div>
+<form method="post" id="akt-forma">
+  {% csrf_token %}
+  <input type="hidden" name="topshiruvchi" value="{{ topshiruvchi.pk|default:'' }}">
+  <input type="hidden" name="q" value="{{ params.q|default:'' }}">
+  <input type="hidden" name="filial" value="{{ params.filial|default:'' }}">
+  <div class="card mb-3">
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th></th><th>Inv. raqam</th><th>Nomi</th><th>Filial</th><th>Holat</th><th class="son">Mavjud</th><th>Topshiriladigan soni</th></tr></thead>
+    <tbody>
+    {% for t in qatorlar %}
+      <tr{% if t.pk in tanlanganlar %} class="table-active"{% endif %}>
+        <td><input class="form-check-input" type="checkbox" name="tanlangan" value="{{ t.pk }}" aria-label="Tanlash" data-soni="soni_{{ t.pk }}"{% if t.pk in tanlanganlar %} checked{% endif %}></td>
+        <td>{{ t.av.inv_raqam }}</td>
+        <td>{{ t.av.nomi }}</td>
+        <td>{{ t.filial.nomi }}</td>
+        <td><span class="holat-pill h-{{ t.holat }}">{{ t.get_holat_display }}</span></td>
+        <td class="son">{{ t.soni|son }}</td>
+        <td><input class="form-control form-control-sm" style="max-width:8rem" type="text" inputmode="decimal" name="soni_{{ t.pk }}" id="soni_{{ t.pk }}" value="{% if t.tanlangan_soni %}{{ t.tanlangan_soni }}{% else %}{{ t.soni|floatformat:"-3u" }}{% endif %}" aria-label="Soni"{% if t.pk not in tanlanganlar %} disabled{% endif %}></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7" class="text-body-secondary"><em>Topshiriladigan qator yo'q.</em></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  </div>
+  <div class="card mb-4"><div class="card-body">
+    <div class="row g-3">
+      <div class="col-md-5"><label class="form-label w-100">Qabul qiluvchi
+        <select class="form-select" name="qabul" required>
+          <option value="">— tanlang —</option>
+          {% for x in qabul_qiluvchilar %}<option value="{{ x.pk }}"{% if forma.qabul == x.pk|stringformat:"s" %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+        </select>
+      </label></div>
+      <div class="col-md-7"><label class="form-label w-100">Izoh<textarea class="form-control" name="izoh" rows="2">{{ forma.izoh }}</textarea></label></div>
+    </div>
+    <button type="submit" class="btn btn-primary"{% if not qatorlar %} disabled{% endif %}><i class="cil-description me-1"></i>Qoralama aktni yaratish</button>
+  </div></div>
+</form>
+<script>
+  // Faqat belgilangan qatorlarning soni yuboriladi (yuborilmasa — butun qator olinadi).
+  function tanlovSoni() {
+    var n = document.querySelectorAll('#akt-forma input[name="tanlangan"]:checked').length;
+    var panel = document.getElementById("akt-tanlov");
+    panel.hidden = n === 0;
+    panel.querySelector("[data-tanlangan-soni]").textContent = n;
+  }
+  document.addEventListener("change", function (e) {
+    var cb = e.target;
+    if (cb.name === "tanlangan" && cb.dataset.soni) {
+      document.getElementById(cb.dataset.soni).disabled = !cb.checked;
+      cb.closest("tr").classList.toggle("table-active", cb.checked);
+      tanlovSoni();
+    }
+  });
+  // Qidiruv/filtr yuborilganda belgilangan qatorlar va ularning soni ham yuboriladi (tanlov yo'qolmasin).
+  // Topshiruvchi almashsa — tanlov tozalanadi (boshqa xodimning qatorlari).
+  document.getElementById("qidiruv-forma").addEventListener("submit", function () {
+    var forma = this;
+    forma.querySelectorAll("input[data-tanlov]").forEach(function (el) { el.remove(); });
+    if (forma.dataset.tozala) return;
+    document.querySelectorAll('#akt-forma input[name="tanlangan"]:checked').forEach(function (cb) {
+      [["tanlangan", cb.value], [cb.dataset.soni, document.getElementById(cb.dataset.soni).value]].forEach(function (j) {
+        var el = document.createElement("input");
+        el.type = "hidden"; el.name = j[0]; el.value = j[1]; el.dataset.tanlov = "1";
+        forma.appendChild(el);
+      });
+    });
+  });
+</script>
+{% endblock %}

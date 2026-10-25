@@ -1,3 +1,135 @@
 {% extends "panel/base.html" %}
+{% load l10n %}
 {% block sarlavha %}Bosh sahifa{% endblock %}
-{% block kontent %}<h1>Bosh sahifa</h1>{% endblock %}
+{% block yol %}{% endblock %}
+{% block kontent %}
+<section class="dash-band">
+  <h1>Xayrli kun, {{ user.get_full_name|default:user.get_username }}</h1>
+  <p>{{ bugun|date:"d.m.Y" }} · {% if kompaniya_nomi %}{{ kompaniya_nomi }} · {% endif %}{{ filiallar|length }} ta filial bo'yicha holat</p>
+</section>
+
+<div class="kpi-qator">
+  {% for k in kpi %}
+  <a class="kpi" href="{% if k.bayroq %}{% url 'vositalar:royxat' %}?bayroq={{ k.bayroq }}{% else %}{% url k.url %}{% endif %}">
+    <span class="kpi-ikonka r-bg-{{ k.rang }}" aria-hidden="true"><i class="{{ k.ikonka }}"></i></span>
+    <span>
+      <span class="kpi-yorliq d-block">{{ k.yorliq }}</span>
+      <span class="kpi-qiymat d-block">{% if k.pul %}{{ k.qiymat|pul }}{% else %}{{ k.qiymat|son }}{% endif %}</span>
+      <span class="kpi-izoh d-block{% if k.ogoh %} ogoh{% endif %}">{{ k.birlik }} · {{ k.izoh }}</span>
+    </span>
+  </a>
+  {% endfor %}
+</div>
+
+<div class="row g-4 mt-1 align-items-start">
+  <div class="col-xl-7">
+    <section class="card" aria-labelledby="g-filial">
+      <div class="card-header d-flex justify-content-between align-items-baseline"><span id="g-filial">Filiallar bo'yicha AV soni</span><small>dona</small></div>
+      {% if filial_grafik %}
+      <ul class="grafik" aria-label="Filiallar bo'yicha AV soni">
+        {% for q in filial_grafik %}
+        <li title="{{ q.filial.nomi }}: {{ q.soni|son }} dona"><a href="{% url 'vositalar:royxat' %}?filial={{ q.filial.pk }}">
+          <span class="g-nomi">{{ q.filial.nomi }}</span>
+          <span class="g-yol"><span class="g-bar" style="width:{{ q.ulush|unlocalize }}%"></span></span>
+          <span class="g-qiymat">{{ q.soni|son }}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+      {% if filial_qolgan %}<p class="g-izoh">Yana {{ filial_qolgan }} ta filial — pastdagi jadvalda.</p>{% endif %}
+      {% else %}<div class="card-body text-body-secondary">Ma'lumot yo'q.</div>{% endif %}
+    </section>
+    {% if qiymat_filial %}
+    <section class="card mt-4" aria-labelledby="g-qiymat">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+        <span id="g-qiymat">Filiallar bo'yicha qiymat</span>
+        <small class="g-afsona"><span class="g-afsona-boshlangich"></span>boshlang'ich <span class="g-afsona-qoldiq"></span>qoldiq · so'm</small>
+      </div>
+      <div class="qiymat-jami">
+        <div><span>Boshlang'ich</span><b title="{{ jami.boshlangich|pul }} so'm">{{ jami.boshlangich|qisqa_pul }}</b></div>
+        <div><span>Qoldiq</span><b title="{{ jami.qoldiq|pul }} so'm">{{ jami.qoldiq|qisqa_pul }}</b></div>
+        <div><span>Eskirish</span><b>{{ eskirish_foizi|floatformat:1 }}%</b></div>
+      </div>
+      <ul class="grafik grafik-qiymat" aria-label="Filiallar bo'yicha boshlang'ich va qoldiq qiymat">
+        {% for q in qiymat_filial %}
+        <li title="{{ q.nomi }}: boshlang'ich {{ q.boshlangich|pul }}, qoldiq {{ q.qoldiq|pul }} so'm"><a href="{% url 'hisobotlar:kesim' %}">
+          <span class="g-nomi">{{ q.nomi }}</span>
+          <span class="g-yol"><span class="g-bar g-fon" style="width:{{ q.ulush|unlocalize }}%"><span class="g-bar" style="width:{{ q.qoldiq_ulush|unlocalize }}%"></span></span></span>
+          <span class="g-qiymat">{{ q.qoldiq|qisqa_pul }}{% if q.qoldiq != q.boshlangich %}<small>{{ q.boshlangich|qisqa_pul }}</small>{% endif %}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+      {% if qiymat_filial_qolgan %}<p class="g-izoh">Yana {{ qiymat_filial_qolgan }} ta filial — «Kesim» hisobotida.</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+  <div class="col-xl-5">
+    <section class="card" aria-labelledby="g-holat">
+      <div class="card-header d-flex justify-content-between align-items-baseline"><span id="g-holat">Holatlar</span><small>taqsimot, dona</small></div>
+      {% if holatlar %}
+      <div class="holat-yigma" role="img" aria-label="Holatlar ulushi">
+        {% for h in holatlar %}{% if h.soni %}<span style="flex:{{ h.foiz|unlocalize }} 1 0;background:var(--av-h-{% if h.kalit == 'hisobdan_chiqarishga' %}hisobdan{% else %}{{ h.kalit }}{% endif %})" title="{{ h.nomi }}: {{ h.foiz }}%"></span>{% endif %}{% endfor %}
+      </div>
+      <ul class="grafik grafik-ixcham" aria-label="Holatlar bo'yicha AV soni">
+        {% for h in holatlar %}
+        <li class="{% if not h.soni %}g-nol{% endif %}" title="{{ h.nomi }}: {{ h.soni|son }} dona ({{ h.foiz }}%)"><a href="{% url 'vositalar:royxat' %}?holat={{ h.kalit }}">
+          <span class="g-nomi"><span class="holat-pill h-{{ h.kalit }}">{{ h.nomi }}</span></span>
+          <span class="g-yol"><span class="g-bar" style="width:{{ h.ulush|unlocalize }}%;--g-rang:var(--av-h-{% if h.kalit == 'hisobdan_chiqarishga' %}hisobdan{% else %}{{ h.kalit }}{% endif %})"></span></span>
+          <span class="g-qiymat">{{ h.soni|son }}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+      {% else %}<div class="card-body text-body-secondary">Taqsimot hali yo'q.</div>{% endif %}
+    </section>
+    <section class="card mt-4" aria-labelledby="vazifalar">
+      <div class="card-header" id="vazifalar">Bajarilishi kerak</div>
+      <ul class="vazifalar">
+        {% for b in bayroqlar %}
+        <li><a class="v-{{ b.rang }} {% if b.soni %}vazifa-faol{% else %}vazifa-bosh{% endif %}" href="{% if b.kalit == 'chiqim_kutilmoqda' %}{% url 'chiqimlar:royxat' %}{% else %}{% url 'vositalar:royxat' %}?bayroq={{ b.kalit }}{% endif %}">
+          <span class="vazifa-belgi" aria-hidden="true"></span><span class="vazifa-nomi">{{ b.nomi }}</span><span class="vazifa-son">{{ b.soni|son }}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% if qiymat_tur %}
+    <section class="card mt-4" aria-labelledby="g-tur">
+      <div class="card-header d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+        <span id="g-tur">AV turlari bo'yicha qiymat</span>
+        <small class="g-afsona"><span class="g-afsona-boshlangich"></span>boshlang'ich <span class="g-afsona-qoldiq"></span>qoldiq · so'm</small>
+      </div>
+      <ul class="grafik grafik-qiymat" aria-label="AV turlari bo'yicha boshlang'ich va qoldiq qiymat">
+        {% for q in qiymat_tur %}
+        <li title="{{ q.nomi }}: boshlang'ich {{ q.boshlangich|pul }}, qoldiq {{ q.qoldiq|pul }} so'm"><a href="{% url 'hisobotlar:kesim' %}?guruh=tur">
+          <span class="g-nomi">{{ q.nomi }}</span>
+          <span class="g-yol"><span class="g-bar g-fon" style="width:{{ q.ulush|unlocalize }}%"><span class="g-bar" style="width:{{ q.qoldiq_ulush|unlocalize }}%"></span></span></span>
+          <span class="g-qiymat">{{ q.qoldiq|qisqa_pul }}{% if q.qoldiq != q.boshlangich %}<small>{{ q.boshlangich|qisqa_pul }}</small>{% endif %}</span>
+        </a></li>
+        {% endfor %}
+      </ul>
+    </section>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-4 mt-0">
+  <div class="col-12">
+    <section class="card" aria-labelledby="kesim">
+      <div class="card-header" id="kesim">Filiallar kesimi</div>
+      <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead><tr><th>Filial</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Boshlang'ich qiymat</th><th class="son">Qoldiq qiymat</th>{% endif %}</tr></thead>
+        <tbody>
+        {% for q in filiallar %}
+          <tr><td>{{ q.filial.nomi }}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.boshlangich|pul }}</td><td class="son">{{ q.qoldiq|pul }}</td>{% endif %}</tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-body-secondary">Ma'lumot yo'q.</td></tr>
+        {% endfor %}
+        </tbody>
+        {% if filiallar %}
+        <tfoot class="table-light"><tr><th>Jami</th><th class="son">{{ jami.soni|son }}</th>{% if pul_huquqi %}<th class="son">{{ jami.boshlangich|pul }}</th><th class="son">{{ jami.qoldiq|pul }}</th>{% endif %}</tr></tfoot>
+        {% endif %}
+      </table>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

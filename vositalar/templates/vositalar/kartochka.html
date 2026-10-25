@@ -1,0 +1,124 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}{{ av.nomi }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'vositalar:royxat' %}">AV ro'yxati</a>{% endblock %}
+{% block kontent %}
+
+{# Sarlavha: nima, qayerda, kimda, qanday holatda — hamma rol uchun bir xil #}
+<header class="av-sarlavha">
+  <div class="av-rasm">
+    {% if asosiy_rasm %}<img src="{% url 'vositalar:rasm_fayl' asosiy_rasm.pk %}?mini=1" alt="{{ av.nomi }}">{% else %}<i class="cil-storage" aria-hidden="true"></i>{% endif %}
+  </div>
+  <div class="av-sarlavha-matn">
+    <h1>{{ av.nomi }}</h1>
+    <div class="av-identifikator">
+      {% if av.inv_raqam %}<span class="av-inv"><small>Inv.</small>{{ av.inv_raqam }}</span>{% else %}<span class="xato fw-bold">Inv. raqamsiz</span>{% endif %}
+      {% if av.turi %}<span>{{ av.turi.nomi }}</span>{% endif %}
+      <span>{{ av.jami_soni|son }} dona</span>
+      {% for g in taqsimot_guruhlari %}<span>{{ g.filial }}</span>{% endfor %}
+    </div>
+    <ul class="av-belgilar" aria-label="Joylashuv va holat">
+      {% for b in joylashuv.bolimlar|slice:":3" %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ b.toliq_nomi }}</li>{% endfor %}
+      {% if joylashuv.bolimlar|length > 3 %}<li class="belgi">+{{ joylashuv.bolimlar|length|add:"-3" }} bo'lim</li>{% endif %}
+      {% for m in joylashuv.mollar|slice:":3" %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i><a href="{% url 'mol:xodim' m.pk %}">{{ m.ism }}</a></li>{% endfor %}
+      {% if joylashuv.mollar|length > 3 %}<li class="belgi">+{{ joylashuv.mollar|length|add:"-3" }} МОЛ</li>{% endif %}
+      {% for nomi, soni in joylashuv.holatlar.items %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ nomi|holat_sinfi }}">{{ nomi }}{% if joylashuv.holatlar|length > 1 %} <span class="son-kichik">{{ soni|son }}</span>{% endif %}</span></li>{% endfor %}
+    </ul>
+  </div>
+  {% if yorliq_huquqi %}
+  <div class="av-amallar">
+    <a href="{% url 'yorliqlar:tanlash' %}?av={{ av.pk }}" class="btn btn-outline-primary btn-sm"><i class="cil-qr-code me-1"></i>QR-yorliq chop etish</a>
+  </div>
+  {% endif %}
+</header>
+
+{# Imzo harakati: 1C qoldig'i va platforma taqsimoti yonma-yon; farq bo'lsa qizil #}
+{% if taqsimot_guruhlari %}
+<section class="solishtirish" aria-label="1C bilan solishtirish">
+  <div><div class="yorliq">1C qoldig'i</div><div class="qiymat">{{ joylashuv.qoldiq|son }}</div></div>
+  <div><div class="yorliq">Platforma taqsimoti</div><div class="qiymat platforma">{{ joylashuv.jami|son }}</div></div>
+  <div><div class="yorliq">Farq</div>{% if joylashuv.farq %}<div class="qiymat farq-bor">{{ joylashuv.farq|son }}<em>mos emas</em></div>{% else %}<div class="qiymat">0<em>mos</em></div>{% endif %}</div>
+  <div class="izoh">{% if joylashuv.farq %}Taqsimot 1C qoldig'iga teng emas — joylashuv jadvalida qatorlarni tuzating yoki «Moslash»dan foydalaning.{% else %}1C qoldig'i va bo'limlar bo'yicha taqsimot bir xil. Farq paydo bo'lsa, shu yerda ko'rinadi.{% endif %}</div>
+</section>
+{% endif %}
+{% if joylashuv.molsiz %}
+<div class="harakat-kerak"><b><i class="cil-warning" aria-hidden="true"></i>МОЛ biriktirilmagan: {{ joylashuv.molsiz|son }} dona</b>{% if mol_akt_huquqi %}<a class="btn btn-danger btn-sm" href="{% url 'mol:akt_yangi' %}">МОЛ akti tuzish</a>{% endif %}</div>
+{% endif %}
+
+<div class="row g-4 mt-1">
+  <div class="col-xl-8">
+    {% include "vositalar/_taqsimot.html" %}
+    {% include "vositalar/_tarix.html" %}
+  </div>
+
+  <div class="col-xl-4">
+    {% if pul_huquqi %}
+    <section class="card mb-4" aria-labelledby="buxgalteriya">
+      <div class="card-header fw-semibold" id="buxgalteriya">Buxgalteriya</div>
+      <dl class="malumot mb-0">
+        <div><dt>1C qoldiq summasi</dt><dd class="son">{{ av.jami_summa|pul }}</dd></div>
+        <div><dt>Bir dona narxi</dt><dd class="son">{{ dona_narxi|pul }}</dd></div>
+        {% if amortizatsiya %}
+        <div><dt>Qoldiq qiymat</dt><dd class="son">{{ amortizatsiya.qoldiq_qiymat|pul }}</dd></div>
+        <div><dt>Eskirish</dt><dd class="son">{{ amortizatsiya.eskirish_foiz|son }}% · {{ amortizatsiya.oylar }} oy</dd></div>
+        <div><dt>Muddat tugashi</dt><dd>{{ amortizatsiya.tugash_sanasi|date:"d.m.Y" }}</dd></div>
+        {% endif %}
+      </dl>
+      {% if not amortizatsiya %}
+      <div class="card-footer small text-body-secondary">
+        Amortizatsiya hisoblanmadi: {% if not kartochka.ishga_tushgan_sana %}ishga tushgan sana{% if not kartochka.xizmat_muddati_oy %} va xizmat muddati{% endif %}{% else %}xizmat muddati (kartochkada ham, AV turi sozlamasida ham){% endif %} kiritilmagan.
+      </div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <section class="card mb-4" aria-labelledby="platforma">
+      <div class="card-header fw-semibold" id="platforma">Platforma ma'lumotlari</div>
+      {% if tahrir %}
+      <div class="card-body">
+        {% if xatolar %}<div class="xabarlar">{% for x in xatolar %}<div class="alert alert-danger py-2 error">{{ x }}</div>{% endfor %}</div>{% endif %}
+        <form method="post" action="{% url 'vositalar:kartochka' av.pk %}">
+          {% csrf_token %}
+          <input type="hidden" name="versiya" value="{{ kartochka.versiya }}">
+          <div class="mb-3"><label class="form-label" for="f_sana">Ishga tushgan sana</label><input class="form-control" id="f_sana" type="date" name="ishga_tushgan_sana" value="{{ qiymat.ishga_tushgan_sana|stringformat:'s' }}"></div>
+          <div class="mb-3"><label class="form-label" for="f_muddat">Xizmat muddati (oy)</label><input class="form-control" id="f_muddat" type="number" name="xizmat_muddati_oy" min="1" max="1200" value="{{ qiymat.xizmat_muddati_oy }}"></div>
+          {% for m in qoshimcha_maydonlar %}
+          <div class="mb-3"><label class="form-label" for="q_{{ m.kalit }}">{{ m.nomi }}{% if m.majburiy %} *{% endif %}</label>
+            {% if m.tip == "tanlov" %}
+            <select class="form-select" id="q_{{ m.kalit }}" name="q_{{ m.kalit }}"><option value="">—</option>
+              {% for v in m.tanlov_qiymatlari %}<option value="{{ v }}" {% if v == m.qiymat %}selected{% endif %}>{{ v }}</option>{% endfor %}
+            </select>
+            {% elif m.tip == "sana" %}<input class="form-control" id="q_{{ m.kalit }}" type="date" name="q_{{ m.kalit }}" value="{{ m.qiymat }}">
+            {% elif m.tip == "son" %}<input class="form-control" id="q_{{ m.kalit }}" type="text" inputmode="decimal" name="q_{{ m.kalit }}" value="{{ m.qiymat }}">
+            {% else %}<input class="form-control" id="q_{{ m.kalit }}" type="text" name="q_{{ m.kalit }}" value="{{ m.qiymat }}">{% endif %}
+          </div>
+          {% endfor %}
+          <div class="mb-3"><label class="form-label" for="f_izoh">Izoh</label><textarea class="form-control" id="f_izoh" name="izoh" rows="3">{{ qiymat.izoh }}</textarea></div>
+          <button type="submit" class="btn btn-primary"><i class="cil-save me-1"></i>Saqlash</button>
+        </form>
+      </div>
+      {% else %}
+      <dl class="malumot mb-0">
+        {% if qiymat.ishga_tushgan_sana %}<div><dt>Ishga tushgan sana</dt><dd>{{ kartochka.ishga_tushgan_sana|date:"d.m.Y" }}</dd></div>{% endif %}
+        {% if qiymat.xizmat_muddati_oy %}<div><dt>Xizmat muddati</dt><dd>{{ qiymat.xizmat_muddati_oy }} oy</dd></div>{% endif %}
+        {% for m in qoshimcha_maydonlar %}{% if m.qiymat %}<div><dt>{{ m.nomi }}</dt><dd>{{ m.qiymat }}</dd></div>{% endif %}{% endfor %}
+        {% if qiymat.izoh %}<div><dt>Izoh</dt><dd>{{ qiymat.izoh|linebreaksbr }}</dd></div>{% endif %}
+      </dl>
+      {% if not qiymat.ishga_tushgan_sana and not qiymat.xizmat_muddati_oy and not qiymat.izoh %}<div class="card-body text-body-secondary small">Hali kiritilmagan.</div>{% endif %}
+      {% endif %}
+    </section>
+
+    {% include "vositalar/_rasmlar.html" %}
+
+    <details class="card mb-4 rekvizitlar">
+      <summary class="card-header fw-semibold">1C rekvizitlari <span class="text-body-secondary fw-normal small">· faqat o'qish</span><i class="cil-chevron-bottom" aria-hidden="true"></i></summary>
+      <dl class="malumot mb-0">
+        <div><dt>Filial (1C rekvizit)</dt><dd>{{ av.filial_rekvizit.nomi|default:"—" }}</dd></div>
+        <div><dt>Tashkilot</dt><dd>{{ av.tashkilot.nomi|default:"—" }}</dd></div>
+        <div><dt>Chiqarilgan sana</dt><dd>{{ av.chiqarilgan_sana|date:"d.m.Y"|default:"—" }}</dd></div>
+        <div><dt>1C kodi</dt><dd>{{ av.kod }}</dd></div>
+        {% if pul_huquqi and av.izoh_1c %}<div><dt>1C izohi</dt><dd>{{ av.izoh_1c|karta_niqobi }}</dd></div>{% endif %}
+      </dl>
+    </details>
+  </div>
+</div>
+{% endblock %}

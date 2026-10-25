@@ -17,6 +17,27 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 # nginx ortida bo'lsa mijoz IP'si X-Forwarded-For dan olinadi (1 ta proksi); aks holda REMOTE_ADDR.
 PROXY_ORQASIDA = env.bool("PROXY_ORQASIDA", default=False)
 
+
+def https_sozlamalari(https: bool, hostlar: list[str], ishonchli: list[str] | None = None) -> dict:
+    """TLS'ni nginx tugatadigan ishlab chiqarish uchun sozlamalar (`HTTPS=True`). `ishonchli` berilmasa
+    CSRF_TRUSTED_ORIGINS ALLOWED_HOSTS dan `https://host` ko'rinishida olinadi."""
+    if not https:
+        return {}
+    if not ishonchli:
+        ishonchli = [f"https://{h.lstrip('.')}" for h in hostlar if h and h != "*"]
+    return {
+        "SECURE_PROXY_SSL_HEADER": ("HTTP_X_FORWARDED_PROTO", "https"),
+        "SESSION_COOKIE_SECURE": True,
+        "CSRF_COOKIE_SECURE": True,
+        "SECURE_HSTS_SECONDS": 31536000,
+        "CSRF_TRUSTED_ORIGINS": list(ishonchli),
+    }
+
+
+# HTTPS=True: nginx TLS'ni tugatadi va X-Forwarded-Proto o'rnatadi (VPS bosqichi). Standart — o'chiq (ichki tarmoq).
+HTTPS = env.bool("HTTPS", default=False)
+globals().update(https_sozlamalari(HTTPS, ALLOWED_HOSTS, env.list("CSRF_TRUSTED_ORIGINS", default=[])))
+
 DATABASES = {
     "default": env.db(
         "DATABASE_URL",
@@ -39,6 +60,13 @@ INSTALLED_APPS = [
     "axes",
     "onec",
     "hisoblar",
+    "jurnal",
+    "vositalar",
+    "chiqimlar",
+    "mol",
+    "reviziya",
+    "yorliqlar",
+    "hisobotlar",
     "panel",
 ]
 
@@ -46,6 +74,7 @@ MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "hisoblar.parametrlar.NulBaytMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -54,6 +83,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+CSRF_FAILURE_VIEW = "panel.views.csrf_xato"
 WSGI_APPLICATION = "config.wsgi.application"
 
 TEMPLATES = [
@@ -62,10 +92,12 @@ TEMPLATES = [
         "DIRS": [],
         "APP_DIRS": True,
         "OPTIONS": {
+            "builtins": ["panel.templatetags.raqamlar"],
             "context_processors": [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "panel.context_processors.sinxron_holati",
             ],
         },
     },
@@ -84,7 +116,7 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 LOGIN_URL = "hisoblar:kirish"
-LOGIN_REDIRECT_URL = "bosh"
+LOGIN_REDIRECT_URL = "panel:bosh"
 LOGOUT_REDIRECT_URL = "hisoblar:kirish"
 
 # Sessiya: 8 soat harakatsizlikdan keyin tugaydi
