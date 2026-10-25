@@ -6,7 +6,7 @@
   <h1 class="mb-0 me-auto">МОЛ akti {{ akt.nomi }} {% include "mol/_akt_holati.html" with a=akt %}</h1>
   <a href="{% url 'mol:akt_pdf' akt.pk %}" class="btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>PDF</a>
   {% if tasdiqlash_mumkin %}
-  <form method="post" action="{% url 'mol:akt_bekor' akt.pk %}" class="d-inline" data-tasdiq="Akt {{ akt.nomi }} bekor qilinsinmi? Bu amalni qaytarib bo'lmaydi." data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'mol:akt_bekor' akt.pk %}" class="d-inline" data-tasdiq="Akt {{ akt.nomi }} bekor qilinsinmi? Bu amalni qaytarib bo'lmaydi." data-tasdiq-tugma="Aktni bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
   <form method="post" action="{% url 'mol:akt_tasdiqla' akt.pk %}" class="d-inline">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Tasdiqlash</button></form>
   {% endif %}
 </div>

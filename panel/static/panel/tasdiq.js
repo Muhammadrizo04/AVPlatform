@@ -13,7 +13,7 @@
     oyna.setAttribute("aria-labelledby", "tasdiq-sarlavha");
     oyna.innerHTML =
       '<h2 id="tasdiq-sarlavha">Tasdiqlang</h2><p data-matn></p>' +
-      '<div class="tasdiq-tugmalar"><button type="button" class="t-yoq" data-yoq>Bekor qilish</button>' +
+      '<div class="tasdiq-tugmalar"><button type="button" class="t-yoq" data-yoq>Orqaga</button>' +
       '<button type="button" class="t-ha" data-ha>Tasdiqlash</button></div>';
     document.body.appendChild(oyna);
     oyna.addEventListener("click", function (e) {

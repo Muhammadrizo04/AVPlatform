@@ -200,3 +200,18 @@ def _teskari(reviziya, q, soni, kim) -> None:
         m = min(t.soni, qoldi)
         qoldi -= m
         _ozgartir(t, m, kim, REVIZIYA, bolim=q.bolim_id, holat=q.holat, hujjat_izoh=izoh)
+
+
+def ochiqqa_qaytar(reviziya: Reviziya, kim) -> None:
+    """Yakunlangan reviziyani «Ochiq» ga qaytaradi — sanashni tuzatish uchun (qaydlar qo'shiladi/tuzatiladi).
+
+    Qo'llangan farq qolgan bo'lsa — rad etiladi: vedomost o'zgarsa, qo'llangan qatorlar bilan mos kelmay qoladi.
+    """
+    with transaction.atomic():
+        reviziya = _yakunlangan_qulfla(reviziya.pk)
+        if reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.OK).exists():
+            raise ReviziyaXato("Avval qo'llangan farqlarni bekor qiling — keyin reviziyani «Ochiq» ga qaytarish mumkin.")
+        reviziya.holat = Reviziya.Holat.OCHIQ
+        reviziya.yakunladi = None
+        reviziya.yakunlangan_vaqt = None
+        reviziya.save(update_fields=["holat", "yakunladi", "yakunlangan_vaqt"])

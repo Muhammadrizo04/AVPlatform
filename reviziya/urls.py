@@ -17,6 +17,7 @@ urlpatterns = [
     path("<int:pk>/belgila/", views.belgila_view, name="belgila"),
     path("<int:pk>/yop/", views.yop_view, name="yop"),
     path("<int:pk>/qaytar/", views.qaytar_view, name="qaytar"),
+    path("<int:pk>/ochiqqa/", views.ochiqqa_view, name="ochiqqa"),
     path("<int:pk>/revizorlar/", views.revizorlar_view, name="revizorlar"),
     path("<int:pk>/excel/", views.excel, name="excel"),
     path("<int:pk>/pdf/", views.pdf, name="pdf"),

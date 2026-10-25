@@ -11,9 +11,12 @@
   <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Skanerlash</a>
   {% endif %}
   {% if boshqarish and rv.holat == "ochiq" %}
-  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o'zgarmaydi." data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o'zgarmaydi." data-tasdiq-tugma="Reviziyani bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
   <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo'shib bo'lmaydi." data-tasdiq-tugma="Yakunlash">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
   {% elif boshqarish and rv.holat == "yakunlangan" %}
+  {% if not farqlar.qollangan %}
+  <form method="post" action="{% url 'reviziya:ochiqqa' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Ochiq» ga qaytarilsinmi? Sanash qayta ochiladi: sonlarni tuzatish va yangi qayd qo'shish mumkin bo'ladi." data-tasdiq-tugma="Ochiqqa qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Ochiqqa qaytarish</button></form>
+  {% endif %}
   <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yopilsinmi?{% if farqlar.qolgan %} {{ farqlar.jami }} ta farqdan {{ farqlar.qolgan }} tasi hali qo'llanmagan — ular taqsimotga kiritilmaydi.{% endif %}" data-tasdiq-tugma="Yopish"{% if farqlar.qolgan %} data-tasdiq-xavfli{% endif %}>{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
   {% elif boshqarish and rv.holat == "qollangan" %}
   <form method="post" action="{% url 'reviziya:qaytar' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Yakunlangan» ga qaytarilsinmi? Qo'llanmagan farqlarni qo'llash mumkin bo'ladi." data-tasdiq-tugma="Qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Yakunlanganga qaytarish</button></form>
@@ -148,7 +151,7 @@
   <b><span data-soni="kalit">0</span> ta qo'llashga · <span data-soni="bekor_kalit">0</span> ta bekor qilishga tanlandi</b>
   <span class="small text-body-secondary me-auto">Ortiqcha qatorlar faqat qayd: taqsimot soni 1C'dan keladi.</span>
   <button type="submit" class="btn btn-danger btn-sm" formaction="{% url 'reviziya:qolla_bekor' rv.pk %}" data-kerak="bekor_kalit" data-bekor-tugma disabled
-    data-tasdiq="Tanlangan {n} ta qatorning qo'llashi bekor qilinsinmi? AV'lar avvalgi joyi va holatiga qaytadi; keyin yana qo'llash mumkin." data-tasdiq-sanoq="input[name=bekor_kalit]:checked" data-tasdiq-tugma="Bekor qilish" data-tasdiq-xavfli><i class="cil-action-undo me-1"></i>Qo'llashni bekor qilish</button>
+    data-tasdiq="Tanlangan {n} ta qatorning qo'llashi bekor qilinsinmi? AV'lar avvalgi joyi va holatiga qaytadi; keyin yana qo'llash mumkin." data-tasdiq-sanoq="input[name=bekor_kalit]:checked" data-tasdiq-tugma="Qo'llashni bekor qilish" data-tasdiq-xavfli><i class="cil-action-undo me-1"></i>Qo'llashni bekor qilish</button>
   <button type="submit" class="btn btn-primary btn-sm" data-kerak="kalit" data-qollash disabled><i class="cil-check-alt me-1"></i>Qo'llash</button>
   {% else %}
   <b><span data-soni="belgi">0</span> ta AV tanlandi</b>

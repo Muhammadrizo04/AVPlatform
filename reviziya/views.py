@@ -24,7 +24,9 @@ from vositalar.models import Bolim, Holat
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
-from .qollash import QOLLANADI, qolla, qollanadimi, qollashni_bekor_qil, reviziya_yop, yakunlanganga_qaytar
+from .qollash import (
+    QOLLANADI, ochiqqa_qaytar, qolla, qollanadimi, qollashni_bekor_qil, reviziya_yop, yakunlanganga_qaytar,
+)
 from .servis import (
     KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qayd_qosh, reviziya_och,
     revizorlarni_ozgartir, yakunla,
@@ -355,6 +357,12 @@ def qaytar_view(request, pk):
     return _amal(
         request, pk, yakunlanganga_qaytar, "Reviziya {nomi} «Yakunlangan» ga qaytarildi — farqlarni qo'llash mumkin."
     )
+
+
+@require_POST
+@amal_kerak("reviziya_boshqarish")
+def ochiqqa_view(request, pk):
+    return _amal(request, pk, ochiqqa_qaytar, "Reviziya {nomi} «Ochiq» ga qaytarildi — sonlarni tuzatish mumkin.")
 
 
 @require_POST

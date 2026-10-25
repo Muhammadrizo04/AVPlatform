@@ -503,3 +503,27 @@ def test_farqsiz_reviziyada_izoh(fa, revizor, hisobchi):
     html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
     assert "farq yo&#x27;q" in html or "farq yo'q" in html
     assert "farqsiz-izoh" in html and 'name="bekor_kalit"' not in html
+
+
+def test_ochiqqa_qaytarish(ikki_topilmadi, hisobchi):
+    """Yakunlangan reviziya sanashni tuzatish uchun «Ochiq» ga qaytariladi — faqat qo'llangan farq qolmagan bo'lsa."""
+    rv, stol, _ = ikki_topilmadi
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    ochiqqa = reverse("reviziya:ochiqqa", args=[rv.pk])
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
+    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]})
+
+    assert f'action="{ochiqqa}"' not in c.get(sahifa).content.decode()  # qo'llangan bor — tugma yo'q
+    r = c.post(ochiqqa, follow=True)
+    assert "alert-danger" in r.content.decode() and "bekor qiling" in r.content.decode()
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN
+
+    c.post(reverse("reviziya:qolla_bekor", args=[rv.pk]), {"bekor_kalit": [kalit]})
+    assert f'action="{ochiqqa}"' in c.get(sahifa).content.decode()
+    assert c.post(ochiqqa).status_code == 302
+    rv.refresh_from_db()
+    assert (rv.holat, rv.yakunlangan_vaqt, rv.yakunladi) == (Reviziya.Holat.OCHIQ, None, None)
+    assert 'name="belgi"' in c.get(sahifa).content.decode()  # endi sahifadan son kiritish mumkin
