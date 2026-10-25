@@ -20,6 +20,12 @@
   {% endif %}
 </div>
 
+{% if boshqarish and rv.holat == "yakunlangan" and not farqlar.jami %}
+<div class="alert alert-success d-flex flex-wrap align-items-center gap-2 farqsiz-izoh chop-yoq" role="status">
+  <i class="cil-check-circle" aria-hidden="true"></i>
+  <span><b>Farq topilmadi — hamma AV joyida.</b> Qo'llanadigan (va bekor qilinadigan) qator yo'q; reviziyani «Yopish» mumkin.</span>
+</div>
+{% endif %}
 {% if tanlash and farqlar.qolgan %}
 <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 qollash-eslatma chop-yoq" role="status">
   <i class="cil-warning" aria-hidden="true"></i>
@@ -45,7 +51,7 @@
       {% if rv.holat == "yakunlangan" or rv.holat == "qollangan" %}
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Qo'llangan farqlar</div>
         <strong>{{ farqlar.qollangan }} / {{ farqlar.jami }}</strong> qator
-        {% if farqlar.qolgan %}<span class="badge {% if rv.holat == 'qollangan' %}bg-danger-subtle text-danger-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %} ms-1">{{ farqlar.qolgan }} tasi qo'llanmagan</span>{% elif farqlar.jami %}<span class="badge bg-success-subtle text-success-emphasis ms-1">hammasi</span>{% endif %}
+        {% if farqlar.qolgan %}<span class="badge {% if rv.holat == 'qollangan' %}bg-danger-subtle text-danger-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %} ms-1">{{ farqlar.qolgan }} tasi qo'llanmagan</span>{% elif farqlar.jami %}<span class="badge bg-success-subtle text-success-emphasis ms-1">hammasi</span>{% else %}<span class="badge bg-success-subtle text-success-emphasis ms-1">farq yo'q</span>{% endif %}
       </div>
       {% endif %}
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}

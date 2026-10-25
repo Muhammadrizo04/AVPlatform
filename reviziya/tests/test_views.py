@@ -486,3 +486,20 @@ def test_qollashni_belgilab_ommaviy_bekor_qilish(ikki_topilmadi, hisobchi):
     r = c.post(reverse("reviziya:qolla_bekor", args=[rv.pk]), {"bekor_kalit": kalitlar}, follow=True)
     assert "2 ta bekor qilindi" in r.content.decode()
     assert {t.holat for t in Taqsimot.objects.filter(av__in=[stol, stul])} == {Holat.ISHLATILMOQDA}
+
+
+def test_farqsiz_reviziyada_izoh(fa, revizor, hisobchi):
+    """Hamma AV topilgan (farq yo'q) — «farq yo'q» belgisi va qo'llash kerak emasligi haqida izoh."""
+    from reviziya.servis import qayd_qosh
+
+    a = Bolim.objects.create(filial=fa, nomi="A xona")
+    stol = av_yarat(fa, inv="INV-STOL")
+    qator(stol, fa, "1", bolim=a)
+    rv = reviziya_och(fa, None, [revizor], [], hisobchi)
+    qayd_qosh(rv, a, hisobchi, av=stol)
+    c = kirgan(hisobchi)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert "farq yo&#x27;q" in html or "farq yo'q" in html
+    assert "farqsiz-izoh" in html and 'name="bekor_kalit"' not in html
