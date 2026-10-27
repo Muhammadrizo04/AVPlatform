@@ -513,3 +513,17 @@ def test_boshqa_filialda_bir_nechta_moslik_royxat(muhit, revizor, filial_yarat):
     html = matn(kirgan(revizor).get(url("mobil_topish", rv.pk, bolim=xona.pk, q="INV-9")))
     assert "Boshqa filiallarda" in html and "Showroom" in html and "Yaypan" in html
     assert "qr=DS%7C02%7CINV-9" in html and "qr=DS%7C03%7CINV-9" in html
+
+
+def test_boshqa_filial_qaydi_nomi_bilan_va_qisqa_sorov_izohi(muhit, revizor, filial_yarat):
+    """Oxirgi belgilanganlarda boshqa filial qaydi «Noma'lum yorliq» emas — AV nomi va filiali; qisqa so'rovda
+    boshqa filiallardan qidirish uchun kamida 5 belgi kerakligi aytiladi."""
+    rv, xona, *_ = muhit
+    begona = av_yarat(filial_yarat("02", "Showroom"), inv="INV_100569")
+    c = kirgan(revizor)
+    saqla(c, rv, xona, qr_matn="DS|02|INV_100569")
+    html = matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert begona.nomi in html and "Showroom" in html and "Noma'lum yorliq" not in html
+
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="787")))
+    assert "Hech narsa topilmadi" in html and "kamida 5 belgi" in html

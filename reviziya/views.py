@@ -31,7 +31,7 @@ from .servis import (
     revizorlarni_ozgartir,
 )
 from .kesim import xonalar_kesimi
-from .mobil import _av_doirasi, _boshqa_filialdan, _qidir
+from .mobil import _av_doirasi, _begona_av, _boshqa_filialdan, _qidir
 from .solishtir import (
     BOLIMSIZ, GURUH_NOMLARI, GURUHLAR, bolim_boyicha, bolim_kesim_nomi, bolim_nomlari, guruh_nomi, jamlar, solishtir,
 )
@@ -293,6 +293,8 @@ def sahifa(request, pk):
     satrlar = []
     for q in korinadigan:
         satr = _satr(q, nomlar)
+        if q.av_id is None and q.izoh == BOSHQA_FILIAL:
+            satr["begona"] = _begona_av(q.qr_matn)
         satr["yozildi"] = q.kalit in yozilgan
         satr["yozilmadi"] = yozilmagan.get(q.kalit, "")
         if yakunlangan and not satr["yozildi"] and not satr["yozilmadi"] and qollanadimi(q):

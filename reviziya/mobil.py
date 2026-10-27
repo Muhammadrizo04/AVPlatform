@@ -165,7 +165,12 @@ def _oxirgilar(request, rv, xona) -> list[dict]:
         .order_by("-yangilangan", "-pk")[:OXIRGILAR_SONI]
     )
     return [
-        {"q": q, "qiymat": format(q.soni.normalize(), "f"), "ozi": boshqaradi or q.kim_id == request.user.pk}
+        {
+            "q": q, "qiymat": format(q.soni.normalize(), "f"), "ozi": boshqaradi or q.kim_id == request.user.pk,
+            # boshqa filial yorlig'i — AV nomi va filiali bilan («Noma'lum yorliq» emas)
+            "begona": _begona_av(q.qr_matn) if q.av_id is None and qr_tahlil(q.qr_matn, rv)[1] == BOSHQA_FILIAL
+            else None,
+        }
         for q in qaydlar
     ]
 
@@ -478,7 +483,10 @@ def topish(request, pk):
                 "tur": "nomalum", "qr_matn": b["qr"], "boshqa_filial": True, "usul": "qidiruv", "begona": b["av"],
             })
         else:
-            ctx.update({"tur": "royxat", "topilganlar": topilganlar, "begonalar": begonalar, "q": q})
+            ctx.update({
+                "tur": "royxat", "topilganlar": topilganlar, "begonalar": begonalar, "q": q,
+                "qisqa": len(q) < BOSHQA_FILIAL_MIN,
+            })
     else:
         return HttpResponse("")
     if ctx.get("tur") == "av":

@@ -474,6 +474,7 @@ def test_panelda_av_qidirib_qoshish(ikki_topilmadi, hisobchi, fa, filial_yarat, 
     q = ReviziyaQayd.objects.get(av__isnull=True)
     assert (q.qr_matn, q.bolim, q.soni) == ("DS|02|INV_100652", a, 1)
     assert [x.izoh for x in solishtir(rv) if x.guruh == "ortiqcha"] == ["boshqa filial"]
+    assert "boshqa filial: Showroom" in c.get(sahifa).content.decode()  # vedomostda AV nomi va filiali
 
     html = c.get(qidir, {"q": "INV-STOL"}).content.decode()  # shu filialdagi AV
     assert stol.nomi in html and f'name="av" value="{stol.pk}"' in html

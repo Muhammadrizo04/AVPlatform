@@ -29,7 +29,7 @@
     {% endfor %}
   </ul>
   {% else %}
-  <p class="m-bosh">Hech narsa topilmadi.</p>
+  <p class="m-bosh">Hech narsa topilmadi.{% if qisqa %}<br><span class="m-xira">Boshqa filiallardan qidirish uchun inv. raqamdan kamida 5 belgi yozing (masalan, 00787).</span>{% endif %}</p>
   {% endif %}
 {% elif tur == "av" or tur == "nomalum" %}
 <form hx-post="{% url 'reviziya:mobil_saqla' rv.pk %}" hx-target="#kartochka" hx-encoding="multipart/form-data">

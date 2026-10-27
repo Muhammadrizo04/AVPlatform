@@ -7,6 +7,7 @@
     <li class="m-qator">
       <span class="m-asosiy">
         {% if o.q.av %}<b>{{ o.q.av.nomi }}</b><span class="m-xira">{{ o.q.av.inv_raqam|default:"inv. raqamsiz" }} · {{ o.q.get_holat_display }}</span>
+        {% elif o.begona %}<b>{{ o.begona.nomi }}</b><span class="m-xira">{{ o.begona.inv_raqam }} · boshqa filial: {{ o.begona.filial_rekvizit.nomi }}</span>
         {% else %}<b>Noma'lum yorliq</b><span class="m-xira">{{ o.q.qr_matn|truncatechars:60 }}</span>{% endif %}
         <span class="m-xira">{{ o.q.kim.get_full_name|default:o.q.kim.username }} · {{ o.q.yangilangan|date:"H:i" }}</span>
       </span>
