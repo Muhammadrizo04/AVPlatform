@@ -398,3 +398,38 @@ def test_farqsiz_va_eski_tartibdagi_yakunlangan(ikki_topilmadi, hisobchi):
     c.post(reverse("reviziya:yakunla", args=[rv.pk]))
     html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
     assert "farq yo&#x27;q — hamma AV joyida" in html or "farq yo'q — hamma AV joyida" in html
+
+
+def test_ochiq_reviziyada_belgini_olib_tashlash(ikki_topilmadi, hisobchi, fa, foydalanuvchi):
+    """«Joyida» ning teskarisi: topilgan qatorni belgilab, belgisini olib tashlash — qayddan shu qator soni ayiriladi."""
+    from reviziya.models import ReviziyaQayd
+    from reviziya.servis import qayd_qosh
+
+    rv, stol, stul = ikki_topilmadi
+    a = Bolim.objects.get(nomi="A xona")
+    b = Bolim.objects.create(filial=fa, nomi="B xona")
+    qayd_qosh(rv, a, hisobchi, av=stol)  # topildi
+    qayd_qosh(rv, b, hisobchi, av=stul, soni=__import__("decimal").Decimal("2"))  # boshqa joyda 1 + ortiqcha 1
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    olib_url = reverse("reviziya:belgini_ol", args=[rv.pk])
+    qatorlar = {q.guruh: q for q in solishtir(rv)}
+
+    html = c.get(sahifa).content.decode()
+    assert f'formaction="{olib_url}"' in html and html.count('name="olib"') == 3
+
+    r = c.post(olib_url, {"olib": [qatorlar["topildi"].kalit, qatorlar["boshqa_joyda"].kalit]}, follow=True)
+    assert "2 ta qatorning belgisi olib tashlandi" in r.content.decode()
+    assert not ReviziyaQayd.objects.filter(av=stol).exists()
+    assert ReviziyaQayd.objects.get(av=stul).soni == 1  # ortiqcha qismi qoldi
+    assert {q.guruh for q in solishtir(rv)} == {"topilmadi", "boshqa_joyda"}  # qolgan 1 dona yana moslashadi
+
+    assert kirgan(foydalanuvchi("hr")).post(olib_url, {"olib": ["x"]}).status_code == 403
+    r = c.post(olib_url, {"olib": ["mavjud-emas"]}, follow=True)
+    assert "alert-danger" in r.content.decode()
+
+
+def test_skanerlash_tugmasi_boshlash_nomida(ikki_topilmadi, hisobchi):
+    rv, *_ = ikki_topilmadi
+    html = kirgan(hisobchi).get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert "</i>Boshlash</a>" in html and "</i>Skanerlash</a>" not in html

@@ -13,6 +13,7 @@ urlpatterns = [
     path("<int:pk>/yakunla/", views.yakunla_view, name="yakunla"),
     path("<int:pk>/bekor/", views.bekor_view, name="bekor"),
     path("<int:pk>/belgila/", views.belgila_view, name="belgila"),
+    path("<int:pk>/belgini-ol/", views.belgini_ol_view, name="belgini_ol"),
     path("<int:pk>/ochiqqa/", views.ochiqqa_view, name="ochiqqa"),
     path("<int:pk>/revizorlar/", views.revizorlar_view, name="revizorlar"),
     path("<int:pk>/excel/", views.excel, name="excel"),

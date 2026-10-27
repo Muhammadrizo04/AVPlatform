@@ -8,7 +8,7 @@
   <a href="{% url 'reviziya:excel' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>
   <a href="{% url 'reviziya:pdf' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>Dalolatnoma</a>
   {% if skanerlay_oladi %}
-  <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Skanerlash</a>
+  <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Boshlash</a>
   {% endif %}
   {% if boshqarish and rv.holat == "ochiq" %}
   <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, AV'larga hech narsa yozilmaydi." data-tasdiq-tugma="Reviziyani bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
@@ -140,8 +140,10 @@
 {% include "reviziya/_vedomost.html" %}
 {% if tanlanadigan_bor %}
 <div class="amal-panel">
-  <b><span data-soni="belgi">0</span> ta AV tanlandi</b>
+  <b><span data-soni="belgi">0</span> ta joyida deb belgilashga · <span data-soni="olib">0</span> ta belgisini olishga tanlandi</b>
   <span class="small text-body-secondary me-auto">«Soni» ustunida topilgan sonni o'zgartirish mumkin.</span>
+  <button type="submit" class="btn btn-outline-light btn-sm" formaction="{% url 'reviziya:belgini_ol' rv.pk %}" data-kerak="olib" disabled
+    data-tasdiq="Tanlangan {n} ta qatorning belgisi olib tashlansinmi? Ular yana «topilmadi» hisoblanadi." data-tasdiq-sanoq="input[name=olib]:checked" data-tasdiq-tugma="Belgini olib tashlash" data-tasdiq-xavfli><i class="cil-x me-1"></i>Belgini olib tashlash</button>
   <button type="submit" class="btn btn-success btn-sm" data-kerak="belgi" disabled><i class="cil-check-alt me-1"></i>Joyida deb belgilash</button>
 </div>
 {% endif %}

@@ -26,7 +26,8 @@ from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, X
 from .pdf import dalolatnoma_pdf
 from .qollash import QOLLANADI, ochiqqa_qaytar, qollanadimi, yakunla_va_yoz
 from .servis import (
-    KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qayd_qosh, reviziya_och,
+    KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qayd_qosh, qayd_tuzat,
+    reviziya_och,
     revizorlarni_ozgartir,
 )
 from .kesim import xonalar_kesimi
@@ -240,6 +241,17 @@ def _satr(q, nomlar) -> dict:
     }
 
 
+def _qayd_kaliti(q):
+    """Vedomost qatoridagi topilgan son qaysi qaydda turadi: (bolim_id, holat); AV'siz yoki topilmagan — None."""
+    if q.av_id is None or q.topilgan <= 0:
+        return None
+    if q.guruh == "boshqa_joyda":
+        return q.nishon_bolim_id, q.nishon_holat or q.holat
+    if q.guruh == "holat_boshqa":
+        return q.bolim_id, q.nishon_holat
+    return q.bolim_id, q.holat  # topildi, kam, ortiqcha
+
+
 def _filtrla(qatorlar, params):
     guruh = params.get("guruh", "")
     if guruh in GURUH_FILTRLARI:
@@ -288,6 +300,8 @@ def sahifa(request, pk):
         if skanerlay_oladi and q.av_id and q.guruh in ("kam", "topilmadi"):
             satr["belgi"] = f"{q.av_id}:{q.bolim_id or ''}:{q.holat}"
             satr["qolgan"] = -q.farq
+        # teskarisi: topilgan (belgilangan) qatorning belgisini olib tashlash
+        satr["olib"] = skanerlay_oladi and _qayd_kaliti(q) is not None
         satrlar.append(satr)
     satrlar = saralash.royxat(satrlar)
     belgilangan, kutilgan = progress(rv)
@@ -300,7 +314,7 @@ def sahifa(request, pk):
         "rv": rv, "plitkalar": plitkalar, "satrlar": satrlar, "guruh": guruh, "bolim": bolim, "saralash": saralash,
         "q": request.GET.get("q", ""), "bolimlar": bolimlar, "guruh_nomlari": GURUH_NOMLARI.items(),
         "boshqarish": boshqarish, "belgilash": skanerlay_oladi,
-        "tanlanadigan_bor": any(s.get("belgi") for s in satrlar),
+        "tanlanadigan_bor": any(s.get("belgi") or s["olib"] for s in satrlar),
         "keyingi": request.get_full_path(),
         "belgilangan": belgilangan, "kutilgan": kutilgan, "farqlar": farqlar,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
@@ -377,16 +391,51 @@ def ochiqqa_view(request, pk):
     )
 
 
+def _orqaga(request, rv):
+    keyingi = request.POST.get("keyingi", "")
+    if url_has_allowed_host_and_scheme(keyingi, allowed_hosts={request.get_host()}):
+        return redirect(keyingi)
+    return redirect("reviziya:sahifa", pk=rv.pk)
+
+
+@require_POST
+@amal_kerak("reviziya_otkazish")
+def belgini_ol_view(request, pk):
+    """«Joyida» ning teskarisi: tanlangan vedomost qatorlari (`olib` — kalit) uchun qayddan shu qatorning topilgan
+    soni ayiriladi (0 bo'lsa qayd o'chadi). Hammasi yoki hech biri."""
+    rv = _reviziya_yoki_404(request, pk)
+    if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
+        raise Http404
+    kalitlar = list(dict.fromkeys(k for k in request.POST.getlist("olib") if k))
+    if not kalitlar:
+        messages.warning(request, "Belgisini olib tashlash uchun qator tanlanmagan.")
+        return _orqaga(request, rv)
+    qatorlar = {q.kalit: q for q in solishtir(rv)}
+    try:
+        with transaction.atomic():
+            for kalit in kalitlar:
+                q = qatorlar.get(kalit)
+                joy = _qayd_kaliti(q) if q is not None else None
+                qayd = joy and ReviziyaQayd.objects.filter(
+                    reviziya=rv, av_id=q.av_id, bolim_id=joy[0], holat=joy[1], qr_matn=""
+                ).first()
+                if not qayd:
+                    raise ReviziyaXato("Qator topilmadi — sahifani yangilab, qayta urinib ko'ring.")
+                qayd_tuzat(qayd, max(qayd.soni - q.topilgan, Decimal("0")), request.user)
+    except ReviziyaXato as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, f"{len(kalitlar)} ta qatorning belgisi olib tashlandi.")
+    return _orqaga(request, rv)
+
+
 @require_POST
 @amal_kerak("reviziya_otkazish")
 def belgila_view(request, pk):
     """Ochiq reviziya sahifasidan: tanlangan `belgi` (av:bolim:holat) qatorlarini `soni_<belgi>` soni bilan qayd qiladi
     (mobil «Hammasi joyida» kabi; hammasi yoki hech biri)."""
     rv = _reviziya_yoki_404(request, pk)
-    keyingi = request.POST.get("keyingi", "")
-    if not url_has_allowed_host_and_scheme(keyingi, allowed_hosts={request.get_host()}):
-        keyingi = ""
-    orqaga = redirect(keyingi) if keyingi else redirect("reviziya:sahifa", pk=rv.pk)
+    orqaga = _orqaga(request, rv)
     if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
         raise Http404
     belgilar = list(dict.fromkeys(b for b in request.POST.getlist("belgi") if b))
