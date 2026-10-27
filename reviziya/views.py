@@ -445,13 +445,15 @@ def belgila_view(request, pk):
     kutilgan = set(ReviziyaKutilgan.objects.filter(reviziya=rv).values_list("av_id", "bolim_id", "holat"))
     try:
         with transaction.atomic():
-            for belgi in belgilar:
+            for qiymat in belgilar:
+                # «av:bolim:holat=soni» (sahifa JS sonni katakka qo'shadi) yoki alohida `soni_<belgi>` maydoni
+                belgi, _, soni_matni = qiymat.partition("=")
                 av_id, bolim_id, holat = belgi.split(":", 2)
                 av_id, bolim_id = int(av_id), int(bolim_id) if bolim_id else None
                 if (av_id, bolim_id, holat) not in kutilgan:
                     raise ReviziyaXato("Tanlangan qator reviziyada kutilmagan.")
                 try:
-                    soni = Decimal(request.POST.get(f"soni_{belgi}", "").replace(",", ".").strip())
+                    soni = Decimal((soni_matni or request.POST.get(f"soni_{belgi}", "")).replace(",", ".").strip())
                 except InvalidOperation:
                     raise ReviziyaXato("Sonni to'g'ri kiriting.") from None
                 bolim = Bolim.objects.get(pk=bolim_id) if bolim_id else None

@@ -135,7 +135,7 @@
 </div></div>
 
 {% if belgilash %}
-<form method="post" id="vedomost" action="{% url 'reviziya:belgila' rv.pk %}">{% csrf_token %}
+<form method="post" id="vedomost" action="{% url 'reviziya:belgila' rv.pk %}" data-soni-jamla>{% csrf_token %}
 <input type="hidden" name="keyingi" value="{{ keyingi }}">
 {% include "reviziya/_vedomost.html" %}
 {% if tanlanadigan_bor %}
@@ -184,6 +184,19 @@
       if (!e.target.matches("[data-soni-maydon]")) return;
       var belgi = e.target.closest("tr").querySelector("[data-tanlov]");
       if (belgi && !belgi.checked) { belgi.checked = true; belgi.closest("tr").classList.add("table-active"); yangila(); }
+    });
+    // Yuborishda «Soni» maydonlari ketmaydi (500+ qatorda maydonlar chegarasidan oshadi): tanlangan qator soni
+    // katak qiymatiga qo'shiladi — «av:bolim:holat=soni»
+    forma.addEventListener("submit", function () {
+      forma.querySelectorAll("[data-soni-maydon]").forEach(function (m) {
+        var belgi = m.closest("tr").querySelector("input[name=belgi]");
+        if (belgi && belgi.checked) belgi.value = belgi.value.split("=")[0] + "=" + m.value;
+        m.disabled = true;
+      });
+    });
+    // Orqaga (bfcache) qaytilganda maydonlar yana faol
+    window.addEventListener("pageshow", function () {
+      forma.querySelectorAll("[data-soni-maydon]").forEach(function (m) { m.disabled = false; });
     });
     yangila();
   })();

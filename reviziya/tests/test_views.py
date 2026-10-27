@@ -433,3 +433,18 @@ def test_skanerlash_tugmasi_boshlash_nomida(ikki_topilmadi, hisobchi):
     rv, *_ = ikki_topilmadi
     html = kirgan(hisobchi).get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
     assert "</i>Boshlash</a>" in html and "</i>Skanerlash</a>" not in html
+
+
+def test_belgilash_soni_katak_qiymatida(ikki_topilmadi, hisobchi):
+    """Ko'p qatorli vedomost: son katak qiymatida keladi («belgi=soni»), alohida soni_* maydonlari shart emas
+    (aks holda 500+ qatorda DATA_UPLOAD_MAX_NUMBER_FIELDS dan oshadi)."""
+    from reviziya.models import ReviziyaQayd
+
+    rv, stol, _ = ikki_topilmadi
+    a = Bolim.objects.get(nomi="A xona")
+    c = kirgan(hisobchi)
+    r = c.post(reverse("reviziya:belgila", args=[rv.pk]), {"belgi": [f"{stol.pk}:{a.pk}:ishlatilmoqda=1"]})
+    assert r.status_code == 302
+    assert ReviziyaQayd.objects.get(av=stol).soni == 1
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert "data-soni-jamla" in html
