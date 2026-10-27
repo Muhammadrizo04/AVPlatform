@@ -417,6 +417,7 @@ def test_ochiq_reviziyada_belgini_olib_tashlash(ikki_topilmadi, hisobchi, fa, fo
 
     html = c.get(sahifa).content.decode()
     assert f'formaction="{olib_url}"' in html and html.count('name="olib"') == 3
+    assert 'href="?guruh=topildi#vedomost" data-topilganlar' in html  # topilganlarga tez o'tish
 
     r = c.post(olib_url, {"olib": [qatorlar["topildi"].kalit, qatorlar["boshqa_joyda"].kalit]}, follow=True)
     assert "2 ta qatorning belgisi olib tashlandi" in r.content.decode()

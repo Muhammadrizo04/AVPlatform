@@ -141,7 +141,7 @@
 {% if tanlanadigan_bor %}
 <div class="amal-panel">
   <b><span data-soni="belgi">0</span> ta joyida deb belgilashga · <span data-soni="olib">0</span> ta belgisini olishga tanlandi</b>
-  <span class="small text-body-secondary me-auto">«Soni» ustunida topilgan sonni o'zgartirish mumkin.</span>
+  <span class="small text-body-secondary me-auto">«Soni» — topilgan dona. Belgini olib tashlash uchun topilgan qatorni tanlang{% if guruh != "topildi" %} — <a class="link-light" href="?guruh=topildi#vedomost" data-topilganlar>topilganlarni ko'rsatish</a>{% endif %}.</span>
   <button type="submit" class="btn btn-outline-light btn-sm" formaction="{% url 'reviziya:belgini_ol' rv.pk %}" data-kerak="olib" disabled
     data-tasdiq="Tanlangan {n} ta qatorning belgisi olib tashlansinmi? Ular yana «topilmadi» hisoblanadi." data-tasdiq-sanoq="input[name=olib]:checked" data-tasdiq-tugma="Belgini olib tashlash" data-tasdiq-xavfli><i class="cil-x me-1"></i>Belgini olib tashlash</button>
   <button type="submit" class="btn btn-success btn-sm" data-kerak="belgi" disabled><i class="cil-check-alt me-1"></i>Joyida deb belgilash</button>
