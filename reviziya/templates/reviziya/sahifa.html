@@ -11,28 +11,21 @@
   <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Skanerlash</a>
   {% endif %}
   {% if boshqarish and rv.holat == "ochiq" %}
-  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, taqsimot o'zgarmaydi." data-tasdiq-tugma="Reviziyani bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
-  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yakunlansinmi? Shundan keyin qayd qo'shib bo'lmaydi." data-tasdiq-tugma="Yakunlash">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
+  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, AV'larga hech narsa yozilmaydi." data-tasdiq-tugma="Reviziyani bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yakunlansinmi? Sanash yopiladi va natija AV'larga yoziladi{% if farqlar.jami %}: {{ farqlar.jami }} ta farq (topilmagan — «Topilmadi», boshqa xonada topilgan — o'sha xonaga, holati boshqa — yangi holatga){% else %} (farq yo'q — AV'lar o'zgarmaydi){% endif %}." data-tasdiq-tugma="Yakunlash">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
   {% elif boshqarish and rv.holat == "yakunlangan" %}
-  {% if not farqlar.qollangan %}
-  <form method="post" action="{% url 'reviziya:ochiqqa' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Ochiq» ga qaytarilsinmi? Sanash qayta ochiladi: sonlarni tuzatish va yangi qayd qo'shish mumkin bo'ladi." data-tasdiq-tugma="Ochiqqa qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Ochiqqa qaytarish</button></form>
-  {% endif %}
-  <form method="post" action="{% url 'reviziya:yop' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yopilsinmi?{% if farqlar.qolgan %} {{ farqlar.jami }} ta farqdan {{ farqlar.qolgan }} tasi hali qo'llanmagan — ular taqsimotga kiritilmaydi.{% endif %}" data-tasdiq-tugma="Yopish"{% if farqlar.qolgan %} data-tasdiq-xavfli{% endif %}>{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-lock-locked me-1"></i>Yopish</button></form>
-  {% elif boshqarish and rv.holat == "qollangan" %}
-  <form method="post" action="{% url 'reviziya:qaytar' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Yakunlangan» ga qaytarilsinmi? Qo'llanmagan farqlarni qo'llash mumkin bo'ladi." data-tasdiq-tugma="Qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Yakunlanganga qaytarish</button></form>
+  <form method="post" action="{% url 'reviziya:ochiqqa' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Ochiq» ga qaytarilsinmi?{% if farqlar.yozilgan %} AV'larga yozilgan {{ farqlar.yozilgan }} ta o'zgarish orqaga qaytariladi.{% endif %} Sanash qayta ochiladi: sonlarni tuzatish mumkin bo'ladi." data-tasdiq-tugma="Ochiqqa qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Ochiqqa qaytarish</button></form>
   {% endif %}
 </div>
 
-{% if boshqarish and rv.holat == "yakunlangan" and not farqlar.jami %}
-<div class="alert alert-success d-flex flex-wrap align-items-center gap-2 farqsiz-izoh chop-yoq" role="status">
-  <i class="cil-check-circle" aria-hidden="true"></i>
-  <span><b>Farq topilmadi — hamma AV joyida.</b> Qo'llanadigan (va bekor qilinadigan) qator yo'q; reviziyani «Yopish» mumkin.</span>
-</div>
-{% endif %}
-{% if tanlash and farqlar.qolgan %}
-<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 qollash-eslatma chop-yoq" role="status">
+{% if rv.holat == "yakunlangan" and farqlar.yozilmagan %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 yozilmagan-eslatma chop-yoq" role="status">
   <i class="cil-warning" aria-hidden="true"></i>
-  <span class="me-auto"><b>{{ farqlar.qolgan }} ta farq hali qo'llanmagan.</b> Vedomostda belgilab «Qo'llash» ni bosing — AV joyi va holati yangilanadi.</span>
+  {% if farqlar.eski == farqlar.yozilmagan %}
+  <span class="me-auto"><b>{{ farqlar.yozilmagan }} ta farq AV'larga hali yozilmagan</b> — reviziya eski tartibda yakunlangan. «Ochiqqa qaytarish», keyin «Yakunlash» ni bosing: farqlar AV'larga yoziladi.</span>
+  {% else %}
+  <span class="me-auto"><b>{{ farqlar.yozilmagan }} ta farq AV'larga yozilmadi.</b> Sababi vedomostda qator yonida; bu AV'larni kartochkasida qo'lda tuzating.</span>
+  {% endif %}
   <a class="btn btn-sm btn-warning" href="?guruh=farqlar#vedomost"><i class="cil-chevron-bottom me-1"></i>Farqlarni ko'rsatish</a>
 </div>
 {% endif %}
@@ -44,17 +37,17 @@
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Bo'lim</div>{% if rv.bolim %}{{ rv.bolim.toliq_nomi }} <span class="text-body-secondary small">(ichki bo'limlari bilan)</span>{% else %}Butun filial{% endif %}</div>
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Ochilgan</div>{{ rv.ochilgan_vaqt|date:"d.m.Y H:i" }} · {{ rv.ochdi.get_full_name|default:rv.ochdi.get_username }}</div>
       {% if rv.yakunlangan_vaqt %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Yakunlangan</div>{{ rv.yakunlangan_vaqt|date:"d.m.Y H:i" }}</div>{% endif %}
-      {% if rv.qollangan_vaqt %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Yopilgan</div>{{ rv.qollangan_vaqt|date:"d.m.Y H:i" }}</div>{% endif %}
       {% if rv.bekor_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Bekor qilingan</div>{{ rv.bekor_vaqti|date:"d.m.Y H:i" }}</div>{% endif %}
       <div class="col-sm-6 col-lg-3">
         <div class="small text-body-secondary">Belgilangan / kutilgan</div>
         <strong>{{ belgilangan|son }} / {{ kutilgan|son }}</strong> dona
         <div class="progress mt-1" style="height: .375rem" role="progressbar" aria-label="Progress" aria-valuenow="{{ foiz }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: {{ foiz }}%"></div></div>
       </div>
-      {% if rv.holat == "yakunlangan" or rv.holat == "qollangan" %}
-      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Qo'llangan farqlar</div>
-        <strong>{{ farqlar.qollangan }} / {{ farqlar.jami }}</strong> qator
-        {% if farqlar.qolgan %}<span class="badge {% if rv.holat == 'qollangan' %}bg-danger-subtle text-danger-emphasis{% else %}bg-warning-subtle text-warning-emphasis{% endif %} ms-1">{{ farqlar.qolgan }} tasi qo'llanmagan</span>{% elif farqlar.jami %}<span class="badge bg-success-subtle text-success-emphasis ms-1">hammasi</span>{% else %}<span class="badge bg-success-subtle text-success-emphasis ms-1">farq yo'q</span>{% endif %}
+      {% if rv.holat == "yakunlangan" %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">AV'larga yozilgan farqlar</div>
+        {% if farqlar.jami %}<strong>{{ farqlar.yozilgan }} / {{ farqlar.jami }}</strong> qator
+        {% if farqlar.yozilmagan %}<span class="badge bg-danger-subtle text-danger-emphasis ms-1">{{ farqlar.yozilmagan }} tasi yozilmadi</span>{% endif %}
+        {% else %}<span class="badge bg-success-subtle text-success-emphasis">farq yo'q — hamma AV joyida</span>{% endif %}
       </div>
       {% endif %}
       <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
@@ -126,7 +119,7 @@
 <form method="get" class="filtrlar">
   <select class="form-select form-select-sm" name="guruh" aria-label="Guruh">
     <option value="">Barcha guruhlar</option>
-    <option value="farqlar" {% if guruh == "farqlar" %}selected{% endif %}>Qo'llanadigan farqlar</option>
+    <option value="farqlar" {% if guruh == "farqlar" %}selected{% endif %}>Farqlar (AV'ga yoziladigan)</option>
     <option value="kamomad" {% if guruh == "kamomad" %}selected{% endif %}>Kam / topilmadi</option>
     {% for kalit, nomi in guruh_nomlari %}<option value="{{ kalit }}" {% if guruh == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
   </select>
@@ -141,28 +134,20 @@
 </form>
 </div></div>
 
-{% if tanlash or belgilash %}
-<form method="post" id="vedomost"{% if tanlash %} action="{% url 'reviziya:qolla' rv.pk %}" data-tasdiq="Tanlangan {n} ta farq taqsimotga qo'llansinmi? AV joyi va holati yangilanadi." data-tasdiq-sanoq="input[name=kalit]:checked" data-tasdiq-tugma="Qo'llash"{% else %} action="{% url 'reviziya:belgila' rv.pk %}"{% endif %}>{% csrf_token %}
+{% if belgilash %}
+<form method="post" id="vedomost" action="{% url 'reviziya:belgila' rv.pk %}">{% csrf_token %}
 <input type="hidden" name="keyingi" value="{{ keyingi }}">
 {% include "reviziya/_vedomost.html" %}
 {% if tanlanadigan_bor %}
 <div class="amal-panel">
-  {% if tanlash %}
-  <b><span data-soni="kalit">0</span> ta qo'llashga · <span data-soni="bekor_kalit">0</span> ta bekor qilishga tanlandi</b>
-  <span class="small text-body-secondary me-auto">Ortiqcha qatorlar faqat qayd: taqsimot soni 1C'dan keladi.</span>
-  <button type="submit" class="btn btn-danger btn-sm" formaction="{% url 'reviziya:qolla_bekor' rv.pk %}" data-kerak="bekor_kalit" data-bekor-tugma disabled
-    data-tasdiq="Tanlangan {n} ta qatorning qo'llashi bekor qilinsinmi? AV'lar avvalgi joyi va holatiga qaytadi; keyin yana qo'llash mumkin." data-tasdiq-sanoq="input[name=bekor_kalit]:checked" data-tasdiq-tugma="Qo'llashni bekor qilish" data-tasdiq-xavfli><i class="cil-action-undo me-1"></i>Qo'llashni bekor qilish</button>
-  <button type="submit" class="btn btn-primary btn-sm" data-kerak="kalit" data-qollash disabled><i class="cil-check-alt me-1"></i>Qo'llash</button>
-  {% else %}
   <b><span data-soni="belgi">0</span> ta AV tanlandi</b>
   <span class="small text-body-secondary me-auto">«Soni» ustunida topilgan sonni o'zgartirish mumkin.</span>
   <button type="submit" class="btn btn-success btn-sm" data-kerak="belgi" disabled><i class="cil-check-alt me-1"></i>Joyida deb belgilash</button>
-  {% endif %}
 </div>
 {% endif %}
 </form>
 <script>
-  // Vedomost: tanlanganlar soni yopishqoq panelda (har tur alohida); sarlavhadagi belgi — ko'rinayotgan hammasini tanlash
+  // Vedomost: tanlanganlar soni yopishqoq panelda; sarlavhadagi belgi — ko'rinayotgan hammasini tanlash
   (function () {
     var forma = document.getElementById("vedomost");
     var hammasi = forma.querySelector("[data-hammasini-tanla]");

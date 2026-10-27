@@ -1,4 +1,4 @@
-"""Reviziya farqlarini taqsimotga qo'llash (spec §5.2) va reviziyani yopish.
+"""Reviziya farqlarini taqsimotga yozish: yakunlashda avtomatik (`yakunla_va_yoz`), «Ochiq» ga qaytarishda teskari.
 
 `qolla` reviziya qatorini butun chaqiruv davomida `select_for_update` bilan qulflaydi (parallel qo'llashlar navbatga
 turadi); har kalit alohida savepoint'da — bitta kalit xatosi boshqalarini bekor qilmaydi, kalit esa hech qachon
@@ -14,7 +14,7 @@ from vositalar.amallar import AmalXato, _ozgartir, holat_ozgartir, kochir
 from vositalar.models import Bolim, Holat, Taqsimot, TaqsimotHarakat
 
 from .models import Reviziya, ReviziyaQollash
-from .servis import ReviziyaXato
+from .servis import ReviziyaXato, yakunla
 from .solishtir import solishtir
 
 NOL = Decimal("0")
@@ -109,31 +109,6 @@ def _taqsimotga(reviziya, q, soni, kim) -> None:
             holat_ozgartir(t, m, Holat.TOPILMADI, kim, **izoh)
 
 
-def reviziya_yop(reviziya: Reviziya, kim) -> None:
-    """Yakunlangan reviziyani yopadi («Yopilgan», qiymati `qollangan`)."""
-    with transaction.atomic():
-        reviziya = _yakunlangan_qulfla(reviziya.pk)
-        reviziya.holat = Reviziya.Holat.QOLLANGAN
-        reviziya.qolladi = kim
-        reviziya.qollangan_vaqt = timezone.now()
-        reviziya.save(update_fields=["holat", "qolladi", "qollangan_vaqt"])
-
-
-def yakunlanganga_qaytar(reviziya: Reviziya, kim) -> None:
-    """Yopilgan reviziyani «Yakunlangan» ga qaytaradi: qo'llanmay qolgan farqlarni qo'llash uchun.
-
-    Avval qo'llangan qatorlar jurnalda qoladi va qayta qo'llanmaydi.
-    """
-    with transaction.atomic():
-        reviziya = Reviziya.objects.select_for_update().get(pk=reviziya.pk)
-        if reviziya.holat != Reviziya.Holat.QOLLANGAN:
-            raise ReviziyaXato("Faqat yopilgan reviziyani «Yakunlangan» ga qaytarish mumkin.")
-        reviziya.holat = Reviziya.Holat.YAKUNLANGAN
-        reviziya.qolladi = None
-        reviziya.qollangan_vaqt = None
-        reviziya.save(update_fields=["holat", "qolladi", "qollangan_vaqt"])
-
-
 def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
     """Qo'llangan vedomost qatorini teskari amal bilan qaytaradi; jurnal yozuvi «bekor» bo'ladi (yana qo'llash mumkin).
 
@@ -143,7 +118,7 @@ def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
     with transaction.atomic():
         reviziya = Reviziya.objects.select_for_update().get(pk=reviziya.pk)
         if reviziya.holat != Reviziya.Holat.YAKUNLANGAN:
-            raise ReviziyaXato("Qo'llashni faqat «Yakunlangan» reviziyada bekor qilish mumkin — avval qaytaring.")
+            raise ReviziyaXato("Reviziya yakunlanmagan.")
         jurnal = (
             reviziya.qollashlar.select_for_update().filter(kalit=kalit, natija=ReviziyaQollash.Natija.OK).first()
         )
@@ -161,9 +136,9 @@ def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
         )
         if keyingi is not None:
             raise ReviziyaXato(
-                f"Qo'llashdan keyin bu AV bilan boshqa amal bajarilgan ({keyingi.get_sabab_display()}, "
-                f"{timezone.localtime(keyingi.sana):%d.%m.%Y %H:%M}) — avtomatik bekor qilib bo'lmaydi. "
-                "AV kartochkasida qo'lda tuzating."
+                f"«{q.av_nomi}» ({q.inv}): yakunlashdan keyin bu AV bilan boshqa amal bajarilgan "
+                f"({keyingi.get_sabab_display()}, {timezone.localtime(keyingi.sana):%d.%m.%Y %H:%M}) — "
+                "uning o'zgarishini avtomatik qaytarib bo'lmaydi. AV kartochkasida qo'lda tuzating."
             )
         try:
             _teskari(reviziya, q, jurnal.soni, kim)
@@ -202,15 +177,31 @@ def _teskari(reviziya, q, soni, kim) -> None:
         _ozgartir(t, m, kim, REVIZIYA, bolim=q.bolim_id, holat=q.holat, hujjat_izoh=izoh)
 
 
-def ochiqqa_qaytar(reviziya: Reviziya, kim) -> None:
-    """Yakunlangan reviziyani «Ochiq» ga qaytaradi — sanashni tuzatish uchun (qaydlar qo'shiladi/tuzatiladi).
+def yakunla_va_yoz(reviziya: Reviziya, kim) -> list[ReviziyaQollash]:
+    """Ochiq reviziyani yakunlaydi va barcha farqlarni (kam/topilmadi, boshqa joyda, holati boshqa) taqsimotga yozadi.
 
-    Qo'llangan farq qolgan bo'lsa — rad etiladi: vedomost o'zgarsa, qo'llangan qatorlar bilan mos kelmay qoladi.
+    Sanash yopilishi va yozish — bitta tranzaksiyada. Har farq alohida savepoint'da (`qolla`): bittasini yozib
+    bo'lmasa (masalan, taqsimot oraliqda o'zgargan), u jurnalda «xato» sababi bilan qoladi, qolganlari yoziladi.
+    «Bo'limsiz» ga ko'chish yozilmaydi (xona noma'lum) — `qollanadimi`.
+    """
+    with transaction.atomic():
+        yakunla(reviziya, kim)
+        kalitlar = [q.kalit for q in solishtir(reviziya) if qollanadimi(q)]
+        return qolla(reviziya, kalitlar, kim) if kalitlar else []
+
+
+def ochiqqa_qaytar(reviziya: Reviziya, kim) -> None:
+    """Yakunlangan reviziyani «Ochiq» ga qaytaradi: taqsimotga yozilgan har farq teskari amal bilan qaytariladi.
+
+    Hammasi yoki hech biri: bittasini qaytarib bo'lmasa (yakunlashdan keyin shu AV bilan boshqa amal bo'lgan) — rad
+    etiladi va reviziya «Yakunlangan» qoladi. Yozilmagan farqlarning xato yozuvlari o'chiriladi (qayta yakunlashda
+    yangidan yoziladi).
     """
     with transaction.atomic():
         reviziya = _yakunlangan_qulfla(reviziya.pk)
-        if reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.OK).exists():
-            raise ReviziyaXato("Avval qo'llangan farqlarni bekor qiling — keyin reviziyani «Ochiq» ga qaytarish mumkin.")
+        for jurnal in reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.OK).order_by("-pk"):
+            qollashni_bekor_qil(reviziya, jurnal.kalit, kim)
+        reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.XATO).delete()
         reviziya.holat = Reviziya.Holat.OCHIQ
         reviziya.yakunladi = None
         reviziya.yakunlangan_vaqt = None

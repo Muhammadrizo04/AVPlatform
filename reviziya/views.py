@@ -24,12 +24,10 @@ from vositalar.models import Bolim, Holat
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
-from .qollash import (
-    QOLLANADI, ochiqqa_qaytar, qolla, qollanadimi, qollashni_bekor_qil, reviziya_yop, yakunlanganga_qaytar,
-)
+from .qollash import QOLLANADI, ochiqqa_qaytar, qollanadimi, yakunla_va_yoz
 from .servis import (
     KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qayd_qosh, reviziya_och,
-    revizorlarni_ozgartir, yakunla,
+    revizorlarni_ozgartir,
 )
 from .kesim import xonalar_kesimi
 from .solishtir import (
@@ -42,6 +40,8 @@ KOMISSIYA_NATIJALARI = 15
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 HOLAT_NOMLARI = dict(Holat.choices)
 # Guruh filtri: har guruh alohida, `kamomad` — kam va topilmadi birga (ko'rsatkich plitkasi)
+# Yangi tartibdan oldin yakunlangan (farqlar hali AV'ga yozilmagan) reviziya qatorlari uchun izoh
+ESKI_TARTIB = "Eski tartibda yakunlangan: «Ochiqqa qaytarish», keyin «Yakunlash» — farq AV'ga yoziladi."
 GURUH_FILTRLARI = {**{g: {g} for g in GURUHLAR}, "kamomad": {"kam", "topilmadi"}, "farqlar": set(QOLLANADI)}
 # Ko'rsatkich plitkalari (spec §5.1: beshta guruh): (filtr, nomi, ikonka, rang sinfi, ogohlantiruvchi)
 PLITKALAR = (
@@ -213,8 +213,15 @@ def yangi(request):
     }, status=status)
 
 
-def _qollangan_kalitlar(reviziya) -> set[str]:
-    return set(reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.OK).values_list("kalit", flat=True))
+def _yozilganlar(reviziya) -> tuple[set[str], dict[str, str]]:
+    """Yakunlashda taqsimotga yozilgan kalitlar va yozilmaganlarning (kalit -> sabab) oxirgi xatosi."""
+    ok, xatolar = set(), {}
+    for kalit, natija, xato in reviziya.qollashlar.order_by("pk").values_list("kalit", "natija", "xato"):
+        if natija == ReviziyaQollash.Natija.OK:
+            ok.add(kalit)
+        elif natija == ReviziyaQollash.Natija.XATO:
+            xatolar[kalit] = xato
+    return ok, {k: v for k, v in xatolar.items() if k not in ok}
 
 
 def _nishon_bolim(q, nomlar) -> str:
@@ -263,9 +270,9 @@ def sahifa(request, pk):
         {(q.bolim_id, q.bolim_nomi) for q in hammasi if q.bolim_id is not None}, key=lambda b: b[1].casefold()
     )
     korinadigan, guruh, bolim = _filtrla(hammasi, request.GET)
-    qollangan = _qollangan_kalitlar(rv)
+    yozilgan, yozilmagan = _yozilganlar(rv)
+    yakunlangan = rv.holat == Reviziya.Holat.YAKUNLANGAN
     boshqarish = huquqi_bor(request.user, "reviziya_boshqarish")
-    tanlash = boshqarish and rv.holat == Reviziya.Holat.YAKUNLANGAN
     saralash = Saralash(request, VEDOMOST_USTUNLARI)
     skanerlay_oladi = rv.holat == Reviziya.Holat.OCHIQ and (
         boshqarish or rv.revizorlar.filter(pk=request.user.pk).exists()
@@ -273,9 +280,10 @@ def sahifa(request, pk):
     satrlar = []
     for q in korinadigan:
         satr = _satr(q, nomlar)
-        satr["qollangan"] = q.kalit in qollangan
-        satr["tanlash"] = tanlash and qollanadimi(q) and not satr["qollangan"]
-        satr["bekor"] = tanlash and satr["qollangan"]
+        satr["yozildi"] = q.kalit in yozilgan
+        satr["yozilmadi"] = yozilmagan.get(q.kalit, "")
+        if yakunlangan and not satr["yozildi"] and not satr["yozilmadi"] and qollanadimi(q):
+            satr["yozilmadi"] = ESKI_TARTIB
         # ochiq reviziya: hali topilmagan qatorni sahifaning o'zidan «joyida» deb belgilash (skanerlashsiz)
         if skanerlay_oladi and q.av_id and q.guruh in ("kam", "topilmadi"):
             satr["belgi"] = f"{q.av_id}:{q.bolim_id or ''}:{q.holat}"
@@ -284,13 +292,15 @@ def sahifa(request, pk):
     satrlar = saralash.royxat(satrlar)
     belgilangan, kutilgan = progress(rv)
     farq_kalitlari = {q.kalit for q in hammasi if qollanadimi(q)}
-    farqlar = {"jami": len(farq_kalitlari), "qollangan": len(farq_kalitlari & qollangan)}
-    farqlar["qolgan"] = farqlar["jami"] - farqlar["qollangan"]
+    farqlar = {"jami": len(farq_kalitlari), "yozilgan": len(farq_kalitlari & yozilgan)}
+    farqlar["yozilmagan"] = farqlar["jami"] - farqlar["yozilgan"] if yakunlangan else 0
+    # yozishga urinilmagan (eski tartibda yakunlangan) farqlar — xato sababi yo'q
+    farqlar["eski"] = farqlar["yozilmagan"] - len(farq_kalitlari & set(yozilmagan)) if yakunlangan else 0
     return render(request, "reviziya/sahifa.html", {
         "rv": rv, "plitkalar": plitkalar, "satrlar": satrlar, "guruh": guruh, "bolim": bolim, "saralash": saralash,
         "q": request.GET.get("q", ""), "bolimlar": bolimlar, "guruh_nomlari": GURUH_NOMLARI.items(),
-        "boshqarish": boshqarish, "tanlash": tanlash, "belgilash": skanerlay_oladi,
-        "tanlanadigan_bor": any(s["tanlash"] or s["bekor"] or s.get("belgi") for s in satrlar),
+        "boshqarish": boshqarish, "belgilash": skanerlay_oladi,
+        "tanlanadigan_bor": any(s.get("belgi") for s in satrlar),
         "keyingi": request.get_full_path(),
         "belgilangan": belgilangan, "kutilgan": kutilgan, "farqlar": farqlar,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
@@ -336,7 +346,20 @@ def _amal(request, pk, bajar, xabar):
 @require_POST
 @amal_kerak("reviziya_boshqarish")
 def yakunla_view(request, pk):
-    return _amal(request, pk, yakunla, "Reviziya {nomi} yakunlandi.")
+    """Yakunlash: sanash yopiladi va farqlar AV taqsimotiga yoziladi (bitta qadam)."""
+    rv = _reviziya_yoki_404(request, pk)
+    try:
+        natijalar = yakunla_va_yoz(rv, request.user)
+    except ReviziyaXato as e:
+        messages.error(request, str(e))
+        return redirect("reviziya:sahifa", pk=rv.pk)
+    xatolar = [n.xato for n in natijalar if n.natija != ReviziyaQollash.Natija.OK]
+    matn = f"Reviziya {rv.nomi} yakunlandi: {len(natijalar) - len(xatolar)} ta farq AV taqsimotiga yozildi"
+    if xatolar:
+        messages.warning(request, f"{matn}; {len(xatolar)} tasi yozilmadi: " + "; ".join(dict.fromkeys(xatolar)))
+    else:
+        messages.success(request, f"{matn}.")
+    return redirect("reviziya:sahifa", pk=rv.pk)
 
 
 @require_POST
@@ -347,77 +370,11 @@ def bekor_view(request, pk):
 
 @require_POST
 @amal_kerak("reviziya_boshqarish")
-def yop_view(request, pk):
-    return _amal(request, pk, reviziya_yop, "Reviziya {nomi} yopildi.")
-
-
-@require_POST
-@amal_kerak("reviziya_boshqarish")
-def qaytar_view(request, pk):
-    return _amal(
-        request, pk, yakunlanganga_qaytar, "Reviziya {nomi} «Yakunlangan» ga qaytarildi — farqlarni qo'llash mumkin."
-    )
-
-
-@require_POST
-@amal_kerak("reviziya_boshqarish")
 def ochiqqa_view(request, pk):
-    return _amal(request, pk, ochiqqa_qaytar, "Reviziya {nomi} «Ochiq» ga qaytarildi — sonlarni tuzatish mumkin.")
-
-
-@require_POST
-@amal_kerak("reviziya_boshqarish")
-def qolla_view(request, pk):
-    rv = _reviziya_yoki_404(request, pk)
-    kalitlar = list(dict.fromkeys(k for k in request.POST.getlist("kalit") if k))
-    if not kalitlar:
-        messages.warning(request, "Qo'llash uchun qator tanlanmagan.")
-        return redirect("reviziya:sahifa", pk=rv.pk)
-    try:
-        natijalar = qolla(rv, kalitlar, request.user)
-    except ReviziyaXato as e:
-        messages.error(request, str(e))
-        return redirect("reviziya:sahifa", pk=rv.pk)
-    xatolar = [n.xato for n in natijalar if n.natija != ReviziyaQollash.Natija.OK]
-    matn = f"{len(natijalar) - len(xatolar)} ta qo'llandi, {len(xatolar)} ta xato"
-    if xatolar:
-        messages.warning(request, f"{matn}: " + "; ".join(dict.fromkeys(xatolar)))
-    else:
-        messages.success(request, f"{matn}.")
-    # Spec §3.1: hamma qo'llanadigan qator qo'llangach reviziya o'zi yopiladi («Bo'limsiz» ga ko'chish — hisobga
-    # olinmaydi: uni qo'llab bo'lmaydi)
-    qolganlar = {q.kalit for q in solishtir(rv) if qollanadimi(q)} - _qollangan_kalitlar(rv)
-    if not qolganlar:
-        try:
-            reviziya_yop(rv, request.user)
-        except ReviziyaXato:
-            pass  # parallel yopilgan
-        else:
-            messages.info(request, f"Barcha farqlar qo'llandi — reviziya {rv.nomi} yopildi.")
-    return redirect("reviziya:sahifa", pk=rv.pk)
-
-
-@require_POST
-@amal_kerak("reviziya_boshqarish")
-def qolla_bekor_view(request, pk):
-    """Tanlangan qo'llangan qatorlar (`bekor_kalit`) — har biri alohida: bittasi rad etilsa, boshqalari bekor bo'ladi."""
-    rv = _reviziya_yoki_404(request, pk)
-    kalitlar = list(dict.fromkeys(k for k in request.POST.getlist("bekor_kalit") if k))
-    if not kalitlar:
-        messages.warning(request, "Bekor qilish uchun qator tanlanmagan.")
-        return redirect("reviziya:sahifa", pk=rv.pk)
-    xatolar = []
-    for kalit in kalitlar:
-        try:
-            qollashni_bekor_qil(rv, kalit, request.user)
-        except ReviziyaXato as e:
-            xatolar.append(str(e))
-    matn = f"{len(kalitlar) - len(xatolar)} ta bekor qilindi — AV'lar avvalgi joyi va holatiga qaytdi"
-    if xatolar:
-        messages.warning(request, f"{matn}; {len(xatolar)} ta rad etildi: " + "; ".join(dict.fromkeys(xatolar)))
-    else:
-        messages.success(request, f"{matn}.")
-    return redirect("reviziya:sahifa", pk=rv.pk)
+    return _amal(
+        request, pk, ochiqqa_qaytar,
+        "Reviziya {nomi} «Ochiq» ga qaytarildi — AV o'zgarishlari orqaga qaytarildi, sonlarni tuzatish mumkin.",
+    )
 
 
 @require_POST

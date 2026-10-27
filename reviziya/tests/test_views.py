@@ -111,7 +111,7 @@ def test_royxat_filial_cheklovi(fa, fb, revizor, hisobchi, foydalanuvchi):
     assert c.get(reverse("reviziya:sahifa", args=[bizniki.pk])).status_code == 200
     for nom in ("sahifa", "excel", "pdf"):
         assert c.get(reverse(f"reviziya:{nom}", args=[begona.pk])).status_code == 404
-    for nom in ("yakunla", "bekor", "qolla", "yop"):
+    for nom in ("yakunla", "bekor", "ochiqqa", "belgila"):
         assert c.post(reverse(f"reviziya:{nom}", args=[begona.pk])).status_code == 404
     begona.refresh_from_db()
     assert begona.holat == Reviziya.Holat.OCHIQ
@@ -128,59 +128,10 @@ def test_royxat_holat_filtri(fa, fb, revizor, hisobchi):
     assert ochiq.nomi in html and bekor.nomi not in html
 
 
-def test_yakunla_va_qolla_oqimi(ikki_topilmadi, hisobchi, foydalanuvchi):
-    rv, stol, stul = ikki_topilmadi
-    c = kirgan(hisobchi)
-    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
-    # HR ko'radi, lekin boshqarolmaydi
-    hr = kirgan(foydalanuvchi("hr"))
-    assert hr.get(sahifa).status_code == 200
-    assert hr.post(reverse("reviziya:yakunla", args=[rv.pk])).status_code == 403
-
-    assert c.post(reverse("reviziya:yakunla", args=[rv.pk])).status_code == 302
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.YAKUNLANGAN
-    html = c.get(sahifa).content.decode()
-    assert html.count('name="kalit"') == 2 and "qollangan-belgi" not in html
-
-    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
-    r = c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]}, follow=True)
-
-    assert "1 ta qo&#x27;llandi, 0 ta xato" in r.content.decode()
-    assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI
-    assert Taqsimot.objects.get(av=stul).holat == Holat.ISHLATILMOQDA
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.YAKUNLANGAN  # hali qo'llanmagan qator bor
-    html = c.get(sahifa).content.decode()
-    assert html.count("qollangan-belgi") == 1 and html.count('name="kalit"') == 1
-
-    # takror qo'llash — xato xabari bilan
-    r = c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]}, follow=True)
-    assert "0 ta qo&#x27;llandi, 1 ta xato" in r.content.decode()
-    assert "allaqachon qo&#x27;llangan" in r.content.decode()
-
-    assert c.post(reverse("reviziya:yop", args=[rv.pk])).status_code == 302
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.QOLLANGAN
-    assert ReviziyaQollash.objects.filter(natija="ok").count() == 1
-
-
-def test_hammasi_qollanganda_yopiladi(ikki_topilmadi, hisobchi):
-    rv, _, _ = ikki_topilmadi
-    c = kirgan(hisobchi)
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    kalitlar = [q.kalit for q in solishtir(rv)]
-
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": kalitlar})
-
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.QOLLANGAN
-
-
 def test_holat_xatosi_xabar_bilan(ikki_topilmadi, hisobchi):
     rv, _, _ = ikki_topilmadi
     c = kirgan(hisobchi)
-    r = c.post(reverse("reviziya:yop", args=[rv.pk]), follow=True)  # ochiq reviziyani yopib bo'lmaydi
+    r = c.post(reverse("reviziya:ochiqqa", args=[rv.pk]), follow=True)  # ochiq reviziyani qaytarib bo'lmaydi
     assert "alert-danger" in r.content.decode()
     c.post(reverse("reviziya:bekor", args=[rv.pk]))
     rv.refresh_from_db()
@@ -243,7 +194,7 @@ def test_menyu_bandi(client_rol):
     assert f'href="{reverse("vositalar:royxat")}"' not in html and f'href="{reverse("panel:bosh")}"' not in html
 
 
-def test_bolimsiz_kochish_tanlanmaydi_va_yopilishga_toskinlik_qilmaydi(ikki_topilmadi, hisobchi):
+def test_bolimsiz_kochish_yozilmaydi_va_xalaqit_bermaydi(ikki_topilmadi, hisobchi):
     from reviziya.servis import qayd_qosh
 
     rv, stol, stul = ikki_topilmadi
@@ -254,13 +205,11 @@ def test_bolimsiz_kochish_tanlanmaydi_va_yopilishga_toskinlik_qilmaydi(ikki_topi
     [bolimsiz] = [q for q in qatorlar if q.guruh == "boshqa_joyda"]
     [topilmadi] = [q for q in qatorlar if q.guruh == "topilmadi"]
 
-    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
-    assert f'value="{bolimsiz.kalit}"' not in html and f'value="{topilmadi.kalit}"' in html
-
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [topilmadi.kalit]})
-
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.QOLLANGAN
+    # «Bo'limsiz» ga ko'chish yozilmaydi (farq hisobiga kirmaydi), topilmadi — yoziladi
+    jurnal = set(rv.qollashlar.values_list("kalit", "natija"))
+    assert jurnal == {(topilmadi.kalit, "ok")}
+    javob = c.get(reverse("reviziya:sahifa", args=[rv.pk]))
+    assert javob.context["farqlar"] == {"jami": 1, "yozilgan": 1, "yozilmagan": 0, "eski": 0}
 
 
 def test_ortiqcha_izohi_sahifa_excel_pdf(ikki_topilmadi, hisobchi, fb):
@@ -342,95 +291,6 @@ def test_skanerlash_tugmasi(ikki_topilmadi, hisobchi, foydalanuvchi):
     assert skan_url not in kirgan(hisobchi).get(sahifa_url).content.decode()
 
 
-def test_qollangan_holat_yorligi_yopilgan():
-    """«qollangan» holati foydalanuvchiga «Yopilgan» deb ko'rinadi (farqlarning bir qismi qo'llanmagan bo'lishi mumkin)."""
-    from reviziya.models import Reviziya
-
-    assert dict(Reviziya.Holat.choices)["qollangan"] == "Yopilgan"
-
-
-def test_qollangan_farqlar_hisoblagichi_va_yopish_ogohlantirishi(ikki_topilmadi, hisobchi):
-    """Sahifada «Qo'llangan farqlar: X / Y»; yopish tasdig'ida qo'llanmaganlar soni aytiladi."""
-    rv, stol, _ = ikki_topilmadi
-    c = kirgan(hisobchi)
-    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]})
-
-    javob = c.get(sahifa)
-    assert javob.context["farqlar"] == {"jami": 2, "qollangan": 1, "qolgan": 1}
-    html = javob.content.decode()
-    assert "Qo'llangan farqlar" in html and "1 / 2" in html
-    assert "2 ta farqdan 1 tasi hali qo'llanmagan" in html and "data-tasdiq-xavfli" in html
-
-
-def test_yopilganni_yakunlanganga_qaytarish(ikki_topilmadi, hisobchi, foydalanuvchi):
-    rv, stol, stul = ikki_topilmadi
-    c = kirgan(hisobchi)
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    c.post(reverse("reviziya:yop", args=[rv.pk]))  # hech narsa qo'llanmasdan yopilgan
-    qaytar = reverse("reviziya:qaytar", args=[rv.pk])
-    assert 'action="%s"' % qaytar in c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
-    assert kirgan(foydalanuvchi("hr")).post(qaytar).status_code == 403
-
-    assert c.post(qaytar).status_code == 302
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.YAKUNLANGAN and rv.qollangan_vaqt is None and rv.qolladi is None
-
-    # endi farqlarni qo'llash mumkin
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [q.kalit for q in solishtir(rv)]})
-    assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI
-    assert Taqsimot.objects.get(av=stul).holat == Holat.TOPILMADI
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.QOLLANGAN  # hammasi qo'llangach o'zi yopildi
-
-
-def test_ochiq_reviziyani_qaytarib_bolmaydi(ikki_topilmadi, hisobchi):
-    rv, _, _ = ikki_topilmadi
-    r = kirgan(hisobchi).post(reverse("reviziya:qaytar", args=[rv.pk]), follow=True)
-    assert "alert-danger" in r.content.decode()
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.OCHIQ
-
-
-def test_qollash_eslatmasi_va_yopishqoq_panel(ikki_topilmadi, hisobchi):
-    """Yakunlanganda tepada «N ta farq qo'llanmagan» eslatmasi (vedomostga havola), Qo'llash — yopishqoq panelda."""
-    rv, _, _ = ikki_topilmadi
-    c = kirgan(hisobchi)
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
-
-    html = c.get(sahifa).content.decode()
-    assert "qollash-eslatma" in html and "2 ta farq hali qo" in html and 'href="?guruh=farqlar#vedomost"' in html
-    assert 'id="vedomost"' in html and 'class="amal-panel"' in html and "data-hammasini-tanla" in html
-
-    filtrlangan = c.get(sahifa, {"guruh": "farqlar"}).context["satrlar"]
-    assert len(filtrlangan) == 2
-
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [q.kalit for q in solishtir(rv)]})
-    assert "qollash-eslatma" not in c.get(sahifa).content.decode()  # hammasi qo'llandi, yopildi
-
-
-def test_qollashni_bekor_qilish_tugmasi_va_view(ikki_topilmadi, hisobchi, foydalanuvchi):
-    rv, stol, _ = ikki_topilmadi
-    c = kirgan(hisobchi)
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]})
-    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
-    bekor_url = reverse("reviziya:qolla_bekor", args=[rv.pk])
-
-    html = c.get(sahifa).content.decode()
-    assert f'formaction="{bekor_url}"' in html and 'name="bekor_kalit"' in html
-    assert kirgan(foydalanuvchi("hr")).post(bekor_url, {"bekor_kalit": kalit}).status_code == 403
-
-    r = c.post(bekor_url, {"bekor_kalit": kalit}, follow=True)
-    assert "bekor qilindi" in r.content.decode()
-    assert Taqsimot.objects.get(av=stol).holat == Holat.ISHLATILMOQDA
-    assert c.get(sahifa).context["farqlar"]["qollangan"] == 0
-
-
 def test_revizor_oz_filialida_boshqaradi(fa, fb, foydalanuvchi, hisobchi):
     """Revizor o'z filialidagi reviziyani yakunlaydi; boshqa filialdagisi unga ko'rinmaydi (404)."""
     revizor = foydalanuvchi("revizor", filiallar=[fa])
@@ -473,57 +333,68 @@ def test_ochiq_reviziyada_sahifadan_belgilash(ikki_topilmadi, hisobchi, foydalan
     assert "alert-danger" in r.content.decode() and not ReviziyaQayd.objects.filter(av=stul).exists()
 
 
-def test_qollashni_belgilab_ommaviy_bekor_qilish(ikki_topilmadi, hisobchi):
+def test_yakunlash_farqlarni_avga_yozadi_va_ochiqqa_qaytaradi(ikki_topilmadi, hisobchi, foydalanuvchi):
+    """Oddiy oqim: Yakunlash — farqlar AV'larga yoziladi; «Ochiqqa qaytarish» — o'zgarishlar orqaga qaytadi."""
     rv, stol, stul = ikki_topilmadi
     c = kirgan(hisobchi)
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    kalitlar = [q.kalit for q in solishtir(rv)]
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": kalitlar})
-    c.post(reverse("reviziya:qaytar", args=[rv.pk]))  # hammasi qo'llanib yopilgan edi
-    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
-    assert html.count('name="bekor_kalit"') == 2 and "data-bekor-tugma" in html
-
-    r = c.post(reverse("reviziya:qolla_bekor", args=[rv.pk]), {"bekor_kalit": kalitlar}, follow=True)
-    assert "2 ta bekor qilindi" in r.content.decode()
-    assert {t.holat for t in Taqsimot.objects.filter(av__in=[stol, stul])} == {Holat.ISHLATILMOQDA}
-
-
-def test_farqsiz_reviziyada_izoh(fa, revizor, hisobchi):
-    """Hamma AV topilgan (farq yo'q) — «farq yo'q» belgisi va qo'llash kerak emasligi haqida izoh."""
-    from reviziya.servis import qayd_qosh
-
-    a = Bolim.objects.create(filial=fa, nomi="A xona")
-    stol = av_yarat(fa, inv="INV-STOL")
-    qator(stol, fa, "1", bolim=a)
-    rv = reviziya_och(fa, None, [revizor], [], hisobchi)
-    qayd_qosh(rv, a, hisobchi, av=stol)
-    c = kirgan(hisobchi)
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-
-    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
-    assert "farq yo&#x27;q" in html or "farq yo'q" in html
-    assert "farqsiz-izoh" in html and 'name="bekor_kalit"' not in html
-
-
-def test_ochiqqa_qaytarish(ikki_topilmadi, hisobchi):
-    """Yakunlangan reviziya sanashni tuzatish uchun «Ochiq» ga qaytariladi — faqat qo'llangan farq qolmagan bo'lsa."""
-    rv, stol, _ = ikki_topilmadi
-    c = kirgan(hisobchi)
     sahifa = reverse("reviziya:sahifa", args=[rv.pk])
-    ochiqqa = reverse("reviziya:ochiqqa", args=[rv.pk])
-    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
-    kalit = next(q.kalit for q in solishtir(rv) if q.av_id == stol.pk)
-    c.post(reverse("reviziya:qolla", args=[rv.pk]), {"kalit": [kalit]})
+    hr = kirgan(foydalanuvchi("hr"))
+    assert hr.get(sahifa).status_code == 200
+    assert hr.post(reverse("reviziya:yakunla", args=[rv.pk])).status_code == 403
 
-    assert f'action="{ochiqqa}"' not in c.get(sahifa).content.decode()  # qo'llangan bor — tugma yo'q
-    r = c.post(ochiqqa, follow=True)
-    assert "alert-danger" in r.content.decode() and "bekor qiling" in r.content.decode()
+    html = c.get(sahifa).content.decode()
+    assert "2 ta farq (topilmagan — «Topilmadi»" in html  # yakunlash tasdig'ida
+    r = c.post(reverse("reviziya:yakunla", args=[rv.pk]), follow=True)
+    assert "yakunlandi: 2 ta farq AV taqsimotiga yozildi" in r.content.decode()
     rv.refresh_from_db()
     assert rv.holat == Reviziya.Holat.YAKUNLANGAN
+    assert {t.holat for t in Taqsimot.objects.filter(av__in=[stol, stul])} == {Holat.TOPILMADI}
 
-    c.post(reverse("reviziya:qolla_bekor", args=[rv.pk]), {"bekor_kalit": [kalit]})
-    assert f'action="{ochiqqa}"' in c.get(sahifa).content.decode()
-    assert c.post(ochiqqa).status_code == 302
+    javob = c.get(sahifa)
+    html = javob.content.decode()
+    assert javob.context["farqlar"] == {"jami": 2, "yozilgan": 2, "yozilmagan": 0, "eski": 0}
+    assert html.count("yozildi-belgi") == 2 and "Ochiqqa qaytarish" in html
+    for eski in ("reviziya:qolla", "Qo&#x27;llash", "Yopish</button>"):
+        assert eski not in html
+
+    r = c.post(reverse("reviziya:ochiqqa", args=[rv.pk]), follow=True)
+    assert "AV o&#x27;zgarishlari orqaga qaytarildi" in r.content.decode()
     rv.refresh_from_db()
-    assert (rv.holat, rv.yakunlangan_vaqt, rv.yakunladi) == (Reviziya.Holat.OCHIQ, None, None)
+    assert (rv.holat, rv.yakunlangan_vaqt) == (Reviziya.Holat.OCHIQ, None)
+    assert {t.holat for t in Taqsimot.objects.filter(av__in=[stol, stul])} == {Holat.ISHLATILMOQDA}
     assert 'name="belgi"' in c.get(sahifa).content.decode()  # endi sahifadan son kiritish mumkin
+
+
+def test_yozilmagan_farq_sababi_bilan(ikki_topilmadi, hisobchi, fa):
+    from vositalar.amallar import kochir
+
+    rv, stol, _ = ikki_topilmadi
+    b = Bolim.objects.create(filial=fa, nomi="B xona")
+    kochir(Taqsimot.objects.get(av=stol), "1", b, hisobchi)  # suratdan keyin ko'chirildi — yozib bo'lmaydi
+    c = kirgan(hisobchi)
+    r = c.post(reverse("reviziya:yakunla", args=[rv.pk]), follow=True)
+    assert "1 tasi yozilmadi" in r.content.decode()
+
+    javob = c.get(reverse("reviziya:sahifa", args=[rv.pk]))
+    html = javob.content.decode()
+    assert javob.context["farqlar"] == {"jami": 2, "yozilgan": 1, "yozilmagan": 1, "eski": 0}
+    assert "yozilmagan-eslatma" in html and "Taqsimot o&#x27;zgargan" in html
+
+
+def test_farqsiz_va_eski_tartibdagi_yakunlangan(ikki_topilmadi, hisobchi):
+    from reviziya.servis import qayd_qosh, yakunla
+
+    rv, stol, stul = ikki_topilmadi
+    a = Bolim.objects.get(nomi="A xona")
+    c = kirgan(hisobchi)
+    # eski tartib: yakunlangan, lekin farqlar yozilmagan — qatorda yo'riqnoma
+    yakunla(rv, hisobchi)
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert "2 tasi yozilmadi" in html and "Eski tartibda yakunlangan" in html and "reviziya eski tartibda yakunlangan" in html
+
+    c.post(reverse("reviziya:ochiqqa", args=[rv.pk]))
+    qayd_qosh(rv, a, hisobchi, av=stol)
+    qayd_qosh(rv, a, hisobchi, av=stul)
+    c.post(reverse("reviziya:yakunla", args=[rv.pk]))
+    html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
+    assert "farq yo&#x27;q — hamma AV joyida" in html or "farq yo'q — hamma AV joyida" in html

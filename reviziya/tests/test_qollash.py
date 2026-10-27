@@ -5,7 +5,7 @@ import pytest
 from django.db import IntegrityError, transaction
 
 from reviziya.models import Reviziya, ReviziyaQollash
-from reviziya.qollash import qolla, reviziya_yop
+from reviziya.qollash import ochiqqa_qaytar, qolla, yakunla_va_yoz
 from reviziya.servis import ReviziyaXato, qayd_qosh, reviziya_och, yakunla
 from reviziya.solishtir import solishtir
 from vositalar.amallar import kochir, mol_ozgartir
@@ -224,20 +224,7 @@ def test_faqat_yakunlangan(filial, och, hisobchi):
     with pytest.raises(ReviziyaXato):
         qolla(rv, [], hisobchi)
     with pytest.raises(ReviziyaXato):
-        reviziya_yop(rv, hisobchi)
-
-
-def test_reviziya_yop(filial, och, hisobchi):
-    rv = och(filial)
-    yakunla(rv, hisobchi)
-
-    reviziya_yop(rv, hisobchi)
-
-    rv.refresh_from_db()
-    assert rv.holat == Reviziya.Holat.QOLLANGAN
-    assert rv.qolladi == hisobchi and rv.qollangan_vaqt is not None
-    with pytest.raises(ReviziyaXato):
-        qolla(rv, [], hisobchi)
+        ochiqqa_qaytar(rv, hisobchi)
 
 
 def test_ok_qollash_noyob(filial, och, hisobchi):
@@ -301,8 +288,9 @@ def test_bolimsiz_joyga_kochirish_aniq_xato(filial, och, qosh, hisobchi):
     assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]
 
 
-def test_bosh_ekran_topilmadi_faqat_qollashdan_keyin(filial, och, qosh, hisobchi):
-    """10 dan 5 tasi topilmadi: bosh ekrandagi «Topilmadi» skanerlash va yakunlashda o'zgarmaydi, qo'llashda 5 bo'ladi."""
+def test_bosh_ekran_topilmadi_yakunlashda(filial, och, qosh, hisobchi):
+    """10 dan 5 tasi topilmadi: bosh ekrandagi «Topilmadi» skanerlashda o'zgarmaydi, yakunlashda 5 bo'ladi;
+    «Ochiq» ga qaytarilsa — yana 10 ta «Ishlatilmoqda»."""
     from django.test import Client
     from django.urls import reverse
 
@@ -320,16 +308,53 @@ def test_bosh_ekran_topilmadi_faqat_qollashdan_keyin(filial, och, qosh, hisobchi
     rv = och(filial)
     qosh(rv, a, "5", av=stol)
     assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("10")}  # ochiq, 5 tasi skanerlangan
-    yakunla(rv, hisobchi)
-    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("10")}  # yakunlangan, hali qo'llanmagan
 
-    [natija] = qolla(rv, [kalit(rv, "kam", stol)], hisobchi)
+    [natija] = yakunla_va_yoz(rv, hisobchi)
     assert natija.natija == "ok" and natija.soni == Decimal("5")
-    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("5"), Holat.TOPILMADI: Decimal("5")}
-    reviziya_yop(rv, hisobchi)
     assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("5"), Holat.TOPILMADI: Decimal("5")}
     h = TaqsimotHarakat.objects.get(av=stol)
     assert (h.sabab, h.hujjat_izoh, h.soni) == ("reviziya", rv.nomi, Decimal("5"))
+
+    ochiqqa_qaytar(rv, hisobchi)
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.OCHIQ
+    assert bosh_ekran() == {Holat.ISHLATILMOQDA: Decimal("10")}
+
+
+def test_yakunlashda_yozilmagan_farq_xato_bilan_qoladi(filial, och, hisobchi):
+    """Bitta farqni yozib bo'lmasa (taqsimot o'zgargan) — yakunlash baribir bo'ladi, qolganlari yoziladi."""
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    stol, stul = av_yarat(filial, soni="1"), av_yarat(filial, soni="1")
+    t = qator(stol, filial, "1", bolim=a)
+    qator(stul, filial, "1", bolim=a)
+    rv = och(filial)
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    kochir(t, Decimal("1"), b, hisobchi)  # reviziya suratidan keyin ko'chirildi
+
+    natijalar = yakunla_va_yoz(rv, hisobchi)
+
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN
+    assert sorted(n.natija for n in natijalar) == ["ok", "xato"]
+    assert Taqsimot.objects.get(av=stul).holat == Holat.TOPILMADI
+    assert Taqsimot.objects.get(av=stol).holat == Holat.ISHLATILMOQDA
+
+
+def test_ochiqqa_qaytarish_keyingi_amal_bolsa_rad(filial, och, hisobchi):
+    a = Bolim.objects.create(filial=filial, nomi="A")
+    b = Bolim.objects.create(filial=filial, nomi="B")
+    stol = av_yarat(filial, soni="2")
+    qator(stol, filial, "2", bolim=a)
+    rv = och(filial)
+    yakunla_va_yoz(rv, hisobchi)
+    kochir(Taqsimot.objects.get(av=stol), Decimal("1"), b, hisobchi)  # yakunlashdan keyin qo'lda
+
+    with pytest.raises(ReviziyaXato, match="boshqa amal"):
+        ochiqqa_qaytar(rv, hisobchi)
+
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN  # hammasi yoki hech biri
+    assert ReviziyaQollash.objects.get(reviziya=rv).natija == "ok"
 
 
 # --- Qo'llashni bekor qilish ---
@@ -409,7 +434,7 @@ def test_bekor_keyin_boshqa_amal_bolsa_rad(filial, och, hisobchi):
     assert taqsimot(stol) == [(a.pk, Holat.TOPILMADI, Decimal("1")), (b.pk, Holat.TOPILMADI, Decimal("1"))]
 
 
-def test_bekor_faqat_yakunlanganda_va_qollanganda(filial, och, hisobchi):
+def test_bekor_faqat_yakunlanganda_va_yozilganda(filial, och, hisobchi):
     a = Bolim.objects.create(filial=filial, nomi="A")
     stol, stul = av_yarat(filial, soni="1"), av_yarat(filial, soni="1")
     qator(stol, filial, "1", bolim=a)
@@ -420,7 +445,7 @@ def test_bekor_faqat_yakunlanganda_va_qollanganda(filial, och, hisobchi):
     with pytest.raises(ReviziyaXato, match="qo'llanmagan"):
         qollashni_bekor_qil(rv, k, hisobchi)
     qolla(rv, [k], hisobchi)
-    reviziya_yop(rv, hisobchi)
-    with pytest.raises(ReviziyaXato, match="Yakunlangan"):
-        qollashni_bekor_qil(rv, k, hisobchi)
+    bekor = och(filial)  # ochiq reviziyada — rad
+    with pytest.raises(ReviziyaXato, match="yakunlanmagan"):
+        qollashni_bekor_qil(bekor, k, hisobchi)
     assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI

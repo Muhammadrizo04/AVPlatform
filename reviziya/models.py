@@ -9,12 +9,11 @@ User = settings.AUTH_USER_MODEL
 
 
 class Reviziya(models.Model):
-    """Inventarizatsiya (reviziya) hujjati: ochiq -> yakunlangan -> yopilgan («qollangan») yoki bekor."""
+    """Inventarizatsiya (reviziya) hujjati: ochiq -> yakunlangan (farqlar taqsimotga yoziladi) yoki bekor."""
 
     class Holat(models.TextChoices):
         OCHIQ = "ochiq", "Ochiq"
         YAKUNLANGAN = "yakunlangan", "Yakunlangan"
-        QOLLANGAN = "qollangan", "Yopilgan"  # qiymat o'zgarmaydi (bazadagi yozuvlar)
         BEKOR = "bekor", "Bekor qilingan"
 
     raqam = models.PositiveIntegerField(unique=True)
@@ -28,8 +27,6 @@ class Reviziya(models.Model):
     ochilgan_vaqt = models.DateTimeField(default=timezone.now)
     yakunladi = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
     yakunlangan_vaqt = models.DateTimeField(null=True, blank=True)
-    qolladi = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
-    qollangan_vaqt = models.DateTimeField(null=True, blank=True)
     bekor_qildi = models.ForeignKey(User, null=True, blank=True, on_delete=models.PROTECT, related_name="+")
     bekor_vaqti = models.DateTimeField(null=True, blank=True)
 

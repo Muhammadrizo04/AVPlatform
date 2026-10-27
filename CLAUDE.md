@@ -22,7 +22,7 @@
 - Ilova `reviziya`: inventarizatsiya hujjati `RV-%06d`, raqam advisory lock bilan (kalit `7310003`). Panel: `/reviziya/` (`reviziya_boshqarish`, `reviziya_korish`).
 - Huquqlar: `reviziya_boshqarish` (admin, hisobchi, revizor), `reviziya_otkazish` (admin, hisobchi, revizor), `reviziya_korish` (admin, hisobchi, hr, rahbar, revizor). Revizor — faqat o'z filiallarida (`filial_bilan_chekla`).
 - Revizor kirgach `/reviziya/m/` ga yo'naltiriladi: QR (`DS|<filial kodi>|<inv>`) skanerlaydi yoki inv bo'yicha qidiradi; qaydlar `+soni` bilan birlashadi.
-- Oqim: hisobchi yakunlaydi -> vedomost -> qo'llash -> yopish. Holatlar: `ochiq`, `yakunlangan`, `qollangan`, `bekor`.
+- Oqim: ochiq -> «Yakunlash» (farqlar avtomatik taqsimotga yoziladi, `qollash.yakunla_va_yoz`) -> yakunlangan; «Ochiqqa qaytarish» yozilganlarni teskari amal bilan qaytaradi. Holatlar: `ochiq`, `yakunlangan`, `bekor`.
 - Reviziya qaydlari AV tarixida (`tur="reviziya"`) filial cheklovi bilan chiqadi (`vositalar/tarix.py`).
 
 ## Buyruqlar
