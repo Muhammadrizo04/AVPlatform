@@ -462,9 +462,11 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 #taqsimot td a:not(.btn) { color: var(--av-indigo); font-weight: 600; }
 .molsiz { color: #b3093a; font-weight: 700; }
 .molsiz a { color: var(--av-indigo) !important; margin-inline-start: .375rem; }
-.amal-panel { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .5rem .75rem; padding: .875rem 1.25rem; background: #f8f9fd; border-top: 1px solid var(--av-chiziq-och); }
-.amal-panel label { display: flex; flex-direction: column; gap: .25rem; font-size: .75rem; color: var(--av-ikkilamchi); font-weight: 600; }
-.amal-panel input[type=number] { width: 7rem; }
+/* AV kartochkasi taqsimot qatoridagi ochiladigan forma — yopishqoq qora tanlov panelidan (.amal-panel) farqli, och */
+.amal-qatori .amal-panel { position: static; align-items: flex-end; gap: .5rem .75rem; margin: 0; padding: .875rem 1.25rem;
+  background: #f8f9fd; color: var(--av-siyoh); border-radius: 0; box-shadow: none; border-top: 1px solid var(--av-chiziq-och); }
+.amal-qatori .amal-panel label { display: flex; flex-direction: column; gap: .25rem; font-size: .75rem; color: var(--av-ikkilamchi); font-weight: 600; }
+.amal-qatori .amal-panel input[type=number] { width: 7rem; }
 
 .tarix-royxat { list-style: none; margin: 0; padding: .5rem 1.25rem; }
 .tarix-royxat li { display: grid; grid-template-columns: .5rem 8rem 1fr auto auto; gap: .25rem .875rem; padding: .55rem 0; font-size: .8125rem; align-items: baseline; }
