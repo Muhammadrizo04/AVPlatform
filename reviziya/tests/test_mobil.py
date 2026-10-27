@@ -500,9 +500,10 @@ def test_boshqa_filial_av_inv_raqam_bilan(muhit, revizor, filial_yarat):
     assert saqla(c, rv, xona, qr_matn="DS|02|INV_100652", usul="qidiruv").status_code == 200
     [q] = [q for q in solishtir(rv) if q.guruh == "ortiqcha"]
     assert q.av_id is None and q.izoh == "boshqa filial" and q.qr_matn == "DS|02|INV_100652"
-    # QR orqali ham AV nomi va filiali ko'rinadi; qisman moslik boshqa filialdan qidirilmaydi
+    # QR orqali ham AV nomi va filiali ko'rinadi; inv. raqam qismi (kamida 5 belgi) bilan ham topiladi
     assert "Showroom" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, qr="DS|02|INV_100652")))
-    assert "Hech narsa topilmadi" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="100652")))
+    assert 'value="DS|02|INV_100652"' in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="00652")))
+    assert "Hech narsa topilmadi" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="0652")))
 
 
 def test_boshqa_filialda_bir_nechta_moslik_royxat(muhit, revizor, filial_yarat):

@@ -466,6 +466,9 @@ def test_panelda_av_qidirib_qoshish(ikki_topilmadi, hisobchi, fa, filial_yarat, 
 
     html = c.get(qidir, {"q": "INV_100652"}).content.decode()
     assert begona.nomi in html and "Showroom" in html and 'value="DS|02|INV_100652"' in html
+    av_yarat(filial_yarat("03", "Yaypan"), inv="INV_100652-2")
+    html = c.get(qidir, {"q": "00652"}).content.decode()  # inv. raqam qismi (kamida 5 belgi) — ikkalasi
+    assert 'value="DS|02|INV_100652"' in html and 'value="DS|03|INV_100652-2"' in html
     r = c.post(qosh, {"qr": "DS|02|INV_100652", "bolim": a.pk, "soni": "1", "keyingi": sahifa}, follow=True)
     assert "qo&#x27;shildi" in r.content.decode()
     q = ReviziyaQayd.objects.get(av__isnull=True)

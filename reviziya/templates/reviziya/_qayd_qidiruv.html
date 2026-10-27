@@ -6,5 +6,5 @@
   {% for b in begonalar %}{% include "reviziya/_qayd_qidiruv_qator.html" with av=b.av filial=b.filial qr=b.qr %}{% endfor %}
 </ul>
 {% else %}
-<p class="small text-body-secondary mb-0">«{{ q }}» bo'yicha hech narsa topilmadi. Boshqa filial AV'si inv. raqamini to'liq yozing.</p>
+<p class="small text-body-secondary mb-0">«{{ q }}» bo'yicha hech narsa topilmadi — na shu filialda, na boshqa filiallarda (boshqa filiallardan inv. raqam bo'yicha, kamida 5 belgi).</p>
 {% endif %}

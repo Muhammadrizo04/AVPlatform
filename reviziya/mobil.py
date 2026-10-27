@@ -404,16 +404,25 @@ def _qidir(rv, q: str):
     )
 
 
+BOSHQA_FILIAL_MIN = 5  # boshqa filiallardan qisman (inv. raqam qismi) qidirish uchun eng kam belgi
+
+
 def _boshqa_filialdan(rv, q: str) -> list[dict]:
-    """Inv. raqam shu filialda topilmasa — boshqa filiallardan aniq (katta-kichik harfsiz) moslik. Har biri uchun
-    yorliq QR matni (`DS|<filial kodi>|<inv>`) — qayd QR bilan skanerlangandek «ortiqcha (boshqa filial)» bo'ladi."""
+    """Inv. raqam shu filialda topilmasa — boshqa filiallardan: aniq moslik birinchi, so'ng (kamida 5 belgi bo'lsa)
+    inv. raqam qismi bo'yicha. Har biri uchun yorliq QR matni (`DS|<filial kodi>|<inv>`) — qayd QR bilan
+    skanerlangandek «ortiqcha (boshqa filial)» bo'ladi."""
+    shart = Q(inv__iexact=q)
+    if len(q) >= BOSHQA_FILIAL_MIN:
+        shart |= Q(inv__icontains=q)
     avlar = (
         AV.objects.annotate(inv=Trim("inv_raqam"))
-        .filter(inv__iexact=q, filial_rekvizit__isnull=False)
+        .filter(shart, filial_rekvizit__isnull=False)
         .exclude(filial_rekvizit_id=rv.filial_id)
+        .exclude(inv="")
         .select_related("filial_rekvizit")
-        .order_by("filial_rekvizit__nomi", "pk")[:QIDIRUV_NATIJALARI]
+        .order_by("inv", "filial_rekvizit__nomi", "pk")[:QIDIRUV_NATIJALARI * 5]
     )
+    avlar = sorted(avlar, key=lambda av: av.inv.casefold() != q.casefold())[:QIDIRUV_NATIJALARI]  # aniq — birinchi
     return [
         {"av": av, "filial": av.filial_rekvizit, "qr": f"{QR_BOSHI}{av.filial_rekvizit.kod.strip()}|{av.inv}"}
         for av in avlar
