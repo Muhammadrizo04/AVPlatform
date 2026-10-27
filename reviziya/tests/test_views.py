@@ -449,3 +449,37 @@ def test_belgilash_soni_katak_qiymatida(ikki_topilmadi, hisobchi):
     assert ReviziyaQayd.objects.get(av=stol).soni == 1
     html = c.get(reverse("reviziya:sahifa", args=[rv.pk])).content.decode()
     assert "data-soni-jamla" in html
+
+
+def test_panelda_av_qidirib_qoshish(ikki_topilmadi, hisobchi, fa, filial_yarat, foydalanuvchi):
+    """Ochiq reviziya sahifasida AV qidirish: shu filialdan yoki boshqa filialdan (aniq inv.) — topildi deb qo'shish."""
+    from reviziya.models import ReviziyaQayd
+
+    rv, stol, _ = ikki_topilmadi
+    a = Bolim.objects.get(nomi="A xona")
+    begona = av_yarat(filial_yarat("02", "Showroom"), inv="INV_100652")
+    c = kirgan(hisobchi)
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+    qidir = reverse("reviziya:qidir", args=[rv.pk])
+    qosh = reverse("reviziya:qayd_qosh", args=[rv.pk])
+    assert f'hx-get="{qidir}"' in c.get(sahifa).content.decode()
+
+    html = c.get(qidir, {"q": "INV_100652"}).content.decode()
+    assert begona.nomi in html and "Showroom" in html and 'value="DS|02|INV_100652"' in html
+    r = c.post(qosh, {"qr": "DS|02|INV_100652", "bolim": a.pk, "soni": "1", "keyingi": sahifa}, follow=True)
+    assert "qo&#x27;shildi" in r.content.decode()
+    q = ReviziyaQayd.objects.get(av__isnull=True)
+    assert (q.qr_matn, q.bolim, q.soni) == ("DS|02|INV_100652", a, 1)
+    assert [x.izoh for x in solishtir(rv) if x.guruh == "ortiqcha"] == ["boshqa filial"]
+
+    html = c.get(qidir, {"q": "INV-STOL"}).content.decode()  # shu filialdagi AV
+    assert stol.nomi in html and f'name="av" value="{stol.pk}"' in html
+    c.post(qosh, {"av": stol.pk, "bolim": a.pk, "soni": "1"})
+    assert ReviziyaQayd.objects.get(av=stol).soni == 1
+
+    # noma'lum QR / begona AV id rad etiladi; HR — 403
+    r = c.post(qosh, {"qr": "DS|99|YOQ", "bolim": a.pk, "soni": "1"}, follow=True)
+    assert "alert-danger" in r.content.decode()
+    r = c.post(qosh, {"av": begona.pk, "bolim": a.pk, "soni": "1"}, follow=True)
+    assert "alert-danger" in r.content.decode()
+    assert kirgan(foydalanuvchi("hr")).get(qidir, {"q": "x"}).status_code == 403

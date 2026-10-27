@@ -18,7 +18,7 @@
       <td class="text-nowrap">{% if s.yozildi %}<span class="badge bg-success-subtle text-success-emphasis yozildi-belgi" title="Yakunlashda AV taqsimotiga yozildi"><i class="cil-check-alt me-1"></i>AV'ga yozildi</span>{% elif s.yozilmadi %}<span class="badge bg-danger-subtle text-danger-emphasis" title="{{ s.yozilmadi }}">yozilmadi</span><div class="small text-danger text-wrap" style="max-width: 18rem">{{ s.yozilmadi }}</div>{% elif s.belgi %}<input class="form-control form-control-sm chop-yoq" type="number" name="soni_{{ s.belgi }}" value="{{ s.qolgan|floatformat:'-3u' }}" min="0.001" step="any" style="width: 6rem" data-soni-maydon aria-label="Topilgan soni">{% endif %}</td>
     </tr>
   {% endwith %}{% empty %}
-    <tr><td colspan="10" class="text-body-secondary">Qator topilmadi.</td></tr>
+    <tr><td colspan="10" class="text-body-secondary">Qator topilmadi.{% if belgilash and q %} Vedomostda yo'q AV'ni (boshqa filialnikini ham) yuqoridagi «AV qidirib qo'shish» orqali qo'shing.{% endif %}</td></tr>
   {% endfor %}
   </tbody>
 </table>

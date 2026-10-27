@@ -1,0 +1,10 @@
+{% if not q %}
+{% elif shu or begonalar %}
+<p class="small text-body-secondary mb-2">{% if shu %}Shu filialda topildi{% else %}Bu filialda yo'q — <b>boshqa filiallarda</b> topildi; «ortiqcha (boshqa filial)» bo'lib qayd qilinadi{% endif %}. Xona va sonni tanlab qo'shing:</p>
+<ul class="list-unstyled mb-0 d-grid gap-2">
+  {% for a in shu %}{% include "reviziya/_qayd_qidiruv_qator.html" with av=a filial=None qr="" %}{% endfor %}
+  {% for b in begonalar %}{% include "reviziya/_qayd_qidiruv_qator.html" with av=b.av filial=b.filial qr=b.qr %}{% endfor %}
+</ul>
+{% else %}
+<p class="small text-body-secondary mb-0">«{{ q }}» bo'yicha hech narsa topilmadi. Boshqa filial AV'si inv. raqamini to'liq yozing.</p>
+{% endif %}

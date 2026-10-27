@@ -26,11 +26,12 @@ from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, X
 from .pdf import dalolatnoma_pdf
 from .qollash import QOLLANADI, ochiqqa_qaytar, qollanadimi, yakunla_va_yoz
 from .servis import (
-    KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qayd_qosh, qayd_tuzat,
-    reviziya_och,
+    BOSHQA_FILIAL, KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qamrov_bolim_idlari,
+    qayd_qosh, qayd_tuzat, qr_tahlil, reviziya_och,
     revizorlarni_ozgartir,
 )
 from .kesim import xonalar_kesimi
+from .mobil import _av_doirasi, _boshqa_filialdan, _qidir
 from .solishtir import (
     BOLIMSIZ, GURUH_NOMLARI, GURUHLAR, bolim_boyicha, bolim_kesim_nomi, bolim_nomlari, guruh_nomi, jamlar, solishtir,
 )
@@ -396,6 +397,70 @@ def _orqaga(request, rv):
     if url_has_allowed_host_and_scheme(keyingi, allowed_hosts={request.get_host()}):
         return redirect(keyingi)
     return redirect("reviziya:sahifa", pk=rv.pk)
+
+
+def _kiritadigan_reviziya(request, pk) -> Reviziya:
+    """Sahifadan qayd kiritish: reviziya boshqaruvchisi yoki shu reviziya revizori (filial cheklovi bilan)."""
+    rv = _reviziya_yoki_404(request, pk)
+    if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
+        raise Http404
+    return rv
+
+
+def _qamrov_bolimlari(rv) -> list:
+    qamrov = qamrov_bolim_idlari(rv)
+    bolimlar = Bolim.objects.filter(filial_id=rv.filial_id, faol=True)
+    if qamrov is not None:
+        bolimlar = bolimlar.filter(pk__in=qamrov)
+    return sorted(bolimlar, key=lambda b: b.toliq_nomi.casefold())
+
+
+@amal_kerak("reviziya_otkazish")
+def qidir_view(request, pk):
+    """Ochiq reviziya sahifasi (HTMX): AV qidirish — shu filialdan (nom, inv., МОЛ), topilmasa boshqa filiallardan
+    (aniq inv.) — «topildi» deb qo'shish uchun."""
+    rv = _kiritadigan_reviziya(request, pk)
+    q = (request.GET.get("q") or "").strip()[:100]
+    shu = _qidir(rv, q) if q else []
+    return render(request, "reviziya/_qayd_qidiruv.html", {
+        "rv": rv, "q": q, "shu": shu, "begonalar": [] if shu or not q else _boshqa_filialdan(rv, q),
+        "bolimlar": _qamrov_bolimlari(rv), "keyingi": request.headers.get("HX-Current-URL", ""),
+    })
+
+
+@require_POST
+@amal_kerak("reviziya_otkazish")
+def qayd_qosh_view(request, pk):
+    """Qidiruvdan: `av` (shu filial AV'si) yoki `qr` (boshqa filial yorlig'i) — `bolim` da `soni` dona topildi."""
+    rv = _kiritadigan_reviziya(request, pk)
+    try:
+        bolim_id = request.POST.get("bolim") or ""
+        bolim = Bolim.objects.filter(pk=int(bolim_id), filial_id=rv.filial_id).first() if bolim_id else None
+        if bolim_id and bolim is None:
+            raise ReviziyaXato("Bo'lim topilmadi.")
+        try:
+            soni = Decimal((request.POST.get("soni") or "1").replace(",", ".").strip())
+        except InvalidOperation:
+            raise ReviziyaXato("Sonni to'g'ri kiriting.") from None
+        av_id, qr = (request.POST.get("av") or "").strip(), (request.POST.get("qr") or "").strip()
+        if av_id:
+            av = _av_doirasi(rv).filter(pk=int(av_id)).first()
+            if av is None:
+                raise ReviziyaXato("AV bu reviziya filialida topilmadi.")
+            qayd_qosh(rv, bolim, request.user, av=av, soni=soni, usul=ReviziyaQayd.Usul.QIDIRUV)
+            nomi = av.nomi
+        else:
+            if qr_tahlil(qr, rv)[1] != BOSHQA_FILIAL:
+                raise ReviziyaXato("Yorliq boshqa filialga tegishli emas.")
+            qayd_qosh(rv, bolim, request.user, qr_matn=qr, soni=soni, usul=ReviziyaQayd.Usul.QIDIRUV)
+            nomi = qr
+    except ValueError:
+        messages.error(request, "Noto'g'ri so'rov.")
+    except ReviziyaXato as e:
+        messages.error(request, str(e))
+    else:
+        messages.success(request, f"«{nomi}» topildi deb qo'shildi.")
+    return _orqaga(request, rv)
 
 
 @require_POST
