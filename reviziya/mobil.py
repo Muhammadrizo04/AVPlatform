@@ -404,6 +404,31 @@ def _qidir(rv, q: str):
     )
 
 
+def _boshqa_filialdan(rv, q: str) -> list[dict]:
+    """Inv. raqam shu filialda topilmasa — boshqa filiallardan aniq (katta-kichik harfsiz) moslik. Har biri uchun
+    yorliq QR matni (`DS|<filial kodi>|<inv>`) — qayd QR bilan skanerlangandek «ortiqcha (boshqa filial)» bo'ladi."""
+    avlar = (
+        AV.objects.annotate(inv=Trim("inv_raqam"))
+        .filter(inv__iexact=q, filial_rekvizit__isnull=False)
+        .exclude(filial_rekvizit_id=rv.filial_id)
+        .select_related("filial_rekvizit")
+        .order_by("filial_rekvizit__nomi", "pk")[:QIDIRUV_NATIJALARI]
+    )
+    return [
+        {"av": av, "filial": av.filial_rekvizit, "qr": f"{QR_BOSHI}{av.filial_rekvizit.kod.strip()}|{av.inv}"}
+        for av in avlar
+    ]
+
+
+def _begona_av(qr: str):
+    """Boshqa filial yorlig'i (`DS|kod|inv`) qaysi AV va filialniki — kartochkada ko'rsatish uchun."""
+    _, kod, inv = (x.strip() for x in qr.split("|", 2))
+    return (
+        AV.objects.annotate(inv=Trim("inv_raqam"), filial_kodi=Trim("filial_rekvizit__kod"))
+        .filter(inv=inv, filial_kodi=kod).select_related("filial_rekvizit").order_by("pk").first()
+    )
+
+
 @_mobil
 @require_GET
 def topish(request, pk):
@@ -426,6 +451,8 @@ def topish(request, pk):
             ctx.update(_av_kartochka(rv, xona, av, "qr"))
         else:
             ctx.update({"tur": "nomalum", "qr_matn": qr, "boshqa_filial": sabab == BOSHQA_FILIAL, "usul": "qr"})
+            if sabab == BOSHQA_FILIAL:
+                ctx["begona"] = _begona_av(qr)
     elif av_id.isdigit():
         av = _av_doirasi(rv).filter(pk=int(av_id)).first()
         if av is None:
@@ -433,10 +460,16 @@ def topish(request, pk):
         ctx.update(_av_kartochka(rv, xona, av, "qidiruv"))
     elif q:
         topilganlar = _qidir(rv, q)
+        begonalar = [] if topilganlar else _boshqa_filialdan(rv, q)
         if len(topilganlar) == 1:
             ctx.update(_av_kartochka(rv, xona, topilganlar[0], "qidiruv"))
+        elif len(begonalar) == 1:
+            b = begonalar[0]
+            ctx.update({
+                "tur": "nomalum", "qr_matn": b["qr"], "boshqa_filial": True, "usul": "qidiruv", "begona": b["av"],
+            })
         else:
-            ctx.update({"tur": "royxat", "topilganlar": topilganlar, "q": q})
+            ctx.update({"tur": "royxat", "topilganlar": topilganlar, "begonalar": begonalar, "q": q})
     else:
         return HttpResponse("")
     if ctx.get("tur") == "av":

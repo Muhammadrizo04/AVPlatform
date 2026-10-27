@@ -481,3 +481,34 @@ def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalan
     # xodim tanlanmagan — 400; boshqa filialdagi revizor — 404
     assert c.post(url("mobil_mol", rv.pk), {"av": pc.pk}).status_code == 400
     assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk}).status_code == 404
+
+
+def test_boshqa_filial_av_inv_raqam_bilan(muhit, revizor, filial_yarat):
+    """Inv. raqam shu filialda topilmasa — boshqa filiallardan aniq moslik: kartochka qaysi filialniki ekanini
+    aytadi va «ortiqcha (boshqa filial)» qilib saqlaydi (QR bilan skanerlagandek)."""
+    from reviziya.solishtir import solishtir
+
+    rv, xona, *_ = muhit
+    fb = filial_yarat("02", "Showroom")
+    begona = av_yarat(fb, inv="INV_100652")
+    c = kirgan(revizor)
+
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="INV_100652")))
+    assert "Boshqa filial yorlig'i" in html and begona.nomi in html and "Showroom" in html
+    assert 'name="qr_matn" value="DS|02|INV_100652"' in html
+
+    assert saqla(c, rv, xona, qr_matn="DS|02|INV_100652", usul="qidiruv").status_code == 200
+    [q] = [q for q in solishtir(rv) if q.guruh == "ortiqcha"]
+    assert q.av_id is None and q.izoh == "boshqa filial" and q.qr_matn == "DS|02|INV_100652"
+    # QR orqali ham AV nomi va filiali ko'rinadi; qisman moslik boshqa filialdan qidirilmaydi
+    assert "Showroom" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, qr="DS|02|INV_100652")))
+    assert "Hech narsa topilmadi" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="100652")))
+
+
+def test_boshqa_filialda_bir_nechta_moslik_royxat(muhit, revizor, filial_yarat):
+    rv, xona, *_ = muhit
+    av_yarat(filial_yarat("02", "Showroom"), inv="INV-9")
+    av_yarat(filial_yarat("03", "Yaypan"), inv="INV-9")
+    html = matn(kirgan(revizor).get(url("mobil_topish", rv.pk, bolim=xona.pk, q="INV-9")))
+    assert "Boshqa filiallarda" in html and "Showroom" in html and "Yaypan" in html
+    assert "qr=DS%7C02%7CINV-9" in html and "qr=DS%7C03%7CINV-9" in html
