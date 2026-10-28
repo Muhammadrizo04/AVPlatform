@@ -7,34 +7,41 @@
 <div class="card mb-3"><div class="card-body">
 
 <form method="get" action="{% url 'vositalar:royxat' %}" hx-get="{% url 'vositalar:royxat' %}" hx-target="#jadval" hx-push-url="true"
-      hx-trigger="change, keyup changed delay:300ms from:input[name=q], keyup changed delay:400ms from:input[name=mol_ism]" class="filtrlar">
-  <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam yoki nomi">
-  <select class="form-select form-select-sm" name="filial"><option value="">Barcha filiallar</option>
-    {% for f in filiallar %}<option value="{{ f.pk }}" {% if params.filial == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
-  </select>
-  <select class="form-select form-select-sm" name="bolim"><option value="">Barcha bo'limlar</option>
-    {% for b in bolimlar %}<option value="{{ b.pk }}" {% if params.bolim == b.pk|stringformat:"s" %}selected{% endif %}>{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
-  </select>
-  <select class="form-select form-select-sm" name="turi"><option value="">Barcha turlar</option>
-    {% for t in turlar %}<option value="{{ t.pk }}" {% if params.turi == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nomi }}</option>{% endfor %}
-  </select>
-  <select class="form-select form-select-sm" name="holat"><option value="">Barcha holatlar</option>
-    {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if params.holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
-  </select>
-  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_guruh" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}><label class="form-check-label" for="f_guruh">Guruhlar</label></div>
-  <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="f_arxiv" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}><label class="form-check-label" for="f_arxiv">Arxiv</label></div>
-  {% if params.mol %}<input type="hidden" name="mol" value="{{ params.mol }}">{% endif %}
-  <input class="form-control form-control-sm" type="search" name="mol_ism" value="{{ params.mol_ism|default:'' }}" list="mol_royxat" placeholder="Javobgar shaxs ismi" aria-label="Javobgar shaxs ismi bo'yicha qidirish" autocomplete="off">
-  <datalist id="mol_royxat">{% for x in xodimlar %}<option value="{{ x.ism }}">{% endfor %}</datalist>
-  <select class="form-select form-select-sm" name="bayroq"><option value="">Bayroq: hammasi</option>
-    {% for kalit, nomi in bayroqlar %}<option value="{{ kalit }}" {% if params.bayroq == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
-  </select>
-  <select class="form-select form-select-sm" name="tartib" aria-label="Saralash">
-    {% for kalit, nomi in tartiblar %}
-    <option value="{{ kalit }}" {% if saralash.kalit == kalit and not saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↑</option>
-    <option value="-{{ kalit }}" {% if saralash.kalit == kalit and saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↓</option>
-    {% endfor %}
-  </select>
+      hx-trigger="change, keyup changed delay:300ms from:input[name=q], keyup changed delay:400ms from:input[name=mol_ism]" class="filtrlar av-filtr">
+  {# 1-qator: qidiruv (AV va javobgar shaxs); 2-qator: tanlovlar; 3-qator: belgilar va saralash #}
+  <div class="filtr-qidiruv">
+    <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam yoki AV nomi" aria-label="Inv. raqam yoki AV nomi bo'yicha qidirish">
+    {% if params.mol %}<input type="hidden" name="mol" value="{{ params.mol }}">{% endif %}
+    <input class="form-control form-control-sm" type="search" name="mol_ism" value="{{ params.mol_ism|default:'' }}" list="mol_royxat" placeholder="Javobgar shaxs ismi" aria-label="Javobgar shaxs ismi bo'yicha qidirish" autocomplete="off">
+    <datalist id="mol_royxat">{% for x in xodimlar %}<option value="{{ x.ism }}">{% endfor %}</datalist>
+  </div>
+  <div class="filtr-tanlov">
+    <select class="form-select form-select-sm" name="filial" aria-label="Filial"><option value="">Barcha filiallar</option>
+      {% for f in filiallar %}<option value="{{ f.pk }}" {% if params.filial == f.pk|stringformat:"s" %}selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+    </select>
+    <select class="form-select form-select-sm" name="bolim" aria-label="Bo'lim"><option value="">Barcha bo'limlar</option>
+      {% for b in bolimlar %}<option value="{{ b.pk }}" {% if params.bolim == b.pk|stringformat:"s" %}selected{% endif %}>{{ b.filial.nomi }} / {{ b.toliq_nomi }}</option>{% endfor %}
+    </select>
+    <select class="form-select form-select-sm" name="turi" aria-label="AV turi"><option value="">Barcha turlar</option>
+      {% for t in turlar %}<option value="{{ t.pk }}" {% if params.turi == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.nomi }}</option>{% endfor %}
+    </select>
+    <select class="form-select form-select-sm" name="holat" aria-label="Holat"><option value="">Barcha holatlar</option>
+      {% for kalit, nomi in holatlar %}<option value="{{ kalit }}" {% if params.holat == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+    </select>
+    <select class="form-select form-select-sm" name="bayroq" aria-label="Muammo bayrog'i"><option value="">Bayroq: hammasi</option>
+      {% for kalit, nomi in bayroqlar %}<option value="{{ kalit }}" {% if params.bayroq == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filtr-pastki">
+    <div class="form-check mb-0" title="Faqat soni 1 dan ko'p AV'lar (bir kartochkada bir nechta dona)"><input class="form-check-input" type="checkbox" id="f_guruh" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}><label class="form-check-label" for="f_guruh">Faqat ko'p donalilar</label></div>
+    <div class="form-check mb-0" title="1C'da qoldig'i qolmagan (hisobdan chiqqan) AV'lar"><input class="form-check-input" type="checkbox" id="f_arxiv" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}><label class="form-check-label" for="f_arxiv">Arxivdagilar</label></div>
+    <select class="form-select form-select-sm ms-auto" name="tartib" aria-label="Saralash">
+      {% for kalit, nomi in tartiblar %}
+      <option value="{{ kalit }}" {% if saralash.kalit == kalit and not saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↑</option>
+      <option value="-{{ kalit }}" {% if saralash.kalit == kalit and saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↓</option>
+      {% endfor %}
+    </select>
+  </div>
   {% if korinish == "kartochka" %}<input type="hidden" name="korinish" value="kartochka">{% endif %}
   <noscript><button type="submit" class="btn btn-sm btn-primary">Qidirish</button></noscript>
 </form>

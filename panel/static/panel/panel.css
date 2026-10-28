@@ -595,3 +595,13 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 /* Javobgar qaydnomasini chop etish: har javobgar shaxs yangi varaqdan */
 @media print { .chop-guruh + .chop-guruh { break-before: page; } }
 .chop-guruh + .chop-guruh { margin-top: 2.5rem; }
+/* AV ro'yxati filtri: qidiruv / tanlovlar / belgilar va saralash — uch qator, ustunlar teng */
+.av-filtr { display: grid; gap: .5rem; }
+.av-filtr > div { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+.av-filtr .form-select, .av-filtr .form-control { max-width: none; }
+.av-filtr .filtr-qidiruv > .form-control { flex: 1 1 16rem; }
+.av-filtr .filtr-qidiruv > .form-control[name=q] { flex-grow: 2; }
+.av-filtr .filtr-tanlov > .form-select { flex: 1 1 10rem; width: auto; min-width: 0; }
+.av-filtr .filtr-tanlov > .form-select[name=bolim] { flex-grow: 1.6; }
+.av-filtr .filtr-pastki { column-gap: 1.25rem; }
+.av-filtr .filtr-pastki .form-select { width: auto; }
