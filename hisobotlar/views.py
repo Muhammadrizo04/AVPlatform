@@ -1,3 +1,5 @@
+from urllib.parse import urlencode
+
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -98,6 +100,9 @@ def mol_qaydnoma(request):
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
     return render(request, "hisobotlar/mol_qaydnoma.html", {
         "qatorlar": qatorlar, "xodim": xodim, "jami": jami, "xodimlar": xodimlar, "q": izla,
+        "jami_soni": sum((q["soni"] for q in qatorlar), servis.NOL),
+        "excel_url": "?" + urlencode({k: v for k, v in (("xodim", xodim.pk if xodim else ""), ("q", izla),
+                                                        ("format", "xlsx")) if v}),
         "bugun": timezone.localdate(),
     })
 
@@ -153,6 +158,8 @@ def bolim_qaydnoma(request):
     return render(request, "hisobotlar/bolim_qaydnoma.html", {
         "filiallar": filiallar, "filial": filial, "bolimlar": royxat, "bolim": bolim, "bolim_nomi": bolim_nomi,
         "bolim_qiymati": bolim_qiymati, "q": izla, "qatorlar": qatorlar,
+        "excel_url": "?" + urlencode({k: v for k, v in (("filial", filial.pk if filial else ""),
+                                                        ("bolim", bolim_qiymati), ("q", izla), ("format", "xlsx")) if v}),
         "jami_soni": sum((q["soni"] for q in qatorlar), servis.NOL),
         "jami": sum((q["qiymat"] for q in qatorlar), servis.NOL),
         "bugun": timezone.localdate(),

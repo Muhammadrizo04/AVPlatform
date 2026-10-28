@@ -7,12 +7,13 @@
   <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui/coreui.min.css' %}">
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui-icons/css/free.min.css' %}">
-  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=10">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=11">
   <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
   <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
   <script src="{% static 'panel/tasdiq.js' %}?v=3" defer></script>
   <script src="{% static 'panel/qidiruv.js' %}?v=1" defer></script>
+  <script src="{% static 'panel/chop.js' %}?v=1" defer></script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated %}

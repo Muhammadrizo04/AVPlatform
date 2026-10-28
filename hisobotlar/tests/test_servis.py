@@ -369,3 +369,18 @@ def test_qaydnomalarda_biriktirilgan_sana(hisobchi, filial_a):
     kitob = load_workbook(io.BytesIO(c.get(reverse("hisobotlar:mol_qaydnoma"), {"xodim": ali.pk, "format": "xlsx"}).content))
     sarlavha = [s.value for s in kitob.active[1]]
     assert "Biriktirilgan sana" in sarlavha
+
+
+def test_qaydnomalarda_summali_va_summasiz_chop(hisobchi, filial_a, foydalanuvchi):
+    """Qiymat ko'radiganga — ikki chop etish tugmasi; qiymat ustunlari belgilangan (summasizda yashiriladi)."""
+    qator(av_yarat(filial_a), filial_a, "1", mol=xodim())
+    c = Client()
+    c.force_login(hisobchi)
+    for url in (reverse("hisobotlar:mol_qaydnoma"), reverse("hisobotlar:bolim_qaydnoma") + f"?filial={filial_a.pk}"):
+        html = c.get(url).content.decode()
+        assert 'data-chop="summali"' in html and 'data-chop="summasiz"' in html, url
+        assert html.count("qiymat-ustun") >= 3 and "format=xlsx" in html and "panel/chop.js" in html
+    hr = Client()
+    hr.force_login(foydalanuvchi("hr"))
+    html = hr.get(reverse("hisobotlar:mol_qaydnoma")).content.decode()
+    assert 'data-chop="summali"' not in html and 'data-chop="summasiz"' in html
