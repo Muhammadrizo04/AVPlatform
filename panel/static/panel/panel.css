@@ -372,6 +372,7 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .av-jadval .av-nomi { min-width: 16rem; }
 .av-jadval .av-nomi > a { color: var(--av-siyoh); }
 .av-jadval .av-nomi > a:hover { color: var(--av-indigo); }
+.av-jadval .av-filial { max-width: 12rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .av-jadval .av-turi { max-width: 11rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .av-jadval > :not(caption) > * > * { padding-top: .5rem; padding-bottom: .5rem; }
 .av-jadval .holat-pill { font-size: .6875rem; }

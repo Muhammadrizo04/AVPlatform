@@ -41,6 +41,7 @@ AV_TARTIBLARI = {
     "nomi": ("Nomi", "nomi"),
     "inv": ("Inv. raqam", "inv_raqam"),
     "turi": ("Turi", "turi__nomi"),
+    "filial": ("Filial", "filial_rekvizit__nomi"),
     "soni": ("Soni", "jami_soni"),
     "summa": ("Summa", "jami_summa"),
 }

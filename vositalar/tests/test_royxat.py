@@ -276,3 +276,16 @@ def test_amallar_paneli_va_hammasini_tanlash(client_hisobchi, client_rol, filial
     # rahbar — taqsimot va yorliq huquqi yo'q: tanlov va panel chiqmaydi
     html = client_rol("rahbar").get(reverse(ROYXAT)).content.decode()
     assert '<div class="amal-panel"' not in html and 'type="checkbox" data-hammasi' not in html
+
+
+def test_filial_alohida_ustunda_va_saralanadi(client_hisobchi, filial_a, filial_b):
+    """Filial nom ostida emas — alohida «Filial» ustunida; shu ustun bo'yicha saralash."""
+    av_yarat(filial_b, inv="INV-B")
+    av_yarat(filial_a, inv="INV-A")
+    javob = client_hisobchi.get(reverse("vositalar:royxat"), {"tartib": "filial"})
+    html = javob.content.decode()
+    assert 'class="small av-filial"' in html and "tartib=-filial" in html  # sarlavha — saralanadigan
+    filiallar = [av.filial_rekvizit.nomi for av in javob.context["sahifa"]]
+    assert filiallar == sorted(filiallar)
+    teskari = [av.filial_rekvizit.nomi for av in client_hisobchi.get(reverse("vositalar:royxat"), {"tartib": "-filial"}).context["sahifa"]]
+    assert teskari == sorted(teskari, reverse=True)
