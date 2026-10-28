@@ -6,7 +6,8 @@ from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import F, OuterRef, Subquery, Sum
+from django.db.models.functions import Coalesce
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -41,7 +42,7 @@ AV_TARTIBLARI = {
     "nomi": ("Nomi", "nomi"),
     "inv": ("Inv. raqam", "inv_raqam"),
     "turi": ("Turi", "turi__nomi"),
-    "filial": ("Filial", "filial_rekvizit__nomi"),
+    "filial": ("Filial", "joy_filial"),
     "soni": ("Soni", "jami_soni"),
     "summa": ("Summa", "jami_summa"),
 }
@@ -54,6 +55,11 @@ def _av_saralash(request) -> Saralash:
 
 def _royxat_qs(request):
     qs = av_filtrla(AV.objects.all(), request.GET, request.user)
+    # «Filial» ustuni bo'yicha tartib — AV turgan (ko'rinadigan) filial nomi; arxivda — 1C kartochkasidagi filial
+    turgan = filial_bilan_chekla(AVQoldiq.objects.filter(av=OuterRef("pk"), soni__gt=0), request.user)
+    qs = qs.annotate(joy_filial=Coalesce(
+        Subquery(turgan.order_by("filial__nomi").values("filial__nomi")[:1]), F("filial_rekvizit__nomi"),
+    ))
     return _av_saralash(request).queryset(qs.select_related("turi", "filial_rekvizit"))
 
 
@@ -65,10 +71,13 @@ def _filtr_soz_parametrlari(request) -> str:
 
 
 def _joylar(avlar, user) -> None:
-    """Ro'yxat qatori uchun har AV'ga `joy`: bo'limlar, МОЛ'lar, holatlar va МОЛ'siz dona (faqat ruxsat etilgan
-    filiallardagi taqsimotdan, bitta so'rov)."""
+    """Ro'yxat qatori uchun har AV'ga `joy`: turgan filiallar (1C qoldig'i), bo'limlar, МОЛ'lar, holatlar va МОЛ'siz
+    dona (faqat ruxsat etilgan filiallardan, ikki so'rov)."""
     nomlar = dict(Holat.choices)
     joylar = {av.pk: {"bolimlar": [], "mollar": [], "holatlar": [], "molsiz": NOL} for av in avlar}
+    filiallar = filial_bilan_chekla(AVQoldiq.objects.filter(av_id__in=joylar, soni__gt=0), user)
+    for av_id, nomi in filiallar.order_by("filial__nomi").values_list("av_id", "filial__nomi"):
+        joylar[av_id].setdefault("filiallar", []).append(nomi)
     qatorlar = filial_bilan_chekla(Taqsimot.objects.filter(av_id__in=joylar), user).select_related("bolim", "mol")
     for t in qatorlar.order_by("pk"):
         j = joylar[t.av_id]
@@ -173,7 +182,7 @@ def royxat_excel(request):
             av.inv_raqam,
             av.nomi,
             av.turi.nomi if av.turi else "",
-            av.filial_rekvizit.nomi if av.filial_rekvizit else "",
+            av.joy_filial or "",
             av.jami_soni,
             *((av.jami_summa,) if pul else ()),
         )

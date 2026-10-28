@@ -5,7 +5,7 @@
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <div class="me-auto">
     <h1 class="mb-1">{{ xodim.ism }}</h1>
-    <div class="text-body-secondary">Filial: {{ xodim.filial.nomi|default:"—" }}
+    <div class="text-body-secondary">Filial: {% if begona %}boshqa filial xodimi{% else %}{{ xodim.filial.nomi|default:"—" }}{% endif %}
     {% if xodim.ishdan_bushagan or xodim.neaktiv or xodim.onec_da_yoq %} · <span class="badge bg-danger">Ketgan / faol emas</span>{% endif %}</div>
   </div>
   {% if akt_huquqi and qatorlar %}<a class="btn btn-primary btn-sm" href="{% url 'mol:akt_yangi' %}?topshiruvchi={{ xodim.pk }}"><i class="cil-transfer me-1"></i>Topshirish aktini yaratish</a>{% endif %}

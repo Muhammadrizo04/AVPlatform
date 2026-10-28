@@ -56,15 +56,19 @@ class Xodim(OneCModel):
 class AVQuerySet(models.QuerySet):
     """AV so'rovlari. Qoldiq yig'indilari alohida kichik so'rovda — qatorlar ko'paymaydi."""
 
-    def qoldiq_bilan(self):
-        """`jami_soni`, `jami_summa` — barcha filiallardagi 1C qoldig'i yig'indisi (qoldiq yo'q bo'lsa 0)."""
+    def qoldiq_bilan(self, filial_idlar=None):
+        """`jami_soni`, `jami_summa` — barcha filiallardagi 1C qoldig'i yig'indisi (qoldiq yo'q bo'lsa 0).
+
+        `filial_idlar` berilsa — faqat shu filiallardagi qism (filiali cheklangan foydalanuvchiga boshqa filialdagi
+        soni va summa ko'rinmasligi uchun; `vositalar.filtrlar.av_filtrla`)."""
         if "jami_soni" in self.query.annotations:
             return self
+        manba = AVQoldiq.objects.filter(av=OuterRef("pk"))
+        if filial_idlar is not None:
+            manba = manba.filter(filial_id__in=list(filial_idlar))
 
         def yigindi(maydon, maydon_turi):
-            qoldiqlar = (
-                AVQoldiq.objects.filter(av=OuterRef("pk")).order_by().values("av").annotate(s=Sum(maydon)).values("s")
-            )
+            qoldiqlar = manba.order_by().values("av").annotate(s=Sum(maydon)).values("s")
             return Coalesce(Subquery(qoldiqlar), Decimal("0"), output_field=maydon_turi)
 
         return self.annotate(

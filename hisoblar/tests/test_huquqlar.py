@@ -34,11 +34,11 @@ def test_admin_hamma_amal(foydalanuvchi):
 def test_hisobchi_amallari(foydalanuvchi):
     u = foydalanuvchi(Rol.HISOBCHI)
     for amal in (
-        "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt", "yorliq", "tozalash", "hisobot", "korish",
+        "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt", "yorliq", "hisobot", "korish",
         "reviziya_boshqarish", "reviziya_otkazish", "reviziya_korish",
     ):
         assert huquqi_bor(u, amal) is True, amal
-    for amal in ("sozlama", "sinxron"):
+    for amal in ("sozlama", "sinxron", "tozalash", "bosh_sahifa"):
         assert huquqi_bor(u, amal) is False, amal
 
 

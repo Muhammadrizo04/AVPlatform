@@ -245,11 +245,11 @@ def test_royxat_n_plus_1_yoq(client_hisobchi, filial_a, django_assert_max_num_qu
     for _ in range(3):
         av_yarat(filial_a)
     # Qator joylashuvi (bitta so'rov) va ko'rsatkichlar qatori (3 ta bayroq soni) — AV soniga bog'liq emas.
-    with django_assert_max_num_queries(36):
+    with django_assert_max_num_queries(40):  # +4: AV turgan filiallar va ruxsat etilgan filiallar bo'yicha soni (o'zgarmas)
         client_hisobchi.get(reverse(ROYXAT))
     for _ in range(20):
         av_yarat(filial_a)
-    with django_assert_max_num_queries(36):
+    with django_assert_max_num_queries(40):  # +4: AV turgan filiallar va ruxsat etilgan filiallar bo'yicha soni (o'zgarmas)
         client_hisobchi.get(reverse(ROYXAT))
 
 
@@ -289,3 +289,29 @@ def test_filial_alohida_ustunda_va_saralanadi(client_hisobchi, filial_a, filial_
     assert filiallar == sorted(filiallar)
     teskari = [av.filial_rekvizit.nomi for av in client_hisobchi.get(reverse("vositalar:royxat"), {"tartib": "-filial"}).context["sahifa"]]
     assert teskari == sorted(teskari, reverse=True)
+
+
+def test_cheklangan_foydalanuvchi_boshqa_filial_soni_va_summasini_kormaydi(foydalanuvchi, filial_a, filial_b):
+    """AV 1C kartochkasida B filialniki, qoldig'i A'da 1 va B'da 3: A hisobchisi — 1 dona, 100 summa, «Filial» — A
+    (ro'yxatda, Excel'da va kartochkada); cheklanmagan foydalanuvchi — 4 dona, turgan filiallari A +1."""
+    av = av_yarat(filial_b, soni="3")
+    qoldiq(av, filial_a, "1")
+    qator(av, filial_a, "1")
+    qator(av, filial_b, "3")
+    a_hisobchi = Client()
+    a_hisobchi.force_login(foydalanuvchi("hisobchi", [filial_a]))
+
+    javob = a_hisobchi.get(reverse(ROYXAT))
+    [korindi] = javob.context["sahifa"]
+    assert (korindi.jami_soni, korindi.jami_summa, korindi.joy["filiallar"]) == (1, 100, [filial_a.nomi])
+    html = javob.content.decode()
+    assert f'title="1C kartochkasida: {filial_b.nomi}"' in html and "300,00" not in html and "400,00" not in html
+    kitob = load_workbook(io.BytesIO(a_hisobchi.get(reverse("vositalar:royxat_excel")).content))
+    assert list(kitob.active.iter_rows(min_row=2, values_only=True))[0][3:] == (filial_a.nomi, 1, 100)
+    kartochka = a_hisobchi.get(reverse("vositalar:kartochka", args=[av.pk]))
+    assert kartochka.context["av"].jami_soni == 1 and "4 dona" not in kartochka.content.decode()
+
+    hammasi = Client()
+    hammasi.force_login(foydalanuvchi("hisobchi"))
+    [korindi] = hammasi.get(reverse(ROYXAT)).context["sahifa"]
+    assert (korindi.jami_soni, korindi.joy["filiallar"]) == (4, [filial_a.nomi, filial_b.nomi])

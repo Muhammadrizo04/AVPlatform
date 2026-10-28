@@ -14,7 +14,7 @@
     {% if f.errors %}<div class="invalid-feedback d-block xato">{{ f.errors|join:" " }}</div>{% endif %}
   </div>
   {% elif f|belgilash_katagi %}
-  <div class="col-12"><div class="form-check">{{ f|cui }} <label class="form-check-label" for="{{ f.id_for_label }}">{{ f.label }}</label>{% if f.errors %} <span class="xato small">{{ f.errors|join:" " }}</span>{% endif %}</div></div>
+  <div class="col-12"><div class="form-check">{{ f|cui }} <label class="form-check-label" for="{{ f.id_for_label }}">{{ f.label }}</label>{% if f.errors %} <span class="xato small">{{ f.errors|join:" " }}</span>{% endif %}{% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}</div></div>
   {% else %}
   <div class="col-md-6"><label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f|cui }}{% if f.errors %}<div class="invalid-feedback d-block xato">{{ f.errors|join:" " }}</div>{% endif %}{% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}</div>
   {% endif %}

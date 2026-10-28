@@ -168,17 +168,25 @@ def foydalanuvchi_tahrir(request, pk):
 
 class UmumiyForma(forms.Form):
     kompaniya_nomi = forms.CharField(label="Kompaniya nomi", max_length=255, required=False)
+    reviziya_faqat_ozimniki = forms.BooleanField(
+        label="Reviziyani faqat uni ochgan kishi va biriktirilgan revizorlar o'zgartira oladi", required=False,
+        help_text="Yoqilsa, boshqa hisobchi yoki revizorlar o'zganing reviziyasini faqat ko'radi: skanerlay, "
+                  "yakunlay, bekor qila yoki ochiqqa qaytara olmaydi. Administrator har doim o'zgartira oladi.",
+    )
 
 
 @amal_kerak("sozlama")
 def umumiy(request):
     sozlama = Sozlama.ol()
-    forma = UmumiyForma(request.POST or None, initial={"kompaniya_nomi": sozlama.kompaniya_nomi})
+    eski = {"kompaniya_nomi": sozlama.kompaniya_nomi, "reviziya_faqat_ozimniki": sozlama.reviziya_faqat_ozimniki}
+    forma = UmumiyForma(request.POST or None, initial=eski)
     if request.method == "POST" and forma.is_valid():
-        yangi = forma.cleaned_data["kompaniya_nomi"].strip()
+        yangi = {"kompaniya_nomi": forma.cleaned_data["kompaniya_nomi"].strip(),
+                 "reviziya_faqat_ozimniki": forma.cleaned_data["reviziya_faqat_ozimniki"]}
         with transaction.atomic():
-            _farq_yoz(request.user, sozlama, {"kompaniya_nomi": sozlama.kompaniya_nomi}, {"kompaniya_nomi": yangi})
-            sozlama.kompaniya_nomi = yangi
+            _farq_yoz(request.user, sozlama, eski, yangi)
+            for maydon, qiymat in yangi.items():
+                setattr(sozlama, maydon, qiymat)
             sozlama.save()
         messages.success(request, "Saqlandi.")
         return redirect("panel:umumiy")

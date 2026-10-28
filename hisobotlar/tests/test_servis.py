@@ -129,7 +129,7 @@ def test_muddat_chegaralari(hisobchi, filial_a):
 def test_tozalash_faqat_1c_bayroqlari(client_rol, filial_a):
     bosh = av_yarat(filial_a, inv="")
     rekvizitsiz = av_yarat(None, qoldiq_filial=filial_a)
-    javob = client_rol("hisobchi").get(reverse("hisobotlar:tozalash"))
+    javob = client_rol("admin").get(reverse("hisobotlar:tozalash"))
     assert javob.status_code == 200
     bolimlar = {b["kalit"]: b for b in javob.context["bolimlar"]}
     assert list(bolimlar) == ["inv_bosh", "inv_takror", "filial_rekvizit_bosh", "mos_emas"]
@@ -144,6 +144,10 @@ def test_tozalash_faqat_1c_bayroqlari(client_rol, filial_a):
 def test_huquqlar(client_rol):
     hr = client_rol("hr")
     assert hr.get(reverse("hisobotlar:tozalash")).status_code == 403
+    # hisobchida «Tizim» bo'limi (1C ma'lumotlarini tozalash) yo'q
+    hisobchi = client_rol("hisobchi")
+    assert hisobchi.get(reverse("hisobotlar:tozalash")).status_code == 403
+    assert 'class="nav-title">Tizim' not in hisobchi.get(reverse("vositalar:royxat")).content.decode()
     assert hr.get(reverse("hisobotlar:tozalash"), {"format": "xlsx"}).status_code == 403
     for nom in ("kesim", "mol_qaydnoma", "muddat"):
         assert hr.get(reverse(f"hisobotlar:{nom}")).status_code == 200
@@ -168,7 +172,7 @@ def test_hisobot_excel_filial_cheklovi(foydalanuvchi, filial_a, filial_b):
     kartochka(av_a, oy_qosh(BUGUN, -24), 12)
     kartochka(av_b, oy_qosh(BUGUN, -24), 12)
     client = Client()
-    client.force_login(foydalanuvchi("hisobchi", [filial_a]))
+    client.force_login(foydalanuvchi("admin", [filial_a]))  # tozalash — faqat admin
     sahifalar = [
         ("kesim", {"guruh": "filial"}),
         ("kesim", {"guruh": "bolim"}),
@@ -198,7 +202,7 @@ def test_hisobotlar_sorovlar_soni_qatorlarga_bogliq_emas(hisobchi, filial_a, dja
     with django_assert_max_num_queries(9):  # +1 — biriktirilgan sanalar (bitta so'rov)
         servis.kesim(hisobchi, "bolim", BUGUN)
         servis.mol_qaydnoma(hisobchi)
-    with django_assert_max_num_queries(6):
+    with django_assert_max_num_queries(7):  # +1: soni/summa — ruxsat etilgan filiallar bo'yicha
         servis.muddat(hisobchi, BUGUN)
 
 

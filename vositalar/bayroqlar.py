@@ -38,7 +38,7 @@ def ruxsat_qoldiq(user) -> Exists:
 
 def av_lar(user) -> QuerySet:
     """Faol AV'lar, ruxsat etilgan filialda musbat qoldig'i borlari."""
-    return AV.objects.faol().filter(ruxsat_qoldiq(user))
+    return AV.objects.qoldiq_bilan(ruxsat_filial_idlar(user)).faol().filter(ruxsat_qoldiq(user))
 
 
 def _taqsimotlar(user) -> QuerySet:

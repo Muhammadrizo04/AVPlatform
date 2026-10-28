@@ -23,7 +23,7 @@
         <a href="{{ kartochka_url }}" class="fw-semibold text-decoration-none">{{ av.nomi }}</a>
         <div class="small text-body-secondary">
           {% if av.inv_raqam %}<a href="{{ kartochka_url }}" class="text-body-secondary">Inv. {{ av.inv_raqam }}</a>{% else %}<span class="xato">Inv. raqamsiz</span>{% endif %}
-          {% if av.turi %} · {{ av.turi.nomi }}{% endif %}{% if av.filial_rekvizit %} · {{ av.filial_rekvizit.nomi }}{% endif %}
+          {% if av.turi %} · {{ av.turi.nomi }}{% endif %}{% if av.joy.filiallar %} · {{ av.joy.filiallar|join:", " }}{% elif av.filial_rekvizit %} · {{ av.filial_rekvizit.nomi }}{% endif %}
         </div>
         {% with j=av.joy %}{% if j %}
         <ul class="av-belgilar av-belgilar-kichik" aria-label="Joylashuv">
@@ -60,7 +60,7 @@
         {% if taqsim_huquqi or yorliq_huquqi %}<td class="tanlash"><input class="form-check-input" type="checkbox" name="av" value="{{ av.pk }}" aria-label="Tanlash: {{ av.nomi }}"></td>{% endif %}
         <td class="text-nowrap">{% if av.inv_raqam %}<a href="{{ kartochka_url }}" class="text-body-secondary">{{ av.inv_raqam }}</a>{% else %}<span class="xato small">raqamsiz</span>{% endif %}</td>
         <td class="av-nomi"><a href="{{ kartochka_url }}" class="fw-semibold text-decoration-none stretched-link">{{ av.nomi }}</a></td>
-        <td class="small av-filial" title="{{ av.filial_rekvizit.nomi }}">{{ av.filial_rekvizit.nomi|default:"—" }}</td>
+        {% with f=av.joy.filiallar %}<td class="small av-filial"{% if av.filial_rekvizit and av.filial_rekvizit.nomi not in f %} title="1C kartochkasida: {{ av.filial_rekvizit.nomi }}"{% endif %}>{% if f %}{{ f.0 }}{% if f|length > 1 %} <span class="text-body-secondary">+{{ f|length|add:"-1" }}</span>{% endif %}{% else %}{{ av.filial_rekvizit.nomi|default:"—" }}{% endif %}</td>{% endwith %}
         <td class="small av-turi" title="{{ av.turi.nomi }}">{{ av.turi.nomi|default:"—" }}</td>
         {% with j=av.joy %}
         <td class="small">{% if j.bolimlar %}{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} <span class="text-body-secondary">+{{ j.bolimlar|length|add:"-1" }}</span>{% endif %}{% else %}<span class="text-body-tertiary">—</span>{% endif %}</td>

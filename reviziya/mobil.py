@@ -27,6 +27,7 @@ from vositalar.models import Bolim, Taqsimot
 from vositalar.models import Holat as TaqsimotHolat
 from vositalar.tarix import tarix as av_tarixi
 
+from .ruxsat import ozgartiradigan_shart
 from .kesim import BOLIMSIZ_QIYMATI as BOLIMSIZ, xonalar_kesimi
 from .models import Reviziya, ReviziyaQayd, ReviziyaXona
 from .servis import (
@@ -76,10 +77,9 @@ def _mobil(view):
 
 
 def _reviziyalar(user):
+    """Mobil sahifada ochiladigan (o'zgartira oladigan) reviziyalar — `reviziya.ruxsat`, filial cheklovi bilan."""
     qs = filial_bilan_chekla(Reviziya.objects.select_related("filial", "bolim"), user)
-    if not huquqi_bor(user, "reviziya_boshqarish"):
-        qs = qs.filter(revizorlar=user)
-    return qs
+    return qs.filter(ozgartiradigan_shart(user)).distinct()
 
 
 def _reviziya(request, pk) -> Reviziya:

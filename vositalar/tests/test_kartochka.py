@@ -383,7 +383,7 @@ def test_kartochka_sahifasi_sorovlar_soni_o_smaydi(client_hisobchi, filial_a, hi
         TaqsimotHarakat.objects.create(
             av=av, filial=filial_a, yangi_holat=Holat.NOSOZ, soni=Decimal("1"), kim=hisobchi, sabab="holat"
         )
-    with django_assert_max_num_queries(32):  # +2: reviziya qaydlari (so'rov + filial cheklovi)
+    with django_assert_max_num_queries(33):  # +2: reviziya qaydlari; +1: ko'rinadigan filiallar qoldig'i
         assert client_hisobchi.get(url("kartochka", av.pk)).status_code == 200
 
 

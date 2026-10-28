@@ -71,7 +71,11 @@ def test_xodimlar_filial_cheklovi(foydalanuvchi, filial, filial_yarat, bobur):
     # Bobur ruxsat etilgan filialda ham ushlab turadi -> ko'rinadi; faqat ruxsat etilgan qatorlar hisoblanadi.
     assert satrlar["Bobur"].av_soni == SON("2")
     assert satrlar["Bobur"].qiymat == SON("400")
-    assert c.get(reverse("mol:xodim", args=[bobur.pk])).status_code == 200
+    # Bobur — boshqa filial xodimi: uning filiali nomi ko'rsatilmaydi (ro'yxatda ham, sahifasida ham)
+    assert satrlar["Bobur"].begona and filial.nomi not in javob.content.decode()
+    assert "Boshqa filial xodimi" in javob.content.decode()
+    sahifa = c.get(reverse("mol:xodim", args=[bobur.pk]))
+    assert sahifa.status_code == 200 and f"Filial: {filial.nomi}" not in sahifa.content.decode()
 
 
 def test_xodim_sahifasi_korinmasa_404(foydalanuvchi, filial, filial_yarat, bobur):

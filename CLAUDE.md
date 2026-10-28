@@ -23,6 +23,7 @@
 - Huquqlar: `reviziya_boshqarish` (admin, hisobchi, revizor), `reviziya_otkazish` (admin, hisobchi, revizor), `reviziya_korish` (admin, hisobchi, hr, rahbar, revizor). Revizor — faqat o'z filiallarida (`filial_bilan_chekla`).
 - Revizor kirgach `/reviziya/m/` ga yo'naltiriladi: QR (`DS|<filial kodi>|<inv>`) skanerlaydi yoki inv bo'yicha qidiradi; qaydlar `+soni` bilan birlashadi.
 - Oqim: ochiq -> «Yakunlash» (farqlar avtomatik taqsimotga yoziladi, `qollash.yakunla_va_yoz`) -> yakunlangan; «Ochiqqa qaytarish» yozilganlarni teskari amal bilan qaytaradi. Holatlar: `ochiq`, `yakunlangan`, `bekor`.
+- Reviziyani o'zgartirish: `reviziya.ruxsat` (`ozgartira_oladi`, `ozgartiradigan_shart`); `Sozlama.reviziya_faqat_ozimniki` yoqilsa — faqat admin, ochgan kishi va revizorlari.
 - Reviziya qaydlari AV tarixida (`tur="reviziya"`) filial cheklovi bilan chiqadi (`vositalar/tarix.py`).
 
 ## Buyruqlar

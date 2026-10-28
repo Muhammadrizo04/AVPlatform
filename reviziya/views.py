@@ -4,6 +4,7 @@ from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import DecimalField, OuterRef, Subquery, Sum
@@ -24,6 +25,7 @@ from vositalar.models import Bolim, Holat
 from .forms import RevizorlarForma, YangiReviziyaForma
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaQollash, XodimLavozimi
 from .pdf import dalolatnoma_pdf
+from .ruxsat import ozgartira_oladi
 from .qollash import QOLLANADI, ochiqqa_qaytar, qollanadimi, yakunla_va_yoz
 from .servis import (
     BOSHQA_FILIAL, KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qamrov_bolim_idlari,
@@ -107,6 +109,14 @@ def _reviziya_yoki_404(request, pk) -> Reviziya:
     if reviziya is None:
         raise Http404
     return reviziya
+
+
+def _ozgartiradigan_reviziya(request, pk) -> Reviziya:
+    """O'zgartirish amallari uchun: ko'rinmasa — 404, ko'rinsa-yu o'zgartira olmasa — 403 (`reviziya.ruxsat`)."""
+    rv = _reviziya_yoki_404(request, pk)
+    if not ozgartira_oladi(request.user, rv):
+        raise PermissionDenied("Bu reviziyani faqat uni ochgan kishi va biriktirilgan revizorlar o'zgartira oladi.")
+    return rv
 
 
 def _yigindi(model, **filtr):
@@ -285,11 +295,10 @@ def sahifa(request, pk):
     korinadigan, guruh, bolim = _filtrla(hammasi, request.GET)
     yozilgan, yozilmagan = _yozilganlar(rv)
     yakunlangan = rv.holat == Reviziya.Holat.YAKUNLANGAN
-    boshqarish = huquqi_bor(request.user, "reviziya_boshqarish")
+    ozgartiradi = ozgartira_oladi(request.user, rv)
+    boshqarish = huquqi_bor(request.user, "reviziya_boshqarish") and ozgartiradi
     saralash = Saralash(request, VEDOMOST_USTUNLARI)
-    skanerlay_oladi = rv.holat == Reviziya.Holat.OCHIQ and (
-        boshqarish or rv.revizorlar.filter(pk=request.user.pk).exists()
-    )
+    skanerlay_oladi = rv.holat == Reviziya.Holat.OCHIQ and ozgartiradi
     satrlar = []
     for q in korinadigan:
         satr = _satr(q, nomlar)
@@ -335,7 +344,7 @@ def sahifa(request, pk):
 @require_POST
 @amal_kerak("reviziya_boshqarish")
 def revizorlar_view(request, pk):
-    rv = _reviziya_yoki_404(request, pk)
+    rv = _ozgartiradigan_reviziya(request, pk)
     forma = RevizorlarForma(request.POST, user=request.user, filial=rv.filial)
     if not forma.is_valid():
         messages.error(request, " ".join(e for xatolar in forma.errors.values() for e in xatolar))
@@ -350,7 +359,7 @@ def revizorlar_view(request, pk):
 
 
 def _amal(request, pk, bajar, xabar):
-    rv = _reviziya_yoki_404(request, pk)
+    rv = _ozgartiradigan_reviziya(request, pk)
     try:
         bajar(rv, request.user)
     except ReviziyaXato as e:
@@ -364,7 +373,7 @@ def _amal(request, pk, bajar, xabar):
 @amal_kerak("reviziya_boshqarish")
 def yakunla_view(request, pk):
     """Yakunlash: sanash yopiladi va farqlar AV taqsimotiga yoziladi (bitta qadam)."""
-    rv = _reviziya_yoki_404(request, pk)
+    rv = _ozgartiradigan_reviziya(request, pk)
     try:
         natijalar = yakunla_va_yoz(rv, request.user)
     except ReviziyaXato as e:
@@ -402,11 +411,8 @@ def _orqaga(request, rv):
 
 
 def _kiritadigan_reviziya(request, pk) -> Reviziya:
-    """Sahifadan qayd kiritish: reviziya boshqaruvchisi yoki shu reviziya revizori (filial cheklovi bilan)."""
-    rv = _reviziya_yoki_404(request, pk)
-    if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
-        raise Http404
-    return rv
+    """Sahifadan qayd kiritish: reviziyani o'zgartira oladiganlar (`reviziya.ruxsat`, filial cheklovi bilan)."""
+    return _ozgartiradigan_reviziya(request, pk)
 
 
 def _qamrov_bolimlari(rv) -> list:
@@ -470,9 +476,7 @@ def qayd_qosh_view(request, pk):
 def belgini_ol_view(request, pk):
     """«Joyida» ning teskarisi: tanlangan vedomost qatorlari (`olib` — kalit) uchun qayddan shu qatorning topilgan
     soni ayiriladi (0 bo'lsa qayd o'chadi). Hammasi yoki hech biri."""
-    rv = _reviziya_yoki_404(request, pk)
-    if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
-        raise Http404
+    rv = _ozgartiradigan_reviziya(request, pk)
     kalitlar = list(dict.fromkeys(k for k in request.POST.getlist("olib") if k))
     if not kalitlar:
         messages.warning(request, "Belgisini olib tashlash uchun qator tanlanmagan.")
@@ -501,10 +505,8 @@ def belgini_ol_view(request, pk):
 def belgila_view(request, pk):
     """Ochiq reviziya sahifasidan: tanlangan `belgi` (av:bolim:holat) qatorlarini `soni_<belgi>` soni bilan qayd qiladi
     (mobil «Hammasi joyida» kabi; hammasi yoki hech biri)."""
-    rv = _reviziya_yoki_404(request, pk)
+    rv = _ozgartiradigan_reviziya(request, pk)
     orqaga = _orqaga(request, rv)
-    if not (huquqi_bor(request.user, "reviziya_boshqarish") or rv.revizorlar.filter(pk=request.user.pk).exists()):
-        raise Http404
     belgilar = list(dict.fromkeys(b for b in request.POST.getlist("belgi") if b))
     if not belgilar:
         messages.warning(request, "Belgilash uchun qator tanlanmagan.")

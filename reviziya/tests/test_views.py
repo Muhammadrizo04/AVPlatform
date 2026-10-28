@@ -487,3 +487,49 @@ def test_panelda_av_qidirib_qoshish(ikki_topilmadi, hisobchi, fa, filial_yarat, 
     r = c.post(qosh, {"av": begona.pk, "bolim": a.pk, "soni": "1"}, follow=True)
     assert "alert-danger" in r.content.decode()
     assert kirgan(foydalanuvchi("hr")).get(qidir, {"q": "x"}).status_code == 403
+
+
+def test_faqat_oz_reviziyasi_sozlamasi(ikki_topilmadi, revizor, hisobchi, foydalanuvchi):
+    """«Faqat o'z reviziyasi»: o'chiq — boshqa hisobchi ham o'zgartiradi; yoqilgan — faqat ochgan kishi, revizorlari
+    va admin; boshqalar sahifani ko'radi, lekin amal tugmalari yo'q va so'rovlar 403; mobil ro'yxatida ham yo'q."""
+    from vositalar.models import Sozlama
+
+    rv, stol, _ = ikki_topilmadi
+    boshqa_hisobchi, boshqa_revizor = kirgan(foydalanuvchi("hisobchi")), kirgan(foydalanuvchi("revizor"))
+    yakunla = reverse("reviziya:yakunla", args=[rv.pk])
+    belgila = reverse("reviziya:belgila", args=[rv.pk])
+    sahifa = reverse("reviziya:sahifa", args=[rv.pk])
+
+    # o'chiq (standart): boshqa hisobchi ham belgilay oladi, boshqa revizor mobil ro'yxatda ko'rmaydi (revizori emas)
+    assert boshqa_hisobchi.get(sahifa).context["boshqarish"] is True
+    assert rv.nomi in boshqa_revizor.get(reverse("reviziya:mobil")).content.decode()  # boshqaruvchi — barchasi
+
+    Sozlama.objects.filter(pk=Sozlama.PK).update(reviziya_faqat_ozimniki=True)
+    javob = boshqa_hisobchi.get(sahifa)
+    assert javob.status_code == 200 and javob.context["boshqarish"] is False and not javob.context["skanerlay_oladi"]
+    assert boshqa_hisobchi.post(yakunla).status_code == 403
+    assert boshqa_hisobchi.post(belgila, {"belgi": "x"}).status_code == 403
+    assert boshqa_hisobchi.post(reverse("reviziya:bekor", args=[rv.pk])).status_code == 403
+    assert rv.nomi not in boshqa_revizor.get(reverse("reviziya:mobil")).content.decode()
+    assert boshqa_revizor.get(reverse("reviziya:mobil_skan", args=[rv.pk])).status_code == 404
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.OCHIQ
+
+    # biriktirilgan revizor skanerlaydi, ochgan hisobchi va admin yakunlay oladi
+    assert rv.nomi in kirgan(revizor).get(reverse("reviziya:mobil")).content.decode()
+    assert kirgan(hisobchi).get(sahifa).context["boshqarish"] is True
+    assert kirgan(foydalanuvchi("admin")).post(yakunla).status_code == 302
+    rv.refresh_from_db()
+    assert rv.holat == Reviziya.Holat.YAKUNLANGAN
+
+
+def test_umumiy_sozlamada_reviziya_katakchasi(client_rol):
+    from vositalar.models import Sozlama
+
+    admin = client_rol("admin")
+    html = admin.get(reverse("panel:umumiy")).content.decode()
+    assert 'name="reviziya_faqat_ozimniki"' in html
+    assert admin.post(reverse("panel:umumiy"), {"kompaniya_nomi": "X", "reviziya_faqat_ozimniki": "on"}).status_code == 302
+    assert Sozlama.ol().reviziya_faqat_ozimniki is True
+    admin.post(reverse("panel:umumiy"), {"kompaniya_nomi": "X"})
+    assert Sozlama.ol().reviziya_faqat_ozimniki is False

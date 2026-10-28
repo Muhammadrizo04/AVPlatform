@@ -17,7 +17,7 @@ HUQUQLAR: dict[str, set[str]] = {
     "bolim_tahrir": {Rol.ADMIN, Rol.HISOBCHI},
     "mol_akt": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR},
     "yorliq": {Rol.ADMIN, Rol.HISOBCHI},
-    "tozalash": {Rol.ADMIN, Rol.HISOBCHI},
+    "tozalash": {Rol.ADMIN},  # «Tizim» bo'limi — faqat admin
     "hisobot": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
     # Summa, qiymat, dona narxi, amortizatsiya va 1C izohi: sahifa, Excel, PDF va tarixda. HR — faqat soni.
     "pul_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.RAHBAR},

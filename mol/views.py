@@ -10,7 +10,7 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
-from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
+from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
 from onec.models import AV, Filial
 from panel.saralash import Saralash
@@ -37,7 +37,7 @@ def _id(qiymat) -> int:
 XODIM_SAHIFA_HAJMI = 50
 XODIM_USTUNLARI = {
     "ism": lambda x: x.ism.strip().casefold(),
-    "filial": lambda x: x.filial.nomi.casefold() if x.filial else None,
+    "filial": lambda x: "" if x.begona else (x.filial.nomi.casefold() if x.filial else None),
     "holat": lambda x: bool(x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq),
     "av_soni": lambda x: x.av_soni,
     "qiymat": lambda x: x.qiymat,
@@ -65,8 +65,11 @@ def xodimlar(request):
         qs = qs.filter(pk__in=[pk for pk, (soni, _) in yigindi.items() if soni > 0])
     # AV soni va qiymat Python'da hisoblanadi — xodimlar soni kichik, butun ro'yxat saralanib keyin sahifalanadi
     xodimlar_royxati = list(qs.select_related("filial"))
+    ruxsat = ruxsat_filial_idlar(request.user)
     for x in xodimlar_royxati:
         x.av_soni, x.qiymat = yigindi.get(x.pk, (NOL, NOL))
+        # boshqa filial xodimi (sizning filialingizdagi AV unda) — uning filiali nomi ko'rsatilmaydi
+        x.begona = ruxsat is not None and x.filial_id not in ruxsat
     ustunlar = dict(XODIM_USTUNLARI)
     if not huquqi_bor(request.user, "pul_korish"):
         ustunlar.pop("qiymat")
@@ -115,6 +118,7 @@ def xodim(request, pk):
         "jami_qiymat": sum((t.qiymat for t in qatorlar), NOL),
         "aktlar": aktlar.order_by("-raqam"),
         "akt_huquqi": huquqi_bor(request.user, "mol_akt"),
+        "begona": (ruxsat := ruxsat_filial_idlar(request.user)) is not None and x.filial_id not in ruxsat,
     }
     return render(request, "mol/xodim.html", kontekst)
 

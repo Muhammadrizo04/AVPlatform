@@ -148,6 +148,9 @@ class Sozlama(models.Model):
 
     kompaniya_nomi = models.CharField(max_length=255, blank=True)
     chiqim_boshlanishi = models.DateTimeField(null=True, blank=True)
+    # Yoqilsa: reviziyani faqat uni ochgan kishi va biriktirilgan revizorlari o'zgartiradi (admin — doim),
+    # boshqalar faqat ko'radi (`reviziya.ruxsat`).
+    reviziya_faqat_ozimniki = models.BooleanField(default=False)
 
     def __str__(self):
         return self.kompaniya_nomi or "Sozlama"
