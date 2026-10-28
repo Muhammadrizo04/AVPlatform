@@ -1,0 +1,6 @@
+{# Qaydnoma imzo qatorlari: sana, mas'ul (ismi ma'lum bo'lsa — chiziq ustida) va tekshiruvchi. #}
+<div class="imzo-qator">
+  <div class="imzo-sana">Sana: {{ bugun|date:"d.m.Y" }}</div>
+  <div class="imzo"><span class="imzo-kim">{{ masul }}:</span><span class="imzo-fish">{% if masul_ism %}<b class="imzo-ism">{{ masul_ism }}</b>{% endif %}<i>F.I.Sh.</i></span><span class="imzo-chizig"><i>imzo</i></span></div>
+  <div class="imzo"><span class="imzo-kim">Tekshirdi:</span><span class="imzo-fish"><i>F.I.Sh.</i></span><span class="imzo-chizig"><i>imzo</i></span></div>
+</div>

@@ -554,7 +554,10 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 /* Qaydnomalar: imzo qatorlari — ekranda xira, bosmada jadval ostida */
 .imzo-qator { display: grid; gap: 1.1rem; margin: 1rem 0 1.5rem; color: var(--av-ikkilamchi); font-size: .875rem; }
 .imzo { display: flex; align-items: flex-end; gap: 1rem; }
-.imzo-kim { flex: 0 0 8.5rem; }
+.imzo-kim { flex: 0 0 11.5rem; }
+.imzo-ism { position: absolute; left: .25rem; right: .25rem; bottom: .15rem; color: var(--av-siyoh, #0a2540); font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media print { .imzo-ism { color: #000; } }
 /* chiziq ustiga qo'lda yoziladi; tagida kichik izoh (F.I.Sh. / imzo) */
 .imzo-fish, .imzo-chizig { position: relative; display: inline-block; height: 1.6rem; border-bottom: 1px solid currentColor; }
 .imzo-fish { flex: 0 1 24rem; } .imzo-chizig { flex: 0 1 10rem; }

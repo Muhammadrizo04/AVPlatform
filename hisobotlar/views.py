@@ -93,6 +93,7 @@ def mol_qaydnoma(request):
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
     return render(request, "hisobotlar/mol_qaydnoma.html", {
         "qatorlar": qatorlar, "xodim": xodim, "jami": jami, "xodimlar": xodimlar, "q": izla,
+        "bugun": timezone.localdate(),
     })
 
 

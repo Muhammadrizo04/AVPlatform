@@ -44,11 +44,7 @@
 </table>
 </div>
 </div>
-<div class="imzo-qator">
-  <div class="imzo-sana">Sana: {{ bugun|date:"d.m.Y" }}</div>
-  <div class="imzo"><span class="imzo-kim">Bo'lim mas'uli:</span><span class="imzo-fish"><i>F.I.Sh.</i></span><span class="imzo-chizig"><i>imzo</i></span></div>
-  <div class="imzo"><span class="imzo-kim">Tekshirdi:</span><span class="imzo-fish"><i>F.I.Sh.</i></span><span class="imzo-chizig"><i>imzo</i></span></div>
-</div>
+{% include "hisobotlar/_imzo.html" with masul="Bo'lim mas'uli" masul_ism="" %}
 {% else %}
 <p class="text-body-secondary">Ro'yxatni ko'rish uchun filialni tanlang.</p>
 {% endif %}

@@ -313,3 +313,19 @@ def test_qaydnomalarda_xulosa_va_amallar_tepada(hisobchi, filial_a):
         html = c.get(url).content.decode()
         assert html.index("hisobot-xulosa") < html.index("<table") and "jadval-qotgan" in html
         assert html.index("format=xlsx") < html.index("<table"), url
+
+
+def test_mol_qaydnomasida_imzo_qatorlari(hisobchi, filial_a):
+    """МОЛ qaydnomasi: sana, «Moddiy javobgar shaxs» (xodim tanlangan bo'lsa — ismi chiziq ustida) va «Tekshirdi»."""
+    from django.utils import timezone
+
+    ali = xodim()
+    qator(av_yarat(filial_a), filial_a, "1", mol=ali)
+    c = Client()
+    c.force_login(hisobchi)
+    url = reverse("hisobotlar:mol_qaydnoma")
+    html = c.get(url).content.decode()
+    assert "Moddiy javobgar shaxs:" in html and html.count('class="imzo-fish"') == 2 and "imzo-ism" not in html
+    assert f"Sana: {timezone.localdate():%d.%m.%Y}" in html
+    html = c.get(url, {"xodim": ali.pk}).content.decode()
+    assert f'<b class="imzo-ism">{ali.ism}</b>' in html
