@@ -17,3 +17,6 @@ staticfiles/
 .impeccable/mocks/
 .impeccable/edge-profil/
 .superpowers/
+
+# Rollarni sinash foydalanuvchilari (parol bilan)
+sinov_foydalanuvchilar.txt
