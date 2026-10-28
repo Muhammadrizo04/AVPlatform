@@ -25,7 +25,7 @@
   <thead><tr><th>Javobgar shaxs</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th>Biriktirilgan</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for q in qatorlar %}
-    <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="text-nowrap small">{% if q.sana %}{{ q.sana|date:"d.m.Y" }}{% if q.sana_soni > 1 %}<div class="text-body-secondary">{{ q.sana_soni }} marta</div>{% endif %}{% else %}<span class="text-body-secondary" title="Platformada tarixi yo'q">—</span>{% endif %}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
+    <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}" class="av-havola">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="text-nowrap small">{% if q.sana %}{{ q.sana|date:"d.m.Y" }}{% if q.sana_soni > 1 %}<div class="text-body-secondary">{{ q.sana_soni }} marta</div>{% endif %}{% else %}<span class="text-body-secondary" title="Platformada tarixi yo'q">—</span>{% endif %}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
   {% empty %}
     <tr><td colspan="8" class="text-body-secondary">{% if q or xodim %}Qidiruv bo'yicha hech narsa topilmadi.{% else %}Ma'lumot yo'q.{% endif %}</td></tr>
   {% endfor %}
