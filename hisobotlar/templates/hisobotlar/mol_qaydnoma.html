@@ -12,11 +12,15 @@
   <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="МОЛ ismi, AV nomi, inv. raqam yoki bo'lim" aria-label="Qidirish">
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
   {% if q or xodim %}<a class="btn btn-sm btn-ghost-secondary" href="?">Tozalash</a>{% endif %}
-  <span class="small text-body-secondary ms-auto">{{ qatorlar|length }} ta qator</span>
 </form>
 </div></div>
+<div class="hisobot-xulosa chop-yoq">
+  <span class="xulosa-son">{{ qatorlar|length }} ta qator{% if pul_huquqi %} <span>·</span> {{ jami|pul }}{% endif %}</span>
+  <span class="ms-auto"></span>
+  {% include "hisobotlar/_pastki.html" %}
+</div>
 <div class="card mb-3">
-<div class="table-responsive">
+<div class="table-responsive jadval-qotgan">
 <table class="table table-hover align-middle mb-0">
   <thead><tr><th>МОЛ</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
@@ -30,5 +34,4 @@
 </table>
 </div>
 </div>
-{% include "hisobotlar/_pastki.html" %}
 {% endblock %}

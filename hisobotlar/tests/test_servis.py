@@ -301,3 +301,15 @@ def test_bolim_qaydnomasi(hisobchi, filial_a, filial_b, foydalanuvchi):
     cheklangan.force_login(foydalanuvchi("hisobchi", [filial_a]))
     assert cheklangan.get(url, {"filial": filial_b.pk}).status_code == 404
     assert c.get(url, {"filial": filial_b.pk, "bolim": ombor.pk}).status_code == 404
+
+
+def test_qaydnomalarda_xulosa_va_amallar_tepada(hisobchi, filial_a):
+    """Uzun ro'yxatda pastga tushmaslik uchun: qatorlar soni, jami va Excel/Chop etish jadval ustida; jadval qotgan."""
+    av = av_yarat(filial_a)
+    qator(av, filial_a, "1", mol=xodim())
+    c = Client()
+    c.force_login(hisobchi)
+    for url in (reverse("hisobotlar:bolim_qaydnoma") + f"?filial={filial_a.pk}", reverse("hisobotlar:mol_qaydnoma")):
+        html = c.get(url).content.decode()
+        assert html.index("hisobot-xulosa") < html.index("<table") and "jadval-qotgan" in html
+        assert html.index("format=xlsx") < html.index("<table"), url

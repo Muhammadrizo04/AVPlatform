@@ -564,3 +564,17 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .qidiruv-tozala:hover { background: var(--av-chiziq, #e3e8ee); color: var(--av-siyoh, #0a2540); }
 .qidiruv-tozala[hidden] { display: none; }
 .form-control-sm + .qidiruv-tozala, .qidiruv-quti .form-control-sm ~ .qidiruv-tozala { width: 1.75rem; height: 1.75rem; font-size: 1.1rem; }
+/* Uzun qaydnomalar: xulosa va amallar tepada; keng ekranda jadval sarlavhasi (menyu satri ostida) va «Jami» (ekran
+   pastida) qotgan — sahifa odatdagidek aylantiriladi. Tor ekranda — gorizontal aylantirish (table-responsive). */
+.hisobot-xulosa { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; margin: 0 0 .75rem; }
+.hisobot-xulosa .xulosa-son { font-weight: 600; color: var(--av-siyoh); }
+.hisobot-xulosa .xulosa-son span { color: var(--av-xira); font-weight: 500; }
+.hisobot-xulosa .amallar { margin: 0 !important; }
+@media (min-width: 992px) {
+  .jadval-qotgan { overflow: visible; }
+  .jadval-qotgan thead th { position: sticky; top: 3.5rem; z-index: 2; background: var(--av-sirt, #fff);
+    box-shadow: inset 0 -1px 0 var(--av-chiziq); }
+  .jadval-qotgan tfoot th, .jadval-qotgan tfoot td { position: sticky; bottom: 0; z-index: 2; background: #f6f8fb;
+    box-shadow: inset 0 1px 0 var(--av-chiziq); }
+}
+@media print { .jadval-qotgan thead th, .jadval-qotgan tfoot th { position: static !important; } }

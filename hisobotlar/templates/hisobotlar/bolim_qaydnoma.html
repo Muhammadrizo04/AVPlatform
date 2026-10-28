@@ -18,14 +18,19 @@
   <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="AV nomi, inv. raqam, МОЛ yoki bo'lim" aria-label="Qidirish">
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
   {% if q or bolim_qiymati %}<a class="btn btn-sm btn-ghost-secondary" href="?filial={{ filial.pk }}">Tozalash</a>{% endif %}
-  <span class="small text-body-secondary ms-auto">{{ qatorlar|length }} ta qator</span>
   {% endif %}
 </form>
 <p class="small text-body-secondary mb-0 mt-2">Bo'lim tanlansa, uning ichki bo'limlari (xonalari) ham kiradi. «Soni» — shu bo'limdagi soni.</p>
 </div></div>
 {% if filial %}
+<div class="hisobot-xulosa chop-yoq">
+  <span class="xulosa-son">{{ qatorlar|length }} ta qator <span>·</span> {{ jami_soni|son }} dona{% if pul_huquqi %} <span>·</span> {{ jami|pul }}{% endif %}</span>
+  <span class="ms-auto"></span>
+  <a class="btn btn-sm btn-outline-success" href="?filial={{ filial.pk }}{% if bolim_qiymati %}&amp;bolim={{ bolim_qiymati }}{% endif %}{% if q %}&amp;q={{ q|urlencode }}{% endif %}&amp;format=xlsx"><i class="cil-spreadsheet me-1"></i>Excel'ga yuklash</a>
+  <a class="btn btn-sm btn-outline-secondary" href="#" onclick="window.print(); return false;"><i class="cil-print me-1"></i>Chop etish</a>
+</div>
 <div class="card mb-3">
-<div class="table-responsive">
+<div class="table-responsive jadval-qotgan">
 <table class="table table-hover align-middle mb-0">
   <thead><tr><th>Bo'lim</th><th>AV</th><th>Inv. raqam</th><th>МОЛ</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
@@ -43,10 +48,6 @@
   <div>Sana: {{ bugun|date:"d.m.Y" }}</div>
   <div>Bo'lim mas'uli: ______________________ (F.I.Sh., imzo)</div>
   <div>Tekshirdi: ______________________ (F.I.Sh., imzo)</div>
-</div>
-<div class="amallar mb-4">
-  <a class="btn btn-sm btn-outline-success" href="?filial={{ filial.pk }}{% if bolim_qiymati %}&amp;bolim={{ bolim_qiymati }}{% endif %}{% if q %}&amp;q={{ q|urlencode }}{% endif %}&amp;format=xlsx"><i class="cil-spreadsheet me-1"></i>Excel'ga yuklash</a>
-  <a class="btn btn-sm btn-outline-secondary" href="#" onclick="window.print(); return false;"><i class="cil-print me-1"></i>Chop etish</a>
 </div>
 {% else %}
 <p class="text-body-secondary">Ro'yxatni ko'rish uchun filialni tanlang.</p>
