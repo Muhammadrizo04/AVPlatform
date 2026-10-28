@@ -8,6 +8,8 @@ class ChiqimHujjat(models.Model):
     class Holat(models.TextChoices):
         KUTILMOQDA = "kutilmoqda", "Kutilmoqda"
         TASDIQLANGAN = "tasdiqlangan", "Tasdiqlangan"
+        # tasdiqlangandan keyin 1C'da hujjat bekor qilindi — taqsimotni qaytarish kerak («Tasdiqni qaytarish»)
+        BEKOR_1C = "bekor_1c", "1C'da bekor qilindi"
         BEKOR = "bekor", "Bekor qilingan"
 
     class Tur(models.TextChoices):
@@ -34,6 +36,8 @@ class ChiqimHujjat(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
     )
     qachon = models.DateTimeField(null=True, blank=True)
+    # tasdiqlashda qaysi taqsimot qatorlaridan qancha ayirilgani: [{"bolim", "mol", "holat", "soni"}] — qaytarish uchun
+    ayirilganlar = models.JSONField(default=list, blank=True)
     yaratildi = models.DateTimeField(auto_now_add=True)
 
     class Meta:

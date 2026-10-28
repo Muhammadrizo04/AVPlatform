@@ -119,6 +119,7 @@ class TaqsimotHarakat(models.Model):
         OTKAZILDI = "otkazildi", "Filialga o'tkazildi"
         HISOBDAN_CHIQARILDI = "hisobdan_chiqarildi", "Hisobdan chiqarildi"
         REVIZIYA = "reviziya", "Reviziya"
+        CHIQIM_QAYTARILDI = "chiqim_qaytarildi", "1C chiqimi qaytarildi"
 
     av = models.ForeignKey("onec.AV", on_delete=models.PROTECT, related_name="taqsimot_harakatlari")
     filial = models.ForeignKey("onec.Filial", on_delete=models.PROTECT, related_name="+")

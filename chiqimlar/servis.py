@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from jurnal import yoz as jurnal_yoz
 from onec.models import AVQoldiq, Harakat1C
-from vositalar.amallar import AmalXato, ayir_va_yoz, holat_ozgartir, kochir
+from vositalar.amallar import AmalXato, _ozgartir, ayir_va_yoz, holat_ozgartir, kochir, qosh_va_yoz
 from vositalar.models import Holat, Sozlama, Taqsimot, TaqsimotHarakat
 
 from .models import ChiqimHujjat
@@ -38,7 +38,7 @@ def taxmin_qil(av_id: int, filial_id: int, sana: datetime, hujjat_turi: str) -> 
 
 def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
     """[dan, gacha] (aware) oralig'idagi 1C chiqimlarini `ChiqimHujjat`ga aks ettiradi."""
-    stat = {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0}
+    stat = {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0, "bekor_1c": 0}
     boshlanish = Sozlama.ol().chiqim_boshlanishi
     if boshlanish is None:
         return stat
@@ -91,6 +91,12 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 c.save(update_fields=["holat", "soni", "summa", "sana"])
                 jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.BEKOR, ChiqimHujjat.Holat.KUTILMOQDA)
                 stat["qaytdi"] += 1
+            elif c.holat == ChiqimHujjat.Holat.BEKOR_1C:
+                # 1C'da qayta o'tkazildi, tasdiq hali qaytarilmagan — yana tasdiqlangan (taqsimot o'zgarmagan)
+                c.holat = ChiqimHujjat.Holat.TASDIQLANGAN
+                c.save(update_fields=["holat"])
+                jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.BEKOR_1C, ChiqimHujjat.Holat.TASDIQLANGAN)
+                stat["qaytdi"] += 1
 
         _taxminlarni_yangila(quyi, gacha, guruhlar)
 
@@ -100,6 +106,13 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 c.save(update_fields=["holat"])
                 jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.KUTILMOQDA, ChiqimHujjat.Holat.BEKOR)
                 stat["bekor"] += 1
+            elif kalit not in guruhlar and c.holat == ChiqimHujjat.Holat.TASDIQLANGAN:
+                # Tasdiqlangandan keyin 1C'da bekor qilindi: taqsimotdan ayirilgan donalar endi «taqsimlanmagan» ga
+                # qaytadi (moslash) — hisobchiga xabar, «Tasdiqni qaytarish» ularni asl joyiga qo'yadi.
+                c.holat = ChiqimHujjat.Holat.BEKOR_1C
+                c.save(update_fields=["holat"])
+                jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.TASDIQLANGAN, ChiqimHujjat.Holat.BEKOR_1C)
+                stat["bekor_1c"] += 1
     return stat
 
 
@@ -191,7 +204,10 @@ def tasdiqla(
 
         tanlangan = _tekshir_qatorlar(qatorlar, a_qatorlar, c.soni)
 
-        hujjat_izoh = f"{c.hujjat_turi} {c.hujjat_raqami}".strip()
+        hujjat_izoh = _izoh(c)
+        c.ayirilganlar = [
+            {"bolim": q.bolim_id, "mol": q.mol_id, "holat": q.holat, "soni": f"{soni:.3f}"} for q, soni in tanlangan
+        ]
         for qator, soni in tanlangan:
             ayir_va_yoz(qator, soni, kim, _SABAB[tur], hujjat_izoh)
 
@@ -202,7 +218,7 @@ def tasdiqla(
         c.izoh = izoh
         c.kim = kim
         c.qachon = timezone.now()
-        c.save(update_fields=["holat", "tur", "qabul_filial", "izoh", "kim", "qachon"])
+        c.save(update_fields=["holat", "tur", "qabul_filial", "izoh", "kim", "qachon", "ayirilganlar"])
         for maydon, oldingi, yangi in zip(
             ("holat", "tur", "qabul_filial", "izoh"), eski, (c.holat, c.tur, c.qabul_filial_id, c.izoh)
         ):
@@ -269,6 +285,130 @@ def _b_ga_joyla(c: ChiqimHujjat, qulflangan: list, qabul_filial, b_bolim, b_hola
     except AmalXato as xato:
         raise ChiqimXato(str(xato)) from None
     return soni
+
+
+def _izoh(c: ChiqimHujjat) -> str:
+    return f"{c.hujjat_turi} {c.hujjat_raqami}".strip()
+
+
+def _ayirilganlar(c: ChiqimHujjat) -> list[tuple[tuple, Decimal]]:
+    """Tasdiqlashda ayirilgan [((bolim_id, mol_id, holat), soni)]. Eski tasdiqlar (maydon bo'sh) — shu tasdiqning
+    taqsimot harakatlaridan."""
+    if c.ayirilganlar:
+        return [((a["bolim"], a["mol"], a["holat"]), Decimal(a["soni"])) for a in c.ayirilganlar]
+    harakatlar = TaqsimotHarakat.objects.filter(
+        av_id=c.av_id, filial_id=c.filial_id, sabab=_SABAB.get(c.tur, ""), hujjat_izoh=_izoh(c)[:255],
+        sana__gte=(c.qachon or c.sana) - timedelta(minutes=1),
+    ).order_by("pk")
+    return [((h.eski_bolim_id, h.eski_mol_id, h.eski_holat), h.soni) for h in harakatlar]
+
+
+def tasdiqni_qaytar(chiqim: ChiqimHujjat, kim) -> str:
+    """Tasdiqni qaytaradi — ayirilgan donalar asl (bo'lim, javobgar shaxs, holat) qatorlariga qaytadi:
+
+    * `tasdiqlangan` (hujjat 1C'da bor; xato tasdiqni tuzatish) — donalar qo'shiladi, chiqim yana `kutilmoqda`
+      (K oshadi, invariant saqlanadi) va qaytadan tasdiqlanadi;
+    * `bekor_1c` (1C'da bekor qilingan) — donalar moslash qo'ygan «taqsimlanmagan» qatordan asl joyiga ko'chiriladi,
+      chiqim `bekor`.
+
+    Otkazishda qabul qiluvchi filialdagi joylash qaytarilmaydi (u 1C qoldig'i bilan moslash orqali to'g'rilanadi).
+    Yangi holatni qaytaradi; xatoda `ChiqimXato`, tranzaksiya qaytariladi."""
+    with transaction.atomic():
+        c = ChiqimHujjat.objects.select_for_update().filter(pk=chiqim.pk).first()
+        if c is None:
+            raise ChiqimXato("Chiqim topilmadi. Sahifani yangilang.")
+        if c.holat not in (ChiqimHujjat.Holat.TASDIQLANGAN, ChiqimHujjat.Holat.BEKOR_1C):
+            raise ChiqimXato("Faqat tasdiqlangan yoki 1C'da bekor qilingan chiqimning tasdig'ini qaytarish mumkin.")
+        qulflangan = list(
+            Taqsimot.objects.select_for_update().filter(av_id=c.av_id, filial_id=c.filial_id).order_by("pk")
+        )
+        ayirilgan = _ayirilganlar(c)
+        if not ayirilgan:
+            raise ChiqimXato("Tasdiqda qaysi qatorlardan ayirilgani topilmadi — AV kartochkasida qo'lda tuzating.")
+        izoh = f"{_izoh(c)} — tasdiq qaytarildi"
+        Sabab = TaqsimotHarakat.Sabab
+        if c.holat == ChiqimHujjat.Holat.TASDIQLANGAN:
+            for joy, soni in ayirilgan:
+                qosh_va_yoz(c.av_id, c.filial_id, joy, soni, kim, Sabab.CHIQIM_QAYTARILDI, izoh)
+            yangi = ChiqimHujjat.Holat.KUTILMOQDA
+        else:
+            taqsimlanmagan = [
+                t for t in qulflangan if t.bolim_id is None and t.mol_id is None and t.holat == Holat.ISHLATILMOQDA
+            ]
+            kerak = sum((s for joy, s in ayirilgan if joy != (None, None, Holat.ISHLATILMOQDA)), NOL)
+            if sum((t.soni for t in taqsimlanmagan), NOL) < kerak:
+                raise ChiqimXato(
+                    "«Bo'limsiz» (taqsimlanmagan) qatorda qaytariladigan donalar yetarli emas — ular allaqachon "
+                    "joylashtirilgan bo'lishi mumkin. AV kartochkasida qo'lda tuzating."
+                )
+            try:
+                for joy, soni in ayirilgan:
+                    if joy == (None, None, Holat.ISHLATILMOQDA):
+                        continue
+                    qoldi = soni
+                    for manba in taqsimlanmagan:
+                        t = Taqsimot.objects.filter(pk=manba.pk).first()  # oldingi ko'chirishda tugagan bo'lishi mumkin
+                        if qoldi <= 0 or t is None:
+                            continue
+                        m = min(t.soni, qoldi)
+                        _ozgartir(t, m, kim, Sabab.CHIQIM_QAYTARILDI, bolim=joy[0], mol=joy[1], holat=joy[2],
+                                  hujjat_izoh=izoh)
+                        qoldi -= m
+            except AmalXato as xato:
+                raise ChiqimXato(str(xato)) from None
+            yangi = ChiqimHujjat.Holat.BEKOR
+        eski = c.holat
+        c.holat = yangi
+        if yangi == ChiqimHujjat.Holat.KUTILMOQDA:
+            c.tur, c.qabul_filial, c.kim, c.qachon, c.ayirilganlar = "", None, None, None, []
+        c.save(update_fields=["holat", "tur", "qabul_filial", "kim", "qachon", "ayirilganlar"])
+        jurnal_yoz.yoz(kim, c, "holat", eski, yangi)
+        _tekshir_invariant(c)
+    chiqim.refresh_from_db()
+    return yangi
+
+
+def _son(soni: Decimal) -> str:
+    """1.000 -> «1», 2.500 -> «2.5» (tarix matni uchun)."""
+    return format(soni.normalize(), "f")
+
+
+def chiqim_tarixi(c: ChiqimHujjat) -> list[dict]:
+    """Chiqim tarixi (vaqt bo'yicha): 1C'dan kelishi, holat o'zgarishlari (kim — foydalanuvchi yoki «1C sinxron»)
+    va shu hujjat bo'yicha taqsimot harakatlari (qaysi bo'lim / javobgar shaxs / holatdan qancha). [{vaqt, kim, matn}]"""
+    from jurnal.models import Jurnal
+
+    holatlar = dict(ChiqimHujjat.Holat.choices)
+    holat_nomi = dict(Holat.choices)
+    tarix = [{"vaqt": c.yaratildi, "kim": "1C sinxron",
+              "matn": f"1C'dan keldi: {_izoh(c)}, {_son(c.soni)} dona (taxmin: {c.get_taxmin_tur_display()})"}]
+    for j in Jurnal.objects.filter(obyekt_turi="chiqimlar.chiqimhujjat", obyekt_id=str(c.pk), maydon="holat"):
+        yangi, eski = j.yangi, j.eski
+        if yangi == ChiqimHujjat.Holat.TASDIQLANGAN and eski == ChiqimHujjat.Holat.KUTILMOQDA:
+            matn = "Tasdiqlandi"
+        elif yangi == ChiqimHujjat.Holat.KUTILMOQDA and eski == ChiqimHujjat.Holat.TASDIQLANGAN:
+            matn = "Tasdiq bekor qilindi — qayta tasdiqlash kutilmoqda"
+        elif yangi == ChiqimHujjat.Holat.BEKOR and eski == ChiqimHujjat.Holat.BEKOR_1C:
+            matn = "Tasdiq qaytarildi — donalar asl joyiga qo'yildi"
+        else:
+            matn = f"Holat: {holatlar.get(eski, eski)} → {holatlar.get(yangi, yangi)}"
+        tarix.append({"vaqt": j.qachon, "kim": j.kim_nomi, "matn": matn})
+    harakatlar = (
+        TaqsimotHarakat.objects.filter(av_id=c.av_id, filial_id=c.filial_id, hujjat_izoh__startswith=_izoh(c)[:255])
+        .select_related("eski_bolim", "eski_mol", "yangi_bolim", "yangi_mol", "kim")
+    )
+    for h in harakatlar:
+        if h.yangi_holat:  # qaytarish — qatorga qo'shildi
+            joy = h.yangi_bolim.toliq_nomi if h.yangi_bolim else "Bo'limsiz"
+            mol = f", {h.yangi_mol.ism}" if h.yangi_mol else ""
+            matn = f"Qaytarildi: {joy}{mol}, {holat_nomi.get(h.yangi_holat, h.yangi_holat)} — +{_son(h.soni)} dona"
+        else:
+            joy = h.eski_bolim.toliq_nomi if h.eski_bolim else "Bo'limsiz"
+            mol = f", {h.eski_mol.ism}" if h.eski_mol else ""
+            matn = f"Ayirildi ({h.get_sabab_display()}): {joy}{mol}, {holat_nomi.get(h.eski_holat, h.eski_holat)} — −{_son(h.soni)} dona"
+        tarix.append({"vaqt": h.sana, "kim": (h.kim.get_full_name() or h.kim.get_username()) if h.kim else "1C sinxron",
+                      "matn": matn})
+    return sorted(tarix, key=lambda t: t["vaqt"])
 
 
 def _tekshir_invariant(c: ChiqimHujjat) -> None:

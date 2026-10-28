@@ -15,9 +15,25 @@
 </dl>
 </div></div>
 
+{% if chiqim.holat == "bekor_1c" %}
+<div class="alert alert-danger d-flex flex-wrap align-items-center gap-2" role="alert">
+  <i class="cil-warning" aria-hidden="true"></i>
+  <span class="me-auto"><b>Bu hujjat 1C'da bekor qilindi</b>, lekin tasdiqlanganda AV taqsimotdan ayirilgan edi — endi u
+    «Bo'limsiz» ga tushgan. «Tasdiqni qaytarish» AV'ni avvalgi bo'lim va javobgar shaxsiga qo'yadi.</span>
+  {% if qaytara_oladi %}
+  <form method="post" action="{% url 'chiqimlar:qaytar' chiqim.pk %}" data-tasdiq="AV avvalgi bo'lim va javobgar shaxsiga qaytarilsinmi?" data-tasdiq-tugma="Tasdiqni qaytarish">{% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-danger"><i class="cil-action-undo me-1"></i>Tasdiqni qaytarish</button></form>
+  {% endif %}
+</div>
+{% endif %}
 {% if faqat_oqish %}
 <div class="card mb-4">
-<div class="card-header fw-semibold">Holat: {{ chiqim.get_holat_display }}</div>
+<div class="card-header fw-semibold d-flex align-items-center gap-2"><span class="me-auto">Holat: {{ chiqim.get_holat_display }}</span>
+  {% if qaytara_oladi and chiqim.holat == "tasdiqlangan" %}
+  <form method="post" action="{% url 'chiqimlar:qaytar' chiqim.pk %}" class="d-inline" data-tasdiq="Tasdiq bekor qilinsinmi? Ayirilgan donalar avvalgi joyiga qaytadi va chiqim qaytadan tasdiqlash uchun «Kutilmoqda» bo'ladi." data-tasdiq-tugma="Tasdiqni bekor qilish" data-tasdiq-xavfli>{% csrf_token %}
+    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="cil-action-undo me-1"></i>Tasdiqni bekor qilish</button></form>
+  {% endif %}
+</div>
 <div class="card-body">
 <dl class="row mb-0">
   {% if chiqim.tur %}<dt class="col-sm-3">Tur</dt><dd class="col-sm-9">{{ chiqim.get_tur_display }}</dd>{% endif %}
@@ -112,5 +128,15 @@
     <button type="submit" class="btn btn-success"><i class="cil-check-alt me-1"></i>Tasdiqlash</button>
   </div></div>
 </form>
+{% endif %}
+{% if tarix %}
+<div class="card mb-4">
+<div class="card-header fw-semibold">Tarix</div>
+<ul class="list-group list-group-flush">
+  {% for t in tarix %}
+  <li class="list-group-item d-flex flex-wrap gap-2"><span class="text-body-secondary text-nowrap" style="min-width: 8.5rem">{{ t.vaqt|date:"d.m.Y H:i" }}</span><span class="me-auto">{{ t.matn }}</span><span class="small text-body-secondary">{{ t.kim }}</span></li>
+  {% endfor %}
+</ul>
+</div>
 {% endif %}
 {% endblock %}

@@ -90,6 +90,26 @@ def ayir_va_yoz(qator: Taqsimot, soni: Decimal, kim, sabab: str, hujjat_izoh: st
     yoz(kim, qator, "soni", eski_soni, eski_soni - soni)
 
 
+def qosh_va_yoz(av_id, filial_id, joy: tuple, soni: Decimal, kim, sabab: str, hujjat_izoh: str = "") -> Taqsimot:
+    """`joy` = (bolim_id, mol_id, holat) qatoriga `soni` dona qo'shadi (yo'q bo'lsa yaratadi) va `TaqsimotHarakat` +
+    Jurnal yozadi — `ayir_va_yoz` ning teskarisi. Qulflash va invariant tekshiruvi — chaqiruvchining vazifasi."""
+    bolim_id, mol_id, holat = joy
+    qator = Taqsimot.objects.filter(
+        av_id=av_id, filial_id=filial_id, bolim_id=bolim_id, mol_id=mol_id, holat=holat
+    ).first()
+    eski_soni = qator.soni if qator else NOL
+    if qator is None:
+        qator = Taqsimot.objects.create(
+            av_id=av_id, filial_id=filial_id, bolim_id=bolim_id, mol_id=mol_id, holat=holat, soni=soni
+        )
+    else:
+        qator.soni = eski_soni + soni
+        qator.save(update_fields=["soni"])
+    _harakat(qator, soni, kim, sabab, hujjat_izoh[:255], eski=(None, None, ""), yangi=joy)
+    yoz(kim, qator, "soni", eski_soni, qator.soni)
+    return qator
+
+
 def _ozgartir(qator, soni, kim, sabab, *, bolim=_SAQLA, mol=_SAQLA, holat=_SAQLA, hujjat_izoh="") -> Taqsimot:
     """Umumiy amal: `soni` donani (bolim, mol, holat) yangi qiymatiga o'tkazadi; o'zgarmaydiganlari `_SAQLA`.
     `bolim`/`mol` — pk yoki None."""

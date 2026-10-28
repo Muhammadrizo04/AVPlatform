@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.cache import patch_vary_headers
+from django.views.decorators.http import require_POST
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
@@ -17,7 +18,7 @@ from vositalar.filtrlar import korinadigan_av_idlari
 from vositalar.models import Bolim, Holat
 
 from .models import ChiqimHujjat
-from .servis import ChiqimXato, taqsimot_qatorlari, taxmin_qil, tasdiqla
+from .servis import ChiqimXato, chiqim_tarixi, taqsimot_qatorlari, tasdiqla, tasdiqni_qaytar, taxmin_qil
 
 SAHIFA_HAJMI = 50
 NOL = Decimal("0")
@@ -115,6 +116,7 @@ def tasdiqlash(request, pk):
     chiqim = filial_bilan_chekla(ChiqimHujjat.objects.select_related("av", "filial", "qabul_filial", "kim"), request.user).filter(pk=pk).first()
     if chiqim is None:
         raise Http404
+    tarix = chiqim_tarixi(chiqim)
     if chiqim.holat != ChiqimHujjat.Holat.KUTILMOQDA:
         if request.method == "POST":
             messages.warning(
@@ -122,12 +124,16 @@ def tasdiqlash(request, pk):
                 "Bu chiqim 1C'da bekor qilingan." if chiqim.holat == ChiqimHujjat.Holat.BEKOR
                 else "Bu chiqim allaqachon tasdiqlangan.",
             )
-        return render(request, "chiqimlar/tasdiqlash.html", {"chiqim": chiqim, "faqat_oqish": True})
+        return render(request, "chiqimlar/tasdiqlash.html", {
+            "chiqim": chiqim, "faqat_oqish": True, "tarix": tarix,
+            "qaytara_oladi": huquqi_bor(request.user, "taqsimot")
+            and chiqim.holat in (ChiqimHujjat.Holat.TASDIQLANGAN, ChiqimHujjat.Holat.BEKOR_1C),
+        })
     if not huquqi_bor(request.user, "taqsimot"):
         if request.method == "POST":
             raise PermissionDenied
         return render(request, "chiqimlar/tasdiqlash.html", {
-            "chiqim": chiqim, "faqat_oqish": True, "qatorlar": taqsimot_qatorlari(chiqim),
+            "chiqim": chiqim, "faqat_oqish": True, "qatorlar": taqsimot_qatorlari(chiqim), "tarix": tarix,
         })
     qatorlar = taqsimot_qatorlari(chiqim)
 
@@ -182,5 +188,26 @@ def tasdiqlash(request, pk):
         qatorlar[0].kiritilgan = f"{min(chiqim.soni, qatorlar[0].soni):.3f}".rstrip("0").rstrip(".")
     return render(request, "chiqimlar/tasdiqlash.html", _tasdiqlash_kontekst(
         request, chiqim, qatorlar, tanlangan_tur=chiqim.taxmin_tur, tanlangan_b=taxmin_b, tanlangan_bolim=None,
-        tanlangan_holat="", izoh="",
+        tanlangan_holat="", izoh="", tarix=tarix,
     ))
+
+
+@require_POST
+@amal_kerak("taqsimot")
+def qaytar(request, pk):
+    """«Tasdiqni qaytarish» (1C'da bekor qilingan) yoki «Tasdiqni bekor qilish» (xato tasdiqni tuzatish)."""
+    chiqim = filial_bilan_chekla(ChiqimHujjat.objects.all(), request.user).filter(pk=pk).first()
+    if chiqim is None:
+        raise Http404
+    try:
+        yangi = tasdiqni_qaytar(chiqim, request.user)
+    except ChiqimXato as xato:
+        messages.error(request, str(xato))
+    else:
+        messages.success(
+            request,
+            "Tasdiq bekor qilindi — donalar joyiga qaytdi, chiqimni qaytadan tasdiqlang."
+            if yangi == ChiqimHujjat.Holat.KUTILMOQDA
+            else "Tasdiq qaytarildi — AV avvalgi bo'lim va javobgar shaxsiga qo'yildi.",
+        )
+    return redirect("chiqimlar:tasdiqlash", pk=pk)
