@@ -21,6 +21,11 @@ def _xlsx(fayl: str, sarlavhalar, qatorlar) -> HttpResponse:
     return javob
 
 
+def _sana(qiymat) -> str:
+    """Excel uchun: biriktirilgan/joylashtirilgan sana (mahalliy vaqt) yoki «—»."""
+    return timezone.localtime(qiymat).strftime("%d.%m.%Y") if qiymat else "—"
+
+
 def _xlsx_so_ralgan(request) -> bool:
     return request.GET.get("format") == "xlsx"
 
@@ -82,14 +87,14 @@ def mol_qaydnoma(request):
             if kalit in " | ".join((q["xodim"].ism, q["av"].nomi, q["inv"] or "", q["bolim"])).casefold()
         ]
     if _xlsx_so_ralgan(request):
-        ustunlar = 7 if huquqi_bor(request.user, "pul_korish") else 6  # HR — qiymatsiz
+        ustunlar = 8 if huquqi_bor(request.user, "pul_korish") else 7  # HR — qiymatsiz
         qatorlar_xlsx = (
-            (q["xodim"].ism, q["av"].nomi, q["inv"], q["bolim"], q["holat"], q["soni"], q["qiymat"])[:ustunlar]
+            (q["xodim"].ism, q["av"].nomi, q["inv"], q["bolim"], q["holat"], _sana(q["sana"]), q["soni"],
+             q["qiymat"])[:ustunlar]
             for q in qatorlar
         )
-        return _xlsx(
-            "mol_qaydnoma", ["Javobgar shaxs", "AV", "Inv. raqam", "Bo'lim", "Holat", "Soni", "Qiymat"][:ustunlar], qatorlar_xlsx
-        )
+        sarlavhalar = ["Javobgar shaxs", "AV", "Inv. raqam", "Bo'lim", "Holat", "Biriktirilgan sana", "Soni", "Qiymat"]
+        return _xlsx("mol_qaydnoma", sarlavhalar[:ustunlar], qatorlar_xlsx)
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
     return render(request, "hisobotlar/mol_qaydnoma.html", {
         "qatorlar": qatorlar, "xodim": xodim, "jami": jami, "xodimlar": xodimlar, "q": izla,
@@ -136,13 +141,14 @@ def bolim_qaydnoma(request):
             ).casefold()
         ]
     if _xlsx_so_ralgan(request):
-        ustunlar = 7 if huquqi_bor(request.user, "pul_korish") else 6  # HR — qiymatsiz
+        ustunlar = 8 if huquqi_bor(request.user, "pul_korish") else 7  # HR — qiymatsiz
         qatorlar_xlsx = (
-            (q["bolim"], q["av"].nomi, q["inv"], q["mol"].ism if q["mol"] else "", q["holat"], q["soni"],
-             q["qiymat"])[:ustunlar]
+            (q["bolim"], q["av"].nomi, q["inv"], q["mol"].ism if q["mol"] else "", q["holat"], _sana(q["sana"]),
+             q["soni"], q["qiymat"])[:ustunlar]
             for q in qatorlar
         )
-        sarlavhalar = ["Bo'lim", "AV", "Inv. raqam", "Javobgar shaxs", "Holat", "Soni", "Qiymat"][:ustunlar]
+        sarlavhalar = ["Bo'lim", "AV", "Inv. raqam", "Javobgar shaxs", "Holat", "Joylashtirilgan sana", "Soni",
+                       "Qiymat"][:ustunlar]
         return _xlsx("bolim_qaydnoma", sarlavhalar, qatorlar_xlsx)
     return render(request, "hisobotlar/bolim_qaydnoma.html", {
         "filiallar": filiallar, "filial": filial, "bolimlar": royxat, "bolim": bolim, "bolim_nomi": bolim_nomi,

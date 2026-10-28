@@ -11,7 +11,7 @@ from openpyxl import load_workbook
 from hisobotlar import servis
 from onec.models import AVTuri
 from vositalar.amortizatsiya import dona_narxi, oy_qosh
-from vositalar.models import AVKartochka, Bolim
+from vositalar.models import AVKartochka, Bolim, TaqsimotHarakat
 from vositalar.tests.test_bayroqlar import BUGUN, av_yarat, qator, xodim
 
 
@@ -191,7 +191,7 @@ def test_hisobotlar_sorovlar_soni_qatorlarga_bogliq_emas(hisobchi, filial_a, dja
         av = av_yarat(filial_a, soni="2", turi=tur("T"))
         kartochka(av, oy_qosh(BUGUN, -10), 12)
         qator(av, filial_a, "2", bolim=bolim, mol=ali)
-    with django_assert_max_num_queries(8):
+    with django_assert_max_num_queries(9):  # +1 — biriktirilgan sanalar (bitta so'rov)
         servis.kesim(hisobchi, "bolim", BUGUN)
         servis.mol_qaydnoma(hisobchi)
     with django_assert_max_num_queries(6):
@@ -329,3 +329,43 @@ def test_mol_qaydnomasida_imzo_qatorlari(hisobchi, filial_a):
     assert f"Sana: {timezone.localdate():%d.%m.%Y}" in html
     html = c.get(url, {"xodim": ali.pk}).content.decode()
     assert f'<b class="imzo-ism">{ali.ism}</b>' in html
+
+
+def test_qaydnomalarda_biriktirilgan_sana(hisobchi, filial_a):
+    """Javobgar shaxs qaydnomasida — shu xodimga o'tgan oxirgi sana (necha marta); bo'lim qaydnomasida — shu
+    bo'limga ko'chirilgan oxirgi sana. Holat o'zgarishi (bo'lim/javobgar o'zgarmagan) hisoblanmaydi."""
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from vositalar.amallar import holat_ozgartir, kochir, mol_ozgartir
+    from vositalar.models import Holat, Taqsimot
+
+    ali = xodim()
+    ofis = Bolim.objects.create(filial=filial_a, nomi="Ofis")
+    av = av_yarat(filial_a, soni="2")
+    t = qator(av, filial_a, "2")
+    kochir(t, Decimal("2"), ofis, hisobchi)
+    t = Taqsimot.objects.get(av=av)
+    mol_ozgartir(t, Decimal("1"), ali, hisobchi)
+    birinchi = TaqsimotHarakat.objects.filter(yangi_mol=ali).get()
+    TaqsimotHarakat.objects.filter(pk=birinchi.pk).update(sana=timezone.now() - timedelta(days=10))
+    mol_ozgartir(Taqsimot.objects.get(av=av, mol=None), Decimal("1"), ali, hisobchi)  # ikkinchi marta — birlashadi
+    holat_ozgartir(Taqsimot.objects.get(av=av, mol=ali), Decimal("2"), Holat.ZAXIRADA, hisobchi)  # sanaga ta'sirsiz
+
+    [q] = servis.mol_qaydnoma(hisobchi, ali)
+    oxirgi = TaqsimotHarakat.objects.filter(yangi_mol=ali).exclude(eski_mol=ali).latest("sana")
+    assert (q["sana"], q["sana_soni"]) == (oxirgi.sana, 2)
+    [b] = servis.bolim_qaydnoma(hisobchi, filial_a.pk)
+    kochirish = TaqsimotHarakat.objects.filter(yangi_bolim=ofis, eski_bolim=None).get()
+    assert (b["sana"], b["sana_soni"]) == (kochirish.sana, 1)
+
+    c = Client()
+    c.force_login(hisobchi)
+    html = c.get(reverse("hisobotlar:mol_qaydnoma"), {"xodim": ali.pk}).content.decode()
+    assert "Biriktirilgan" in html and f"{timezone.localtime(oxirgi.sana):%d.%m.%Y}" in html and "2 marta" in html
+    html = c.get(reverse("hisobotlar:bolim_qaydnoma"), {"filial": filial_a.pk}).content.decode()
+    assert "Joylashtirilgan" in html
+    kitob = load_workbook(io.BytesIO(c.get(reverse("hisobotlar:mol_qaydnoma"), {"xodim": ali.pk, "format": "xlsx"}).content))
+    sarlavha = [s.value for s in kitob.active[1]]
+    assert "Biriktirilgan sana" in sarlavha

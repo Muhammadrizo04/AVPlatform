@@ -9,13 +9,13 @@ from decimal import ROUND_FLOOR, Decimal
 from typing import Literal
 
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import prefetch_related_objects
+from django.db.models import F, prefetch_related_objects
 
 from hisoblar.huquqlar import filial_bilan_chekla
 from onec.models import AV, AVQoldiq, Filial, Xodim
 from vositalar.amortizatsiya import dona_narxi, hisobla, oy_qosh, samarali_muddat
 from vositalar.bayroqlar import BAYROQLAR
-from vositalar.models import Bolim, Taqsimot
+from vositalar.models import Bolim, Taqsimot, TaqsimotHarakat
 
 NOL = Decimal("0")
 TIYIN = Decimal("0.01")
@@ -139,16 +139,42 @@ def jami(qatorlar: list[dict]) -> dict:
     return {k: sum((q[k] for q in qatorlar), NOL) for k in ("soni", "boshlangich", "qoldiq")}
 
 
+def _biriktirish_sanalari(qatorlar, maydon: str) -> dict:
+    """{(av_id, filial_id, qiymat): (oxirgi sana, necha marta)} — taqsimot harakatlaridan: AV qachon shu javobgar
+    shaxsga (`maydon="mol"`) yoki shu bo'limga (`"bolim"`) o'tgan. Faqat haqiqiy o'tish (eski qiymat boshqa) —
+    holat o'zgarishi hisoblanmaydi."""
+    kalitlar = {(t.av_id, t.filial_id, getattr(t, f"{maydon}_id")) for t in qatorlar}
+    qiymatlar = {k[2] for k in kalitlar if k[2] is not None}
+    if not qiymatlar:
+        return {}
+    harakatlar = (
+        TaqsimotHarakat.objects.filter(av_id__in={k[0] for k in kalitlar}, **{f"yangi_{maydon}_id__in": qiymatlar})
+        .exclude(**{f"eski_{maydon}_id": F(f"yangi_{maydon}_id")})
+        .values_list("av_id", "filial_id", f"yangi_{maydon}_id", "sana")
+    )
+    natija = {}
+    for av_id, filial_id, qiymat, sana in harakatlar:
+        kalit = (av_id, filial_id, qiymat)
+        if kalit in kalitlar:
+            oxirgi, soni = natija.get(kalit, (None, 0))
+            natija[kalit] = (sana if oxirgi is None or sana > oxirgi else oxirgi, soni + 1)
+    return natija
+
+
 def mol_qaydnoma(user, xodim: Xodim | None = None) -> list[dict]:
-    """МОЛ'ga biriktirilgan taqsimot qatorlari (yoki bitta xodimniki): qiymat = soni × dona narxi."""
+    """МОЛ'ga biriktirilgan taqsimot qatorlari (yoki bitta xodimniki): qiymat = soni × dona narxi; `sana` — shu
+    xodimga oxirgi biriktirilgan sana (`sana_soni` — necha marta)."""
     qatorlar, avlar = _taqsimotlar(user)
     bolimlar = _bolimlar()
+    sanalar = _biriktirish_sanalari([t for t in qatorlar if t.mol_id], "mol")
     natija = []
     for t in qatorlar:
         if t.mol_id is None or (xodim is not None and t.mol_id != xodim.pk):
             continue
         av = avlar[t.av_id]
+        sana, sana_soni = sanalar.get((t.av_id, t.filial_id, t.mol_id), (None, 0))
         natija.append({
+            "sana": sana, "sana_soni": sana_soni,
             "xodim": t.mol,
             "av": av,
             "inv": av.inv_raqam,
@@ -162,15 +188,19 @@ def mol_qaydnoma(user, xodim: Xodim | None = None) -> list[dict]:
 
 def bolim_qaydnoma(user, filial_id: int, bolim_idlari: set | None = None) -> list[dict]:
     """Filialdagi taqsimot qatorlari (yoki faqat `bolim_idlari` dagi — tanlangan bo'lim va ichki bo'limlari; None
-    elementi — bo'limsiz): soni — shu bo'limdagi, qiymat = soni × dona narxi; tartib — bo'lim, AV nomi."""
+    elementi — bo'limsiz): soni — shu bo'limdagi, qiymat = soni × dona narxi; `sana` — shu bo'limga oxirgi
+    joylashtirilgan sana; tartib — bo'lim, AV nomi."""
     qatorlar, avlar = _taqsimotlar(user)
     bolimlar = _bolimlar()
+    sanalar = _biriktirish_sanalari([t for t in qatorlar if t.filial_id == filial_id and t.bolim_id], "bolim")
     natija = []
     for t in qatorlar:
         if t.filial_id != filial_id or (bolim_idlari is not None and t.bolim_id not in bolim_idlari):
             continue
         av = avlar[t.av_id]
+        sana, sana_soni = sanalar.get((t.av_id, t.filial_id, t.bolim_id), (None, 0))
         natija.append({
+            "sana": sana, "sana_soni": sana_soni,
             "bolim": bolimlar[t.bolim_id].toliq_nomi if t.bolim_id else BOLIMSIZ,
             "av": av,
             "inv": av.inv_raqam,
