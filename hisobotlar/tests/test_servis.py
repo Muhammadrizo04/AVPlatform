@@ -269,3 +269,35 @@ def test_mol_qaydnoma_qidiruv_va_mol_tanlash(hisobchi, filial_a):
     assert "q=INV-MON&amp;format=xlsx" in html
     kitob = load_workbook(io.BytesIO(c.get(url, {"q": "INV-MON", "format": "xlsx"}).content))
     assert [r[2] for r in kitob.active.iter_rows(min_row=2, values_only=True) if r[2]] == ["INV-MON"]
+
+
+def test_bolim_qaydnomasi(hisobchi, filial_a, filial_b, foydalanuvchi):
+    """Bo'lim qaydnomasi: tanlangan bo'lim va ichki bo'limlari; soni — shu bo'limdagi; МОЛ; qidiruv; Excel; imzo."""
+    ali = xodim()
+    bino = Bolim.objects.create(filial=filial_a, nomi="Bino")
+    xona = Bolim.objects.create(filial=filial_a, nomi="Xona", ota=bino)
+    ombor = Bolim.objects.create(filial=filial_a, nomi="Ombor")
+    ratsiya = av_yarat(filial_a, inv="INV-R", soni="4")
+    qator(ratsiya, filial_a, "1", bolim=xona, mol=ali)
+    qator(ratsiya, filial_a, "3", bolim=ombor)
+    begona = av_yarat(filial_b, inv="INV-B")
+    qator(begona, filial_b, "1")
+    c = Client()
+    c.force_login(hisobchi)
+    url = reverse("hisobotlar:bolim_qaydnoma")
+    assert f'href="{url}"' in c.get(reverse("panel:bosh")).content.decode()  # menyuda
+
+    javob = c.get(url, {"filial": filial_a.pk, "bolim": bino.pk})
+    [q] = javob.context["qatorlar"]
+    assert (q["av"], q["soni"], q["bolim"], q["mol"]) == (ratsiya, Decimal("1"), "Bino / Xona", ali)
+    html = javob.content.decode()
+    assert "Bo&#x27;lim mas&#x27;uli" in html or "Bo'lim mas'uli" in html
+    assert [q["soni"] for q in c.get(url, {"filial": filial_a.pk}).context["qatorlar"]] == [Decimal("1"), Decimal("3")]
+    assert c.get(url, {"filial": filial_a.pk, "q": "ombor"}).context["qatorlar"][0]["bolim"] == "Ombor"
+    kitob = load_workbook(io.BytesIO(c.get(url, {"filial": filial_a.pk, "bolim": ombor.pk, "format": "xlsx"}).content))
+    assert [r[0] for r in kitob.active.iter_rows(min_row=2, values_only=True) if r[0]] == ["Ombor"]
+    # boshqa filial bo'limi / ruxsatsiz filial — 404
+    cheklangan = Client()
+    cheklangan.force_login(foydalanuvchi("hisobchi", [filial_a]))
+    assert cheklangan.get(url, {"filial": filial_b.pk}).status_code == 404
+    assert c.get(url, {"filial": filial_b.pk, "bolim": ombor.pk}).status_code == 404

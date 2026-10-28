@@ -160,6 +160,28 @@ def mol_qaydnoma(user, xodim: Xodim | None = None) -> list[dict]:
     return sorted(natija, key=lambda q: (q["xodim"].ism, q["xodim"].pk, q["av"].nomi, q["av"].pk))
 
 
+def bolim_qaydnoma(user, filial_id: int, bolim_idlari: set | None = None) -> list[dict]:
+    """Filialdagi taqsimot qatorlari (yoki faqat `bolim_idlari` dagi — tanlangan bo'lim va ichki bo'limlari; None
+    elementi — bo'limsiz): soni — shu bo'limdagi, qiymat = soni × dona narxi; tartib — bo'lim, AV nomi."""
+    qatorlar, avlar = _taqsimotlar(user)
+    bolimlar = _bolimlar()
+    natija = []
+    for t in qatorlar:
+        if t.filial_id != filial_id or (bolim_idlari is not None and t.bolim_id not in bolim_idlari):
+            continue
+        av = avlar[t.av_id]
+        natija.append({
+            "bolim": bolimlar[t.bolim_id].toliq_nomi if t.bolim_id else BOLIMSIZ,
+            "av": av,
+            "inv": av.inv_raqam,
+            "mol": t.mol,
+            "holat": t.get_holat_display(),
+            "soni": t.soni,
+            "qiymat": _qiymat(t.soni, av).quantize(TIYIN),
+        })
+    return sorted(natija, key=lambda q: (q["bolim"] == BOLIMSIZ, q["bolim"].casefold(), q["av"].nomi, q["av"].pk))
+
+
 def tugash_sanasi(av: AV) -> date:
     kartochka = av.kartochka
     return oy_qosh(kartochka.ishga_tushgan_sana, samarali_muddat(kartochka))

@@ -2,11 +2,13 @@ from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
 
-from hisoblar.huquqlar import amal_kerak, huquqi_bor
+from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisobotlar import servis
 from hisobotlar.excel import jadval_xlsx
 from hisoblar.parametrlar import son
 from mol.sorovlar import korinadigan_xodimlar
+from onec.models import Filial
+from vositalar.bolimlar import daraxt, pastkilar
 
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 GURUHLAR = {"filial": "Filial", "bolim": "Bo'lim", "tur": "AV turi"}
@@ -91,6 +93,62 @@ def mol_qaydnoma(request):
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
     return render(request, "hisobotlar/mol_qaydnoma.html", {
         "qatorlar": qatorlar, "xodim": xodim, "jami": jami, "xodimlar": xodimlar, "q": izla,
+    })
+
+
+@amal_kerak("hisobot")
+def bolim_qaydnoma(request):
+    """Bo'lim qaydnomasi: filial va bo'lim (ichki bo'limlari bilan) tanlanadi; «bolimsiz» — taqsimlanmaganlar."""
+    filiallar = list(filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi", "pk"))
+    filial = None
+    filial_id = request.GET.get("filial", "")
+    if filial_id:
+        pk = son(filial_id)
+        filial = next((f for f in filiallar if f.pk == pk), None)
+        if filial is None:
+            raise Http404
+    elif len(filiallar) == 1:
+        filial = filiallar[0]
+    bolim_qiymati = request.GET.get("bolim", "") if filial else ""
+    bolim, bolim_idlari, bolim_nomi = None, None, ""
+    royxat = []
+    if filial:
+        for b, chuqurlik, toliq in daraxt(filial.pk):
+            b.chiziq, b.toliq = "— " * chuqurlik, toliq
+            royxat.append(b)
+    if bolim_qiymati == "bolimsiz":
+        bolim_idlari, bolim_nomi = {None}, servis.BOLIMSIZ
+    elif bolim_qiymati:
+        pk = son(bolim_qiymati)
+        bolim = next((b for b in royxat if b.pk == pk), None)
+        if bolim is None:
+            raise Http404
+        bolim_idlari, bolim_nomi = {bolim.pk, *(b.pk for b in pastkilar(bolim))}, bolim.toliq
+    qatorlar = servis.bolim_qaydnoma(request.user, filial.pk, bolim_idlari) if filial else []
+    izla = (request.GET.get("q") or "").strip()[:100]
+    if izla:
+        kalit = izla.casefold()
+        qatorlar = [
+            q for q in qatorlar
+            if kalit in " | ".join(
+                (q["bolim"], q["av"].nomi, q["inv"] or "", q["mol"].ism if q["mol"] else "")
+            ).casefold()
+        ]
+    if _xlsx_so_ralgan(request):
+        ustunlar = 7 if huquqi_bor(request.user, "pul_korish") else 6  # HR — qiymatsiz
+        qatorlar_xlsx = (
+            (q["bolim"], q["av"].nomi, q["inv"], q["mol"].ism if q["mol"] else "", q["holat"], q["soni"],
+             q["qiymat"])[:ustunlar]
+            for q in qatorlar
+        )
+        sarlavhalar = ["Bo'lim", "AV", "Inv. raqam", "МОЛ", "Holat", "Soni", "Qiymat"][:ustunlar]
+        return _xlsx("bolim_qaydnoma", sarlavhalar, qatorlar_xlsx)
+    return render(request, "hisobotlar/bolim_qaydnoma.html", {
+        "filiallar": filiallar, "filial": filial, "bolimlar": royxat, "bolim": bolim, "bolim_nomi": bolim_nomi,
+        "bolim_qiymati": bolim_qiymati, "q": izla, "qatorlar": qatorlar,
+        "jami_soni": sum((q["soni"] for q in qatorlar), servis.NOL),
+        "jami": sum((q["qiymat"] for q in qatorlar), servis.NOL),
+        "bugun": timezone.localdate(),
     })
 
 

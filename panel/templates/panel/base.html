@@ -7,7 +7,7 @@
   <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui/coreui.min.css' %}">
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui-icons/css/free.min.css' %}">
-  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=3">
   <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
   <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
@@ -44,6 +44,7 @@
       {% if hisobot_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'mol_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:mol_qaydnoma' %}"><i class="nav-icon cil-notes"></i> МОЛ qaydnomasi</a></li>
+      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'bolim_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:bolim_qaydnoma' %}"><i class="nav-icon cil-room"></i> Bo'lim qaydnomasi</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'muddat' %} active{% endif %}" href="{% url 'hisobotlar:muddat' %}"><i class="nav-icon cil-clock"></i> Xizmat muddati</a></li>
       {% endif %}
       {% if tozalash_huquqi %}

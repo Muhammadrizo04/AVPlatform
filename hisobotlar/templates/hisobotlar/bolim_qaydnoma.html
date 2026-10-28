@@ -1,0 +1,54 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Bo'lim qaydnomasi{% endblock %}
+{% block yol %}Hisobotlar{% endblock %}
+{% block kontent %}
+<h1>Bo'lim qaydnomasi{% if filial %}: {{ filial.nomi }}{% if bolim_nomi %} — {{ bolim_nomi }}{% endif %}{% endif %}</h1>
+<div class="card mb-3 chop-yoq"><div class="card-body">
+<form method="get" class="filtrlar">
+  <select class="form-select form-select-sm" name="filial" aria-label="Filial" onchange="if (this.form.bolim) this.form.bolim.value = ''; this.form.submit()">
+    {% if not filial %}<option value="">— filialni tanlang —</option>{% endif %}
+    {% for f in filiallar %}<option value="{{ f.pk }}"{% if filial and filial.pk == f.pk %} selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+  </select>
+  {% if filial %}
+  <select class="form-select form-select-sm" name="bolim" aria-label="Bo'lim" onchange="this.form.submit()">
+    <option value="">Butun filial</option>
+    {% for b in bolimlar %}<option value="{{ b.pk }}"{% if bolim and bolim.pk == b.pk %} selected{% endif %}>{{ b.chiziq }}{{ b.nomi }}</option>{% endfor %}
+    <option value="bolimsiz"{% if bolim_qiymati == "bolimsiz" %} selected{% endif %}>Bo'limsiz (taqsimlanmagan)</option>
+  </select>
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="AV nomi, inv. raqam, МОЛ yoki bo'lim" aria-label="Qidirish">
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
+  {% if q or bolim_qiymati %}<a class="btn btn-sm btn-ghost-secondary" href="?filial={{ filial.pk }}">Tozalash</a>{% endif %}
+  <span class="small text-body-secondary ms-auto">{{ qatorlar|length }} ta qator</span>
+  {% endif %}
+</form>
+<p class="small text-body-secondary mb-0 mt-2">Bo'lim tanlansa, uning ichki bo'limlari (xonalari) ham kiradi. «Soni» — shu bo'limdagi soni.</p>
+</div></div>
+{% if filial %}
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Bo'lim</th><th>AV</th><th>Inv. raqam</th><th>МОЛ</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
+  <tbody>
+  {% for q in qatorlar %}
+    <tr><td>{{ q.bolim }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{% if q.mol %}{{ q.mol.ism }}{% else %}<span class="text-body-secondary">—</span>{% endif %}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
+  {% empty %}
+    <tr><td colspan="7" class="text-body-secondary">{% if q %}Qidiruv bo'yicha hech narsa topilmadi.{% else %}Bu bo'limda AV yo'q.{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+  <tfoot class="table-light"><tr><th colspan="5">Jami</th><th class="son">{{ jami_soni|son }}</th>{% if pul_huquqi %}<th class="son">{{ jami|pul }}</th>{% endif %}</tr></tfoot>
+</table>
+</div>
+</div>
+<div class="imzo-qator">
+  <div>Sana: {{ bugun|date:"d.m.Y" }}</div>
+  <div>Bo'lim mas'uli: ______________________ (F.I.Sh., imzo)</div>
+  <div>Tekshirdi: ______________________ (F.I.Sh., imzo)</div>
+</div>
+<div class="amallar mb-4">
+  <a class="btn btn-sm btn-outline-success" href="?filial={{ filial.pk }}{% if bolim_qiymati %}&amp;bolim={{ bolim_qiymati }}{% endif %}{% if q %}&amp;q={{ q|urlencode }}{% endif %}&amp;format=xlsx"><i class="cil-spreadsheet me-1"></i>Excel'ga yuklash</a>
+  <a class="btn btn-sm btn-outline-secondary" href="#" onclick="window.print(); return false;"><i class="cil-print me-1"></i>Chop etish</a>
+</div>
+{% else %}
+<p class="text-body-secondary">Ro'yxatni ko'rish uchun filialni tanlang.</p>
+{% endif %}
+{% endblock %}
