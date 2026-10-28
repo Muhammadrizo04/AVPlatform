@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisobotlar import servis
@@ -100,6 +101,7 @@ def kesim(request):
     return render(request, "hisobotlar/kesim.html", kontekst)
 
 
+@xframe_options_sameorigin  # chop etish — ko'rinmas iframe'da (panel/chop.js)
 @amal_kerak("hisobot")
 def mol_qaydnoma(request):
     xodim = None
@@ -143,6 +145,7 @@ def mol_qaydnoma(request):
     })
 
 
+@xframe_options_sameorigin
 @amal_kerak("hisobot")
 def bolim_qaydnoma(request):
     """Bo'lim qaydnomasi: filial va bo'lim (ichki bo'limlari bilan) tanlanadi; «bolimsiz» — taqsimlanmaganlar."""

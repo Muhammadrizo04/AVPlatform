@@ -392,6 +392,9 @@ def test_qaydnomalarda_summali_va_summasiz_chop(hisobchi, filial_a, foydalanuvch
         summasiz = c.get(f"{url}?{asos.replace('&amp;', '&')}&chop=summasiz").content.decode()
         assert "data-avto-chop" in summali and "qiymat-ustun" in summali, url
         assert "data-avto-chop" in summasiz and "qiymat-ustun" not in summasiz, url
+        # chop etish ko'rinmas iframe'da (yangi tab emas) — o'z saytidan iframe'ga ruxsat
+        assert 'target="_blank"' not in html and "data-chop-url" in html
+        assert c.get(f"{url}?chop=summali&{asos.replace('&amp;', '&')}")["X-Frame-Options"] == "SAMEORIGIN"
     hr = Client()
     hr.force_login(foydalanuvchi("hr"))
     html = hr.get(reverse("hisobotlar:mol_qaydnoma")).content.decode()
