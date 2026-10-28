@@ -12,7 +12,7 @@
 <div class="korsatkichlar">
   <a class="korsatkich" href="?holat=faol"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-people"></i></span><span><b>{{ korsatkichlar.faol|son }}</b>faol xodim</span></a>
   <a class="korsatkich" href="?av_bor=1"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ korsatkichlar.ushlab|son }}</b>AV ushlab turgan</span></a>
-  <a class="korsatkich{% if korsatkichlar.ketgan_ushlab %} ogoh{% else %} nol{% endif %}" href="{% url 'mol:ketganlar' %}"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.ketgan_ushlab|son }}</b>ketgan, lekin AV'si bor</span></a>
+  <a class="korsatkich{% if korsatkichlar.ketgan_ushlab %} ogoh{% else %} nol{% endif %}" href="?holat=ketgan&amp;av_bor=1"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.ketgan_ushlab|son }}</b>ketgan, lekin AV'si bor</span></a>
 </div>
 <div class="card mb-3"><div class="card-body">
 <form method="get" class="filtrlar">

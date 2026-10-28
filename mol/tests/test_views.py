@@ -384,3 +384,17 @@ def test_akt_yangi_qatorlar_soni_cheklangan(client_rol, filial, monkeypatch):
     javob = client_rol("hisobchi").get(reverse("mol:akt_yangi"))
     assert len(javob.context["qatorlar"]) == 2
     assert "Filtrni toraytiring" in javob.content.decode()
+
+
+def test_ketgan_avli_plitka_royxatni_filtrlaydi(client_rol, filial, bobur, aziz):
+    """Uchchala plitka ham shu sahifadagi ro'yxatni filtrlaydi: «ketgan, lekin AV'si bor» — holat=ketgan&av_bor=1."""
+    av = av_yarat(filial, "5", "500")
+    bobur.ishdan_bushagan = True
+    bobur.save()
+    qator(av, filial, "3", bobur)
+    qator(av, filial, "2", aziz)
+    c = client_rol("hr")
+    html = c.get(reverse("mol:xodimlar")).content.decode()
+    assert 'href="?holat=ketgan&amp;av_bor=1"' in html
+    royxat = c.get(reverse("mol:xodimlar"), {"holat": "ketgan", "av_bor": "1"}).context["xodimlar"]
+    assert [x.pk for x in royxat] == [bobur.pk]
