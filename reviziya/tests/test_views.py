@@ -184,7 +184,7 @@ def test_excel_va_pdf(ikki_topilmadi, hisobchi, foydalanuvchi):
 def test_menyu_bandi(client_rol):
     havola = reverse("reviziya:royxat")
     for rol in ("hisobchi", "hr", "rahbar"):
-        r = client_rol(rol).get(reverse("panel:bosh"))
+        r = client_rol(rol).get(reverse("panel:bosh"), follow=True)
         assert r.status_code == 200 and f'href="{havola}"' in r.content.decode(), rol
         assert client_rol(rol).get(havola).status_code == 200, rol
     # revizor: panel «Reviziyalar» ochiladi, menyuda faqat shu bo'lim (boshqa panel bo'limlari unga yopiq)

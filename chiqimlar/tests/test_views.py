@@ -194,14 +194,14 @@ def test_tasdiqlangan_faqat_oqish(foydalanuvchi, tayyor):
 
 def test_bosh_sahifa_kartochka_havolasi(client_rol, av, fa):
     chiqim(av, fa)
-    html = client_rol("hisobchi").get(reverse("panel:bosh")).content.decode()
+    html = client_rol("admin").get(reverse("panel:bosh")).content.decode()
     assert f'href="{reverse("chiqimlar:royxat")}"' in html
     assert "bayroq=chiqim_kutilmoqda" not in html
 
 
 def test_menyu_nishon(client_rol, av, fa):
     chiqim(av, fa)
-    html = client_rol("hisobchi").get(reverse("panel:bosh")).content.decode()
+    html = client_rol("hisobchi").get(reverse("panel:bosh"), follow=True).content.decode()
     assert "1C chiqimlari" in html
     assert 'badge bg-danger ms-auto">1<' in html
     for rol in ("hr",):  # tasdiqlay olmaydi: menyu bor, belgi yo'q

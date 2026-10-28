@@ -401,7 +401,7 @@ def test_mpo_rasm_jpeg_sifatida_saqlanadi(filial_a, hisobchi):
 
 
 def test_htmx_4xx_javoblarni_almashtirish_sozlamasi(client_hisobchi):
-    html = client_hisobchi.get(reverse("panel:bosh")).content.decode()
+    html = client_hisobchi.get(reverse("panel:bosh"), follow=True).content.decode()
     assert 'name="htmx-config"' in html and "responseHandling" in html
     assert "400|409|422" in html
 

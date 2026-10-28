@@ -16,7 +16,8 @@ from vositalar.tests.test_bayroqlar import av_yarat
 
 @pytest.fixture
 def client_hisobchi(client_rol):
-    return client_rol("hisobchi")
+    """Bosh sahifani ko'radigan to'liq huquqli rol (hisobchida bosh sahifa yo'q — AV ro'yxatiga o'tadi)."""
+    return client_rol("admin")
 
 
 def test_bosh_filial_kesimi(client_hisobchi, filial_yarat):
@@ -54,7 +55,7 @@ def test_bosh_filial_cheklovi(foydalanuvchi, filial_yarat):
     av_yarat(a)
     av_yarat(b)
     client = Client()
-    client.force_login(foydalanuvchi("hisobchi", [a]))
+    client.force_login(foydalanuvchi("admin", [a]))
     javob = client.get(reverse("panel:bosh"))
     assert [q["filial"].kod for q in javob.context["filiallar"]] == ["A"]
 

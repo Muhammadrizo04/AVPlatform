@@ -23,7 +23,7 @@ from onec.models import Filial
 def test_admin_hamma_amal(foydalanuvchi):
     admin = foydalanuvchi(Rol.ADMIN)
     assert set(HUQUQLAR) == {
-        "korish", "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt",
+        "korish", "bosh_sahifa", "av_tahrir", "taqsimot", "bolim_tahrir", "mol_akt",
         "yorliq", "tozalash", "hisobot", "sozlama", "sinxron", "pul_korish", "chiqim_korish",
         "reviziya_boshqarish", "reviziya_otkazish", "reviziya_korish",
     }
@@ -53,7 +53,7 @@ def test_hr_amallari(foydalanuvchi):
 def test_rahbar_faqat_korish_va_hisobot(foydalanuvchi):
     u = foydalanuvchi(Rol.RAHBAR)
     for amal in HUQUQLAR:
-        assert huquqi_bor(u, amal) is (amal in {"korish", "hisobot", "pul_korish", "reviziya_korish"}), amal
+        assert huquqi_bor(u, amal) is (amal in {"korish", "bosh_sahifa", "hisobot", "pul_korish", "reviziya_korish"}), amal
 
 
 def test_revizor_va_notanish_amalda_huquq_yoq(foydalanuvchi):
@@ -91,7 +91,11 @@ def test_hisobchi_kira_oladi_va_chiqadi(foydalanuvchi):
     javob = client.post(reverse("hisoblar:kirish"), {"username": u.username, "password": PAROL})
     assert javob.status_code == 302
     assert client.session["_auth_user_id"] == str(u.pk)
-    assert client.get(reverse("panel:bosh")).status_code == 200
+    # hisobchida bosh sahifa yo'q — AV ro'yxatiga o'tadi, menyuda «Bosh sahifa» bandi yo'q
+    javob = client.get(reverse("panel:bosh"))
+    assert javob.status_code == 302 and javob.url == reverse("vositalar:royxat")
+    html = client.get(javob.url).content.decode()
+    assert "Bosh sahifa" not in html and f'href="{reverse("panel:bosh")}"' not in html
     javob = client.post(reverse("hisoblar:chiqish"))
     assert javob.status_code == 302
     assert "_auth_user_id" not in client.session
@@ -148,7 +152,7 @@ def test_bosh_rol_sessiya_davomida_o_zgarsa_403(foydalanuvchi):
     u = foydalanuvchi(Rol.HISOBCHI)
     client = Client()
     client.force_login(u)
-    assert client.get(reverse("panel:bosh")).status_code == 200
+    assert client.get(reverse("vositalar:royxat")).status_code == 200
     u.profil.rol = Rol.REVIZOR
     u.profil.save()
     assert client.get(reverse("panel:bosh")).url == reverse("reviziya:mobil")

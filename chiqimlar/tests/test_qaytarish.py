@@ -165,7 +165,7 @@ def test_bekor_1c_menyu_belgisida_va_royxatda(muhit):
     chiqimlarni_yangila(DAN, GACHA)
     c = Client()
     c.force_login(m["hisobchi"])
-    javob = c.get(reverse("panel:bosh"))
+    javob = c.get(reverse("panel:bosh"), follow=True)
     assert javob.context["chiqim_kutilmoqda_soni"] == 1  # kutilmoqda 0 + 1C'da bekor 1
     html = c.get(reverse("chiqimlar:royxat"), {"holat": "bekor_1c"}).content.decode()
     assert "Реализация 17" in html or "17" in html

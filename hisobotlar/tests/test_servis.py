@@ -289,7 +289,7 @@ def test_bolim_qaydnomasi(hisobchi, filial_a, filial_b, foydalanuvchi):
     c = Client()
     c.force_login(hisobchi)
     url = reverse("hisobotlar:bolim_qaydnoma")
-    assert f'href="{url}"' in c.get(reverse("panel:bosh")).content.decode()  # menyuda
+    assert f'href="{url}"' in c.get(reverse("panel:bosh"), follow=True).content.decode()  # menyuda
 
     javob = c.get(url, {"filial": filial_a.pk, "bolim": bino.pk})
     [q] = javob.context["qatorlar"]

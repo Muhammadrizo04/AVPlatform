@@ -76,8 +76,9 @@ def test_revizor_kirganda_mobilga(muhit, revizor):
     assert royxat.status_code == 200 and muhit[0].nomi in matn(royxat)
 
 
-def test_hisobchi_boshda_qoladi(muhit, hisobchi):
-    assert kirgan(hisobchi).get("/").status_code == 200
+def test_hisobchi_av_royxatiga_otadi(muhit, hisobchi):
+    javob = kirgan(hisobchi).get("/")
+    assert javob.status_code == 302 and javob.url == "/av/"
 
 
 def test_faqat_biriktirilgan(muhit, foydalanuvchi, hisobchi, fa, filial_yarat):

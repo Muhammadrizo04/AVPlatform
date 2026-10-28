@@ -51,6 +51,8 @@ def bosh(request):
     # Revizor panelga kirmaydi (`korish` yo'q): uning bosh sahifasi — «Mening reviziyalarim» (spec §3.2)
     if not huquqi_bor(request.user, "korish") and huquqi_bor(request.user, "reviziya_otkazish"):
         return redirect("reviziya:mobil")
+    if huquqi_bor(request.user, "korish") and not huquqi_bor(request.user, "bosh_sahifa"):
+        return redirect("vositalar:royxat")  # hisobchi — ish sahifasi AV ro'yxati
     return _bosh(request)
 
 

@@ -10,6 +10,8 @@ from .models import Rol
 # amal -> shu amalga ruxsati bor rollar. Revizor panelda faqat «Reviziyalar» ni ko'radi (o'z filiallarida boshqaradi).
 HUQUQLAR: dict[str, set[str]] = {
     "korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
+    # Bosh sahifa (umumiy ko'rsatkichlar): hisobchiga kerak emas — u kirgach AV ro'yxatiga o'tadi.
+    "bosh_sahifa": {Rol.ADMIN, Rol.HR, Rol.RAHBAR},
     "av_tahrir": {Rol.ADMIN, Rol.HISOBCHI},
     "taqsimot": {Rol.ADMIN, Rol.HISOBCHI},
     "bolim_tahrir": {Rol.ADMIN, Rol.HISOBCHI},

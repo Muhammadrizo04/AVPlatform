@@ -24,6 +24,7 @@ def sinxron_holati(request):
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
         "pul_huquqi": huquqi_bor(request.user, "pul_korish"),
         "korish_huquqi": huquqi_bor(request.user, "korish"),
+        "bosh_huquqi": huquqi_bor(request.user, "bosh_sahifa"),
         "reviziya_huquqi": huquqi_bor(request.user, "reviziya_korish"),
         "kompaniya_nomi": Sozlama.ol().kompaniya_nomi,
         "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),

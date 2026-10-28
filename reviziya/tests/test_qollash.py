@@ -288,7 +288,7 @@ def test_bolimsiz_joyga_kochirish_aniq_xato(filial, och, qosh, hisobchi):
     assert taqsimot(stol) == [(a.pk, Holat.ISHLATILMOQDA, Decimal("1"))]
 
 
-def test_bosh_ekran_topilmadi_yakunlashda(filial, och, qosh, hisobchi):
+def test_bosh_ekran_topilmadi_yakunlashda(filial, och, qosh, hisobchi, foydalanuvchi):
     """10 dan 5 tasi topilmadi: bosh ekrandagi «Topilmadi» skanerlashda o'zgarmaydi, yakunlashda 5 bo'ladi;
     «Ochiq» ga qaytarilsa — yana 10 ta «Ishlatilmoqda»."""
     from django.test import Client
@@ -298,7 +298,7 @@ def test_bosh_ekran_topilmadi_yakunlashda(filial, och, qosh, hisobchi):
     stol = av_yarat(filial, soni="10")
     qator(stol, filial, "10", bolim=a)
     client = Client()
-    client.force_login(hisobchi)
+    client.force_login(foydalanuvchi("admin"))  # bosh sahifa — admin/HR/rahbarda
 
     def bosh_ekran():
         holatlar = client.get(reverse("panel:bosh")).context["holatlar"]
