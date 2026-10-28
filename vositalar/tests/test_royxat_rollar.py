@@ -30,7 +30,7 @@ def test_royxat_qatorida_bolim_mol_holat(client_rol, filial):
     for htmx in ({}, {"HTTP_HX_REQUEST": "true"}):
         html = client_rol("hr").get(reverse(ROYXAT), **htmx).content.decode()
         assert "Ombor" in html and "Bobur Aliyev" in html and "Ishlatilmoqda" in html
-        assert "МОЛ'siz: 1" in html
+        assert "Javobgarsiz: 1" in html
 
 
 def test_royxat_joylashuv_filial_cheklovi(foydalanuvchi, filial, filial_yarat):

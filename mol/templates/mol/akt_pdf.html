@@ -19,9 +19,9 @@
 </head>
 <body>
 <div class="kompaniya">{{ kompaniya }}</div>
-<h1>МОЛ topshirish-qabul akti {{ akt.nomi }}</h1>
+<h1>Moddiy javobgar shaxs topshirish-qabul akti {{ akt.nomi }}</h1>
 <div class="sana">{{ akt.sana|date:"d.m.Y" }}</div>
-<p>Topshiruvchi: <b>{{ akt.topshiruvchi.ism|default:"— (МОЛ biriktirilmagan)" }}</b><br>
+<p>Topshiruvchi: <b>{{ akt.topshiruvchi.ism|default:"— (javobgar shaxs biriktirilmagan)" }}</b><br>
 Qabul qiluvchi: <b>{{ akt.qabul_qiluvchi.ism }}</b></p>
 {% if akt.izoh %}<p>Izoh: {{ akt.izoh }}</p>{% endif %}
 <table>

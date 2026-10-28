@@ -29,7 +29,7 @@
         <ul class="av-belgilar av-belgilar-kichik" aria-label="Joylashuv">
           {% if j.bolimlar %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} +{{ j.bolimlar|length|add:"-1" }}{% endif %}</li>{% endif %}
           {% if j.mollar %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i>{{ j.mollar.0 }}{% if j.mollar|length > 1 %} +{{ j.mollar|length|add:"-1" }}{% endif %}</li>{% endif %}
-          {% if j.molsiz %}<li class="belgi belgi-yumshoq">МОЛ'siz: {{ j.molsiz|son }}</li>{% endif %}
+          {% if j.molsiz %}<li class="belgi belgi-yumshoq">Javobgarsiz: {{ j.molsiz|son }}</li>{% endif %}
           {% for h in j.holatlar %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ h|holat_sinfi }}">{{ h }}</span></li>{% endfor %}
         </ul>
         {% endif %}{% endwith %}
@@ -50,7 +50,7 @@
     <thead><tr>
       {% if taqsim_huquqi or yorliq_huquqi %}<th class="tanlash"><input class="form-check-input" type="checkbox" data-hammasi aria-label="Sahifadagi hammasini tanlash"></th>{% endif %}
       {% saralash_ustuni "inv" "Inv. raqam" %}{% saralash_ustuni "nomi" "Nomi" %}{% saralash_ustuni "turi" "Turi" %}
-      <th>Bo'lim</th><th>МОЛ</th><th>Holat</th>
+      <th>Bo'lim</th><th>Javobgar shaxs</th><th>Holat</th>
       {% saralash_ustuni "soni" "Soni" "son" %}{% if pul_huquqi %}{% saralash_ustuni "summa" "Summa" "son" %}{% endif %}
     </tr></thead>
     <tbody>
@@ -63,7 +63,7 @@
         <td class="small av-turi" title="{{ av.turi.nomi }}">{{ av.turi.nomi|default:"—" }}</td>
         {% with j=av.joy %}
         <td class="small">{% if j.bolimlar %}{{ j.bolimlar.0 }}{% if j.bolimlar|length > 1 %} <span class="text-body-secondary">+{{ j.bolimlar|length|add:"-1" }}</span>{% endif %}{% else %}<span class="text-body-tertiary">—</span>{% endif %}</td>
-        <td class="small">{% if j.mollar %}{{ j.mollar.0 }}{% if j.mollar|length > 1 %} <span class="text-body-secondary">+{{ j.mollar|length|add:"-1" }}</span>{% endif %}{% endif %}{% if j.molsiz %}{% if j.mollar %}<br>{% endif %}<span class="text-body-tertiary text-nowrap">МОЛ'siz{% if j.mollar or j.molsiz != av.jami_soni %}: {{ j.molsiz|son }}{% endif %}</span>{% endif %}</td>
+        <td class="small">{% if j.mollar %}{{ j.mollar.0 }}{% if j.mollar|length > 1 %} <span class="text-body-secondary">+{{ j.mollar|length|add:"-1" }}</span>{% endif %}{% endif %}{% if j.molsiz %}{% if j.mollar %}<br>{% endif %}<span class="text-body-tertiary text-nowrap">Javobgarsiz{% if j.mollar or j.molsiz != av.jami_soni %}: {{ j.molsiz|son }}{% endif %}</span>{% endif %}</td>
         <td>{% for h in j.holatlar %}<span class="holat-pill h-{{ h|holat_sinfi }}">{{ h }}</span> {% endfor %}</td>
         {% endwith %}
         <td class="son text-nowrap">{{ av.jami_soni|son }}</td>

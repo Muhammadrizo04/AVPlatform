@@ -1,15 +1,15 @@
 {% extends "panel/base.html" %}
-{% block sarlavha %}МОЛ qaydnomasi{% endblock %}
+{% block sarlavha %}Javobgar shaxs qaydnomasi{% endblock %}
 {% block yol %}Hisobotlar{% endblock %}
 {% block kontent %}
-<h1>МОЛ qaydnomasi{% if xodim %}: {{ xodim.ism }}{% endif %}</h1>
+<h1>Javobgar shaxs qaydnomasi{% if xodim %}: {{ xodim.ism }}{% endif %}</h1>
 <div class="card mb-3 chop-yoq"><div class="card-body">
 <form method="get" class="filtrlar">
-  <select class="form-select form-select-sm" name="xodim" aria-label="МОЛ" onchange="this.form.submit()">
-    <option value="">Barcha МОЛ'lar</option>
+  <select class="form-select form-select-sm" name="xodim" aria-label="Javobgar shaxs" onchange="this.form.submit()">
+    <option value="">Barcha javobgar shaxslar</option>
     {% for x in xodimlar %}<option value="{{ x.pk }}"{% if xodim and xodim.pk == x.pk %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
   </select>
-  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="МОЛ ismi, AV nomi, inv. raqam yoki bo'lim" aria-label="Qidirish">
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="Javobgar shaxs ismi, AV nomi, inv. raqam yoki bo'lim" aria-label="Qidirish">
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
   {% if q or xodim %}<a class="btn btn-sm btn-ghost-secondary" href="?">Tozalash</a>{% endif %}
 </form>
@@ -22,7 +22,7 @@
 <div class="card mb-3">
 <div class="table-responsive jadval-qotgan">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>МОЛ</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
+  <thead><tr><th>Javobgar shaxs</th><th>AV</th><th>Inv. raqam</th><th>Bo'lim</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for q in qatorlar %}
     <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>

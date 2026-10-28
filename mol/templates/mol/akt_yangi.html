@@ -1,13 +1,13 @@
 {% extends "panel/base.html" %}
-{% block sarlavha %}Yangi МОЛ akti{% endblock %}
-{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">МОЛ nazorati</a>{% endblock %}
+{% block sarlavha %}Yangi topshirish akti{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'mol:xodimlar' %}">Javobgar shaxslar</a>{% endblock %}
 {% block kontent %}
-<h1>Yangi МОЛ topshirish-qabul akti</h1>
+<h1>Yangi topshirish-qabul akti</h1>
 <div class="card mb-3"><div class="card-body">
 <form method="get" class="row g-2 align-items-end" id="qidiruv-forma">
   <div class="col-md-4"><label class="form-label w-100 mb-0">Topshiruvchi
     <select class="form-select form-select-sm" name="topshiruvchi" onchange="this.form.dataset.tozala = '1'; this.form.requestSubmit()">
-      <option value="">— МОЛ'siz qatorlar —</option>
+      <option value="">— Javobgar shaxsi yo'q qatorlar —</option>
       {% for x in xodimlar %}<option value="{{ x.pk }}"{% if topshiruvchi and x.pk == topshiruvchi.pk %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
     </select>
   </label></div>

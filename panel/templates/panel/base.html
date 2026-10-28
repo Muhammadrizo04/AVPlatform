@@ -29,8 +29,8 @@
       <li class="nav-title">Vositalar</li>
       <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom != 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:royxat' %}"><i class="nav-icon cil-list"></i> AV ro'yxati</a></li>
       <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom == 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:bolimlar' %}"><i class="nav-icon cil-sitemap"></i> Bo'limlar</a></li>
-      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom != 'akt_royxat' and nom != 'akt' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> МОЛ nazorati</a></li>
-      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> МОЛ aktlari</a></li>
+      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom != 'akt_royxat' and nom != 'akt' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> Javobgar shaxslar</a></li>
+      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> Topshirish aktlari</a></li>
       {% else %}
       <li class="nav-title">Reviziya</li>
       <li class="nav-item"><a class="nav-link" href="{% url 'reviziya:mobil' %}"><i class="nav-icon cil-qr-code"></i> Skanerlash (telefon)</a></li>
@@ -44,7 +44,7 @@
       {% if hisobot_huquqi or tozalash_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
       {% if hisobot_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>
-      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'mol_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:mol_qaydnoma' %}"><i class="nav-icon cil-notes"></i> МОЛ qaydnomasi</a></li>
+      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'mol_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:mol_qaydnoma' %}"><i class="nav-icon cil-notes"></i> Javobgar qaydnomasi</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'bolim_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:bolim_qaydnoma' %}"><i class="nav-icon cil-room"></i> Bo'lim qaydnomasi</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'muddat' %} active{% endif %}" href="{% url 'hisobotlar:muddat' %}"><i class="nav-icon cil-clock"></i> Xizmat muddati</a></li>
       {% endif %}

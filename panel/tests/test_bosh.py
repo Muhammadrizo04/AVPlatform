@@ -169,3 +169,17 @@ def test_tasdiq_oynasi_hamma_sahifada_va_tizim_confirm_qolmagan(client_hisobchi,
     ildiz = pathlib.Path(__file__).resolve().parents[2]
     qolgan = [str(p) for p in ildiz.glob("*/templates/**/*.html") if "confirm(" in p.read_text(encoding="utf-8")]
     assert qolgan == []
+
+
+def test_mol_qisqartmasi_korinadigan_matnlarda_yoq():
+    """«МОЛ» (kirillcha qisqartma) o'rniga «Javobgar shaxs»: shablonlarda ko'rinadigan matn sifatida qolmagan."""
+    import pathlib
+    import re
+
+    ildiz = pathlib.Path(__file__).resolve().parents[2]
+    qolgan = []
+    for p in ildiz.glob("*/templates/**/*.html"):
+        matn = re.sub(r"{#.*?#}", "", p.read_text(encoding="utf-8"), flags=re.S)
+        if "МОЛ" in matn:
+            qolgan.append(str(p))
+    assert qolgan == []

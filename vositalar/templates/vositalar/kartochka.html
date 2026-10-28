@@ -20,7 +20,7 @@
       {% for b in joylashuv.bolimlar|slice:":3" %}<li class="belgi"><i class="cil-sitemap" aria-hidden="true"></i>{{ b.toliq_nomi }}</li>{% endfor %}
       {% if joylashuv.bolimlar|length > 3 %}<li class="belgi">+{{ joylashuv.bolimlar|length|add:"-3" }} bo'lim</li>{% endif %}
       {% for m in joylashuv.mollar|slice:":3" %}<li class="belgi"><i class="cil-user" aria-hidden="true"></i><a href="{% url 'mol:xodim' m.pk %}">{{ m.ism }}</a></li>{% endfor %}
-      {% if joylashuv.mollar|length > 3 %}<li class="belgi">+{{ joylashuv.mollar|length|add:"-3" }} МОЛ</li>{% endif %}
+      {% if joylashuv.mollar|length > 3 %}<li class="belgi">+{{ joylashuv.mollar|length|add:"-3" }} javobgar</li>{% endif %}
       {% for nomi, soni in joylashuv.holatlar.items %}<li class="belgi belgi-holat"><span class="holat-pill h-{{ nomi|holat_sinfi }}">{{ nomi }}{% if joylashuv.holatlar|length > 1 %} <span class="son-kichik">{{ soni|son }}</span>{% endif %}</span></li>{% endfor %}
     </ul>
   </div>
@@ -41,7 +41,7 @@
 </section>
 {% endif %}
 {% if joylashuv.molsiz %}
-<div class="harakat-kerak"><b><i class="cil-warning" aria-hidden="true"></i>МОЛ biriktirilmagan: {{ joylashuv.molsiz|son }} dona</b>{% if mol_akt_huquqi %}<a class="btn btn-danger btn-sm" href="{% url 'mol:akt_yangi' %}">МОЛ akti tuzish</a>{% endif %}</div>
+<div class="harakat-kerak"><b><i class="cil-warning" aria-hidden="true"></i>Javobgar shaxs biriktirilmagan: {{ joylashuv.molsiz|son }} dona</b>{% if mol_akt_huquqi %}<a class="btn btn-danger btn-sm" href="{% url 'mol:akt_yangi' %}">Topshirish akti tuzish</a>{% endif %}</div>
 {% endif %}
 
 <div class="row g-4 mt-1">

@@ -15,7 +15,7 @@
     {% for b in bolimlar %}<option value="{{ b.pk }}"{% if bolim and bolim.pk == b.pk %} selected{% endif %}>{{ b.chiziq }}{{ b.nomi }}</option>{% endfor %}
     <option value="bolimsiz"{% if bolim_qiymati == "bolimsiz" %} selected{% endif %}>Bo'limsiz (taqsimlanmagan)</option>
   </select>
-  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="AV nomi, inv. raqam, МОЛ yoki bo'lim" aria-label="Qidirish">
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="AV nomi, inv. raqam, javobgar shaxs yoki bo'lim" aria-label="Qidirish">
   <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
   {% if q or bolim_qiymati %}<a class="btn btn-sm btn-ghost-secondary" href="?filial={{ filial.pk }}">Tozalash</a>{% endif %}
   {% endif %}
@@ -32,7 +32,7 @@
 <div class="card mb-3">
 <div class="table-responsive jadval-qotgan">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Bo'lim</th><th>AV</th><th>Inv. raqam</th><th>МОЛ</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
+  <thead><tr><th>Bo'lim</th><th>AV</th><th>Inv. raqam</th><th>Javobgar shaxs</th><th>Holat</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
   {% for q in qatorlar %}
     <tr><td>{{ q.bolim }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{% if q.mol %}{{ q.mol.ism }}{% else %}<span class="text-body-secondary">—</span>{% endif %}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>

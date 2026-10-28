@@ -116,10 +116,10 @@ def tarix(av: AV, user) -> list[TarixQator]:
         ))
     aktlar = korinadigan_aktlar(user).filter(qatorlar__av=av).distinct().select_related("tuzdi")
     for akt in aktlar:
-        kimdan = akt.topshiruvchi.ism if akt.topshiruvchi else "МОЛ'siz"
+        kimdan = akt.topshiruvchi.ism if akt.topshiruvchi else "Javobgarsiz"
         natija.append(TarixQator(
             _aware(akt.sana), "mol_akt",
-            f"МОЛ akti {akt.nomi} ({akt.get_holat_display().lower()}): {kimdan} → {akt.qabul_qiluvchi.ism}",
+            f"Topshirish akti {akt.nomi} ({akt.get_holat_display().lower()}): {kimdan} → {akt.qabul_qiluvchi.ism}",
             _kim(akt.tuzdi),
         ))
     for r in Rasm.objects.filter(av=av).select_related("kim"):

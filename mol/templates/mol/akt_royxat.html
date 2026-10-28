@@ -1,10 +1,10 @@
 {% extends "panel/base.html" %}
 {% load jadval %}
-{% block sarlavha %}МОЛ aktlari{% endblock %}
+{% block sarlavha %}Topshirish aktlari{% endblock %}
 {% block yol %}Vositalar{% endblock %}
 {% block kontent %}
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-  <h1 class="mb-0 me-auto">МОЛ aktlari</h1>
+  <h1 class="mb-0 me-auto">Topshirish aktlari</h1>
   {% if akt_huquqi %}<a class="btn btn-primary btn-sm" href="{% url 'mol:akt_yangi' %}"><i class="cil-plus me-1"></i>Yangi akt</a>{% endif %}
 </div>
 
@@ -35,7 +35,7 @@
     <tr>
       <td class="text-nowrap"><a href="{% url 'mol:akt' a.pk %}" class="fw-semibold text-decoration-none">{{ a.nomi }}</a></td>
       <td>{{ a.sana|date:"d.m.Y" }}</td>
-      <td>{{ a.topshiruvchi.ism|default:"— (МОЛ'siz)" }}</td>
+      <td>{{ a.topshiruvchi.ism|default:"— (javobgarsiz)" }}</td>
       <td>{{ a.qabul_qiluvchi.ism }}</td>
       <td class="small">{{ a.tuzdi.get_full_name|default:a.tuzdi.get_username }}</td>
       <td>{% include "mol/_akt_holati.html" %}</td>

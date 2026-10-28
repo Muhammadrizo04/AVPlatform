@@ -398,14 +398,14 @@ def test_mol_korinadi_va_mol_boyicha_qidiriladi(fa, revizor, hisobchi):
     c = kirgan(revizor)
 
     html = matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
-    assert "МОЛ: Bobur Aliyev" in html and "МОЛ'siz" in html
+    assert "Javobgar: Bobur Aliyev" in html and "Javobgarsiz" in html
     assert 'data-qolgan="' in html and "bobur aliyev" in html  # ro'yxat filtri МОЛ ismi bo'yicha ham
 
     # asosiy qidiruv: МОЛ ismi bo'yicha — ro'yxatda МОЛ ko'rinadi; tanlangach kartochkada ham
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="bobur")))
-    assert stol.nomi in html and "МОЛ: Bobur Aliyev" in html
+    assert stol.nomi in html and "Javobgar: Bobur Aliyev" in html
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, av=stol.pk)))
-    assert "МОЛ: Bobur Aliyev" in html and "AV tarixi" in html
+    assert "Javobgar: Bobur Aliyev" in html and "AV tarixi" in html
 
 
 def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi, filial_yarat):
@@ -438,9 +438,9 @@ def test_reviziyadan_keyin_biriktirilgan_mol_korinadi(fa, revizor, hisobchi):
     q.save()
     c = kirgan(revizor)
 
-    assert "МОЛ: Akbarov Burxonjon (kassir)" in matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert "Javobgar: Akbarov Burxonjon (kassir)" in matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="akbarov")))
-    assert pc.nomi in html and "МОЛ: Akbarov Burxonjon (kassir)" in html
+    assert pc.nomi in html and "Javobgar: Akbarov Burxonjon (kassir)" in html
 
 
 def test_boshqaning_qaydi_revizor_ham_tuzatadi(muhit, revizor, hisobchi, foydalanuvchi):
@@ -469,7 +469,7 @@ def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalan
     c = kirgan(revizor)
 
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, av=pc.pk)))
-    assert "Javobgar shaxsni (МОЛ) biriktirish" in html and f'data-xodim="{kassir.pk}" data-xodim-nomi="Akbarov Burxonjon (kassir)"' in html
+    assert "Javobgar shaxsni biriktirish" in html and f'data-xodim="{kassir.pk}" data-xodim-nomi="Akbarov Burxonjon (kassir)"' in html
 
     r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk})
     assert r.status_code == 200 and "qoralama aktga qo'shildi" in matn(r)

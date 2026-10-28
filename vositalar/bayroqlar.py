@@ -155,7 +155,7 @@ BAYROQLAR: dict[str, Bayroq] = {
     "filial_rekvizit_bosh": Bayroq("Filial rekviziti bo'sh", AV, _filial_rekvizit_bosh),
     "mos_emas": Bayroq("Taqsimot 1C bilan mos emas", AV, _mos_emas),
     "bolimsiz": Bayroq("Bo'limga joylash kerak", Taqsimot, _bolimsiz),
-    "molsiz": Bayroq("MOL'siz", Taqsimot, _molsiz),
+    "molsiz": Bayroq("Javobgarsiz", Taqsimot, _molsiz),
     "ketgan_xodimda": Bayroq("Ketgan xodimda", Taqsimot, _ketgan_xodimda),
     "yorliq_yoq": Bayroq("Yorlig'i chop etilmagan", AV, _yorliq_yoq),
     "yorliq_almashtirish": Bayroq("Yorliqni almashtirish kerak", AV, _yorliq_almashtirish),

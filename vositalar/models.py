@@ -111,7 +111,7 @@ class TaqsimotHarakat(models.Model):
     class Sabab(models.TextChoices):
         KOCHIRISH = "kochirish", "Ko'chirish"
         HOLAT = "holat", "Holat o'zgarishi"
-        MOL_AKT = "mol_akt", "MOL akti"
+        MOL_AKT = "mol_akt", "Topshirish akti"
         ONEC_KOPAYDI = "1c_kopaydi", "1C'da ko'paydi"
         ONEC_KAMAYDI = "1c_kamaydi", "1C'da kamaydi"
         ONEC_NOLGA_TUSHDI = "1c_nolga_tushdi", "1C'da nolga tushdi"

@@ -10,12 +10,12 @@
     </div>
     <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">
-      <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Soni</th>{% if taqsim_huquqi %}<th class="text-end"><span class="visually-hidden">Amallar</span></th>{% endif %}</tr></thead>
+      <thead><tr><th>Bo'lim</th><th>Javobgar shaxs</th><th>Holat</th><th class="son">Soni</th>{% if taqsim_huquqi %}<th class="text-end"><span class="visually-hidden">Amallar</span></th>{% endif %}</tr></thead>
       <tbody>
       {% for t in g.qatorlar %}
         <tr>
           <td>{% if t.bolim %}<span class="platforma-qiymat">{{ t.bolim.toliq_nomi }}</span>{% else %}<span class="text-body-secondary">Bo'limsiz</span>{% endif %}</td>
-          <td>{% if t.mol %}<a href="{% url 'mol:xodim' t.mol.pk %}">{{ t.mol.ism }}</a>{% else %}<span class="molsiz">МОЛ'siz{% if mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}">biriktirish</a>{% endif %}</span>{% endif %}</td>
+          <td>{% if t.mol %}<a href="{% url 'mol:xodim' t.mol.pk %}">{{ t.mol.ism }}</a>{% else %}<span class="molsiz">Javobgarsiz{% if mol_akt_huquqi %}<a href="{% url 'mol:akt_yangi' %}?qator={{ t.pk }}">biriktirish</a>{% endif %}</span>{% endif %}</td>
           <td><span class="holat-pill h-{{ t.holat }}">{{ t.get_holat_display }}</span></td>
           <td class="son fw-semibold">{{ t.soni|son }}</td>
           {% if taqsim_huquqi %}

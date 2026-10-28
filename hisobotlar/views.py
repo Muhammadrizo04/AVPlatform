@@ -88,7 +88,7 @@ def mol_qaydnoma(request):
             for q in qatorlar
         )
         return _xlsx(
-            "mol_qaydnoma", ["МОЛ", "AV", "Inv. raqam", "Bo'lim", "Holat", "Soni", "Qiymat"][:ustunlar], qatorlar_xlsx
+            "mol_qaydnoma", ["Javobgar shaxs", "AV", "Inv. raqam", "Bo'lim", "Holat", "Soni", "Qiymat"][:ustunlar], qatorlar_xlsx
         )
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
     return render(request, "hisobotlar/mol_qaydnoma.html", {
@@ -142,7 +142,7 @@ def bolim_qaydnoma(request):
              q["qiymat"])[:ustunlar]
             for q in qatorlar
         )
-        sarlavhalar = ["Bo'lim", "AV", "Inv. raqam", "МОЛ", "Holat", "Soni", "Qiymat"][:ustunlar]
+        sarlavhalar = ["Bo'lim", "AV", "Inv. raqam", "Javobgar shaxs", "Holat", "Soni", "Qiymat"][:ustunlar]
         return _xlsx("bolim_qaydnoma", sarlavhalar, qatorlar_xlsx)
     return render(request, "hisobotlar/bolim_qaydnoma.html", {
         "filiallar": filiallar, "filial": filial, "bolimlar": royxat, "bolim": bolim, "bolim_nomi": bolim_nomi,

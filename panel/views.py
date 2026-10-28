@@ -80,7 +80,7 @@ def _bosh(request):
     if pul:
         kpi.append({"yorliq": "Qoldiq qiymat", "qiymat": jamlar["qoldiq"], "birlik": "so'm", "izoh": "amortizatsiya bilan",
                     "ikonka": "cil-wallet", "rang": "pul", "url": "hisobotlar:kesim", "pul": True})
-    kpi.append({"yorliq": "МОЛ biriktirilmagan", "qiymat": sonlar.get("molsiz", 0), "birlik": "qator", "izoh": "akt orqali biriktiring",
+    kpi.append({"yorliq": "Javobgar shaxs biriktirilmagan", "qiymat": sonlar.get("molsiz", 0), "birlik": "qator", "izoh": "akt orqali biriktiring",
                 "ikonka": "cil-user-unfollow", "rang": "mol", "bayroq": "molsiz", "ogoh": bool(sonlar.get("molsiz"))})
     if "chiqim_kutilmoqda" in sonlar:
         kpi.append({"yorliq": "1C chiqimlari", "qiymat": sonlar["chiqim_kutilmoqda"], "birlik": "kutilmoqda", "izoh": "tasdiqlash kerak",
@@ -89,7 +89,7 @@ def _bosh(request):
         kpi.append({"yorliq": "1C bilan mos emas", "qiymat": sonlar["mos_emas"], "birlik": "AV", "izoh": "taqsimotni tuzating",
                     "ikonka": "cil-warning", "rang": "ogoh", "bayroq": "mos_emas", "ogoh": bool(sonlar["mos_emas"])})
     else:
-        kpi.append({"yorliq": "Ketgan xodimlarda", "qiymat": sonlar.get("ketgan_xodimda", 0), "birlik": "qator", "izoh": "boshqa МОЛ'ga topshiring",
+        kpi.append({"yorliq": "Ketgan xodimlarda", "qiymat": sonlar.get("ketgan_xodimda", 0), "birlik": "qator", "izoh": "boshqa javobgar shaxsga topshiring",
                     "ikonka": "cil-warning", "rang": "ogoh", "bayroq": "ketgan_xodimda", "ogoh": bool(sonlar.get("ketgan_xodimda"))})
     if not pul:
         kpi.append({"yorliq": "Bo'limsiz", "qiymat": sonlar.get("bolimsiz", 0), "birlik": "qator", "izoh": "bo'limga joylang",

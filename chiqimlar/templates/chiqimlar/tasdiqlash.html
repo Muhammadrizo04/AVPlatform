@@ -34,7 +34,7 @@
 <div class="card-header fw-semibold">A filialdagi taqsimot</div>
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
-  <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Mavjud</th></tr></thead>
+  <thead><tr><th>Bo'lim</th><th>Javobgar shaxs</th><th>Holat</th><th class="son">Mavjud</th></tr></thead>
   <tbody>
   {% for q in qatorlar %}
     <tr><td>{{ q.bolim.toliq_nomi|default:"—" }}</td><td>{{ q.mol.ism|default:"—" }}</td><td><span class="holat-pill h-{{ q.holat }}">{{ q.get_holat_display }}</span></td><td class="son">{{ q.soni|son }}</td></tr>
@@ -66,7 +66,7 @@
   <div class="card-header fw-semibold">A filialdagi taqsimot: nechta dona chiqariladi (jami {{ chiqim.soni|son }})</div>
   <div class="table-responsive">
   <table class="table table-hover align-middle mb-0">
-    <thead><tr><th>Bo'lim</th><th>МОЛ</th><th>Holat</th><th class="son">Mavjud</th><th class="son">Chiqariladi</th></tr></thead>
+    <thead><tr><th>Bo'lim</th><th>Javobgar shaxs</th><th>Holat</th><th class="son">Mavjud</th><th class="son">Chiqariladi</th></tr></thead>
     <tbody>
     {% for q in qatorlar %}
       <tr>

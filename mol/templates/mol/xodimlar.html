@@ -1,10 +1,10 @@
 {% extends "panel/base.html" %}
 {% load jadval %}
-{% block sarlavha %}МОЛ nazorati{% endblock %}
+{% block sarlavha %}Javobgar shaxslar{% endblock %}
 {% block yol %}Vositalar{% endblock %}
 {% block kontent %}
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-  <h1 class="mb-0 me-auto">МОЛ nazorati</h1>
+  <h1 class="mb-0 me-auto">Javobgar shaxslar</h1>
   <a class="btn btn-outline-secondary btn-sm" href="{% url 'mol:akt_royxat' %}"><i class="cil-description me-1"></i>Aktlar</a>
   <a class="btn btn-outline-secondary btn-sm" href="{% url 'mol:ketganlar' %}"><i class="cil-warning me-1"></i>Ketgan xodimlardagi AV'lar</a>
   {% if akt_huquqi %}<a class="btn btn-primary btn-sm tugma" href="{% url 'mol:akt_yangi' %}"><i class="cil-plus me-1"></i>Yangi akt</a>{% endif %}

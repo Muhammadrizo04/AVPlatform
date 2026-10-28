@@ -59,7 +59,7 @@ def _qatorlarni_tekshir(topshiruvchi, qabul_qiluvchi, qatorlar) -> list[tuple]:
         if not soni.is_finite() or soni <= 0:
             raise AktXato("Qator soni noldan katta bo'lishi kerak.")
         if taqsimot.mol_id != topshiruvchi_id:
-            raise AktXato("Qator topshiruvchining МОЛ'iga tegishli emas.")
+            raise AktXato("Qator topshiruvchining javobgar shaxsiga tegishli emas.")
         if soni > taqsimot.soni:
             raise AktXato(f"Soni qatordagi miqdordan ({taqsimot.soni:f}) oshib ketdi.")
         tekshirilgan.append((taqsimot, soni))
