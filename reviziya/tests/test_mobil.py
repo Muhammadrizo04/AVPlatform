@@ -543,3 +543,11 @@ def test_oxirgilarda_kutilgan_va_topilgan_solishtiriladi(muhit, revizor):
     assert "Kutilmagan · ortiqcha" in html
     saqla(c, rv, xona, av=stol.pk, soni="1")
     assert 'teng">Kutilgan 2 · Topildi 2 ✓' in matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+
+
+def test_qidiruv_5_belgida_ozi_ishga_tushadi(muhit, revizor, hisobchi):
+    """Qidiruv 5+ belgida yozish to'xtagach avtomatik (telefon va kompyuter sahifasida)."""
+    rv, xona, *_ = muhit
+    trigger = 'hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms"'
+    assert trigger in matn(kirgan(revizor).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert trigger in matn(kirgan(hisobchi).get(reverse("reviziya:sahifa", args=[rv.pk])))

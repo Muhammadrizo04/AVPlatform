@@ -64,8 +64,10 @@
   var klaviatura = !!(window.matchMedia && window.matchMedia("(pointer: fine)").matches);
 
   function qidiruvgaQayt() {
-    // Kamerasiz (kompyuter) rejimda kursor doim qidiruvda: inv. raqam yoki USB skaner -> Enter
-    if (klaviatura && kameraYoq && qidiruv) { qidiruv.value = ""; qidiruv.focus(); }
+    // Saqlangach qidiruv so'zi doim tozalanadi; kamerasiz (kompyuter) rejimda kursor ham qidiruvga qaytadi
+    if (!qidiruv) return;
+    qidiruv.value = "";
+    if (klaviatura && kameraYoq) qidiruv.focus();
   }
 
   // HTTPS bor, lekin brauzerda QR o'quvchi yo'q (masalan, kompyuterdagi Chrome/Edge) — izoh aniqroq

@@ -101,9 +101,11 @@
   <p class="m-izoh" data-xavfsiz>Kamera faqat HTTPS'da ishlaydi — inv. raqamni kiriting</p>
 </div>
 
-<form class="m-qidiruv" hx-get="{% url 'reviziya:mobil_topish' rv.pk %}" hx-target="#kartochka" role="search">
+<!-- 5+ belgida yozish to'xtagach (0,4 s) natija o'zi chiqadi; qisqaroq so'z — «Topish» bilan -->
+<form class="m-qidiruv" hx-get="{% url 'reviziya:mobil_topish' rv.pk %}" hx-target="#kartochka" role="search"
+  hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms" hx-sync="this:replace">
   <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
-  <input class="m-maydon" type="search" name="q" id="qidiruv" placeholder="Inv. raqam yoki nom" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
+  <input class="m-maydon" type="search" name="q" id="qidiruv" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
   <button class="m-tugma asosiy" type="submit">Topish</button>
 </form>
 
@@ -130,5 +132,5 @@
 {% endblock %}
 {% block skript %}
 <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-<script src="{% static 'reviziya/skan.js' %}?v=2" defer></script>
+<script src="{% static 'reviziya/skan.js' %}?v=3" defer></script>
 {% endblock %}

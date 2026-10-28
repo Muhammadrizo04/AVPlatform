@@ -137,8 +137,9 @@
 {% if belgilash %}
 <div class="card mb-3 chop-yoq"><div class="card-body">
   <div class="fw-semibold mb-2">AV qidirib qo'shish <span class="small text-body-secondary fw-normal">— vedomostda yo'q AV (boshqa filialniki ham) topilgan bo'lsa</span></div>
-  <form class="d-flex flex-wrap gap-2 mb-2" hx-get="{% url 'reviziya:qidir' rv.pk %}" hx-target="#qayd-qidiruv" role="search">
-    <input class="form-control form-control-sm" style="max-width: 22rem" type="search" name="q" placeholder="Inv. raqam yoki nom" aria-label="AV qidirish" required maxlength="100">
+  <form class="d-flex flex-wrap gap-2 mb-2" hx-get="{% url 'reviziya:qidir' rv.pk %}" hx-target="#qayd-qidiruv" role="search"
+    hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms" hx-sync="this:replace">
+    <input class="form-control form-control-sm" style="max-width: 22rem" type="search" name="q" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="AV qidirish" required maxlength="100">
     <button type="submit" class="btn btn-sm btn-outline-primary"><i class="cil-search me-1"></i>Qidirish</button>
   </form>
   <div id="qayd-qidiruv" aria-live="polite"></div>
