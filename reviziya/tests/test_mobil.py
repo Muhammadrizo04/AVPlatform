@@ -123,7 +123,10 @@ def test_qidiruv_va_saqlash(muhit, revizor):
     rv, xona, stol, _ = muhit
     c = kirgan(revizor)
     c.get(url("mobil_skan", rv.pk, bolim=xona.pk))
-    javob = c.get(url("mobil_topish", rv.pk, q="INV-1"))
+    # matn bo'yicha qidiruv — bitta natija ham ro'yxatda, tanlanadi
+    royxat = matn(c.get(url("mobil_topish", rv.pk, q="INV-1")))
+    assert f"av={stol.pk}" in royxat and "Kutilgan</span>" not in royxat
+    javob = c.get(url("mobil_topish", rv.pk, av=stol.pk))
     t = matn(javob)
     assert javob.status_code == 200 and stol.nomi in t and "<span>Kutilgan</span><b>2</b>" in t and "guruh × 2" in t
     assert '<div class="qoldi"><span>Qoldi</span><b>2</b>' in t and "data-rasm-input" in t
@@ -398,9 +401,11 @@ def test_mol_korinadi_va_mol_boyicha_qidiriladi(fa, revizor, hisobchi):
     assert "МОЛ: Bobur Aliyev" in html and "МОЛ'siz" in html
     assert 'data-qolgan="' in html and "bobur aliyev" in html  # ro'yxat filtri МОЛ ismi bo'yicha ham
 
-    # asosiy qidiruv: МОЛ ismi bo'yicha — yagona natija kartochkasi, unda МОЛ ko'rinadi
+    # asosiy qidiruv: МОЛ ismi bo'yicha — ro'yxatda МОЛ ko'rinadi; tanlangach kartochkada ham
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="bobur")))
-    assert stol.nomi in html and "МОЛ: Bobur Aliyev" in html and "AV tarixi" in html
+    assert stol.nomi in html and "МОЛ: Bobur Aliyev" in html
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, av=stol.pk)))
+    assert "МОЛ: Bobur Aliyev" in html and "AV tarixi" in html
 
 
 def test_av_tarixi_mobil(fa, revizor, hisobchi, foydalanuvchi, filial_yarat):
@@ -495,15 +500,16 @@ def test_boshqa_filial_av_inv_raqam_bilan(muhit, revizor, filial_yarat):
     c = kirgan(revizor)
 
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="INV_100652")))
-    assert "Boshqa filial yorlig'i" in html and begona.nomi in html and "Showroom" in html
-    assert 'name="qr_matn" value="DS|02|INV_100652"' in html
+    assert begona.nomi in html and "Showroom" in html and "qr=DS%7C02%7CINV_100652" in html  # ro'yxat — tanlanadi
+    html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, qr="DS|02|INV_100652")))
+    assert "Boshqa filial yorlig'i" in html and 'name="qr_matn" value="DS|02|INV_100652"' in html
 
     assert saqla(c, rv, xona, qr_matn="DS|02|INV_100652", usul="qidiruv").status_code == 200
     [q] = [q for q in solishtir(rv) if q.guruh == "ortiqcha"]
     assert q.av_id is None and q.izoh == "boshqa filial" and q.qr_matn == "DS|02|INV_100652"
     # QR orqali ham AV nomi va filiali ko'rinadi; inv. raqam qismi (kamida 5 belgi) bilan ham topiladi
     assert "Showroom" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, qr="DS|02|INV_100652")))
-    assert 'value="DS|02|INV_100652"' in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="00652")))
+    assert "qr=DS%7C02%7CINV_100652" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="00652")))
     assert "Hech narsa topilmadi" in matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="0652")))
 
 

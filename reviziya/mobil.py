@@ -488,18 +488,13 @@ def topish(request, pk):
     elif q:
         topilganlar = _qidir(rv, q)
         begonalar = [] if topilganlar else _boshqa_filialdan(rv, q)
-        if len(topilganlar) == 1:
-            ctx.update(_av_kartochka(rv, xona, topilganlar[0], "qidiruv"))
-        elif len(begonalar) == 1:
-            b = begonalar[0]
-            ctx.update({
-                "tur": "nomalum", "qr_matn": b["qr"], "boshqa_filial": True, "usul": "qidiruv", "begona": b["av"],
-            })
-        else:
-            ctx.update({
-                "tur": "royxat", "topilganlar": topilganlar, "begonalar": begonalar, "q": q,
-                "qisqa": len(q) < BOSHQA_FILIAL_MIN,
-            })
+        # Matn bo'yicha qidiruv doim ro'yxat (bitta natija ham tanlanadi) — yozish davomida kartochka o'zi
+        # ochilib ketmasin; to'g'ridan-to'g'ri kartochka faqat QR (skaner) bilan
+        mollar = _mollar(rv, [a.pk for a in topilganlar])
+        ctx.update({
+            "tur": "royxat", "topilganlar": [(a, mollar.get(a.pk, [])) for a in topilganlar], "begonalar": begonalar,
+            "q": q, "qisqa": len(q) < BOSHQA_FILIAL_MIN,
+        })
     else:
         return HttpResponse("")
     if ctx.get("tur") == "av":

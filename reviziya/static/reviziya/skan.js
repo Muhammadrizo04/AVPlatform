@@ -145,6 +145,19 @@
     if (!tugma) qidir.focus();
   });
 
+  // Qidiruv qatori xona satri ostida qotadi; kartochka qidiruv qatorigacha ko'tariladi (uni yopmaydi).
+  // Balandliklar ekranga qarab o'zgaradi (xona nomi ikki qator bo'lishi mumkin) — o'lchab olinadi.
+  function joylashuv() {
+    var xona = document.querySelector(".m-xona");
+    var forma = qidiruv && qidiruv.form;
+    if (!xona || !forma) return;
+    var past = xona.getBoundingClientRect().bottom;
+    document.documentElement.style.setProperty("--qidiruv-top", Math.round(past) + "px");
+    document.documentElement.style.setProperty("--kartochka-joy", Math.round(past + forma.offsetHeight + 8) + "px");
+  }
+  joylashuv();
+  window.addEventListener("resize", joylashuv);
+
   // Rasm tanlanganda tugmada fayl nomi ko'rinadi
   document.addEventListener("change", function (e) {
     if (!e.target.matches("[data-rasm-input]")) return;

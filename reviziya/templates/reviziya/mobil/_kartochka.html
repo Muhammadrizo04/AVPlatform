@@ -15,9 +15,10 @@
 {% if tur == "royxat" %}
   {% if topilganlar %}
   <ul class="m-royxat">
-    {% for a in topilganlar %}
+    {% for a, mollar in topilganlar %}
     <li><button class="m-qator" type="button" hx-get="{% url 'reviziya:mobil_topish' rv.pk %}?av={{ a.pk }}&amp;bolim={{ xona_qiymati }}" hx-target="#kartochka">
-      <span class="m-asosiy"><b>{{ a.nomi }}</b><span class="m-xira">{{ a.inv_raqam|default:"inv. raqamsiz" }}</span></span></button></li>
+      <span class="m-asosiy"><b>{{ a.nomi }}</b><span class="m-xira">{{ a.inv_raqam|default:"inv. raqamsiz" }}{% if mollar %} · МОЛ: {{ mollar|join:", " }}{% endif %}</span></span>
+      <span class="m-tanlash" aria-hidden="true">›</span></button></li>
     {% endfor %}
   </ul>
   {% elif begonalar %}

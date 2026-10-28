@@ -6,11 +6,14 @@
   .m-xona { position: sticky; top: 56px; z-index: 15; display: flex; align-items: center; gap: .5rem; margin: -.75rem -.75rem .75rem;
     padding: .5rem .75rem; background: var(--av-indigo-och); border-bottom: 1px solid var(--av-chiziq); }
   .m-xona b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  .m-qidiruv { display: flex; gap: .5rem; margin-top: .75rem; }
+  /* Qidiruv qatori doim ko'rinadi: xona satri ostida qotadi; kartochka uni yopmaydi (balandligi cheklangan) */
+  .m-qidiruv { position: sticky; top: var(--qidiruv-top, 121px); z-index: 14; display: flex; gap: .5rem; margin: .5rem -.75rem 0;
+    padding: .5rem .75rem; background: var(--av-fon); }
   .m-qidiruv .m-maydon { flex: 1; }
   #kamera-video { width: 100%; max-height: 50vh; margin-top: .5rem; border-radius: var(--av-radius); background: #000; object-fit: cover; }
   #kartochka:empty { display: none; }
-  #kartochka { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: 88vh; overflow-y: auto; margin: 0 auto;
+  #kartochka { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: calc(100vh - var(--kartochka-joy, 190px));
+    max-height: calc(100dvh - var(--kartochka-joy, 190px)); overflow-y: auto; margin: 0 auto;
     max-width: 640px; padding: .5rem 1rem calc(1rem + env(safe-area-inset-bottom)); background: var(--av-sirt);
     border-radius: 18px 18px 0 0; box-shadow: var(--av-soya-katta); border: 1px solid var(--av-chiziq); }
   #kartochka::before { content: ""; display: block; width: 40px; height: 4px; margin: 0 auto .5rem; border-radius: 4px; background: var(--av-chiziq); }
@@ -132,5 +135,5 @@
 {% endblock %}
 {% block skript %}
 <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-<script src="{% static 'reviziya/skan.js' %}?v=3" defer></script>
+<script src="{% static 'reviziya/skan.js' %}?v=4" defer></script>
 {% endblock %}
