@@ -242,3 +242,30 @@ def test_mol_qaydnoma_boshqa_filial_xodimi_404(foydalanuvchi, filial_a, filial_b
     oziniki = xodim(filial=filial_a)
     javob = c.get(reverse("hisobotlar:mol_qaydnoma"), {"xodim": oziniki.pk})
     assert javob.status_code == 200 and javob.context["xodim"] == oziniki
+
+
+def test_mol_qaydnoma_qidiruv_va_mol_tanlash(hisobchi, filial_a):
+    """МОЛ qaydnomasi: МОЛ tanlash ro'yxati va matn qidiruvi (МОЛ ismi, AV nomi, inv. raqam); Excel ham filtrlangan."""
+    from onec.models import Xodim
+
+    ali = Xodim.objects.create(ref_1c=uuid.uuid4(), ism="Ali Valiyev")
+    vali = Xodim.objects.create(ref_1c=uuid.uuid4(), ism="Vali Aliyev")
+    stol = av_yarat(filial_a, inv="INV-STOL")
+    monitor = av_yarat(filial_a, inv="INV-MON")
+    qator(stol, filial_a, "1", mol=ali)
+    qator(monitor, filial_a, "1", mol=vali)
+    c = Client()
+    c.force_login(hisobchi)
+    url = reverse("hisobotlar:mol_qaydnoma")
+
+    javob = c.get(url)
+    html = javob.content.decode()
+    assert 'name="q"' in html and f'<option value="{ali.pk}">Ali Valiyev</option>' in html
+
+    assert [q["av"] for q in c.get(url, {"q": "inv-mon"}).context["qatorlar"]] == [monitor]
+    assert [q["av"] for q in c.get(url, {"q": "ali valiyev"}).context["qatorlar"]] == [stol]
+    assert [q["av"] for q in c.get(url, {"xodim": vali.pk}).context["qatorlar"]] == [monitor]
+    html = c.get(url, {"q": "INV-MON"}).content.decode()
+    assert "q=INV-MON&amp;format=xlsx" in html
+    kitob = load_workbook(io.BytesIO(c.get(url, {"q": "INV-MON", "format": "xlsx"}).content))
+    assert [r[2] for r in kitob.active.iter_rows(min_row=2, values_only=True) if r[2]] == ["INV-MON"]

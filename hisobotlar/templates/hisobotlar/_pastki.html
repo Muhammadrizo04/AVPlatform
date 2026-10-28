@@ -1,4 +1,4 @@
 <div class="amallar mb-4">
-  <a class="btn btn-sm btn-outline-success" href="?{% if guruh %}guruh={{ guruh }}&amp;{% endif %}{% if xodim %}xodim={{ xodim.pk }}&amp;{% endif %}format=xlsx"><i class="cil-spreadsheet me-1"></i>Excel'ga yuklash</a>
+  <a class="btn btn-sm btn-outline-success" href="?{% if guruh %}guruh={{ guruh }}&amp;{% endif %}{% if xodim %}xodim={{ xodim.pk }}&amp;{% endif %}{% if q %}q={{ q|urlencode }}&amp;{% endif %}format=xlsx"><i class="cil-spreadsheet me-1"></i>Excel'ga yuklash</a>
   <a class="btn btn-sm btn-outline-secondary" href="#" onclick="window.print(); return false;"><i class="cil-print me-1"></i>Chop etish</a>
 </div>

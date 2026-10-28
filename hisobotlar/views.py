@@ -68,7 +68,17 @@ def mol_qaydnoma(request):
         xodim = None if pk is None else korinadigan_xodimlar(request.user).filter(pk=pk).first()
         if xodim is None:
             raise Http404
-    qatorlar = servis.mol_qaydnoma(request.user, xodim)
+    hammasi = servis.mol_qaydnoma(request.user)
+    # МОЛ tanlash ro'yxati — hisobotda AV'si bor xodimlar (ism bo'yicha)
+    xodimlar = sorted({q["xodim"].pk: q["xodim"] for q in hammasi}.values(), key=lambda x: x.ism.strip().casefold())
+    qatorlar = [q for q in hammasi if xodim is None or q["xodim"].pk == xodim.pk]
+    izla = (request.GET.get("q") or "").strip()[:100]
+    if izla:
+        kalit = izla.casefold()
+        qatorlar = [
+            q for q in qatorlar
+            if kalit in " | ".join((q["xodim"].ism, q["av"].nomi, q["inv"] or "", q["bolim"])).casefold()
+        ]
     if _xlsx_so_ralgan(request):
         ustunlar = 7 if huquqi_bor(request.user, "pul_korish") else 6  # HR — qiymatsiz
         qatorlar_xlsx = (
@@ -79,7 +89,9 @@ def mol_qaydnoma(request):
             "mol_qaydnoma", ["МОЛ", "AV", "Inv. raqam", "Bo'lim", "Holat", "Soni", "Qiymat"][:ustunlar], qatorlar_xlsx
         )
     jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
-    return render(request, "hisobotlar/mol_qaydnoma.html", {"qatorlar": qatorlar, "xodim": xodim, "jami": jami})
+    return render(request, "hisobotlar/mol_qaydnoma.html", {
+        "qatorlar": qatorlar, "xodim": xodim, "jami": jami, "xodimlar": xodimlar, "q": izla,
+    })
 
 
 @amal_kerak("hisobot")

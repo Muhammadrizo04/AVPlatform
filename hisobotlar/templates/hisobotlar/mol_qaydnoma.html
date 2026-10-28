@@ -3,6 +3,18 @@
 {% block yol %}Hisobotlar{% endblock %}
 {% block kontent %}
 <h1>МОЛ qaydnomasi{% if xodim %}: {{ xodim.ism }}{% endif %}</h1>
+<div class="card mb-3 chop-yoq"><div class="card-body">
+<form method="get" class="filtrlar">
+  <select class="form-select form-select-sm" name="xodim" aria-label="МОЛ" onchange="this.form.submit()">
+    <option value="">Barcha МОЛ'lar</option>
+    {% for x in xodimlar %}<option value="{{ x.pk }}"{% if xodim and xodim.pk == x.pk %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+  </select>
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="МОЛ ismi, AV nomi, inv. raqam yoki bo'lim" aria-label="Qidirish">
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
+  {% if q or xodim %}<a class="btn btn-sm btn-ghost-secondary" href="?">Tozalash</a>{% endif %}
+  <span class="small text-body-secondary ms-auto">{{ qatorlar|length }} ta qator</span>
+</form>
+</div></div>
 <div class="card mb-3">
 <div class="table-responsive">
 <table class="table table-hover align-middle mb-0">
@@ -11,7 +23,7 @@
   {% for q in qatorlar %}
     <tr><td>{{ q.xodim.ism }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{{ q.bolim }}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son">{{ q.qiymat|pul }}</td>{% endif %}</tr>
   {% empty %}
-    <tr><td colspan="7" class="text-body-secondary">Ma'lumot yo'q.</td></tr>
+    <tr><td colspan="7" class="text-body-secondary">{% if q or xodim %}Qidiruv bo'yicha hech narsa topilmadi.{% else %}Ma'lumot yo'q.{% endif %}</td></tr>
   {% endfor %}
   </tbody>
   {% if pul_huquqi %}<tfoot class="table-light"><tr><th colspan="6">Jami</th><th class="son">{{ jami|pul }}</th></tr></tfoot>{% endif %}
