@@ -139,7 +139,10 @@
   <div class="fw-semibold mb-2">AV qidirib qo'shish <span class="small text-body-secondary fw-normal">— vedomostda yo'q AV (boshqa filialniki ham) topilgan bo'lsa</span></div>
   <form class="d-flex flex-wrap gap-2 mb-2" hx-get="{% url 'reviziya:qidir' rv.pk %}" hx-target="#qayd-qidiruv" role="search"
     hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms" hx-sync="this:replace">
-    <input class="form-control form-control-sm" style="max-width: 22rem" type="search" name="q" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="AV qidirish" required maxlength="100">
+    <span class="qidiruv-quti" style="width: 22rem; max-width: 100%">
+      <input class="form-control form-control-sm" type="search" name="q" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="AV qidirish" required maxlength="100">
+      <button class="qidiruv-tozala" type="button" data-tozala data-tozala-natija="#qayd-qidiruv" aria-label="Qidiruvni tozalash" title="Tozalash" hidden>&times;</button>
+    </span>
     <button type="submit" class="btn btn-sm btn-outline-primary"><i class="cil-search me-1"></i>Qidirish</button>
   </form>
   <div id="qayd-qidiruv" aria-live="polite"></div>

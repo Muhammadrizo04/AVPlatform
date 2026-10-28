@@ -6,9 +6,10 @@
   <meta name="theme-color" content="#0a2540">
   <meta name="htmx-config" content='{"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"400|403|409|422","swap":true,"error":false},{"code":"[45]..","swap":false,"error":true}]}'>
   <title>{% block sarlavha %}Reviziya{% endblock %} — Asosiy vositalar</title>
-  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=2">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=4">
   <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
   <script src="{% static 'panel/tasdiq.js' %}?v=3" defer></script>
+  <script src="{% static 'panel/qidiruv.js' %}?v=1" defer></script>
   <style>
     /* Revizor uchun yengil mobil qatlam: panel tokenlari (--av-*), yon menyusiz, tegish nishonlari ≥ 44px. */
     *, *::before, *::after { box-sizing: border-box; }

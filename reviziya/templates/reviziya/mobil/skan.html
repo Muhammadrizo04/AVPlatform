@@ -9,7 +9,7 @@
   /* Qidiruv qatori doim ko'rinadi: xona satri ostida qotadi; kartochka uni yopmaydi (balandligi cheklangan) */
   .m-qidiruv { position: sticky; top: var(--qidiruv-top, 121px); z-index: 14; display: flex; gap: .5rem; margin: .5rem -.75rem 0;
     padding: .5rem .75rem; background: var(--av-fon); }
-  .m-qidiruv .m-maydon { flex: 1; }
+  .m-qidiruv .qidiruv-quti { flex: 1; min-width: 0; }
   #kamera-video { width: 100%; max-height: 50vh; margin-top: .5rem; border-radius: var(--av-radius); background: #000; object-fit: cover; }
   #kartochka:empty { display: none; }
   #kartochka { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: calc(100vh - var(--kartochka-joy, 190px));
@@ -108,7 +108,10 @@
 <form class="m-qidiruv" hx-get="{% url 'reviziya:mobil_topish' rv.pk %}" hx-target="#kartochka" role="search"
   hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms" hx-sync="this:replace">
   <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
-  <input class="m-maydon" type="search" name="q" id="qidiruv" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
+  <span class="qidiruv-quti">
+    <input class="m-maydon" type="search" name="q" id="qidiruv" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
+    <button class="qidiruv-tozala" type="button" data-tozala data-tozala-natija="#kartochka" aria-label="Qidiruvni tozalash" title="Tozalash" hidden>&times;</button>
+  </span>
   <button class="m-tugma asosiy" type="submit">Topish</button>
 </form>
 

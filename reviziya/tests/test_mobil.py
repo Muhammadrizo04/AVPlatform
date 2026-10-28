@@ -557,3 +557,12 @@ def test_qidiruv_5_belgida_ozi_ishga_tushadi(muhit, revizor, hisobchi):
     trigger = 'hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms"'
     assert trigger in matn(kirgan(revizor).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
     assert trigger in matn(kirgan(hisobchi).get(reverse("reviziya:sahifa", args=[rv.pk])))
+
+
+def test_qidiruvda_tozalash_tugmasi(muhit, revizor, hisobchi):
+    """Qidiruv maydonida katta «×»: telefon skan sahifasida (kartochkani yopadi) va kompyuterdagi qidiruvda."""
+    rv, xona, *_ = muhit
+    html = matn(kirgan(revizor).get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert 'data-tozala data-tozala-natija="#kartochka"' in html and "panel/qidiruv.js" in html
+    html = matn(kirgan(hisobchi).get(reverse("reviziya:sahifa", args=[rv.pk])))
+    assert 'data-tozala data-tozala-natija="#qayd-qidiruv"' in html
