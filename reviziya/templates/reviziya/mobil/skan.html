@@ -21,6 +21,32 @@
   .m-kart-bosh .m-asosiy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
   .m-kart-bosh .m-ikon { color: var(--av-ikkilamchi); font-size: 1.4rem; }
   .m-raqamlar { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0; }
+  /* AV kartochkasi: nom, hisob qatori, holat tugmachalari, yig'iladigan qo'shimcha, qotirilgan «Saqlash» */
+  .m-kart-nom { font-size: 1.1rem; line-height: 1.3; }
+  .m-molsiz { color: #b3093a; font-weight: 600; }
+  .m-hisob { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin: .6rem 0 .25rem; }
+  .m-hisob div { display: flex; flex-direction: column; align-items: center; padding: .4rem .25rem; border-radius: 12px;
+    background: var(--av-chiziq-och); }
+  .m-hisob span { font-size: .72rem; font-weight: 600; color: var(--av-ikkilamchi); text-transform: uppercase; letter-spacing: .02em; }
+  .m-hisob b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .m-hisob .qoldi { background: var(--av-qizil-och); } .m-hisob .qoldi b { color: #b3093a; }
+  .m-hisob .tayyor { background: var(--av-yashil-och); } .m-hisob .tayyor b { color: #087251; }
+  .m-holatlar { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .m-holatlar legend { padding: 0; }
+  .m-holat { position: relative; }
+  .m-holat input { position: absolute; opacity: 0; pointer-events: none; }
+  .m-holat span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 .85rem; border-radius: 999px;
+    border: 1px solid var(--av-chiziq); background: var(--av-sirt); font-size: .9rem; font-weight: 600; cursor: pointer; }
+  .m-holat input:checked + span { background: var(--av-indigo); border-color: var(--av-indigo); color: #fff; }
+  .m-holat input:focus-visible + span { outline: 3px solid rgba(99, 91, 255, .35); outline-offset: 1px; }
+  .m-qoshimcha { margin-top: .75rem; }
+  .m-qoshimcha summary { cursor: pointer; font-weight: 600; color: var(--av-indigo); padding: .35rem 0; }
+  .m-rasm-tugma { display: flex; align-items: center; gap: .5rem; min-height: 48px; margin-top: .4rem; padding: 0 .9rem;
+    border: 1px dashed var(--av-chiziq); border-radius: 12px; background: var(--av-sirt); font-weight: 600; cursor: pointer; }
+  .m-rasm-tugma input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .m-rasm-tugma.tanlangan { border-style: solid; border-color: var(--av-yashil); background: var(--av-yashil-och); color: #087251; }
+  .m-saqla-panel { position: sticky; bottom: calc(-1rem - env(safe-area-inset-bottom)); margin: .75rem -1rem 0;
+    padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom)); background: var(--av-sirt); border-top: 1px solid var(--av-chiziq-och); z-index: 1; }
   .m-xona-tugadi { margin-top: 1.5rem; }
   .m-begona { display: flex; flex-direction: column; align-items: flex-end; text-align: right; max-width: 9.5rem; gap: .15rem; }
   .m-begona .m-xira { font-size: .72rem; line-height: 1.25; }
@@ -104,5 +130,5 @@
 {% endblock %}
 {% block skript %}
 <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-<script src="{% static 'reviziya/skan.js' %}" defer></script>
+<script src="{% static 'reviziya/skan.js' %}?v=2" defer></script>
 {% endblock %}

@@ -125,7 +125,8 @@ def test_qidiruv_va_saqlash(muhit, revizor):
     c.get(url("mobil_skan", rv.pk, bolim=xona.pk))
     javob = c.get(url("mobil_topish", rv.pk, q="INV-1"))
     t = matn(javob)
-    assert javob.status_code == 200 and stol.nomi in t and "Kutilgan: 2" in t and "guruh × 2" in t
+    assert javob.status_code == 200 and stol.nomi in t and "<span>Kutilgan</span><b>2</b>" in t and "guruh × 2" in t
+    assert '<div class="qoldi"><span>Qoldi</span><b>2</b>' in t and "data-rasm-input" in t
     assert saqla(c, rv, xona, av=stol.pk).status_code == 200
     qayd = ReviziyaQayd.objects.get(reviziya=rv, av=stol)
     assert qayd.soni == 1 and qayd.bolim == xona and qayd.usul == "qidiruv" and qayd.kim == revizor
@@ -269,7 +270,7 @@ def test_kartochka_standart_holati_boshqa_xonada(muhit, revizor, fa):
 
     assert javob.status_code == 200
     t = matn(javob)
-    assert f'<option value="{Holat.NOSOZ}" selected>' in t
+    assert f'name="holat" value="{Holat.NOSOZ}" checked' in t
 
 
 def test_bir_bosishda_va_hammasi_joyida(muhit, revizor, foydalanuvchi, filial_yarat):

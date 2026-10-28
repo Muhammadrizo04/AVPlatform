@@ -143,6 +143,15 @@
     if (!tugma) qidir.focus();
   });
 
+  // Rasm tanlanganda tugmada fayl nomi ko'rinadi
+  document.addEventListener("change", function (e) {
+    if (!e.target.matches("[data-rasm-input]")) return;
+    var tugma = e.target.closest(".m-rasm-tugma");
+    var fayl = e.target.files && e.target.files[0];
+    tugma.classList.toggle("tanlangan", !!fayl);
+    tugma.querySelector("[data-rasm-nomi]").textContent = fayl ? "Rasm: " + fayl.name : "Rasm olish yoki tanlash";
+  });
+
   document.addEventListener("input", function (e) {
     if (!e.target.matches("[data-qolgan-filtr]")) return;
     var soz = e.target.value.trim().toLowerCase();

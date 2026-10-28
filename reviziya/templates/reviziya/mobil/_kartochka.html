@@ -1,7 +1,7 @@
 <div class="m-kart-bosh">
   <div class="m-asosiy">
-  {% if tur == "av" %}<b>{{ av.nomi }}</b><div class="m-xira">Inv. {{ av.inv_raqam|default:"—" }}{% if guruh %} · guruh × {{ guruh|son }}{% endif %}</div>
-  <div class="m-xira">МОЛ: {% if mollar %}{{ mollar|join:", " }}{% else %}biriktirilmagan{% endif %}</div>
+  {% if tur == "av" %}<b class="m-kart-nom">{{ av.nomi }}</b>
+  <div class="m-xira">{{ av.inv_raqam|default:"inv. raqamsiz" }}{% if guruh %} · guruh × {{ guruh|son }}{% endif %} · МОЛ: {% if mollar %}{{ mollar|join:", " }}{% else %}<span class="m-molsiz">biriktirilmagan</span>{% endif %}</div>
   {% elif tur == "nomalum" %}<b>{% if boshqa_filial %}Boshqa filial yorlig'i{% else %}Noma'lum yorliq{% endif %}</b>
   {% if begona %}<div>{{ begona.nomi }}</div><div class="m-xira">Inv. {{ begona.inv_raqam }} · {{ begona.filial_rekvizit.nomi }} filialiniki</div>{% endif %}
   <div class="m-xira">{{ qr_matn|truncatechars:80 }}</div>
@@ -37,7 +37,11 @@
   <input type="hidden" name="usul" value="{{ usul }}">
   {% if tur == "av" %}
   <input type="hidden" name="av" value="{{ av.pk }}">
-  <div class="m-raqamlar"><span>Kutilgan: {{ kutilgan|son }}</span><span>Belgilangan: {{ topilgan|son }}</span></div>
+  <div class="m-hisob">
+    <div><span>Kutilgan</span><b>{{ kutilgan|son }}</b></div>
+    <div><span>Belgilangan</span><b>{{ topilgan|son }}</b></div>
+    <div class="{% if qoldi %}qoldi{% else %}tayyor{% endif %}"><span>Qoldi</span><b>{% if qoldi %}{{ qoldi|son }}{% else %}✓{% endif %}</b></div>
+  </div>
   {% else %}
   <input type="hidden" name="qr_matn" value="{{ qr_matn }}">
   <p class="m-izoh">{% if boshqa_filial %}Yorliq boshqa filialga tegishli.{% else %}Yorliq tizimda topilmadi.{% endif %} Qayd «ortiqcha» sifatida saqlanadi.</p>
@@ -49,17 +53,26 @@
     <button class="m-tugma" type="button" data-qadam="1" aria-label="Ko'paytirish">+</button>
   </div>
   {% if tur == "av" %}
-  <label class="m-yorliq" for="k-holat">Holat</label>
-  <select class="m-maydon" id="k-holat" name="holat">
-    {% for kalit, nomi in holatlar %}<option value="{{ kalit }}"{% if kalit == holat %} selected{% endif %}>{{ nomi }}</option>{% endfor %}
-  </select>
-  <label class="m-yorliq" for="k-rasm">Rasm (ixtiyoriy)</label>
-  <input class="m-maydon" id="k-rasm" type="file" name="rasm" accept="image/jpeg,image/png" capture="environment">
+  <fieldset class="m-holatlar">
+    <legend class="m-yorliq">Holat</legend>
+    {% for kalit, nomi in holatlar %}
+    <label class="m-holat h-{{ kalit }}"><input type="radio" name="holat" value="{{ kalit }}"{% if kalit == holat %} checked{% endif %}><span>{{ nomi }}</span></label>
+    {% endfor %}
+  </fieldset>
   {% endif %}
-  <label class="m-yorliq" for="k-izoh">Izoh (ixtiyoriy)</label>
-  <textarea class="m-maydon" id="k-izoh" name="izoh" maxlength="1000"></textarea>
+  <details class="m-qoshimcha">
+    <summary>Qo'shimcha: {% if tur == "av" %}rasm, {% endif %}izoh <span class="m-xira">(ixtiyoriy)</span></summary>
+    {% if tur == "av" %}
+    <label class="m-rasm-tugma" for="k-rasm">
+      <span aria-hidden="true">📷</span> <span data-rasm-nomi>Rasm olish yoki tanlash</span>
+      <input id="k-rasm" type="file" name="rasm" accept="image/jpeg,image/png" capture="environment" data-rasm-input>
+    </label>
+    {% endif %}
+    <label class="m-yorliq" for="k-izoh">Izoh</label>
+    <textarea class="m-maydon" id="k-izoh" name="izoh" maxlength="1000" placeholder="Masalan: yorlig'i yo'q, singan"></textarea>
+  </details>
   <div id="saqla-xato"></div>
-  <p><button class="m-tugma asosiy keng" type="submit">Saqlash</button></p>
+  <div class="m-saqla-panel"><button class="m-tugma asosiy keng" type="submit">Saqlash</button></div>
 </form>
 {% if tur == "av" %}
 <details class="m-tarix-qism">

@@ -391,10 +391,11 @@ def _av_kartochka(rv, xona, av, usul) -> dict:
     kutilganlar = rv.kutilganlar.filter(av=av, bolim_id=xona_id)
     holat = standart_holat(rv, av, xona_id)
     jami_soni = AVQoldiq.objects.filter(av=av, filial_id=rv.filial_id).aggregate(s=Sum("soni"))["s"] or NOL
+    kutilgan = kutilganlar.aggregate(s=Sum("soni"))["s"] or NOL
+    topilgan = rv.qaydlar.filter(av=av, bolim_id=xona_id).aggregate(s=Sum("soni"))["s"] or NOL
     return {
-        "tur": "av", "av": av, "usul": usul, "holat": holat,
-        "kutilgan": kutilganlar.aggregate(s=Sum("soni"))["s"] or NOL,
-        "topilgan": rv.qaydlar.filter(av=av, bolim_id=xona_id).aggregate(s=Sum("soni"))["s"] or NOL,
+        "tur": "av", "av": av, "usul": usul, "holat": holat, "kutilgan": kutilgan, "topilgan": topilgan,
+        "qoldi": max(kutilgan - topilgan, NOL),
         "guruh": jami_soni if jami_soni > 1 else None,
         "mollar": _mollar(rv, [av.pk]).get(av.pk, []),
     }
