@@ -164,15 +164,27 @@ def _oxirgilar(request, rv, xona) -> list[dict]:
         .select_related("av", "kim")
         .order_by("-yangilangan", "-pk")[:OXIRGILAR_SONI]
     )
-    return [
-        {
+    # Kutilgan va topilgan — shu xonadagi AV bo'yicha (barcha holatlar yig'indisi), solishtirish uchun
+    xona_id = None if xona is None else xona.pk
+    av_idlar = {q.av_id for q in qaydlar if q.av_id}
+    kutilgan = dict(
+        rv.kutilganlar.filter(bolim_id=xona_id, av_id__in=av_idlar).order_by().values_list("av_id")
+        .annotate(s=Sum("soni"))
+    )
+    topilgan = dict(
+        rv.qaydlar.filter(bolim_id=xona_id, av_id__in=av_idlar).order_by().values_list("av_id").annotate(s=Sum("soni"))
+    )
+    natija = []
+    for q in qaydlar:
+        k, t = kutilgan.get(q.av_id, NOL), topilgan.get(q.av_id, NOL)
+        natija.append({
             "q": q, "qiymat": format(q.soni.normalize(), "f"), "ozi": boshqaradi or q.kim_id == request.user.pk,
             # boshqa filial yorlig'i — AV nomi va filiali bilan («Noma'lum yorliq» emas)
             "begona": _begona_av(q.qr_matn) if q.av_id is None and qr_tahlil(q.qr_matn, rv)[1] == BOSHQA_FILIAL
             else None,
-        }
-        for q in qaydlar
-    ]
+            "kutilgan": k, "topilgan": t, "farq": t - k,
+        })
+    return natija
 
 
 def _qolganlar(rv, xona) -> list[dict]:

@@ -9,6 +9,8 @@
         {% if o.q.av %}<b>{{ o.q.av.nomi }}</b><span class="m-xira">{{ o.q.av.inv_raqam|default:"inv. raqamsiz" }} · {{ o.q.get_holat_display }}</span>
         {% elif o.begona %}<b>{{ o.begona.nomi }}</b><span class="m-xira">{{ o.begona.inv_raqam }} · boshqa filial: {{ o.begona.filial_rekvizit.nomi }}</span>
         {% else %}<b>Noma'lum yorliq</b><span class="m-xira">{{ o.q.qr_matn|truncatechars:60 }}</span>{% endif %}
+        {% if o.q.av_id and o.kutilgan %}<span class="m-solishtir {% if o.farq == 0 %}teng{% elif o.farq < 0 %}kam{% else %}ortiq{% endif %}">Kutilgan {{ o.kutilgan|son }} · Topildi {{ o.topilgan|son }} {% if o.farq == 0 %}✓{% elif o.farq < 0 %}({{ o.farq|son }}){% else %}(+{{ o.farq|son }}){% endif %}</span>
+        {% else %}<span class="m-solishtir ortiq">Kutilmagan · ortiqcha</span>{% endif %}
         <span class="m-xira">{{ o.q.kim.get_full_name|default:o.q.kim.username }} · {{ o.q.yangilangan|date:"H:i" }}</span>
       </span>
       {% if o.ozi %}

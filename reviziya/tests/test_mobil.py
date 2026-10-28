@@ -527,3 +527,18 @@ def test_boshqa_filial_qaydi_nomi_bilan_va_qisqa_sorov_izohi(muhit, revizor, fil
 
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, q="787")))
     assert "Hech narsa topilmadi" in html and "kamida 5 belgi" in html
+
+
+def test_oxirgilarda_kutilgan_va_topilgan_solishtiriladi(muhit, revizor):
+    """Oxirgi belgilanganlarda har AV uchun: kutilgan · topilgan va farq (teng / kam / ortiqcha)."""
+    rv, xona, stol, stul = muhit  # stol: 2 kutilgan, stul: 1
+    c = kirgan(revizor)
+    saqla(c, rv, xona, av=stol.pk, soni="1")
+    saqla(c, rv, xona, av=stul.pk, soni="2")
+    saqla(c, rv, xona, qr_matn="NOMALUM-1")
+    html = matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
+    assert 'kam">Kutilgan 2 · Topildi 1 (-1)' in html
+    assert 'ortiq">Kutilgan 1 · Topildi 2 (+1)' in html
+    assert "Kutilmagan · ortiqcha" in html
+    saqla(c, rv, xona, av=stol.pk, soni="1")
+    assert 'teng">Kutilgan 2 · Topildi 2 ✓' in matn(c.get(url("mobil_skan", rv.pk, bolim=xona.pk)))
