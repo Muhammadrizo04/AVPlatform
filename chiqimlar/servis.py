@@ -373,26 +373,40 @@ def _son(soni: Decimal) -> str:
     return format(soni.normalize(), "f")
 
 
+# Umumiy tarix filtri: amal -> (nomi, [(eski, yangi) holat juftlari])
+H = ChiqimHujjat.Holat
+AMALLAR = {
+    "tasdiq": ("Tasdiqlandi", [(H.KUTILMOQDA, H.TASDIQLANGAN)]),
+    "tasdiq_bekor": ("Tasdiq bekor qilindi", [(H.TASDIQLANGAN, H.KUTILMOQDA)]),
+    "bekor_1c": ("1C'da bekor qilindi", [(H.TASDIQLANGAN, H.BEKOR_1C)]),
+    "qaytarildi": ("Tasdiq qaytarildi (1C bekori)", [(H.BEKOR_1C, H.BEKOR)]),
+}
+
+
+def holat_matni(eski: str, yangi: str) -> str:
+    """Chiqim holati o'zgarishining odamga tushunarli nomi (tarix uchun)."""
+    if (eski, yangi) == (H.KUTILMOQDA, H.TASDIQLANGAN):
+        return "Tasdiqlandi"
+    if (eski, yangi) == (H.TASDIQLANGAN, H.KUTILMOQDA):
+        return "Tasdiq bekor qilindi — qayta tasdiqlash kutilmoqda"
+    if (eski, yangi) == (H.TASDIQLANGAN, H.BEKOR_1C):
+        return "1C'da hujjat bekor qilindi — tasdiqni qaytarish kerak"
+    if (eski, yangi) == (H.BEKOR_1C, H.BEKOR):
+        return "Tasdiq qaytarildi — donalar asl joyiga qo'yildi"
+    holatlar = dict(H.choices)
+    return f"Holat: {holatlar.get(eski, eski)} → {holatlar.get(yangi, yangi)}"
+
+
 def chiqim_tarixi(c: ChiqimHujjat) -> list[dict]:
     """Chiqim tarixi (vaqt bo'yicha): 1C'dan kelishi, holat o'zgarishlari (kim — foydalanuvchi yoki «1C sinxron»)
     va shu hujjat bo'yicha taqsimot harakatlari (qaysi bo'lim / javobgar shaxs / holatdan qancha). [{vaqt, kim, matn}]"""
     from jurnal.models import Jurnal
 
-    holatlar = dict(ChiqimHujjat.Holat.choices)
     holat_nomi = dict(Holat.choices)
     tarix = [{"vaqt": c.yaratildi, "kim": "1C sinxron",
               "matn": f"1C'dan keldi: {_izoh(c)}, {_son(c.soni)} dona (taxmin: {c.get_taxmin_tur_display()})"}]
     for j in Jurnal.objects.filter(obyekt_turi="chiqimlar.chiqimhujjat", obyekt_id=str(c.pk), maydon="holat"):
-        yangi, eski = j.yangi, j.eski
-        if yangi == ChiqimHujjat.Holat.TASDIQLANGAN and eski == ChiqimHujjat.Holat.KUTILMOQDA:
-            matn = "Tasdiqlandi"
-        elif yangi == ChiqimHujjat.Holat.KUTILMOQDA and eski == ChiqimHujjat.Holat.TASDIQLANGAN:
-            matn = "Tasdiq bekor qilindi — qayta tasdiqlash kutilmoqda"
-        elif yangi == ChiqimHujjat.Holat.BEKOR and eski == ChiqimHujjat.Holat.BEKOR_1C:
-            matn = "Tasdiq qaytarildi — donalar asl joyiga qo'yildi"
-        else:
-            matn = f"Holat: {holatlar.get(eski, eski)} → {holatlar.get(yangi, yangi)}"
-        tarix.append({"vaqt": j.qachon, "kim": j.kim_nomi, "matn": matn})
+        tarix.append({"vaqt": j.qachon, "kim": j.kim_nomi, "matn": holat_matni(j.eski, j.yangi)})
     harakatlar = (
         TaqsimotHarakat.objects.filter(av_id=c.av_id, filial_id=c.filial_id, hujjat_izoh__startswith=_izoh(c)[:255])
         .select_related("eski_bolim", "eski_mol", "yangi_bolim", "yangi_mol", "kim")

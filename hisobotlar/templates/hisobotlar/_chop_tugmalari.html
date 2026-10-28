@@ -1,8 +1,8 @@
-{# Qaydnoma amallari: Excel va chop etish — qiymat ko'radiganlar uchun ikki xil (summali / summasiz). #}
+{# Qaydnoma amallari: Excel va chop etish (yangi oynada barcha qatorlar); qiymat ko'radiganlarga — summali/summasiz. #}
 <a class="btn btn-sm btn-outline-success" href="{{ excel_url }}"><i class="cil-spreadsheet me-1"></i>Excel'ga yuklash</a>
 {% if pul_huquqi %}
-<button type="button" class="btn btn-sm btn-outline-secondary" data-chop="summali"><i class="cil-print me-1"></i>Chop etish (summali)</button>
-<button type="button" class="btn btn-sm btn-outline-secondary" data-chop="summasiz"><i class="cil-print me-1"></i>Chop etish (summasiz)</button>
+<a class="btn btn-sm btn-outline-secondary" href="{{ chop_url }}summali" target="_blank" rel="noopener"><i class="cil-print me-1"></i>Chop etish (summali)</a>
+<a class="btn btn-sm btn-outline-secondary" href="{{ chop_url }}summasiz" target="_blank" rel="noopener"><i class="cil-print me-1"></i>Chop etish (summasiz)</a>
 {% else %}
-<button type="button" class="btn btn-sm btn-outline-secondary" data-chop="summasiz"><i class="cil-print me-1"></i>Chop etish</button>
+<a class="btn btn-sm btn-outline-secondary" href="{{ chop_url }}summasiz" target="_blank" rel="noopener"><i class="cil-print me-1"></i>Chop etish</a>
 {% endif %}

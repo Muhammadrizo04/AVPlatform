@@ -1,5 +1,6 @@
-from urllib.parse import urlencode
+from itertools import groupby
 
+from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -15,6 +16,8 @@ from vositalar.bolimlar import daraxt, pastkilar
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 GURUHLAR = {"filial": "Filial", "bolim": "Bo'lim", "tur": "AV turi"}
 KORSATISH_CHEGARASI = 200  # tozalash sahifasida har bo'limda ko'rsatiladigan qatorlar (Excel'da — hammasi)
+QAYDNOMA_SAHIFA = 100  # qaydnomalar ekranda shuncha qatordan; chop etish va Excel — hammasi
+CHOP_TURLARI = ("summali", "summasiz")
 
 
 def _xlsx(fayl: str, sarlavhalar, qatorlar) -> HttpResponse:
@@ -30,6 +33,36 @@ def _sana(qiymat) -> str:
 
 def _xlsx_so_ralgan(request) -> bool:
     return request.GET.get("format") == "xlsx"
+
+
+def _qaydnoma_konteksti(request, qatorlar) -> dict:
+    """Qaydnomalarning umumiy konteksti: jami, ekranda sahifa, chop etish rejimi va havolalari.
+
+    `?chop=summali|summasiz` — chop etish rejimi: barcha qatorlar bitta sahifada, sahifa ochilgach chop etish oynasi
+    chiqadi (panel/chop.js); summasizda qiymat ustunlari umuman chiqmaydi (`pul_huquqi` shu sahifa uchun o'chadi)."""
+    chop = request.GET.get("chop", "")
+    chop = chop if chop in CHOP_TURLARI else ""
+    params = request.GET.copy()
+    for k in ("page", "chop", "format"):
+        params.pop(k, None)
+    asos = params.urlencode()
+    kontekst = {
+        "chop": chop,
+        "jami_soni": sum((q["soni"] for q in qatorlar), servis.NOL),
+        "jami": sum((q["qiymat"] for q in qatorlar), servis.NOL),
+        "excel_url": "?" + (asos + "&" if asos else "") + "format=xlsx",
+        "chop_url": "?" + (asos + "&" if asos else "") + "chop=",
+        "orqa_url": "?" + asos,
+        "bugun": timezone.localdate(),
+    }
+    if chop:
+        kontekst["korsatiladi"] = qatorlar
+        if chop == "summasiz":
+            kontekst["pul_huquqi"] = False
+    else:
+        sahifa = Paginator(qatorlar, QAYDNOMA_SAHIFA).get_page(request.GET.get("page"))
+        kontekst.update(sahifa=sahifa, korsatiladi=sahifa.object_list)
+    return kontekst
 
 
 def _av_qatori(av):
@@ -97,13 +130,16 @@ def mol_qaydnoma(request):
         )
         sarlavhalar = ["Javobgar shaxs", "AV", "Inv. raqam", "Bo'lim", "Holat", "Biriktirilgan sana", "Soni", "Qiymat"]
         return _xlsx("mol_qaydnoma", sarlavhalar[:ustunlar], qatorlar_xlsx)
-    jami = sum((q["qiymat"] for q in qatorlar), servis.NOL)
+    kontekst = _qaydnoma_konteksti(request, qatorlar)
+    if kontekst["chop"]:
+        # Chop etishda har javobgar shaxs alohida varaqdan — o'z jadvali, jami va imzo qatori bilan.
+        kontekst["guruhlar"] = [
+            {"xodim": g[0]["xodim"], "qatorlar": g, "jami_soni": sum((q["soni"] for q in g), servis.NOL),
+             "jami": sum((q["qiymat"] for q in g), servis.NOL)}
+            for g in (list(v) for _, v in groupby(qatorlar, key=lambda q: q["xodim"].pk))
+        ]
     return render(request, "hisobotlar/mol_qaydnoma.html", {
-        "qatorlar": qatorlar, "xodim": xodim, "jami": jami, "xodimlar": xodimlar, "q": izla,
-        "jami_soni": sum((q["soni"] for q in qatorlar), servis.NOL),
-        "excel_url": "?" + urlencode({k: v for k, v in (("xodim", xodim.pk if xodim else ""), ("q", izla),
-                                                        ("format", "xlsx")) if v}),
-        "bugun": timezone.localdate(),
+        **kontekst, "qatorlar": qatorlar, "xodim": xodim, "xodimlar": xodimlar, "q": izla,
     })
 
 
@@ -156,13 +192,9 @@ def bolim_qaydnoma(request):
                        "Qiymat"][:ustunlar]
         return _xlsx("bolim_qaydnoma", sarlavhalar, qatorlar_xlsx)
     return render(request, "hisobotlar/bolim_qaydnoma.html", {
+        **_qaydnoma_konteksti(request, qatorlar),
         "filiallar": filiallar, "filial": filial, "bolimlar": royxat, "bolim": bolim, "bolim_nomi": bolim_nomi,
         "bolim_qiymati": bolim_qiymati, "q": izla, "qatorlar": qatorlar,
-        "excel_url": "?" + urlencode({k: v for k, v in (("filial", filial.pk if filial else ""),
-                                                        ("bolim", bolim_qiymati), ("q", izla), ("format", "xlsx")) if v}),
-        "jami_soni": sum((q["soni"] for q in qatorlar), servis.NOL),
-        "jami": sum((q["qiymat"] for q in qatorlar), servis.NOL),
-        "bugun": timezone.localdate(),
     })
 
 

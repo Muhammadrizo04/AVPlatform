@@ -1,13 +1,10 @@
-/* Chop etish tugmalari: data-chop="summasiz" — qiymat ustunlari (.qiymat-ustun) bosmaga chiqmaydi (panel.css). */
+/* Qaydnomalarni chop etish rejimi (?chop=…): sahifa ochilgach chop etish oynasi o'zi chiqadi; [data-chop] — qayta. */
 (function () {
   "use strict";
   document.addEventListener("click", function (e) {
-    var tugma = e.target.closest("[data-chop]");
-    if (!tugma) return;
-    document.body.classList.toggle("chop-summasiz", tugma.dataset.chop === "summasiz");
-    window.print();
+    if (e.target.closest("button[data-chop]")) window.print();
   });
-  window.addEventListener("afterprint", function () {
-    document.body.classList.remove("chop-summasiz");
+  window.addEventListener("load", function () {
+    if (document.querySelector("[data-avto-chop]")) window.print();
   });
 })();

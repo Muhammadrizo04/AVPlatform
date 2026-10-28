@@ -3,7 +3,10 @@
 {% block sarlavha %}1C chiqimlari{% endblock %}
 {% block yol %}Vositalar{% endblock %}
 {% block kontent %}
-<h1>1C chiqimlari</h1>
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">1C chiqimlari</h1>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'chiqimlar:tarix' %}"><i class="cil-history me-1"></i>Amallar tarixi</a>
+</div>
 
 <div class="card mb-3"><div class="card-body">
 <form method="get" action="{% url 'chiqimlar:royxat' %}" class="filtrlar">

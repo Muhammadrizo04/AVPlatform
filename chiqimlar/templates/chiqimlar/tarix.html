@@ -1,0 +1,52 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}1C chiqimlari — amallar tarixi{% endblock %}
+{% block yol %}Vositalar{% endblock %}
+{% block kontent %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">1C chiqimlari — amallar tarixi</h1>
+  <a class="btn btn-sm btn-outline-secondary" href="{% url 'chiqimlar:royxat' %}">‹ Chiqimlar ro'yxati</a>
+</div>
+
+<div class="card mb-3"><div class="card-body">
+<form method="get" class="filtrlar">
+  <select class="form-select form-select-sm" name="amal" aria-label="Amal">
+    <option value="">Barcha amallar</option>
+    {% for kalit, nomi in amallar %}<option value="{{ kalit }}"{% if params.amal == kalit %} selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
+  <input class="form-control form-control-sm" type="search" name="kim" value="{{ params.kim }}" placeholder="Kim (foydalanuvchi yoki «1C sinxron»)" aria-label="Kim">
+  <label class="d-flex align-items-center gap-1 small">Dan <input class="form-control form-control-sm" type="date" name="dan" value="{{ params.dan }}"></label>
+  <label class="d-flex align-items-center gap-1 small">Gacha <input class="form-control form-control-sm" type="date" name="gacha" value="{{ params.gacha }}"></label>
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
+  {% if query %}<a class="btn btn-sm btn-ghost-secondary" href="?">Tozalash</a>{% endif %}
+</form>
+</div></div>
+
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>Vaqt</th><th>Kim</th><th>Amal</th><th>1C hujjati</th><th>AV</th><th>Filial</th><th class="son">Soni</th><th></th></tr></thead>
+  <tbody>
+  {% for q in qatorlar %}
+    <tr>
+      <td class="text-nowrap">{{ q.j.qachon|date:"d.m.Y H:i" }}</td>
+      <td>{{ q.j.kim_nomi }}</td>
+      <td>{{ q.matn }}</td>
+      {% if q.c %}
+      <td>{{ q.c.hujjat_turi }} {{ q.c.hujjat_raqami }}<div class="small text-body-secondary">{{ q.c.sana|date:"d.m.Y" }}</div></td>
+      <td>{% if q.c.av_id in korinadigan_av %}<a href="{% url 'vositalar:kartochka' q.c.av_id %}">{{ q.c.av.nomi }}</a>{% else %}{{ q.c.av.nomi }}{% endif %}</td>
+      <td>{{ q.c.filial.nomi }}</td>
+      <td class="son">{{ q.c.soni|son }}</td>
+      <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'chiqimlar:tasdiqlash' q.c.pk %}">Ochish</a></td>
+      {% else %}
+      <td colspan="5" class="text-body-secondary">Hujjat topilmadi</td>
+      {% endif %}
+    </tr>
+  {% empty %}
+    <tr><td colspan="8" class="text-body-secondary">{% if query %}Filtr bo'yicha amal topilmadi.{% else %}Hali amal bajarilmagan.{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% include "panel/sozlamalar/_sahifalash.html" %}
+{% endblock %}

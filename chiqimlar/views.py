@@ -4,7 +4,8 @@ from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import CharField, Q
+from django.db.models.functions import Cast
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils.cache import patch_vary_headers
@@ -18,7 +19,11 @@ from vositalar.filtrlar import korinadigan_av_idlari
 from vositalar.models import Bolim, Holat
 
 from .models import ChiqimHujjat
-from .servis import ChiqimXato, chiqim_tarixi, taqsimot_qatorlari, tasdiqla, tasdiqni_qaytar, taxmin_qil
+from jurnal.models import Jurnal
+
+from .servis import (
+    AMALLAR, ChiqimXato, chiqim_tarixi, holat_matni, taqsimot_qatorlari, tasdiqla, tasdiqni_qaytar, taxmin_qil,
+)
 
 SAHIFA_HAJMI = 50
 NOL = Decimal("0")
@@ -77,6 +82,41 @@ def royxat(request):
     })
     patch_vary_headers(javob, ["HX-Request"])
     return javob
+
+
+@amal_kerak("chiqim_korish")
+def tarix(request):
+    """Barcha chiqimlar bo'yicha amallar tarixi (yangilari tepada): kim, qachon, qaysi hujjatni tasdiqladi, tasdiqni
+    bekor qildi yoki qaytardi; 1C sinxron o'zgarishlari ham. Faqat foydalanuvchi filiallaridagi chiqimlar."""
+    chiqimlar = filial_bilan_chekla(ChiqimHujjat.objects.all(), request.user)
+    qs = Jurnal.objects.filter(
+        obyekt_turi="chiqimlar.chiqimhujjat", maydon="holat",
+        obyekt_id__in=chiqimlar.annotate(s=Cast("pk", CharField())).values("s"),
+    )
+    amal = request.GET.get("amal", "")
+    if amal in AMALLAR:
+        shart = Q(pk__in=[])
+        for eski, yangi in AMALLAR[amal][1]:
+            shart |= Q(eski=eski, yangi=yangi)
+        qs = qs.filter(shart)
+    kim = (request.GET.get("kim") or "").strip()[:100]
+    if kim:
+        qs = qs.filter(kim_nomi__icontains=kim)
+    dan, gacha = _sana(request.GET.get("dan")), _sana(request.GET.get("gacha"))
+    if dan:
+        qs = qs.filter(qachon__date__gte=dan)
+    if gacha:
+        qs = qs.filter(qachon__date__lte=gacha)
+    sahifa = Paginator(qs.order_by("-qachon", "-id"), SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    hujjatlar = ChiqimHujjat.objects.select_related("av", "filial").in_bulk([int(j.obyekt_id) for j in sahifa])
+    qatorlar = [{"j": j, "c": hujjatlar.get(int(j.obyekt_id)), "matn": holat_matni(j.eski, j.yangi)} for j in sahifa]
+    params = request.GET.copy()
+    params.pop("page", None)
+    return render(request, "chiqimlar/tarix.html", {
+        "sahifa": sahifa, "qatorlar": qatorlar, "params": request.GET, "query": params.urlencode(),
+        "amallar": [(k, v[0]) for k, v in AMALLAR.items()],
+        "korinadigan_av": korinadigan_av_idlari(request.user, {q["c"].av_id for q in qatorlar if q["c"]}),
+    })
 
 
 class _FormaXato(Exception):

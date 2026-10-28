@@ -592,5 +592,6 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .av-havola { color: var(--av-siyoh); font-weight: 500; text-decoration: none; }
 .av-havola:hover { color: var(--av-indigo); text-decoration: underline; }
 @media print { .av-havola { color: #000; } }
-/* «Chop etish (summasiz)» — qiymat ustunlari bosmaga chiqmaydi (panel/chop.js) */
-@media print { body.chop-summasiz .qiymat-ustun { display: none !important; } }
+/* Javobgar qaydnomasini chop etish: har javobgar shaxs yangi varaqdan */
+@media print { .chop-guruh + .chop-guruh { break-before: page; } }
+.chop-guruh + .chop-guruh { margin-top: 2.5rem; }

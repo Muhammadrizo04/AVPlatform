@@ -2,6 +2,7 @@
 {% block sarlavha %}Bo'lim qaydnomasi{% endblock %}
 {% block yol %}Hisobotlar{% endblock %}
 {% block kontent %}
+{% if chop %}{% include "hisobotlar/_chop_rejimi.html" with qator_soni=qatorlar|length %}{% endif %}
 <h1>Bo'lim qaydnomasi{% if filial %}: {{ filial.nomi }}{% if bolim_nomi %} — {{ bolim_nomi }}{% endif %}{% endif %}</h1>
 <div class="card mb-3 chop-yoq"><div class="card-body">
 <form method="get" class="filtrlar">
@@ -23,17 +24,17 @@
 <p class="small text-body-secondary mb-0 mt-2">Bo'lim tanlansa, uning ichki bo'limlari (xonalari) ham kiradi. «Soni» — shu bo'limdagi soni.</p>
 </div></div>
 {% if filial %}
-<div class="hisobot-xulosa chop-yoq">
+{% if not chop %}<div class="hisobot-xulosa chop-yoq">
   <span class="xulosa-son">{{ qatorlar|length }} ta qator <span>·</span> {{ jami_soni|son }} dona{% if pul_huquqi %} <span>·</span> {{ jami|pul }}{% endif %}</span>
   <span class="ms-auto"></span>
-  {% include "hisobotlar/_chop_tugmalari.html" with excel_url=excel_url %}
-</div>
+  {% include "hisobotlar/_chop_tugmalari.html" %}
+</div>{% endif %}
 <div class="card mb-3">
 <div class="table-responsive jadval-qotgan">
 <table class="table table-hover align-middle mb-0">
   <thead><tr><th>Bo'lim</th><th>AV</th><th>Inv. raqam</th><th>Javobgar shaxs</th><th>Holat</th><th>Joylashtirilgan</th><th class="son">Soni</th>{% if pul_huquqi %}<th class="son qiymat-ustun">Qiymat</th>{% endif %}</tr></thead>
   <tbody>
-  {% for q in qatorlar %}
+  {% for q in korsatiladi %}
     <tr><td>{{ q.bolim }}</td><td><a href="{% url 'vositalar:kartochka' q.av.pk %}" class="av-havola">{{ q.av.nomi }}</a></td><td>{{ q.inv }}</td><td>{% if q.mol %}{{ q.mol.ism }}{% else %}<span class="text-body-secondary">—</span>{% endif %}</td><td><span class="holat-pill h-{{ q.holat|holat_sinfi }}">{{ q.holat }}</span></td><td class="text-nowrap small">{% if q.sana %}{{ q.sana|date:"d.m.Y" }}{% if q.sana_soni > 1 %}<div class="text-body-secondary">{{ q.sana_soni }} marta</div>{% endif %}{% else %}<span class="text-body-secondary" title="Platformada tarixi yo'q">—</span>{% endif %}</td><td class="son">{{ q.soni|son }}</td>{% if pul_huquqi %}<td class="son qiymat-ustun">{{ q.qiymat|pul }}</td>{% endif %}</tr>
   {% empty %}
     <tr><td colspan="8" class="text-body-secondary">{% if q %}Qidiruv bo'yicha hech narsa topilmadi.{% else %}Bu bo'limda AV yo'q.{% endif %}</td></tr>
@@ -43,7 +44,7 @@
 </table>
 </div>
 </div>
-{% include "hisobotlar/_imzo.html" with masul="Bo'lim mas'uli" masul_ism="" %}
+{% if chop %}{% include "hisobotlar/_imzo.html" with masul="Bo'lim mas'uli" masul_ism="" %}{% else %}{% include "panel/sozlamalar/_sahifalash_qaydnoma.html" %}{% endif %}
 {% else %}
 <p class="text-body-secondary">Ro'yxatni ko'rish uchun filialni tanlang.</p>
 {% endif %}

@@ -135,6 +135,10 @@ def test_tozalash_faqat_1c_bayroqlari(client_rol, filial_a):
     assert list(bolimlar) == ["inv_bosh", "inv_takror", "filial_rekvizit_bosh", "mos_emas"]
     assert bosh.pk in {av.pk for av in bolimlar["inv_bosh"]["avlar"]}
     assert rekvizitsiz.pk in {av.pk for av in bolimlar["filial_rekvizit_bosh"]["avlar"]}
+    # menyuda — «Tizim» bo'limida, «Hisobotlar» da emas
+    menyu = javob.content.decode()
+    assert menyu.index('class="nav-title">Tizim') < menyu.index(reverse("hisobotlar:tozalash"))
+    assert menyu.index(reverse("hisobotlar:muddat")) < menyu.index('class="nav-title">Tizim')
 
 
 def test_huquqlar(client_rol):
@@ -291,6 +295,7 @@ def test_bolim_qaydnomasi(hisobchi, filial_a, filial_b, foydalanuvchi):
     [q] = javob.context["qatorlar"]
     assert (q["av"], q["soni"], q["bolim"], q["mol"]) == (ratsiya, Decimal("1"), "Bino / Xona", ali)
     html = javob.content.decode()
+    html = c.get(url, {"filial": filial_a.pk, "bolim": bino.pk, "chop": "summali"}).content.decode()
     assert "Bo'lim mas'uli:" in html and html.count('class="imzo-fish"') == 2  # F.I.Sh. uchun uzun chiziq
     assert [q["soni"] for q in c.get(url, {"filial": filial_a.pk}).context["qatorlar"]] == [Decimal("1"), Decimal("3")]
     assert c.get(url, {"filial": filial_a.pk, "q": "ombor"}).context["qatorlar"][0]["bolim"] == "Ombor"
@@ -324,10 +329,12 @@ def test_mol_qaydnomasida_imzo_qatorlari(hisobchi, filial_a):
     c = Client()
     c.force_login(hisobchi)
     url = reverse("hisobotlar:mol_qaydnoma")
-    html = c.get(url).content.decode()
-    assert "Moddiy javobgar shaxs:" in html and html.count('class="imzo-fish"') == 2 and "imzo-ism" not in html
+    assert "imzo-fish" not in c.get(url).content.decode()  # ekranda imzo yo'q — faqat chop etishda
+    html = c.get(url, {"chop": "summali"}).content.decode()
+    assert "Moddiy javobgar shaxs:" in html and html.count('class="imzo-fish"') == 2
+    assert f'<b class="imzo-ism">{ali.ism}</b>' in html  # hammasi chop etilsa ham — har guruhda o'z ismi
     assert f"Sana: {timezone.localdate():%d.%m.%Y}" in html
-    html = c.get(url, {"xodim": ali.pk}).content.decode()
+    html = c.get(url, {"xodim": ali.pk, "chop": "summali"}).content.decode()
     assert f'<b class="imzo-ism">{ali.ism}</b>' in html
 
 
@@ -372,15 +379,56 @@ def test_qaydnomalarda_biriktirilgan_sana(hisobchi, filial_a):
 
 
 def test_qaydnomalarda_summali_va_summasiz_chop(hisobchi, filial_a, foydalanuvchi):
-    """Qiymat ko'radiganga — ikki chop etish tugmasi; qiymat ustunlari belgilangan (summasizda yashiriladi)."""
+    """Qiymat ko'radiganga — ikki chop etish havolasi (filtrlar saqlanadi); summasizda qiymat ustuni umuman yo'q."""
     qator(av_yarat(filial_a), filial_a, "1", mol=xodim())
     c = Client()
     c.force_login(hisobchi)
-    for url in (reverse("hisobotlar:mol_qaydnoma"), reverse("hisobotlar:bolim_qaydnoma") + f"?filial={filial_a.pk}"):
-        html = c.get(url).content.decode()
-        assert 'data-chop="summali"' in html and 'data-chop="summasiz"' in html, url
-        assert html.count("qiymat-ustun") >= 3 and "format=xlsx" in html and "panel/chop.js" in html
+    for url, asos in ((reverse("hisobotlar:mol_qaydnoma"), "q=Ali"),
+                      (reverse("hisobotlar:bolim_qaydnoma"), f"filial={filial_a.pk}&amp;q=Ali")):
+        html = c.get(f"{url}?{asos.replace('&amp;', '&')}&page=1").content.decode()
+        assert f'href="?{asos}&amp;chop=summali"' in html and f'href="?{asos}&amp;chop=summasiz"' in html, url
+        assert f'href="?{asos}&amp;format=xlsx"' in html and "panel/chop.js" in html
+        summali = c.get(f"{url}?{asos.replace('&amp;', '&')}&chop=summali").content.decode()
+        summasiz = c.get(f"{url}?{asos.replace('&amp;', '&')}&chop=summasiz").content.decode()
+        assert "data-avto-chop" in summali and "qiymat-ustun" in summali, url
+        assert "data-avto-chop" in summasiz and "qiymat-ustun" not in summasiz, url
     hr = Client()
     hr.force_login(foydalanuvchi("hr"))
     html = hr.get(reverse("hisobotlar:mol_qaydnoma")).content.decode()
-    assert 'data-chop="summali"' not in html and 'data-chop="summasiz"' in html
+    assert "chop=summali" not in html and "chop=summasiz" in html
+    assert "qiymat-ustun" not in hr.get(reverse("hisobotlar:mol_qaydnoma"), {"chop": "summali"}).content.decode()
+
+
+def test_javobgar_qaydnomasi_chopda_har_biri_alohida(hisobchi, filial_a):
+    """Hammasi chop etilsa — har javobgar shaxs o'z bo'limida (yangi varaq), o'z jami va imzo ismi bilan."""
+    ali, vali = xodim(), xodim()
+    qator(av_yarat(filial_a, soni="2"), filial_a, "2", mol=ali)
+    qator(av_yarat(filial_a, soni="5"), filial_a, "5", mol=vali)
+    c = Client()
+    c.force_login(hisobchi)
+    javob = c.get(reverse("hisobotlar:mol_qaydnoma"), {"chop": "summasiz"})
+    guruhlar = javob.context["guruhlar"]
+    assert sorted((g["xodim"].pk, g["jami_soni"]) for g in guruhlar) == [(ali.pk, Decimal("2")), (vali.pk, Decimal("5"))]
+    html = javob.content.decode()
+    assert html.count('class="chop-guruh"') == 2
+    assert f'<b class="imzo-ism">{ali.ism}</b>' in html and f'<b class="imzo-ism">{vali.ism}</b>' in html
+
+
+def test_qaydnomalar_ekranda_sahifalanadi(hisobchi, filial_a, monkeypatch):
+    """Ekranda — sahifalab (filtr saqlanadi, «Jami» — hammasi bo'yicha); chop etishda — barcha qatorlar."""
+    from hisobotlar import views
+
+    monkeypatch.setattr(views, "QAYDNOMA_SAHIFA", 2)
+    ali = xodim()
+    for _ in range(5):
+        qator(av_yarat(filial_a, soni="1"), filial_a, "1", mol=ali)
+    c = Client()
+    c.force_login(hisobchi)
+    for url, params in ((reverse("hisobotlar:mol_qaydnoma"), {}),
+                        (reverse("hisobotlar:bolim_qaydnoma"), {"filial": filial_a.pk})):
+        javob = c.get(url, params)
+        assert len(javob.context["korsatiladi"]) == 2 and javob.context["jami_soni"] == Decimal("5"), url
+        assert "1 / 3" in javob.content.decode() and "page=3" in javob.content.decode()
+        oxirgi = c.get(url, {**params, "page": 3})
+        assert len(oxirgi.context["korsatiladi"]) == 1
+        assert len(c.get(url, {**params, "chop": "summali"}).context["korsatiladi"]) == 5

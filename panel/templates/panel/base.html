@@ -7,13 +7,13 @@
   <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui/coreui.min.css' %}">
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui-icons/css/free.min.css' %}">
-  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=11">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=12">
   <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
   <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
   <script src="{% static 'panel/tasdiq.js' %}?v=3" defer></script>
   <script src="{% static 'panel/qidiruv.js' %}?v=1" defer></script>
-  <script src="{% static 'panel/chop.js' %}?v=1" defer></script>
+  <script src="{% static 'panel/chop.js' %}?v=2" defer></script>
 </head>
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   {% if user.is_authenticated %}
@@ -42,18 +42,18 @@
       {% if reviziya_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if ns == 'reviziya' %} active{% endif %}" href="{% url 'reviziya:royxat' %}"><i class="nav-icon cil-task"></i> Reviziyalar</a></li>
       {% endif %}
-      {% if hisobot_huquqi or tozalash_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
+      {% if hisobot_huquqi %}<li class="nav-title">Hisobotlar</li>{% endif %}
       {% if hisobot_huquqi %}
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'kesim' %} active{% endif %}" href="{% url 'hisobotlar:kesim' %}"><i class="nav-icon cil-chart-pie"></i> Kesim</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'mol_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:mol_qaydnoma' %}"><i class="nav-icon cil-notes"></i> Javobgar qaydnomasi</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'bolim_qaydnoma' %} active{% endif %}" href="{% url 'hisobotlar:bolim_qaydnoma' %}"><i class="nav-icon cil-room"></i> Bo'lim qaydnomasi</a></li>
       <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'muddat' %} active{% endif %}" href="{% url 'hisobotlar:muddat' %}"><i class="nav-icon cil-clock"></i> Xizmat muddati</a></li>
       {% endif %}
+      {% if sozlama_huquqi or tozalash_huquqi %}<li class="nav-title">Tizim</li>{% endif %}
       {% if tozalash_huquqi %}
-      <li class="nav-item"><a class="nav-link r-hisobot{% if nom == 'tozalash' %} active{% endif %}" href="{% url 'hisobotlar:tozalash' %}"><i class="nav-icon cil-task"></i> Tozalash</a></li>
+      <li class="nav-item"><a class="nav-link r-tizim{% if nom == 'tozalash' %} active{% endif %}" href="{% url 'hisobotlar:tozalash' %}"><i class="nav-icon cil-warning"></i> 1C ma'lumotlarini tozalash</a></li>
       {% endif %}
       {% if sozlama_huquqi %}
-      <li class="nav-title">Tizim</li>
       <li class="nav-item"><a class="nav-link r-tizim{% if ns == 'panel' and nom != 'bosh' %} active{% endif %}" href="{% url 'panel:foydalanuvchilar' %}"><i class="nav-icon cil-settings"></i> Sozlamalar</a></li>
       {% endif %}
       {% endblock %}

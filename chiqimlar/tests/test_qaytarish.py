@@ -172,3 +172,35 @@ def test_bekor_1c_menyu_belgisida_va_royxatda(muhit):
     html = c.get(reverse("chiqimlar:tasdiqlash", args=[m["c"].pk])).content.decode()
     assert "1C&#x27;da bekor qilindi" in html or "1C'da bekor qilindi" in html
     assert "Tasdiqni qaytarish" in html
+
+
+def test_umumiy_amallar_tarixi(muhit, filial_yarat, foydalanuvchi):
+    """Barcha chiqimlar tarixi: tasdiq, 1C bekori va qaytarish (kim, amal), filtr; boshqa filial chiqimi ko'rinmaydi."""
+    m = muhit
+    ofisdan_tasdiqla(m)
+    m["harakat"].delete()
+    AVQoldiq.objects.filter(av=m["av"]).update(soni=SON("3"))
+    chiqimlarni_yangila(DAN, GACHA)
+    moslashtir()
+    m["c"].refresh_from_db()
+    tasdiqni_qaytar(m["c"], m["hisobchi"])
+
+    c = Client()
+    c.force_login(m["hisobchi"])
+    url = reverse("chiqimlar:tarix")
+    assert f'href="{url}"' in c.get(reverse("chiqimlar:royxat")).content.decode()
+    javob = c.get(url)
+    matnlar = [q["matn"] for q in javob.context["qatorlar"]]
+    assert matnlar == [
+        "Tasdiq qaytarildi — donalar asl joyiga qo'yildi",
+        "1C'da hujjat bekor qilindi — tasdiqni qaytarish kerak",
+        "Tasdiqlandi",
+    ]
+    assert all(q["c"].pk == m["c"].pk for q in javob.context["qatorlar"])
+    assert [q["matn"] for q in c.get(url, {"amal": "tasdiq"}).context["qatorlar"]] == ["Tasdiqlandi"]
+    assert [q["j"].kim_nomi for q in c.get(url, {"kim": "1C"}).context["qatorlar"]] == ["1C sinxron"]
+
+    # Boshqa filialda cheklangan foydalanuvchi bu chiqimlar tarixini ko'rmaydi
+    boshqa = Client()
+    boshqa.force_login(foydalanuvchi("hisobchi", filiallar=[filial_yarat("B")]))
+    assert boshqa.get(url).context["qatorlar"] == []
