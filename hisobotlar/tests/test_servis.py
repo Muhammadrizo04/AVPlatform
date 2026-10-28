@@ -291,7 +291,7 @@ def test_bolim_qaydnomasi(hisobchi, filial_a, filial_b, foydalanuvchi):
     [q] = javob.context["qatorlar"]
     assert (q["av"], q["soni"], q["bolim"], q["mol"]) == (ratsiya, Decimal("1"), "Bino / Xona", ali)
     html = javob.content.decode()
-    assert "Bo&#x27;lim mas&#x27;uli" in html or "Bo'lim mas'uli" in html
+    assert "Bo'lim mas'uli:" in html and html.count('class="imzo-fish"') == 2  # F.I.Sh. uchun uzun chiziq
     assert [q["soni"] for q in c.get(url, {"filial": filial_a.pk}).context["qatorlar"]] == [Decimal("1"), Decimal("3")]
     assert c.get(url, {"filial": filial_a.pk, "q": "ombor"}).context["qatorlar"][0]["bolim"] == "Ombor"
     kitob = load_workbook(io.BytesIO(c.get(url, {"filial": filial_a.pk, "bolim": ombor.pk, "format": "xlsx"}).content))

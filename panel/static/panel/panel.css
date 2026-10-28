@@ -552,8 +552,14 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .tasdiq-oyna .t-xavfli, .tasdiq-oyna .t-xavfli:hover { background: #d92d4d; border-color: #d92d4d; }
 .tasdiq-oyna button:focus-visible { outline: 3px solid rgba(99, 91, 255, .35); outline-offset: 2px; }
 /* Qaydnomalar: imzo qatorlari — ekranda xira, bosmada jadval ostida */
-.imzo-qator { display: flex; flex-wrap: wrap; gap: .5rem 2.5rem; margin: 0 0 1rem; color: var(--av-ikkilamchi); font-size: .875rem; }
-@media print { .imzo-qator { margin-top: 2rem; color: #000; font-size: 11pt; gap: 1.25rem 3rem; } }
+.imzo-qator { display: grid; gap: 1.1rem; margin: 1rem 0 1.5rem; color: var(--av-ikkilamchi); font-size: .875rem; }
+.imzo { display: flex; align-items: flex-end; gap: 1rem; }
+.imzo-kim { flex: 0 0 8.5rem; }
+/* chiziq ustiga qo'lda yoziladi; tagida kichik izoh (F.I.Sh. / imzo) */
+.imzo-fish, .imzo-chizig { position: relative; display: inline-block; height: 1.6rem; border-bottom: 1px solid currentColor; }
+.imzo-fish { flex: 0 1 24rem; } .imzo-chizig { flex: 0 1 10rem; }
+.imzo-fish i, .imzo-chizig i { position: absolute; top: 100%; left: 0; right: 0; text-align: center; font-size: .7rem; font-style: normal; opacity: .7; }
+@media print { .imzo-qator { margin-top: 2.5rem; color: #000; font-size: 11pt; gap: 2rem; } }
 /* Qidiruv maydonidagi katta «×» (panel/qidiruv.js); brauzerning o'z mayda belgisi yashiriladi */
 .qidiruv-quti { position: relative; display: block; }
 .qidiruv-quti input { width: 100%; padding-right: 2.75rem; }
