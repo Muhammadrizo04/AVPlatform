@@ -449,3 +449,31 @@ def test_bekor_faqat_yakunlanganda_va_yozilganda(filial, och, hisobchi):
     with pytest.raises(ReviziyaXato, match="yakunlanmagan"):
         qollashni_bekor_qil(bekor, k, hisobchi)
     assert Taqsimot.objects.get(av=stol).holat == Holat.TOPILMADI
+
+
+def test_tarixda_reviziya_qatorlari_tushunarli(filial, och, qosh, hisobchi):
+    """AV tarixida reviziya yozgan farq va uni qaytarish odam tilida: nima bo'ldi, qaysi reviziya, qayerda."""
+    from vositalar.tarix import tarix
+
+    a = Bolim.objects.create(filial=filial, nomi="Ombor")
+    b = Bolim.objects.create(filial=filial, nomi="Kabinet")
+    stol, stul = av_yarat(filial, soni="2"), av_yarat(filial)
+    qator(stol, filial, "2", bolim=a)
+    qator(stul, filial, "1", bolim=a)
+    rv = och(filial)
+    qosh(rv, b, av=stul)
+    yakunla_va_yoz(rv, hisobchi)
+
+    def matnlar(av):
+        return [q.matn for q in tarix(av, hisobchi) if q.tur == "reviziya" and "dona" in q.matn and "topildi," not in q.matn]
+
+    assert matnlar(stol) == [f"{rv.nomi} reviziyasida 2 dona topilmadi — «Ishlatilmoqda» → «Topilmadi» ({filial.nomi})"]
+    assert matnlar(stul) == [f"{rv.nomi} reviziyasida 1 dona boshqa xonada topildi — «Ombor» → «Kabinet» ({filial.nomi})"]
+
+    ochiqqa_qaytar(rv, hisobchi)
+    assert matnlar(stol)[0] == (
+        f"{rv.nomi} reviziyasi natijasi bekor qilindi: 2 dona yana «Ishlatilmoqda» holatiga qaytarildi ({filial.nomi})"
+    )
+    assert matnlar(stul)[0] == (
+        f"{rv.nomi} reviziyasi natijasi bekor qilindi: 1 dona yana «Ombor» xonasiga qaytarildi ({filial.nomi})"
+    )

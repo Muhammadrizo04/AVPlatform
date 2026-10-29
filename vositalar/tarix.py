@@ -86,6 +86,42 @@ def _taqsimot_matni(h: TaqsimotHarakat) -> str:
     return qism
 
 
+def _reviziya_matni(h: TaqsimotHarakat) -> str:
+    """Reviziya natijasi taqsimotga yozilgan (yoki qaytarilgan) qator — odam tilida.
+
+    `hujjat_izoh`: «RV-000015» — yakunlashda yozilgan farq; «RV-000015 — qo'llash bekor qilindi» — reviziya ochiqqa
+    qaytarilganda (yoki bitta farq bekor qilinganda) oldingi holatga qaytarish (`reviziya.qollash`)."""
+    rv, _, qoshimcha = (h.hujjat_izoh or "").partition(" — ")
+    rv = rv or "Reviziya"
+
+    def xona(bolim) -> str:
+        return f"«{bolim.nomi}»" if bolim else "«Bo'limsiz»"
+
+    soni = f"{son(h.soni)} dona"
+    kochdi = h.eski_bolim_id != h.yangi_bolim_id
+    holat = h.eski_holat != h.yangi_holat
+    if qoshimcha:  # teskari amal
+        qism = []
+        if kochdi:
+            qism.append(f"{xona(h.yangi_bolim)} xonasiga")
+        if holat:
+            qism.append(f"«{_holat(h.yangi_holat)}» holatiga")
+        joy = " va ".join(qism) or "oldingi joyiga"
+        matn = f"{rv} reviziyasi natijasi bekor qilindi: {soni} yana {joy} qaytarildi"
+    else:
+        if kochdi and holat:
+            sabab = (f"boshqa xonada topildi — {xona(h.eski_bolim)} → {xona(h.yangi_bolim)}, "
+                     f"holati «{_holat(h.eski_holat)}» → «{_holat(h.yangi_holat)}»")
+        elif kochdi:
+            sabab = f"boshqa xonada topildi — {xona(h.eski_bolim)} → {xona(h.yangi_bolim)}"
+        elif h.yangi_holat == Holat.TOPILMADI:
+            sabab = f"topilmadi — «{_holat(h.eski_holat)}» → «{_holat(h.yangi_holat)}»"
+        else:
+            sabab = f"holati boshqa chiqdi — «{_holat(h.eski_holat)}» → «{_holat(h.yangi_holat)}»"
+        matn = f"{rv} reviziyasida {soni} {sabab}"
+    return f"{matn} ({h.filial.nomi})"
+
+
 def tarix(av: AV, user) -> list[TarixQator]:
     """`av` bo'yicha `user` ko'ra oladigan voqealar, sana bo'yicha kamayuvchi. 1C harakatlari va taqsimot
     harakatlari — faqat ruxsat etilgan filiallardan, МОЛ aktlari — faqat ko'rinadigan aktlar (boshqa filial bo'lim,
@@ -105,7 +141,8 @@ def tarix(av: AV, user) -> list[TarixQator]:
         "filial", "kim", "eski_bolim", "yangi_bolim", "eski_mol", "yangi_mol"
     )
     for h in harakatlar:
-        natija.append(TarixQator(h.sana, "holat" if h.sabab == "holat" else h.sabab, _taqsimot_matni(h), _kim(h.kim)))
+        matn = _reviziya_matni(h) if h.sabab == TaqsimotHarakat.Sabab.REVIZIYA else _taqsimot_matni(h)
+        natija.append(TarixQator(h.sana, "holat" if h.sabab == "holat" else h.sabab, matn, _kim(h.kim)))
     qaydlar = filial_bilan_chekla(
         ReviziyaQayd.objects.filter(av=av).exclude(reviziya__holat="bekor"), user, "reviziya__filial"
     ).select_related("reviziya", "bolim", "kim")  # bekor qilingan reviziya qaydlari tarixga kirmaydi
