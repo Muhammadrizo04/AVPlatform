@@ -645,3 +645,62 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .tanlov-menyu li.tanlangan { font-weight: 600; }
 .tanlov-menyu li:hover, .tanlov-menyu li.faol { background: var(--av-indigo); color: #fff; }
 .tanlov-menyu li.bosh { color: var(--av-xira); cursor: default; background: none; }
+/* Bosh sahifa: AV summasi dinamikasi (panel/_dinamika.html, panel/dinamika.js) */
+.dinamika-filtr { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font-size: .8125rem; font-weight: 500; color: var(--av-ikkilamchi); }
+.dinamika-filtr label { display: flex; align-items: center; gap: .375rem; margin: 0; }
+.dinamika-filiallar { position: relative; }
+.dinamika-filiallar summary { list-style: none; cursor: pointer; min-width: 9rem; }
+.dinamika-filiallar summary::-webkit-details-marker { display: none; }
+.dinamika-filiallar-royxat { position: absolute; right: 0; z-index: 1050; width: min(20rem, 80vw); max-height: 18rem; overflow-y: auto;
+  margin-top: 4px; padding: .5rem .75rem; background: var(--av-sirt, #fff); border: 1px solid var(--av-chiziq); border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(10, 37, 64, .14); font-weight: 400; }
+.dinamika-filiallar-royxat .form-check { display: flex; gap: .5rem; margin: 0; padding: .2rem 0; }
+.dinamika-filiallar-royxat .form-check-input { margin: .15rem 0 0; flex: none; }
+.dinamika-jami { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin-bottom: 1rem; }
+.dinamika-jami span { display: block; font-size: .75rem; color: var(--av-xira); }
+.dinamika-jami b { font-size: 1.25rem; color: var(--av-siyoh); }
+.dinamika-jami b small, .dinamika .osish small, .dinamika .kamayish small { font-size: .8125rem; }
+.dinamika .osish { color: #087251; }
+.dinamika .kamayish { color: var(--av-qizil); }
+.dinamika-legend { display: flex; flex-wrap: wrap; gap: .375rem 1.25rem; margin: 0 0 .5rem; padding: 0; list-style: none; font-size: .8125rem; color: var(--av-ikkilamchi); }
+.dinamika-legend i { display: inline-block; width: 12px; height: 3px; border-radius: 2px; margin-right: .375rem; vertical-align: middle; }
+.dinamika-grafik { position: relative; }
+.dinamika-grafik svg { display: block; max-width: 100%; overflow: visible; }
+.dinamika-grafik .o-q { font-family: inherit; }
+.dinamika-grafik .tor { stroke: var(--av-chiziq-och, #eef1f5); stroke-width: 1; }
+.dinamika-grafik .o-q { font-size: 11px; fill: var(--av-xira); }
+.dinamika-grafik .o-q.y { text-anchor: end; dominant-baseline: middle; }
+.dinamika-grafik .o-q.x { text-anchor: middle; }
+.dinamika-grafik .chiziq { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.dinamika-grafik .kursor { stroke: var(--av-xira); stroke-width: 1; stroke-dasharray: 3 3; }
+.dinamika-grafik .nuqta { stroke: var(--av-sirt, #fff); stroke-width: 2; }
+.dinamika-tooltip { position: absolute; top: .25rem; z-index: 5; min-width: 13rem; padding: .5rem .75rem; pointer-events: none;
+  background: var(--av-sirt, #fff); border: 1px solid var(--av-chiziq); border-radius: 8px; box-shadow: 0 10px 28px rgba(10, 37, 64, .14);
+  font-size: .75rem; color: var(--av-ikkilamchi); }
+.dinamika-tooltip b { display: block; margin-bottom: .25rem; color: var(--av-siyoh); }
+.dinamika-tooltip div { display: flex; align-items: center; gap: .5rem; }
+.dinamika-tooltip i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dinamika-tooltip span { flex: 1 1 auto; }
+.dinamika-tooltip strong { color: var(--av-siyoh); font-variant-numeric: tabular-nums; }
+.dinamika-jadval summary { cursor: pointer; font-size: .8125rem; font-weight: 600; color: var(--av-indigo); }
+/* Oy tanlagich (panel/_oy_tanlov.html, panel/oy_tanlov.js) */
+.oy-tanlov { position: relative; display: flex; align-items: center; gap: .375rem; }
+.oy-tanlov-tugma { display: flex; align-items: center; gap: .5rem; min-width: 9.5rem; text-align: left; cursor: pointer; }
+.oy-tanlov-tugma i { color: var(--av-xira); }
+.oy-tanlov-panel { position: absolute; top: calc(100% + 4px); left: 0; z-index: 1060; width: 16rem; padding: .625rem;
+  background: var(--av-sirt, #fff); border: 1px solid var(--av-chiziq); border-radius: 10px; box-shadow: 0 12px 32px rgba(10, 37, 64, .16); }
+.oy-tanlov-bosh { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
+.oy-tanlov-bosh b { font-size: .9375rem; color: var(--av-siyoh); }
+.oy-tanlov-yil { width: 2rem; height: 2rem; border: 0; border-radius: 8px; background: transparent; color: var(--av-siyoh); font-size: 1.125rem; line-height: 1; }
+.oy-tanlov-yil:hover:not(:disabled) { background: var(--av-chiziq-och, #eef1f5); }
+.oy-tanlov-yil:disabled { color: var(--av-chiziq); }
+.oy-tanlov-tor { display: grid; grid-template-columns: repeat(4, 1fr); gap: .25rem; }
+.oy-tanlov-tor button { padding: .45rem 0; border: 1px solid transparent; border-radius: 8px; background: transparent;
+  color: var(--av-siyoh); font-size: .8125rem; font-weight: 500; }
+.oy-tanlov-tor button:hover:not(:disabled), .oy-tanlov-tor button:focus-visible { background: #eef0ff; border-color: #d9dcff; outline: none; }
+.oy-tanlov-tor button.tanlangan { background: var(--av-indigo); border-color: var(--av-indigo); color: #fff; }
+.oy-tanlov-tor button:disabled { color: var(--av-chiziq); cursor: default; }
+.dinamika-filiallar-amallar { display: flex; justify-content: space-between; margin-bottom: .25rem; padding-bottom: .375rem; border-bottom: 1px solid var(--av-chiziq-och, #eef1f5); }
+.dinamika-filiallar-amallar .btn-link { font-size: .8125rem; font-weight: 600; text-decoration: none; color: var(--av-indigo); }
+.dinamika-filiallar-qatorlar { max-height: 15rem; overflow-y: auto; margin-bottom: .5rem; }
+.dinamika-filiallar-royxat { max-height: none; overflow: visible; }

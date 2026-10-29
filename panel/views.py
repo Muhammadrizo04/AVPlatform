@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -10,6 +11,8 @@ from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from onec.models import AV
 from vositalar.bayroqlar import BAYROQLAR, bayroq_sonlari
 from vositalar.models import Holat, Taqsimot
+
+from .dinamika import filial_dinamikasi
 
 # Buxgalteriya tozalash vazifalarini ko'rmaydigan (pul huquqi yo'q) rol — HR — uchun faqat o'zi hal qiladigan bayroqlar:
 # МОЛ biriktirish (akt orqali), ketgan xodimdagi AV'lar va bo'limsiz qatorlar.
@@ -106,6 +109,7 @@ def _bosh(request):
     if pul:
         # Summalar grafiklari: boshlang'ich qiymat (yo'lak) va uning ichida qoldiq qiymat (amortizatsiya bilan)
         filial_qiymat = [{**q, "nomi": q["filial"].nomi} for q in filiallar]
+        kontekst.update(_dinamika_kontekst(request))
         kontekst.update(
             qiymat_filial=_qiymat_grafigi(filial_qiymat),
             qiymat_filial_qolgan=max(len(filial_qiymat) - GRAFIK_FILIALLAR, 0),
@@ -113,6 +117,19 @@ def _bosh(request):
             eskirish_foizi=_ulush(jamlar["boshlangich"] - jamlar["qoldiq"], jamlar["boshlangich"]),
         )
     return render(request, "panel/bosh.html", kontekst)
+
+
+def _dinamika_kontekst(request) -> dict:
+    d = filial_dinamikasi(request.user, request.GET)
+    return {"d": d, "grafik_malumot": d.grafik}
+
+
+@amal_kerak("bosh_sahifa")
+def dinamika(request):
+    """HTMX: dinamika bo'lagi (davr yoki filiallar o'zgarganda). Summa — faqat `pul_korish` bilan."""
+    if not huquqi_bor(request.user, "pul_korish"):
+        raise PermissionDenied
+    return render(request, "panel/_dinamika.html", _dinamika_kontekst(request))
 
 
 def _qiymat_grafigi(qatorlar, nechta=GRAFIK_FILIALLAR) -> list[dict]:

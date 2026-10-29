@@ -6,6 +6,7 @@ app_name = "panel"
 
 urlpatterns = [
     path("", views.bosh, name="bosh"),
+    path("dinamika/", views.dinamika, name="dinamika"),
     path("sozlamalar/foydalanuvchilar/", sozlamalar.foydalanuvchilar, name="foydalanuvchilar"),
     path("sozlamalar/foydalanuvchilar/<int:pk>/", sozlamalar.foydalanuvchi_tahrir, name="foydalanuvchi_tahrir"),
     path("sozlamalar/av-turlari/", sozlamalar.av_turlari, name="av_turlari"),
