@@ -382,3 +382,16 @@ def test_menyuda_sozlamalar_faqat_adminga(client_admin, client_rol):
     url = reverse("panel:foydalanuvchilar")
     assert url in client_admin.get(reverse("panel:bosh")).content.decode()
     assert url not in client_rol("hisobchi").get(reverse("panel:bosh")).content.decode()
+
+
+def test_av_turi_uzun_tanlov_va_xotira_tipi(client_admin, tur):
+    """Uzun ro'yxat yangi qator bilan ham kiritiladi va formada qatorma-qator qaytadi; «xotira» tipi saqlanadi."""
+    url = reverse("panel:av_turi_tahrir", args=[tur.pk])
+    cpu = [f"Intel Core i3 ({a}-avlod)" for a in range(2, 20)]
+    assert client_admin.post(url, maydon_post(
+        ("cpu", "CPU", "tanlov", "yoq", "\r\n".join(cpu)),
+        ("xotira", "Storage", "xotira", "yoq", ""),
+    )).status_code == 302
+    s = AVTuriSozlama.objects.get(av_turi=tur)
+    assert s.maydonlar[0]["tanlov_qiymatlari"] == cpu and s.maydonlar[1]["tip"] == "xotira"
+    assert "Intel Core i3 (2-avlod)\nIntel Core i3 (3-avlod)" in client_admin.get(url).content.decode()

@@ -16,7 +16,7 @@ from mol.models import MolAkt, MolAktQator
 from onec.models import AVTuri, Harakat1C, Xodim
 from vositalar.amallar import AmalXato
 from vositalar.models import AVKartochka, AVTuriSozlama, Bolim, Holat, Rasm, Taqsimot, TaqsimotHarakat
-from vositalar.qoshimcha import qoshimcha_tekshir
+from vositalar.qoshimcha import qoshimcha_tekshir, xotira_qatorlari
 from vositalar.rasmlar import rasm_saqla
 from vositalar.tarix import tarix
 from vositalar.tests.test_bayroqlar import av_yarat, qator, qoldiq
@@ -497,3 +497,49 @@ def test_tarixda_bekor_reviziya_qaydi_yoq(filial_a, foydalanuvchi):
         )
     qatorlar = [q for q in tarix(av, hisobchi) if q.tur == "reviziya"]
     assert len(qatorlar) == 1 and "RV-000002" in qatorlar[0].matn
+
+
+def test_xotira_tipi():
+    maydonlar = [{"kalit": "xotira", "nomi": "Storage", "tip": "xotira"}]
+    assert qoshimcha_tekshir(maydonlar, {"xotira": "M.2 SSD 512 GB + HDD 1 TB"}) == {"xotira": "M.2 SSD 512 GB + HDD 1 TB"}
+    assert xotira_qatorlari("M.2 SSD 512 GB + HDD 1 TB") == [("M.2 SSD", "512 GB"), ("HDD", "1 TB")]
+    for yomon in ("SSD 512 GB", "HDD 3 TB", " + ".join(["HDD 1 TB"] * 5)):
+        with pytest.raises(ValidationError):
+            qoshimcha_tekshir(maydonlar, {"xotira": yomon})
+
+
+def test_ozgarmagan_eski_qiymat_tekshirilmaydi():
+    """Sozlama keyin qat'iylashsa ham (tanlov ro'yxati), kartochkadagi o'zgarmagan eski qiymat saqlashni to'xtatmaydi."""
+    maydonlar = [{"kalit": "cpu", "nomi": "CPU", "tip": "tanlov", "tanlov_qiymatlari": ["Intel Core i3 (10-avlod)"]}]
+    assert qoshimcha_tekshir(maydonlar, {"cpu": "core i3"}, {"cpu": "core i3"}) == {"cpu": "core i3"}
+    with pytest.raises(ValidationError) as xato:
+        qoshimcha_tekshir(maydonlar, {"cpu": "Intel i3"}, {"cpu": "core i3"})
+    assert "Ro'yxatdan tanlang" in str(xato.value)
+
+
+def test_kartochkada_qidiruvli_tanlov_va_xotira(client_hisobchi, filial_a):
+    turi = AVTuri.objects.create(ref_1c=uuid.uuid4(), nomi="KOMPYUTERLAR")
+    cpu = [f"Intel Core i3 ({a}-avlod)" for a in range(2, 15)] + [f"Intel Core i5 ({a}-avlod)" for a in range(2, 15)]
+    AVTuriSozlama.objects.create(av_turi=turi, maydonlar=[
+        {"kalit": "cpu", "nomi": "Protsessor (CPU)", "tip": "tanlov", "tanlov_qiymatlari": cpu},
+        {"kalit": "rang", "nomi": "Rang", "tip": "tanlov", "tanlov_qiymatlari": ["qora", "oq"]},
+        {"kalit": "xotira", "nomi": "Storage", "tip": "xotira"},
+    ])
+    av = av_yarat(filial_a)
+    av.turi = turi
+    av.save()
+    k = kartochka_ol(av)
+    html = client_hisobchi.get(url("kartochka", av.pk)).content.decode()
+    assert 'data-royxat="r_cpu"' in html and 'role="combobox"' in html and '<option value="Intel Core i5 (14-avlod)">' in html
+    assert '<select class="form-select" id="q_rang"' in html  # qisqa ro'yxat — oddiy tanlov
+    assert "data-xotira-qosh" in html and "<option>M.2 SSD</option>" in html and "<option>4 TB</option>" in html
+
+    rad = client_hisobchi.post(url("kartochka", av.pk), {"versiya": 1, "q_cpu": "core i3", "q_xotira": ""})
+    assert rad.status_code == 400 and "Ro'yxatdan tanlang" in rad.content.decode()
+    client_hisobchi.post(url("kartochka", av.pk), {
+        "versiya": 1, "q_cpu": "Intel Core i3 (10-avlod)", "q_xotira": "M.2 SSD 256 GB + HDD 1 TB",
+    })
+    k.refresh_from_db()
+    assert k.qoshimcha == {"cpu": "Intel Core i3 (10-avlod)", "xotira": "M.2 SSD 256 GB + HDD 1 TB"}
+    html = client_hisobchi.get(url("kartochka", av.pk)).content.decode()
+    assert html.count("data-xotira-qator>") == 2 and "<option selected>HDD</option>" in html

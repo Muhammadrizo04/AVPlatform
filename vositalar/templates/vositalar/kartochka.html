@@ -83,7 +83,26 @@
           <div class="mb-3"><label class="form-label" for="f_muddat">Xizmat muddati (oy)</label><input class="form-control" id="f_muddat" type="number" name="xizmat_muddati_oy" min="1" max="1200" value="{{ qiymat.xizmat_muddati_oy }}"></div>
           {% for m in qoshimcha_maydonlar %}
           <div class="mb-3"><label class="form-label" for="q_{{ m.kalit }}">{{ m.nomi }}{% if m.majburiy %} *{% endif %}</label>
-            {% if m.tip == "tanlov" %}
+            {% if m.qidiruvli %}
+            <div class="tanlov-qidiruv">
+              <input class="form-control form-select" id="q_{{ m.kalit }}" type="text" name="q_{{ m.kalit }}" value="{{ m.qiymat }}" autocomplete="off" placeholder="Yozing yoki ro'yxatdan tanlang (masalan, i3)" data-qatiy-tanlov data-royxat="r_{{ m.kalit }}" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="m_{{ m.kalit }}" aria-describedby="h_{{ m.kalit }}">
+              <ul class="tanlov-menyu" id="m_{{ m.kalit }}" role="listbox" aria-label="{{ m.nomi }}" hidden></ul>
+              <datalist id="r_{{ m.kalit }}">{% for v in m.tanlov_qiymatlari %}<option value="{{ v }}">{% endfor %}</datalist>
+              <div class="invalid-feedback" id="h_{{ m.kalit }}">Ro'yxatdan tanlang — o'zingiz yozgan qiymat qabul qilinmaydi.</div>
+            </div>
+            {% elif m.tip == "xotira" %}
+            <div class="xotira" data-xotira data-maks="{{ xotira.maks }}">
+              <input type="hidden" id="q_{{ m.kalit }}" name="q_{{ m.kalit }}" value="{{ m.qiymat }}" data-xotira-qiymat>
+              {% for tur, hajm in m.xotira_qatorlari %}
+              <div class="xotira-qator" data-xotira-qator>
+                <select class="form-select" aria-label="{{ m.nomi }}: turi" data-xotira-tur><option value="">Turi</option>{% for t in xotira.turlar %}<option{% if t == tur %} selected{% endif %}>{{ t }}</option>{% endfor %}</select>
+                <select class="form-select" aria-label="{{ m.nomi }}: hajmi" data-xotira-hajm><option value="">Hajmi</option>{% for h in xotira.hajmlar %}<option{% if h == hajm %} selected{% endif %}>{{ h }}</option>{% endfor %}</select>
+                <button type="button" class="btn btn-sm btn-ghost-danger" data-xotira-ochir aria-label="Qatorni o'chirish" title="O'chirish"><i class="cil-x" aria-hidden="true"></i></button>
+              </div>
+              {% endfor %}
+              <button type="button" class="btn btn-sm btn-outline-primary xotira-qosh" data-xotira-qosh><i class="cil-plus me-1" aria-hidden="true"></i>Qo'shish</button>
+            </div>
+            {% elif m.tip == "tanlov" %}
             <select class="form-select" id="q_{{ m.kalit }}" name="q_{{ m.kalit }}"><option value="">—</option>
               {% for v in m.tanlov_qiymatlari %}<option value="{{ v }}" {% if v == m.qiymat %}selected{% endif %}>{{ v }}</option>{% endfor %}
             </select>
@@ -103,7 +122,7 @@
         {% for m in qoshimcha_maydonlar %}{% if m.qiymat %}<div><dt>{{ m.nomi }}</dt><dd>{{ m.qiymat }}</dd></div>{% endif %}{% endfor %}
         {% if qiymat.izoh %}<div><dt>Izoh</dt><dd>{{ qiymat.izoh|linebreaksbr }}</dd></div>{% endif %}
       </dl>
-      {% if not qiymat.ishga_tushgan_sana and not qiymat.xizmat_muddati_oy and not qiymat.izoh %}<div class="card-body text-body-secondary small">Hali kiritilmagan.</div>{% endif %}
+      {% if not qiymat.ishga_tushgan_sana and not qiymat.xizmat_muddati_oy and not qiymat.izoh and not qoshimcha_bor %}<div class="card-body text-body-secondary small">Hali kiritilmagan.</div>{% endif %}
       {% endif %}
     </section>
 

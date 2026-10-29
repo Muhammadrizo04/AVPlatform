@@ -631,3 +631,17 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
   .sahifalash { grid-template-columns: 1fr; justify-items: center; }
   .sahifalash-chap, .sahifalash .pagination, .sahifalash-hajm { grid-column: 1; justify-self: center; }
 }
+/* Storage maydoni (panel/maydonlar.js): turi + hajmi qatorlari, «Qo'shish» o'ng burchakda */
+.xotira { display: flex; flex-direction: column; gap: .5rem; }
+.xotira-qator { display: grid; grid-template-columns: 1fr 1fr auto; gap: .5rem; align-items: center; }
+.xotira-qosh { align-self: flex-end; padding: .15rem .6rem; font-size: .75rem; }
+/* Qidiruvli tanlov (panel/maydonlar.js): oddiy tanlov menyusi ko'rinishida — oq, maydon kengligida, tanlangani ko'k */
+.tanlov-qidiruv { position: relative; }
+.tanlov-qidiruv .form-control.is-invalid { background-position: right 2.25rem center, right .75rem center; }
+.tanlov-menyu { position: absolute; z-index: 1050; top: calc(100% + 2px); left: 0; right: 0; max-height: 16rem; overflow-y: auto;
+  margin: 0; padding: .25rem 0; list-style: none; background: var(--av-sirt, #fff); border: 1px solid var(--av-chiziq);
+  border-radius: 8px; box-shadow: 0 10px 28px rgba(10, 37, 64, .14); font-size: .875rem; }
+.tanlov-menyu li { padding: .375rem .75rem; color: var(--av-siyoh); cursor: pointer; }
+.tanlov-menyu li.tanlangan { font-weight: 600; }
+.tanlov-menyu li:hover, .tanlov-menyu li.faol { background: var(--av-indigo); color: #fff; }
+.tanlov-menyu li.bosh { color: var(--av-xira); cursor: default; background: none; }

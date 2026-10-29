@@ -29,7 +29,9 @@ from .amortizatsiya import dona_narxi, hisobla, samarali_muddat
 from .bayroqlar import BAYROQLAR
 from .filtrlar import av_filtrla, korinadigan_av
 from .models import AVKartochka, Bolim, Holat, Rasm, Taqsimot
-from .qoshimcha import qoshimcha_tekshir
+from .qoshimcha import (
+    QIDIRUVLI_TANLOV, XOTIRA_HAJMLARI, XOTIRA_MAKS, XOTIRA_TURLARI, qoshimcha_tekshir, xotira_qatorlari,
+)
 from .rasmlar import rasm_saqla
 from .tarix import tarix
 
@@ -374,7 +376,7 @@ def kartochka_saqla(kartochka: AVKartochka, malumot: dict, versiya: int, kim) ->
         if "qoshimcha" in malumot:
             maydonlar = _maydonlar(kartochka.av)
             try:
-                toza = qoshimcha_tekshir(maydonlar, malumot["qoshimcha"])
+                toza = qoshimcha_tekshir(maydonlar, malumot["qoshimcha"], joriy.qoshimcha)
             except ValidationError as xato:
                 xatolar.update(xato.message_dict)
             else:
@@ -450,10 +452,17 @@ def kartochka(request, pk):
         {**m, "qiymat": forma.get(f"q_{m['kalit']}", "") if forma else k.qoshimcha.get(m["kalit"], "")}
         for m in _maydonlar(av)
     ]
+    for m in qoshimcha:
+        # uzun tanlov — qidiruvli maydon; «xotira» — turi/hajmi qatorlari (bo'sh bo'lsa bitta bo'sh qator)
+        m["qidiruvli"] = m.get("tip") == "tanlov" and len(m.get("tanlov_qiymatlari", [])) > QIDIRUVLI_TANLOV
+        if m.get("tip") == "xotira":
+            m["xotira_qatorlari"] = xotira_qatorlari(m["qiymat"]) or [("", "")]
     kontekst = {
         "kartochka": k,
         "qiymat": qiymat,
         "qoshimcha_maydonlar": qoshimcha,
+        "qoshimcha_bor": any(m["qiymat"] for m in qoshimcha),
+        "xotira": {"turlar": XOTIRA_TURLARI, "hajmlar": XOTIRA_HAJMLARI, "maks": XOTIRA_MAKS},
         "xatolar": xatolar,
         "tahrir": tahrir,
         "yorliq_huquqi": huquqi_bor(request.user, "yorliq"),

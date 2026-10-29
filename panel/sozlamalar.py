@@ -30,7 +30,7 @@ from vositalar.models import AVTuriSozlama, Sozlama, YorliqOlchami
 User = get_user_model()
 SAHIFA_HAJMI = 50
 MAX_MAYDON = 50
-MAYDON_TIPLARI = ("matn", "son", "sana", "tanlov")
+MAYDON_TIPLARI = ("matn", "son", "sana", "tanlov", "xotira")  # xotira — Storage: turi + hajmi qatorlari
 KALIT_RE = re.compile(r"[a-z0-9_]+")
 MAX_PK = 2**62
 
@@ -288,7 +288,8 @@ def _maydonlarni_o_qi(post) -> tuple[list[dict], list[str]]:
         if tip not in MAYDON_TIPLARI:
             xatolar.append(f"{n}-qator: tip {', '.join(MAYDON_TIPLARI)} dan biri bo'lsin.")
             continue
-        qiymatlar = list(dict.fromkeys(q.strip() for q in tanlov.split(",") if q.strip()))
+        # vergul yoki yangi qator bilan (uzun ro'yxatlar — masalan, protsessorlar — qatorma-qator qulayroq)
+        qiymatlar = list(dict.fromkeys(q.strip() for q in re.split(r"[,\n]", tanlov) if q.strip()))
         if tip == "tanlov" and not qiymatlar:
             xatolar.append(f"{n}-qator: «tanlov» uchun qiymatlar kiriting (vergul bilan).")
             continue
@@ -309,7 +310,7 @@ def av_turlari(request):
 def av_turi_tahrir(request, pk):
     tur = _ol(AVTuri, pk)
     sozlama = AVTuriSozlama.objects.filter(av_turi=tur).first()
-    maydonlar = [{**m, "tanlov": ", ".join(m.get("tanlov_qiymatlari", []))} for m in sozlama.maydonlar] if sozlama else []
+    maydonlar = [{**m, "tanlov": _tanlov_matni(m.get("tanlov_qiymatlari", []))} for m in sozlama.maydonlar] if sozlama else []
     xatolar = []
     forma = MuddatForma(request.POST or None, initial={"xizmat_muddati_oy": sozlama.xizmat_muddati_oy if sozlama else None})
     if request.method == "POST":
@@ -331,6 +332,11 @@ def av_turi_tahrir(request, pk):
         "tur": tur, "forma": forma, "maydonlar": maydonlar, "xatolar": xatolar, "tiplar": MAYDON_TIPLARI,
         "bosh_qatorlar": range(3),
     })
+
+
+def _tanlov_matni(qiymatlar: list[str]) -> str:
+    """Formada: qisqa ro'yxat — vergul bilan bir qatorda, uzun ro'yxat — har qiymat alohida qatorda."""
+    return ("\n" if len(qiymatlar) > 15 else ", ").join(qiymatlar)
 
 
 def _json(maydonlar) -> str:
