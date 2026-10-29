@@ -1,6 +1,5 @@
 from itertools import groupby
 
-from django.core.paginator import Paginator
 from django.http import Http404, HttpResponse
 from django.shortcuts import render
 from django.utils import timezone
@@ -12,6 +11,7 @@ from hisobotlar.excel import jadval_xlsx
 from hisoblar.parametrlar import son
 from mol.sorovlar import korinadigan_xodimlar
 from onec.models import Filial
+from panel.sahifalash import sahifala
 from vositalar.bolimlar import daraxt, pastkilar
 
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -61,7 +61,7 @@ def _qaydnoma_konteksti(request, qatorlar) -> dict:
         if chop == "summasiz":
             kontekst["pul_huquqi"] = False
     else:
-        sahifa = Paginator(qatorlar, QAYDNOMA_SAHIFA).get_page(request.GET.get("page"))
+        sahifa = sahifala(request, qatorlar, QAYDNOMA_SAHIFA)
         kontekst.update(sahifa=sahifa, korsatiladi=sahifa.object_list)
     return kontekst
 

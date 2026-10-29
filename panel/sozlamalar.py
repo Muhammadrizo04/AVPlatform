@@ -12,7 +12,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.http import Http404
 from django.shortcuts import redirect, render
@@ -25,6 +24,7 @@ from jurnal.yoz import yoz
 from onec.client import OneCClient
 from onec.models import AVTuri, Filial, SinxronJurnal
 from onec.sinxron import SinxronBand, ketma_ket_xatolar, oxirgi_muvaffaqiyatli, sinxronla
+from panel.sahifalash import sahifala
 from vositalar.models import AVTuriSozlama, Sozlama, YorliqOlchami
 
 User = get_user_model()
@@ -390,7 +390,7 @@ def hozir_sinxronla(request):
 
 
 def _sahifa(request, qs):
-    return Paginator(qs, SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    return sahifala(request, qs, SAHIFA_HAJMI)
 
 
 @amal_kerak("sozlama")

@@ -39,12 +39,5 @@
 </div>
 </div>
 
-<div class="amallar justify-content-end mb-4">
-  <span class="me-auto text-body-secondary small">Jami: {{ sahifa.paginator.count|son }}</span>
-  {% if sahifa.paginator.num_pages > 1 %}
-  {% if sahifa.has_previous %}<a class="btn btn-sm btn-outline-secondary" href="{% sahifa_url sahifa.previous_page_number %}">‹ Oldingi</a>{% endif %}
-  <span>{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
-  {% if sahifa.has_next %}<a class="btn btn-sm btn-outline-secondary" href="{% sahifa_url sahifa.next_page_number %}">Keyingi ›</a>{% endif %}
-  {% endif %}
-</div>
+{% include "panel/_sahifalash.html" %}
 {% endblock %}

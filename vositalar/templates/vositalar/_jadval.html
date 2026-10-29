@@ -111,7 +111,5 @@
   {% if yorliq_huquqi and params.bolim or yorliq_huquqi and params.bayroq %}
   <a href="{% url 'yorliqlar:tanlash' %}?{% if params.bolim %}bolim={{ params.bolim|urlencode }}{% endif %}{% if params.bolim and params.bayroq %}&{% endif %}{% if params.bayroq %}bayroq={{ params.bayroq|urlencode }}{% endif %}" class="btn btn-sm btn-outline-secondary"><i class="cil-print me-1"></i>Filtrdagi hammasiga yorliq</a>
   {% endif %}
-  <span class="ms-auto">{{ sahifa.number }} / {{ sahifa.paginator.num_pages }}</span>
-  {% if sahifa.has_previous %}<a href="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-get="?{{ query }}&page={{ sahifa.previous_page_number }}" hx-target="#jadval" hx-push-url="true" class="btn btn-sm btn-outline-secondary">« Oldingi</a>{% endif %}
-  {% if sahifa.has_next %}<a href="?{{ query }}&page={{ sahifa.next_page_number }}" hx-get="?{{ query }}&page={{ sahifa.next_page_number }}" hx-target="#jadval" hx-push-url="true" class="btn btn-sm btn-outline-secondary">Keyingi »</a>{% endif %}
 </div>
+{% include "panel/_sahifalash.html" with hx_target="#jadval" %}

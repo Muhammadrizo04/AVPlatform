@@ -1,0 +1,24 @@
+{% load jadval raqamlar %}{# Umumiy sahifalash (panel/sahifalash.py): chapda qatorlar oralig'i, o'rtada sahifa raqamlari, o'ngda «bir sahifada N qator». `hx_target` berilsa — HTMX bilan (AV ro'yxati). #}
+{% if sahifa.paginator.count %}
+<nav class="sahifalash chop-yoq{% if sinf %} {{ sinf }}{% endif %}" aria-label="Sahifalar">
+  <div class="sahifalash-chap">{{ sahifa.start_index|son }}–{{ sahifa.end_index|son }} / {{ sahifa.paginator.count|son }}{% if izoh %} · {{ izoh }}{% endif %}</div>
+  {% if sahifa.paginator.num_pages > 1 %}
+  <ul class="pagination pagination-sm mb-0">
+    {% if sahifa.has_previous %}{% sahifa_url sahifa.previous_page_number as u %}<li class="page-item"><a class="page-link" href="{{ u }}"{% if hx_target %} hx-get="{{ u }}" hx-target="{{ hx_target }}" hx-push-url="true"{% endif %} aria-label="Oldingi sahifa">‹</a></li>{% else %}<li class="page-item disabled"><span class="page-link" aria-hidden="true">‹</span></li>{% endif %}
+    {% for r in sahifa.raqamlar %}
+    {% if r is None %}<li class="page-item disabled"><span class="page-link">…</span></li>
+    {% elif r == sahifa.number %}<li class="page-item active" aria-current="page"><span class="page-link">{{ r }}</span></li>
+    {% else %}{% sahifa_url r as u %}<li class="page-item"><a class="page-link" href="{{ u }}"{% if hx_target %} hx-get="{{ u }}" hx-target="{{ hx_target }}" hx-push-url="true"{% endif %}>{{ r }}</a></li>{% endif %}
+    {% endfor %}
+    {% if sahifa.has_next %}{% sahifa_url sahifa.next_page_number as u %}<li class="page-item"><a class="page-link" href="{{ u }}"{% if hx_target %} hx-get="{{ u }}" hx-target="{{ hx_target }}" hx-push-url="true"{% endif %} aria-label="Keyingi sahifa">›</a></li>{% else %}<li class="page-item disabled"><span class="page-link" aria-hidden="true">›</span></li>{% endif %}
+  </ul>
+  {% endif %}
+  <form method="get" class="sahifalash-hajm" data-sahifa-hajmi{% if hx_target %} hx-get="{{ request.path }}" hx-target="{{ hx_target }}" hx-push-url="true"{% endif %}>
+    {% sahifa_yashirin %}
+    <label for="sahifa-hajm">Bir sahifada</label>
+    <input id="sahifa-hajm" class="form-control form-control-sm" type="number" name="hajm" min="1" max="500" step="1" value="{{ sahifa.hajm }}" list="sahifa-takliflar" inputmode="numeric">
+    <datalist id="sahifa-takliflar">{% for t in sahifa.takliflar %}<option value="{{ t }}">{% endfor %}</datalist>
+    <span>qator</span>
+  </form>
+</nav>
+{% endif %}

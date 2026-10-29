@@ -618,3 +618,16 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .av-ishlar-menyu .dropdown-item span { flex: 1 1 auto; }
 .av-ishlar-menyu .dropdown-item b { min-width: 1.75rem; padding: .1rem .45rem; border-radius: 999px; background: var(--av-qizil); color: #fff; text-align: center; font-size: .75rem; }
 .av-ishlar-bosh { margin: 0; padding: .25rem 1rem .5rem; color: var(--av-xira); font-size: .8125rem; }
+/* Sahifalash (panel/_sahifalash.html): chapda oraliq, o'rtada raqamlar, o'ngda sahifa hajmi */
+.sahifalash { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: .75rem; margin: 1rem 0 1.5rem; font-size: .8125rem; }
+.sahifalash-chap { justify-self: start; color: var(--av-xira); }
+.sahifalash .pagination { justify-self: center; grid-column: 2; }
+.sahifalash .page-link { min-width: 2rem; text-align: center; border-radius: 8px !important; margin: 0 .125rem; border-color: var(--av-chiziq); color: var(--av-siyoh); }
+.sahifalash .page-item.active .page-link { background: var(--av-indigo); border-color: var(--av-indigo); color: #fff; }
+.sahifalash .page-item.disabled .page-link { color: var(--av-xira); background: transparent; }
+.sahifalash-hajm { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: .5rem; white-space: nowrap; color: var(--av-ikkilamchi); margin: 0; }
+.sahifalash-hajm input { width: 5rem; }
+@media (max-width: 767.98px) {
+  .sahifalash { grid-template-columns: 1fr; justify-items: center; }
+  .sahifalash-chap, .sahifalash .pagination, .sahifalash-hajm { grid-column: 1; justify-self: center; }
+}

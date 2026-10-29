@@ -3,7 +3,6 @@ from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db.models import CharField, Q
 from django.db.models.functions import Cast
 from django.http import Http404
@@ -14,6 +13,7 @@ from django.views.decorators.http import require_POST
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
 from onec.models import Filial
+from panel.sahifalash import sahifala
 from panel.saralash import Saralash
 from vositalar.filtrlar import korinadigan_av_idlari
 from vositalar.models import Bolim, Holat
@@ -70,7 +70,7 @@ def royxat(request):
     qs, holat = _royxat_qs(request)
     ustunlar = {k: v for k, v in CHIQIM_USTUNLARI.items() if k != "summa" or huquqi_bor(request.user, "pul_korish")}
     saralash = Saralash(request, ustunlar)
-    sahifa = Paginator(saralash.queryset(qs), SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    sahifa = sahifala(request, saralash.queryset(qs), SAHIFA_HAJMI)
     params = request.GET.copy()
     params.pop("page", None)
     korinadigan = korinadigan_av_idlari(request.user, {c.av_id for c in sahifa})
@@ -107,7 +107,7 @@ def tarix(request):
         qs = qs.filter(qachon__date__gte=dan)
     if gacha:
         qs = qs.filter(qachon__date__lte=gacha)
-    sahifa = Paginator(qs.order_by("-qachon", "-id"), SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    sahifa = sahifala(request, qs.order_by("-qachon", "-id"), SAHIFA_HAJMI)
     hujjatlar = ChiqimHujjat.objects.select_related("av", "filial").in_bulk([int(j.obyekt_id) for j in sahifa])
     qatorlar = [{"j": j, "c": hujjatlar.get(int(j.obyekt_id)), "matn": holat_matni(j.eski, j.yangi)} for j in sahifa]
     params = request.GET.copy()

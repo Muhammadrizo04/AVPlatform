@@ -1,6 +1,6 @@
 """Jadval sarlavhasi: ustun bo'yicha saralash havolasi (`panel.saralash.Saralash` bilan)."""
 from django import template
-from django.utils.html import format_html
+from django.utils.html import format_html, format_html_join
 
 register = template.Library()
 
@@ -42,4 +42,14 @@ def saralash_ustuni(context, kalit, nomi, sinf=""):
     return format_html(
         '<th class="{}" aria-sort="{}"><a class="saralash{}" href="?{}">{}<i class="{}" aria-hidden="true"></i></a></th>',
         sinf, aria, " faol" if joriy else "", params.urlencode(), nomi, belgi,
+    )
+
+
+@register.simple_tag(takes_context=True)
+def sahifa_yashirin(context):
+    """«Bir sahifada N qator» formasi uchun: joriy filtr va tartib parametrlari (sahifa raqami va hajmidan tashqari)."""
+    params = context["request"].GET
+    return format_html_join(
+        "", '<input type="hidden" name="{}" value="{}">',
+        ((k, v) for k in params if k not in ("page", "hajm") for v in params.getlist(k)),
     )

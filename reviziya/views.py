@@ -5,7 +5,6 @@ from urllib.parse import quote
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Count, DecimalField, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce, Lower, Trim
@@ -20,6 +19,7 @@ from hisobotlar.excel import jadval_xlsx
 from mol.models import MolAkt
 from mol.sorovlar import faol_xodimlar, korinadigan_aktlar
 from onec.models import AV
+from panel.sahifalash import sahifala
 from panel.saralash import Saralash
 from vositalar.models import Bolim, Holat
 
@@ -137,7 +137,7 @@ def royxat(request):
     else:
         holat = ""
     saralash = Saralash(request, ROYXAT_USTUNLARI, standart="-raqam")
-    sahifa = Paginator(saralash.queryset(qs), SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    sahifa = sahifala(request, saralash.queryset(qs), SAHIFA_HAJMI)
     return render(request, "reviziya/royxat.html", {
         "sahifa": sahifa, "holat": holat, "holatlar": Reviziya.Holat.choices, "saralash": saralash,
         "boshqarish": huquqi_bor(request.user, "reviziya_boshqarish"),

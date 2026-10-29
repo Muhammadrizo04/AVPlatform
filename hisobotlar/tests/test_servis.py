@@ -435,7 +435,7 @@ def test_qaydnomalar_ekranda_sahifalanadi(hisobchi, filial_a, monkeypatch):
                         (reverse("hisobotlar:bolim_qaydnoma"), {"filial": filial_a.pk})):
         javob = c.get(url, params)
         assert len(javob.context["korsatiladi"]) == 2 and javob.context["jami_soni"] == Decimal("5"), url
-        assert "1 / 3" in javob.content.decode() and "page=3" in javob.content.decode()
+        assert "1–2 / 5" in javob.content.decode() and "page=3" in javob.content.decode()
         oxirgi = c.get(url, {**params, "page": 3})
         assert len(oxirgi.context["korsatiladi"]) == 1
         assert len(c.get(url, {**params, "chop": "summali"}).context["korsatiladi"]) == 5

@@ -3,7 +3,6 @@ from datetime import date
 from decimal import Decimal
 
 from django.contrib import messages
-from django.core.paginator import Paginator
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
@@ -13,6 +12,7 @@ from django.views.decorators.http import require_POST
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
 from onec.models import AV, Filial
+from panel.sahifalash import sahifala
 from panel.saralash import Saralash
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.bayroqlar import BAYROQLAR
@@ -74,7 +74,7 @@ def xodimlar(request):
     if not huquqi_bor(request.user, "pul_korish"):
         ustunlar.pop("qiymat")
     saralash = Saralash(request, ustunlar)
-    sahifa = Paginator(saralash.royxat(xodimlar_royxati), XODIM_SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    sahifa = sahifala(request, saralash.royxat(xodimlar_royxati), XODIM_SAHIFA_HAJMI)
     hammasi = sorovlar.korinadigan_xodimlar(request.user)
     ushlab = {pk for pk, (soni, _) in yigindi.items() if soni > 0}
     korsatkichlar = {
@@ -259,7 +259,7 @@ def akt_royxat(request):
     if gacha:
         qs = qs.filter(sana__lte=gacha)
     saralash = Saralash(request, AKT_USTUNLARI, standart="-raqam")
-    sahifa = Paginator(saralash.queryset(qs), AKT_SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    sahifa = sahifala(request, saralash.queryset(qs), AKT_SAHIFA_HAJMI)
     params = request.GET.copy()
     params.pop("page", None)
     return render(request, "mol/akt_royxat.html", {

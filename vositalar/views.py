@@ -4,7 +4,6 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
-from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import F, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce
@@ -21,6 +20,7 @@ from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsa
 from hisoblar.parametrlar import son
 from jurnal.yoz import yoz
 from onec.models import AV, AVQoldiq, AVTuri, Filial, Xodim
+from panel.sahifalash import sahifala
 from panel.saralash import Saralash
 
 from . import amallar
@@ -128,7 +128,7 @@ def _korinish(request) -> str:
 @amal_kerak("korish")
 def royxat(request):
     qs = _royxat_qs(request)
-    sahifa = Paginator(qs, SAHIFA_HAJMI).get_page(request.GET.get("page"))
+    sahifa = sahifala(request, qs, SAHIFA_HAJMI)
     _joylar(sahifa.object_list, request.user)
     taqsim_huquqi = huquqi_bor(request.user, "taqsimot")
     plitka_params = request.GET.copy()
