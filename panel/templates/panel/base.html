@@ -7,7 +7,7 @@
   <title>{% block sarlavha %}Asosiy vositalar{% endblock %} — Asosiy vositalar</title>
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui/coreui.min.css' %}">
   <link rel="stylesheet" href="{% static 'panel/vendor/coreui-icons/css/free.min.css' %}">
-  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=13">
+  <link rel="stylesheet" href="{% static 'panel/panel.css' %}?v=14">
   <script src="{% static 'panel/vendor/coreui/coreui.bundle.min.js' %}" defer></script>
   <script src="{% static 'panel/htmx.min.js' %}" defer></script>
   <script src="{% static 'panel/csrf.js' %}?v=2" defer></script>
@@ -31,7 +31,7 @@
       <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom != 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:royxat' %}"><i class="nav-icon cil-list"></i> AV ro'yxati</a></li>
       <li class="nav-item"><a class="nav-link r-vosita{% if ns == 'vositalar' and nom == 'bolimlar' %} active{% endif %}" href="{% url 'vositalar:bolimlar' %}"><i class="nav-icon cil-sitemap"></i> Bo'limlar</a></li>
       <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom != 'akt_royxat' and nom != 'akt' %} active{% endif %}" href="{% url 'mol:xodimlar' %}"><i class="nav-icon cil-people"></i> Javobgar shaxslar</a></li>
-      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> Topshirish aktlari</a></li>
+      <li class="nav-item"><a class="nav-link r-mol{% if ns == 'mol' and nom == 'akt_royxat' or ns == 'mol' and nom == 'akt' %} active{% endif %}" href="{% url 'mol:akt_royxat' %}"><i class="nav-icon cil-description"></i> Topshirish aktlari{% if akt_qoralama_soni %} <span class="badge bg-warning text-dark ms-auto" title="Tasdiq kutayotgan qoralama aktlar">{{ akt_qoralama_soni }}</span>{% endif %}</a></li>
       {% else %}
       <li class="nav-title">Reviziya</li>
       <li class="nav-item"><a class="nav-link" href="{% url 'reviziya:mobil' %}"><i class="nav-icon cil-qr-code"></i> Skanerlash (telefon)</a></li>
@@ -68,6 +68,7 @@
       <button class="header-toggler d-lg-none" type="button" aria-label="Menyu" data-sidebar-toggle><i class="cil-menu fs-5"></i></button>
       <span class="av-yol-sarlavha">{% block yol %}{% endblock %}</span>
       {% if sinxron_holati and not sinxron_holati.xato %}<span class="av-sinxron"><i aria-hidden="true"></i>Oxirgi muvaffaqiyatli sinxron: {% if sinxron_holati.oxirgi %}{{ sinxron_holati.oxirgi|date:"H:i" }}{% else %}hali bo'lmagan{% endif %}</span>{% endif %}
+      {% if user.is_authenticated %}{% include "panel/_kutayotgan_ishlar.html" %}{% endif %}
       <div class="av-foydalanuvchi">
         <span class="av-avatar" aria-hidden="true">{{ user.get_username|slice:":1" }}</span>
         <span class="ism-blok"><span class="ism">{{ user.get_full_name|default:user.get_username }}</span>{% if user.profil %}<span class="rol">{{ user.profil.get_rol_display }}</span>{% endif %}</span>

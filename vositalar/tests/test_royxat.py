@@ -245,11 +245,11 @@ def test_royxat_n_plus_1_yoq(client_hisobchi, filial_a, django_assert_max_num_qu
     for _ in range(3):
         av_yarat(filial_a)
     # Qator joylashuvi (bitta so'rov) va ko'rsatkichlar qatori (3 ta bayroq soni) — AV soniga bog'liq emas.
-    with django_assert_max_num_queries(40):  # +4: AV turgan filiallar va ruxsat etilgan filiallar bo'yicha soni (o'zgarmas)
+    with django_assert_max_num_queries(42):  # +4: AV turgan filiallar va ruxsat etilgan filiallar bo'yicha soni; +2: kutayotgan ishlar (o'zgarmas)
         client_hisobchi.get(reverse(ROYXAT))
     for _ in range(20):
         av_yarat(filial_a)
-    with django_assert_max_num_queries(40):  # +4: AV turgan filiallar va ruxsat etilgan filiallar bo'yicha soni (o'zgarmas)
+    with django_assert_max_num_queries(42):  # +4: AV turgan filiallar va ruxsat etilgan filiallar bo'yicha soni; +2: kutayotgan ishlar (o'zgarmas)
         client_hisobchi.get(reverse(ROYXAT))
 
 

@@ -559,7 +559,7 @@ def mol_biriktir(request, pk):
         guruhlar.setdefault(t.mol, []).append((t, t.soni))
     if not guruhlar:
         return _xato(f"Bu AV allaqachon {xodim.ism.strip()} da.", "#mol-natija")
-    izoh = f"{rv.nomi} reviziyasi bo'yicha"
+    izoh = rv.akt_izohi
     aktlar = []
     try:
         with transaction.atomic():

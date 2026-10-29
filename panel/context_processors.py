@@ -1,7 +1,7 @@
-from chiqimlar.models import ChiqimHujjat
-from hisoblar.huquqlar import filial_bilan_chekla, huquqi_bor
+from hisoblar.huquqlar import huquqi_bor
 from vositalar.models import Sozlama
 from onec.sinxron import ketma_ket_xatolar, oxirgi_muvaffaqiyatli
+from panel.vazifalar import kutayotgan_ishlar
 
 XATO_CHEGARASI = 3
 
@@ -11,16 +11,15 @@ def sinxron_holati(request):
     if not request.user.is_authenticated:
         return {}
     oxirgi = oxirgi_muvaffaqiyatli()
-    chiqim_soni = None
-    # Kutilayotgan chiqimlar belgisi — faqat ularni tasdiqlay oladiganlarga (HR va rahbar uchun vazifa emas).
-    if huquqi_bor(request.user, "taqsimot") and not request.headers.get("HX-Request"):
-        chiqim_soni = filial_bilan_chekla(
-            ChiqimHujjat.objects.filter(holat__in=(ChiqimHujjat.Holat.KUTILMOQDA, ChiqimHujjat.Holat.BEKOR_1C)),
-            request.user
-        ).count()
+    # Kutayotgan ishlar (qo'ng'iroqcha) va menyudagi belgilar — HTMX bo'laklarida hisoblanmaydi
+    ishlar = [] if request.headers.get("HX-Request") else kutayotgan_ishlar(request.user)
+    chiqim_soni = sum(i["soni"] for i in ishlar if i["tur"] == "chiqim") or None
     return {
         "chiqim_huquqi": huquqi_bor(request.user, "chiqim_korish"),
         "chiqim_kutilmoqda_soni": chiqim_soni,
+        "akt_qoralama_soni": sum(i["soni"] for i in ishlar if i["tur"] == "akt"),
+        "kutayotgan_ishlar": ishlar,
+        "kutayotgan_jami": sum(i["soni"] for i in ishlar),
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
         "pul_huquqi": huquqi_bor(request.user, "pul_korish"),
         "korish_huquqi": huquqi_bor(request.user, "korish"),

@@ -605,3 +605,16 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .av-filtr .filtr-tanlov > .form-select[name=bolim] { flex-grow: 1.6; }
 .av-filtr .filtr-pastki { column-gap: 1.25rem; }
 .av-filtr .filtr-pastki .form-select { width: auto; }
+/* Kutayotgan ishlar (qo'ng'iroqcha, panel/vazifalar.py) */
+.av-qongiroq { position: relative; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%;
+  border: 1px solid var(--av-chiziq); background: var(--av-sirt); color: var(--av-ikkilamchi); cursor: pointer; }
+.av-qongiroq:hover, .av-qongiroq[aria-expanded="true"] { color: var(--av-indigo); border-color: var(--av-indigo); }
+.av-qongiroq i { font-size: 1rem; }
+.av-qongiroq-son { position: absolute; top: -.35rem; right: -.4rem; min-width: 1.15rem; height: 1.15rem; padding: 0 .3rem;
+  border-radius: 999px; background: var(--av-qizil); color: #fff; font-size: .6875rem; font-weight: 700; line-height: 1.15rem; text-align: center; }
+.av-ishlar-menyu { width: min(22rem, calc(100vw - 2rem)); padding: .375rem 0; }
+.av-ishlar-sarlavha { padding: .375rem 1rem .5rem; font-weight: 700; color: var(--av-siyoh); font-size: .8125rem; }
+.av-ishlar-menyu .dropdown-item { display: flex; align-items: center; gap: .625rem; white-space: normal; font-size: .8125rem; }
+.av-ishlar-menyu .dropdown-item span { flex: 1 1 auto; }
+.av-ishlar-menyu .dropdown-item b { min-width: 1.75rem; padding: .1rem .45rem; border-radius: 999px; background: var(--av-qizil); color: #fff; text-align: center; font-size: .75rem; }
+.av-ishlar-bosh { margin: 0; padding: .25rem 1rem .5rem; color: var(--av-xira); font-size: .8125rem; }

@@ -37,6 +37,11 @@ class Reviziya(models.Model):
     def nomi(self) -> str:
         return f"RV-{self.raqam:06d}"
 
+    @property
+    def akt_izohi(self) -> str:
+        """Reviziyada Javobgar shaxsga biriktirish uchun tuziladigan qoralama МОЛ aktlarining izohi (bog'lovchi)."""
+        return f"{self.nomi} reviziyasi bo'yicha"
+
 
 class ReviziyaKutilgan(models.Model):
     """Reviziya ochilgan paytdagi kutilgan (taqsimot) holati."""

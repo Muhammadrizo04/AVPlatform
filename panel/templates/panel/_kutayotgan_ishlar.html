@@ -1,0 +1,11 @@
+<div class="dropdown av-ishlar">
+  <button type="button" class="av-qongiroq" data-coreui-toggle="dropdown" aria-expanded="false" title="Kutayotgan ishlar"><i class="cil-bell" aria-hidden="true"></i><span class="visually-hidden">Kutayotgan ishlar</span>{% if kutayotgan_jami %}<span class="av-qongiroq-son">{{ kutayotgan_jami }}</span>{% endif %}</button>
+  <div class="dropdown-menu dropdown-menu-end av-ishlar-menyu">
+    <div class="av-ishlar-sarlavha">Kutayotgan ishlar</div>
+    {% for i in kutayotgan_ishlar %}
+    <a class="dropdown-item" href="{{ i.url }}"><i class="{{ i.ikonka }}" aria-hidden="true"></i><span>{{ i.nomi }}</span><b>{{ i.soni }}</b></a>
+    {% empty %}
+    <p class="av-ishlar-bosh">Hozircha kutayotgan ish yo'q.</p>
+    {% endfor %}
+  </div>
+</div>

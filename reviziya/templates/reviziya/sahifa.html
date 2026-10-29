@@ -81,6 +81,31 @@
 </div>
 {% if rv.holat == "ochiq" %}<p class="small text-body-secondary chop-yoq">Reviziya ochiq — vedomost joriy qaydlar bo'yicha (jonli).</p>{% endif %}
 
+{% if aktlar %}
+<div class="card mb-3 chop-yoq" id="aktlar">
+  <div class="card-header fw-semibold">Javobgar shaxsga biriktirish aktlari</div>
+  <div class="card-body pb-2">
+    <p class="small text-body-secondary mb-2">Revizor reviziya paytida biriktirgan AV'lar. Javobgar shaxs akt tasdiqlangandan keyin almashadi{% if akt_huquqi %} — aktni chop eting, xodim imzolagach tasdiqlang{% else %}: tasdiqni hisobchi yoki HR beradi{% endif %}.</p>
+  </div>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Akt</th><th>Topshiruvchi</th><th>Qabul qiluvchi</th><th class="son">Qatorlar</th><th>Holati</th></tr></thead>
+    <tbody>
+    {% for a in aktlar %}
+    <tr>
+      <td><a href="{% url 'mol:akt' a.pk %}">{{ a.nomi }}</a></td>
+      <td>{% if a.topshiruvchi %}{{ a.topshiruvchi.ism }}{% else %}<span class="text-body-secondary">Javobgarsiz</span>{% endif %}</td>
+      <td>{{ a.qabul_qiluvchi.ism }}</td>
+      <td class="son">{{ a.qator_soni }}</td>
+      <td>{% include "mol/_akt_holati.html" %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
 {% if kesim|length > 1 %}
 <div class="card mb-3 chop-yoq">
   <div class="card-header fw-semibold">Bo'limlar kesimi</div>

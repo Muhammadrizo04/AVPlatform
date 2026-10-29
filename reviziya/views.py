@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.db.models import DecimalField, OuterRef, Subquery, Sum
+from django.db.models import Count, DecimalField, OuterRef, Subquery, Sum
 from django.db.models.functions import Coalesce, Lower, Trim
 from django.http import Http404, HttpResponse
 from django.shortcuts import redirect, render
@@ -17,7 +17,8 @@ from django.views.decorators.http import require_POST
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisoblar.parametrlar import son
 from hisobotlar.excel import jadval_xlsx
-from mol.sorovlar import faol_xodimlar
+from mol.models import MolAkt
+from mol.sorovlar import faol_xodimlar, korinadigan_aktlar
 from onec.models import AV
 from panel.saralash import Saralash
 from vositalar.models import Bolim, Holat
@@ -332,6 +333,13 @@ def sahifa(request, pk):
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
         "kesim": _bolimlar_kesimi(rv, hammasi),
         "revizorlar": rv.revizorlar.order_by("first_name", "username"),
+        # revizor telefondan Javobgar shaxsga biriktirgan AV'lar — qoralama МОЛ aktlari (tasdiqni hisobchi/HR beradi)
+        "aktlar": list(
+            korinadigan_aktlar(request.user).filter(izoh=rv.akt_izohi)
+            .annotate(qator_soni=Count("qatorlar")).order_by("raqam")
+        ),
+        "akt_huquqi": huquqi_bor(request.user, "mol_akt"),
+        "qoralama": MolAkt.Holat.QORALAMA,
         # mobil skan sahifasiga ruxsat bilan bir xil: ochiq, revizor yoki boshqaruvchi (filial cheklovi — yuqorida)
         "skanerlay_oladi": skanerlay_oladi,
         "revizor_forma": (
