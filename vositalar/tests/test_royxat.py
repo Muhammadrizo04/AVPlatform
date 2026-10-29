@@ -315,3 +315,17 @@ def test_cheklangan_foydalanuvchi_boshqa_filial_soni_va_summasini_kormaydi(foyda
     hammasi.force_login(foydalanuvchi("hisobchi"))
     [korindi] = hammasi.get(reverse(ROYXAT)).context["sahifa"]
     assert (korindi.jami_soni, korindi.joy["filiallar"]) == (4, [filial_a.nomi, filial_b.nomi])
+
+
+def test_royxat_qidiruv_platforma_malumotlari(client_hisobchi, filial_a):
+    """Qidiruv kartochkadagi qo'shimcha maydon qiymatlari va izohdan ham topadi; kalit nomlari bo'yicha emas."""
+    from vositalar.models import AVKartochka
+
+    noutbuk, boshqa = av_yarat(filial_a, inv="NB-1"), av_yarat(filial_a, inv="NB-2")
+    AVKartochka.objects.create(av=noutbuk, qoshimcha={"cpu": "Intel Core i7-14gen", "ram_gb": "16"},
+                               izoh="Buxgalteriya xonasida")
+    AVKartochka.objects.create(av=boshqa, qoshimcha={"cpu": "Ryzen 5"})
+    assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "i7-14GEN"})) == {noutbuk.nomi}
+    assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "buxgalteriya"})) == {noutbuk.nomi}
+    assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "ryzen"})) == {boshqa.nomi}
+    assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "cpu"})) == set()

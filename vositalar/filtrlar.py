@@ -1,5 +1,5 @@
 """AV ro'yxati filtrlari. Filial cheklovi har doim qo'llanadi (ro'yxat, Excel va HTMX bo'laklari shu funksiyadan)."""
-from django.db.models import Exists, OuterRef, Q, QuerySet
+from django.db.models import Exists, Func, OuterRef, Q, QuerySet, TextField
 from django.utils import timezone
 
 from hisoblar.huquqlar import filial_bilan_chekla, ruxsat_filial_idlar
@@ -7,7 +7,21 @@ from hisoblar.parametrlar import son
 from onec.models import AV, AVQoldiq
 
 from .bayroqlar import BAYROQLAR, ruxsat_qoldiq
-from .models import Taqsimot
+from .models import AVKartochka, Taqsimot
+
+
+class JsonQiymatlari(Func):
+    """jsonb obyektining faqat qiymatlari (kalitlarsiz), qator bilan ajratilgan: `qoshimcha` bo'yicha qidirish uchun
+    («cpu» deb qidirilsa kalit nomi emas, qiymatlar solishtiriladi)."""
+
+    template = "(SELECT string_agg(value, chr(10)) FROM jsonb_each_text(%(expressions)s))"
+    output_field = TextField()
+
+
+def _platforma_shart(q: str):
+    """«Platforma ma'lumotlari» (qo'shimcha maydonlar qiymatlari va izoh) da `q` bor AV'lar."""
+    kartochkalar = AVKartochka.objects.filter(av=OuterRef("pk")).annotate(qiymatlar=JsonQiymatlari("qoshimcha"))
+    return Exists(kartochkalar.filter(Q(qiymatlar__icontains=q) | Q(izoh__icontains=q)))
 
 
 def _bayroq_av_idlari(kalit: str, user) -> list[int]:
@@ -32,7 +46,8 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
 
     q = (params.get("q") or "").strip()
     if q:
-        qs = qs.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q))
+        # 1C maydonlari (inv. raqam, nomi) va platforma ma'lumotlari (masalan, «i7-14», «16 GB»)
+        qs = qs.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q) | _platforma_shart(q))
 
     filial = son(params.get("filial"))
     if filial is not None:

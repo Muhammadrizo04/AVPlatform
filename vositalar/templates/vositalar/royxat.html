@@ -10,7 +10,7 @@
       hx-trigger="change, keyup changed delay:300ms from:input[name=q], keyup changed delay:400ms from:input[name=mol_ism]" class="filtrlar av-filtr">
   {# 1-qator: qidiruv (AV va javobgar shaxs); 2-qator: tanlovlar; 3-qator: belgilar va saralash #}
   <div class="filtr-qidiruv">
-    <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam yoki AV nomi" aria-label="Inv. raqam yoki AV nomi bo'yicha qidirish">
+    <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam, AV nomi yoki platforma ma'lumoti (masalan, i7)" aria-label="Inv. raqam, AV nomi yoki platforma ma'lumotlari bo'yicha qidirish">
     {% if params.mol %}<input type="hidden" name="mol" value="{{ params.mol }}">{% endif %}
     <input class="form-control form-control-sm" type="search" name="mol_ism" value="{{ params.mol_ism|default:'' }}" list="mol_royxat" placeholder="Javobgar shaxs ismi" aria-label="Javobgar shaxs ismi bo'yicha qidirish" autocomplete="off">
     <datalist id="mol_royxat">{% for x in xodimlar %}<option value="{{ x.ism }}">{% endfor %}</datalist>
