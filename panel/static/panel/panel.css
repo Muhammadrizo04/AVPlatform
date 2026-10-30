@@ -724,3 +724,12 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .dinamika-grafik svg.fokusda .seriya:not(.faol) { opacity: .18; }
 .dinamika-grafik svg.fokusda .seriya.faol .chiziq { stroke-width: 3.25; }
 .dinamika-jami-izoh { align-self: flex-end; font-size: .75rem; color: var(--av-xira); padding-bottom: .2rem; }
+/* Dinamika: yumshoq egri chiziqlar va chizilib chiqish (panel/dinamika.js) */
+.dinamika-grafik .chiziq { stroke-width: 2.5; }
+.dinamika-grafik .chiziq.qalin { stroke-width: 3; }
+.dinamika-grafik .nuqta { stroke-width: 2.5; filter: drop-shadow(0 1px 2px rgba(10, 37, 64, .3)); }
+.dinamika-grafik .kursor { stroke: #b7bfcc; stroke-dasharray: none; }
+.dinamika-grafik svg.animatsiya .soha, .dinamika-grafik svg.animatsiya .oxiri, .dinamika-grafik svg.animatsiya .oxiri-matn {
+  animation: dinamika-chiq .45s ease-out .65s both; }
+@keyframes dinamika-chiq { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .dinamika-grafik svg.animatsiya * { animation: none !important; } }

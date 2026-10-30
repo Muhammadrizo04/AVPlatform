@@ -13,12 +13,40 @@
     return e;
   }
 
+  // Monoton kubik egri (Fritsch–Carlson, d3 curveMonotoneX kabi): har nuqtadan o'tadi, ikki nuqta orasida
+  // ulardan yuqori/past chiqmaydi — summa sakrashlarida ham yolg'on «tepalik» chizilmaydi. p — [[x, y], ...].
+  function egriYol(p) {
+    var n = p.length, i;
+    if (n < 3) return "M" + p.map(function (q) { return q[0].toFixed(1) + "," + q[1].toFixed(1); }).join(" L");
+    var s = [], t = [];
+    for (i = 0; i < n - 1; i++) s.push((p[i + 1][1] - p[i][1]) / (p[i + 1][0] - p[i][0]));
+    t[0] = s[0];
+    t[n - 1] = s[n - 2];
+    for (i = 1; i < n - 1; i++) {
+      if (s[i - 1] * s[i] <= 0) { t[i] = 0; continue; }
+      var h0 = p[i][0] - p[i - 1][0], h1 = p[i + 1][0] - p[i][0];
+      var o = (s[i - 1] * h1 + s[i] * h0) / (h0 + h1);
+      t[i] = (Math.sign(s[i - 1]) + Math.sign(s[i])) * Math.min(Math.abs(s[i - 1]), Math.abs(s[i]), 0.5 * Math.abs(o));
+    }
+    var d = "M" + p[0][0].toFixed(1) + "," + p[0][1].toFixed(1);
+    for (i = 0; i < n - 1; i++) {
+      var dx = (p[i + 1][0] - p[i][0]) / 3;
+      d += " C" + (p[i][0] + dx).toFixed(1) + "," + (p[i][1] + t[i] * dx).toFixed(1) + " " +
+        (p[i + 1][0] - dx).toFixed(1) + "," + (p[i + 1][1] - t[i + 1] * dx).toFixed(1) + " " +
+        p[i + 1][0].toFixed(1) + "," + p[i + 1][1].toFixed(1);
+    }
+    return d;
+  }
+
+  var HARAKATSIZ = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   function malumot(blok) {
     var manba = blok.closest(".dinamika").querySelector("#dinamika-malumot");
     return manba ? JSON.parse(manba.textContent) : null;
   }
 
-  function chiz(blok) {
+  function chiz(blok, animatsiya) {
+    animatsiya = animatsiya && !HARAKATSIZ;
     var m = malumot(blok), svg = blok.querySelector("svg");
     if (!m || !m.oylar.length) return;
     var yashirin = blok._yashirin || (blok._yashirin = {});
@@ -30,6 +58,7 @@
     svg.setAttribute("width", kenglik);
     svg.setAttribute("height", BALANDLIK);
     svg.textContent = "";
+    svg.classList.toggle("animatsiya", !!animatsiya);
 
     // To'r va o'qlar
     m.y.forEach(function (b, i) {
@@ -45,21 +74,31 @@
     });
     el("line", { "class": "kursor", x1: 0, x2: 0, y1: TEPA, y2: TEPA + boyi, visibility: "hidden" }, svg);
 
-    // Chiziqlar (umumiy ko'rishda ostida soha)
-    var oxirlar = [];
+    // Chiziqlar: monoton egri (oy nuqtalaridan o'tadi, ulardan oshib ketmaydi). 3 tagacha chiziq yoki umumiy
+    // ko'rishda — ostida yengil soha. `animatsiya` — faqat yangi ma'lumotda (o'lcham o'zgarganda emas).
+    var oxirlar = [], korinadi = m.seriyalar.filter(function (s, si) { return !yashirin[si]; }).length;
+    var asos = TEPA + boyi, soha = m.umumiy || korinadi <= 3;
     m.seriyalar.forEach(function (s, si) {
       if (yashirin[si]) return;
       var g = el("g", { "class": "seriya", "data-seriya": si }, svg);
-      var nuqtalar = s.q.map(function (q, i) { return x(i).toFixed(1) + "," + y(q).toFixed(1); });
-      if (m.umumiy) {
+      var egri = egriYol(s.q.map(function (q, i) { return [x(i), y(q)]; }));
+      if (soha) {
         var id = "dinamika-soha-" + si;
         var grad = el("linearGradient", { id: id, x1: 0, x2: 0, y1: 0, y2: 1 }, el("defs", {}, g));
-        el("stop", { offset: "0%", "stop-color": s.rang, "stop-opacity": 0.22 }, grad);
-        el("stop", { offset: "100%", "stop-color": s.rang, "stop-opacity": 0.02 }, grad);
-        el("polygon", { "class": "soha", fill: "url(#" + id + ")",
-          points: x(0) + "," + (TEPA + boyi) + " " + nuqtalar.join(" ") + " " + x(n - 1) + "," + (TEPA + boyi) }, g);
+        el("stop", { offset: "0%", "stop-color": s.rang, "stop-opacity": m.umumiy ? 0.24 : 0.1 }, grad);
+        el("stop", { offset: "100%", "stop-color": s.rang, "stop-opacity": 0 }, grad);
+        el("path", { "class": "soha", fill: "url(#" + id + ")",
+          d: egri + " L" + x(n - 1).toFixed(1) + "," + asos + " L" + x(0).toFixed(1) + "," + asos + " Z" }, g);
       }
-      el("polyline", { "class": "chiziq" + (m.umumiy ? " qalin" : ""), stroke: s.rang, points: nuqtalar.join(" ") }, g);
+      var chiziq = el("path", { "class": "chiziq" + (m.umumiy ? " qalin" : ""), stroke: s.rang, d: egri }, g);
+      if (animatsiya) {
+        var uzunlik = chiziq.getTotalLength();
+        chiziq.style.strokeDasharray = uzunlik;
+        chiziq.style.strokeDashoffset = uzunlik;
+        chiziq.getBoundingClientRect();  // boshlang'ich holat qo'llansin, keyin o'tish
+        chiziq.style.transition = "stroke-dashoffset .9s cubic-bezier(.3,.7,.2,1) " + (si * 0.06) + "s";
+        chiziq.style.strokeDashoffset = 0;
+      }
       el("circle", { "class": "oxiri", cx: x(n - 1), cy: y(s.q[n - 1]), r: 3.5, fill: s.rang }, g);
       oxirlar.push({ si: si, y: y(s.q[n - 1]), matn: s.matn[n - 1], g: g });
     });
@@ -97,7 +136,7 @@
     kursor.setAttribute("visibility", "visible");
     svg.querySelectorAll(".nuqta").forEach(function (n) { n.remove(); });
     korinadi.forEach(function (s) {
-      el("circle", { "class": "nuqta", cx: g.x(i), cy: g.y(s.q[i]), r: 5, fill: s.rang }, svg);
+      el("circle", { "class": "nuqta", cx: g.x(i), cy: g.y(s.q[i]), r: 5.5, fill: s.rang }, svg);
     });
 
     var tip = blok.querySelector(".dinamika-tooltip");
@@ -137,7 +176,7 @@
 
   function boshla(ildiz) {
     (ildiz || document).querySelectorAll("[data-dinamika]").forEach(function (blok) {
-      chiz(blok);
+      chiz(blok, true);  // yangi ma'lumot — chiziqlar chizilib chiqadi
       if (kuzatuvchi) kuzatuvchi.observe(blok);
     });
   }
