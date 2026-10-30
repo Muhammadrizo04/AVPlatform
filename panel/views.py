@@ -51,10 +51,10 @@ def _holatlar(user) -> list[dict]:
 
 
 def salomlashuv(soat: int) -> str:
-    """Kun vaqtiga qarab: 5–11 tong, 11–17 kun, 17–20 kech, 20–23 oqshom, 23–5 tun."""
-    if 5 <= soat < 11:
+    """Kun vaqtiga qarab: 5–10 tong, 10–17 kun, 17–20 kech, 20–23 oqshom, 23–5 tun."""
+    if 5 <= soat < 10:
         return "Xayrli tong"
-    if 11 <= soat < 17:
+    if 10 <= soat < 17:
         return "Xayrli kun"
     if 17 <= soat < 20:
         return "Xayrli kech"
