@@ -184,3 +184,12 @@ def test_mol_qisqartmasi_korinadigan_matnlarda_yoq():
         if "МОЛ" in matn:
             qolgan.append(str(p))
     assert qolgan == []
+
+
+@pytest.mark.parametrize("soat, kutilgan", [
+    (5, "Xayrli tong"), (10, "Xayrli tong"), (11, "Xayrli kun"), (16, "Xayrli kun"), (17, "Xayrli kech"),
+    (20, "Xayrli oqshom"), (22, "Xayrli oqshom"), (23, "Xayrli tun"), (0, "Xayrli tun"), (4, "Xayrli tun"),
+])
+def test_salomlashuv_kun_vaqtiga_qarab(soat, kutilgan):
+    from panel.views import salomlashuv
+    assert salomlashuv(soat) == kutilgan

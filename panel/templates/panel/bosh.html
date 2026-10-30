@@ -4,7 +4,7 @@
 {% block yol %}{% endblock %}
 {% block kontent %}
 <section class="dash-band">
-  <h1>Xayrli kun, {{ user.get_full_name|default:user.get_username }}</h1>
+  <h1>{{ salom }}</h1>
   <p>{{ bugun|date:"d.m.Y" }} · {% if kompaniya_nomi %}{{ kompaniya_nomi }} · {% endif %}{{ filiallar|length }} ta filial bo'yicha holat</p>
 </section>
 

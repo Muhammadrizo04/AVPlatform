@@ -50,6 +50,19 @@ def _holatlar(user) -> list[dict]:
     return natija
 
 
+def salomlashuv(soat: int) -> str:
+    """Kun vaqtiga qarab: 5–11 tong, 11–17 kun, 17–20 kech, 20–23 oqshom, 23–5 tun."""
+    if 5 <= soat < 11:
+        return "Xayrli tong"
+    if 11 <= soat < 17:
+        return "Xayrli kun"
+    if 17 <= soat < 20:
+        return "Xayrli kech"
+    if 20 <= soat < 23:
+        return "Xayrli oqshom"
+    return "Xayrli tun"
+
+
 def bosh(request):
     # Revizor panelga kirmaydi (`korish` yo'q): uning bosh sahifasi — «Mening reviziyalarim» (spec §3.2)
     if not huquqi_bor(request.user, "korish") and huquqi_bor(request.user, "reviziya_otkazish"):
@@ -104,7 +117,7 @@ def _bosh(request):
     kontekst = {
         "filiallar": filiallar, "jami": jamlar, "bayroqlar": sorted(bayroqlar, key=lambda b: not b["soni"]),
         "kpi": kpi[:4], "filial_grafik": filial_grafik, "filial_qolgan": max(len(filiallar) - GRAFIK_FILIALLAR, 0),
-        "holatlar": holatlar, "bugun": bugun,
+        "holatlar": holatlar, "bugun": bugun, "salom": salomlashuv(timezone.localtime().hour),
     }
     if pul:
         # Summalar grafiklari: boshlang'ich qiymat (yo'lak) va uning ichida qoldiq qiymat (amortizatsiya bilan)
