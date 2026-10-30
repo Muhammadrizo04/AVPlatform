@@ -55,12 +55,14 @@ class Dinamika:
     oylar: list[date]
     seriyalar: list[dict]  # tanlangan filiallar: {id, nomi, rang, qiymatlar, nuqtalar}
     jadval: list[dict]  # barcha ruxsat etilgan filiallar: {nomi, boshi, oxiri, farq, foiz}
-    jami: dict  # {boshi, oxiri, farq, foiz}
+    jami: dict  # barcha filiallar (jadval ostida): {boshi, oxiri, farq, foiz}
     filiallar: list[dict]  # tanlov uchun: {id, nomi, tanlangan}
     ogohlantirishlar: list[str] = field(default_factory=list)
     eng_erta: date | None = None
     grafik: dict = field(default_factory=dict)
     joriy_oy: date | None = None  # «gacha» ning eng kechi
+    umumiy: bool = False  # tanlanganlar summasi bitta chiziqda
+    tanlangan_jami: dict = field(default_factory=dict)  # grafikdagi filiallar (tepadagi raqamlar): {boshi, oxiri, farq, foiz}
 
     @property
     def dan_matn(self) -> str:
@@ -114,16 +116,21 @@ def _shkala(eng_katta: Decimal) -> list[Decimal]:
     return belgilar
 
 
-def _grafik(oylar: list[date], seriyalar: list[dict]) -> dict:
+def _grafik(oylar: list[date], seriyalar: list[dict], umumiy: bool = False) -> dict:
     """Brauzerda chiziladigan grafik ma'lumoti (`panel/static/panel/dinamika.js`): grafik konteyner kengligiga
     qarab chiziladi, shuning uchun yozuvlar har ekranda bir xil o'lchamda qoladi."""
     eng_katta = max((v for s in seriyalar for v in s["qiymatlar"]), default=NOL)
     return {
-        "oylar": [oy_nomi(oy) for oy in oylar],
+        "oylar": [oy_nomi(oy) for oy in oylar], "umumiy": umumiy,
         "y": [{"q": float(b), "matn": qisqa_pul(b)} for b in _shkala(max(eng_katta, NOL))],
         "seriyalar": [{"nomi": s["nomi"], "rang": s["rang"], "q": [float(v) for v in s["qiymatlar"]],
                        "matn": [qisqa_pul(v) for v in s["qiymatlar"]]} for s in seriyalar],
     }
+
+
+def _jami(qatorlar: list[dict]) -> dict:
+    boshi, oxiri = sum((q["boshi"] for q in qatorlar), NOL), sum((q["oxiri"] for q in qatorlar), NOL)
+    return {"boshi": boshi, "oxiri": oxiri, "farq": oxiri - boshi, "foiz": _foiz(boshi, oxiri)}
 
 
 def filial_dinamikasi(user, params) -> Dinamika:
@@ -166,14 +173,19 @@ def filial_dinamikasi(user, params) -> Dinamika:
         jadval.append({"id": fid, "nomi": filial_nomlari.get(fid, "—"), "boshi": boshi, "oxiri": oxiri,
                        "farq": oxiri - boshi, "foiz": _foiz(boshi, oxiri)})
     jadval.sort(key=lambda q: q["oxiri"], reverse=True)
-    jami_boshi, jami_oxiri = sum((q["boshi"] for q in jadval), NOL), sum((q["oxiri"] for q in jadval), NOL)
 
     # Tanlangan filiallar: GET `f` (istalgancha, «Hammasi» ham), bo'lmasa davr oxiridagi eng katta 5 tasi
     mavjud = [q["id"] for q in jadval]  # davr oxiridagi summa bo'yicha kamayuvchi
     tanlov = {int(f) for f in params.getlist("f") if str(f).isdigit()}
     tanlangan = [fid for fid in mavjud if fid in tanlov] or mavjud[:STANDART_FILIALLAR]
+    umumiy = params.get("umumiy") == "1"
+    if umumiy:  # «Umumiy ko'rish»: tanlangan filiallar summasi — bitta chiziq
+        alohida, qolgan = [], tanlangan
     # 8 tadan ko'p rangni ko'z ajratmaydi: eng kattalari o'z rangida, qolganlari bitta «Boshqa N ta filial» chizig'ida
-    alohida, qolgan = (tanlangan, []) if len(tanlangan) <= len(RANGLAR) else (
+    elif len(tanlangan) <= len(RANGLAR):
+        alohida, qolgan = tanlangan, []
+    else:
+        alohida, qolgan = (
         tanlangan[:len(RANGLAR) - 1], tanlangan[len(RANGLAR) - 1:])
     # Rang tartibi barqaror bo'lsin (davr o'zgarganda qayta bo'yalmasin): alohida chiziladiganlar id bo'yicha
     seriyalar = [
@@ -182,14 +194,18 @@ def filial_dinamikasi(user, params) -> Dinamika:
     ]
     seriyalar.sort(key=lambda s: s["qiymatlar"][-1], reverse=True)
     if qolgan:
+        if umumiy:
+            nomi = "Barcha filiallar" if len(qolgan) == len(mavjud) else f"{len(qolgan)} ta filial jami"
+        else:
+            nomi = f"Boshqa {len(qolgan)} ta filial"
         seriyalar.append({
-            "id": None, "nomi": f"Boshqa {len(qolgan)} ta filial", "rang": BOSHQALAR_RANGI,
+            "id": None, "nomi": nomi, "rang": RANGLAR[0] if umumiy else BOSHQALAR_RANGI,
             "qiymatlar": [sum((qiymatlar[fid][i] for fid in qolgan), NOL) for i in range(len(oylar))],
         })
     return Dinamika(
         dan=dan, gacha=gacha, oylar=oylar, seriyalar=seriyalar, jadval=jadval,
-        jami={"boshi": jami_boshi, "oxiri": jami_oxiri, "farq": jami_oxiri - jami_boshi, "foiz": _foiz(jami_boshi, jami_oxiri)},
+        jami=_jami(jadval), tanlangan_jami=_jami([q for q in jadval if q["id"] in tanlangan]),
         filiallar=[{"id": q["id"], "nomi": q["nomi"], "tanlangan": q["id"] in tanlangan} for q in sorted(jadval, key=lambda q: q["nomi"])],
-        ogohlantirishlar=ogoh, eng_erta=eng_erta, grafik=_grafik(oylar, seriyalar),
+        ogohlantirishlar=ogoh, eng_erta=eng_erta, grafik=_grafik(oylar, seriyalar, umumiy), umumiy=umumiy,
         joriy_oy=timezone.localdate().replace(day=1),
     )

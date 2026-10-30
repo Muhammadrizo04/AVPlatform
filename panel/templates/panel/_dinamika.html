@@ -5,6 +5,10 @@
     <form class="dinamika-filtr" method="get" action="{% url 'panel:dinamika' %}" hx-get="{% url 'panel:dinamika' %}" hx-target="#dinamika" hx-swap="outerHTML" hx-trigger="submit">
       {% include "panel/_oy_tanlov.html" with nom="dan" yorliq="dan" qiymat=d.dan matn=d.dan_matn eng_kam=d.eng_erta eng_kop=d.gacha %}
       {% include "panel/_oy_tanlov.html" with nom="gacha" yorliq="gacha" qiymat=d.gacha matn=d.gacha_matn eng_kam=d.dan eng_kop=d.joriy_oy %}
+      <label class="dinamika-umumiy form-check form-switch" title="Tanlangan filiallar summasini bitta chiziqda ko'rsatish">
+        <input class="form-check-input" type="checkbox" role="switch" name="umumiy" value="1"{% if d.umumiy %} checked{% endif %} data-umumiy>
+        <span class="form-check-label">Umumiy ko'rish</span>
+      </label>
       <details class="dinamika-filiallar" data-filial-tanlov>
         <summary class="form-select form-select-sm">Filiallar ({{ d.tanlangan_soni }})</summary>
         <div class="dinamika-filiallar-royxat">
@@ -23,14 +27,17 @@
   </div>
   <div class="card-body">
     {% for o in d.ogohlantirishlar %}<p class="small text-warning-emphasis mb-2"><i class="cil-info me-1" aria-hidden="true"></i>{{ o }}</p>{% endfor %}
-    <div class="dinamika-jami">
-      <div><span>{{ d.dan|date:"m.Y" }} boshida</span><b>{{ d.jami.boshi|qisqa_pul }}</b></div>
-      <div><span>{{ d.gacha|date:"m.Y" }} oxirida</span><b>{{ d.jami.oxiri|qisqa_pul }}</b></div>
-      <div><span>O'zgarish</span><b class="{% if d.jami.farq > 0 %}osish{% elif d.jami.farq < 0 %}kamayish{% endif %}">{% if d.jami.farq > 0 %}+{% endif %}{{ d.jami.farq|qisqa_pul }}{% if d.jami.foiz is not None %} <small>({% if d.jami.farq > 0 %}+{% endif %}{{ d.jami.foiz|floatformat:1 }}%)</small>{% endif %}</b></div>
+    {% with t=d.tanlangan_jami %}
+    <div class="dinamika-jami" aria-label="Grafikdagi {{ d.tanlangan_soni }} ta filial bo'yicha">
+      <div><span>{{ d.dan|date:"m.Y" }} boshida</span><b>{{ t.boshi|qisqa_pul }}</b></div>
+      <div><span>{{ d.gacha|date:"m.Y" }} oxirida</span><b>{{ t.oxiri|qisqa_pul }}</b></div>
+      <div><span>O'zgarish</span><b class="{% if t.farq > 0 %}osish{% elif t.farq < 0 %}kamayish{% endif %}">{% if t.farq > 0 %}+{% endif %}{{ t.farq|qisqa_pul }}{% if t.foiz is not None %} <small>({% if t.farq > 0 %}+{% endif %}{{ t.foiz|floatformat:1 }}%)</small>{% endif %}</b></div>
+      <div class="dinamika-jami-izoh">{% if d.tanlangan_soni == d.jadval|length %}barcha filiallar{% else %}tanlangan {{ d.tanlangan_soni }} ta filial · barchasi: {{ d.jami.oxiri|qisqa_pul }}{% endif %}</div>
     </div>
+    {% endwith %}
     {% if d.seriyalar %}
-    <ul class="dinamika-legend" aria-label="Grafikdagi filiallar">
-      {% for s in d.seriyalar %}<li><i style="background:{{ s.rang }}" aria-hidden="true"></i>{{ s.nomi }}</li>{% endfor %}
+    <ul class="dinamika-legend" aria-label="Grafikdagi chiziqlar{% if d.seriyalar|length > 1 %} — bosilsa yashiriladi yoki ko'rsatiladi{% endif %}">
+      {% for s in d.seriyalar %}<li><button type="button" data-seriya="{{ forloop.counter0 }}" aria-pressed="true"{% if d.seriyalar|length == 1 %} disabled{% endif %}><i style="background:{{ s.rang }}" aria-hidden="true"></i>{{ s.nomi }}</button></li>{% endfor %}
     </ul>
     <div class="dinamika-grafik" data-dinamika>
       <svg role="img" aria-label="Tanlangan filiallarning oyma-oy AV summasi; aniq qiymatlar pastdagi jadvalda"></svg>

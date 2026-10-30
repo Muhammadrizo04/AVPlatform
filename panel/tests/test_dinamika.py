@@ -43,6 +43,7 @@ def test_oyma_oy_summa_va_jadval(muhit, foydalanuvchi):
     jadval = {q["nomi"]: (q["boshi"], q["oxiri"], q["farq"]) for q in d.jadval}
     assert jadval[a.nomi] == (1000, 1300, 300) and jadval[b.nomi] == (0, 300, 300)
     assert (d.jami["boshi"], d.jami["oxiri"], d.jami["foiz"]) == (1000, 1600, 60)
+    assert d.tanlangan_jami == d.jami  # standart: eng katta 5 ta = ikkala filial
 
 
 @pytest.mark.parametrize("dan, gacha, oylar, ogoh", [
@@ -94,3 +95,26 @@ def test_oy_tanlagich_va_filial_tugmalari(muhit, client_rol):
     html = client_rol("admin").get(reverse("panel:dinamika")).content.decode()
     assert html.count("data-oy-tanlov") == 2 and 'name="dan"' in html and 'type="month"' not in html
     assert "data-filial-hammasi" in html and "data-filial-tozala" in html and 'hx-trigger="submit"' in html
+
+
+def test_umumiy_korish_bitta_chiziq(muhit, foydalanuvchi, client_rol):
+    a, b = muhit
+    params = QueryDict(f"dan={oy_qosh(JORIY, -5):%Y-%m}&gacha={JORIY:%Y-%m}&umumiy=1", mutable=True)
+    d = filial_dinamikasi(foydalanuvchi("admin"), params)
+    assert d.umumiy and d.grafik["umumiy"] and len(d.seriyalar) == 1
+    assert d.seriyalar[0]["nomi"] == "Barcha filiallar"
+    assert [int(v) for v in d.seriyalar[0]["qiymatlar"]] == [1000, 1000, 1500, 1800, 1600, 1600]
+    params.setlist("f", [str(a.pk)])
+    d = filial_dinamikasi(foydalanuvchi("admin"), params)
+    assert d.seriyalar[0]["nomi"] == "1 ta filial jami" and int(d.seriyalar[0]["qiymatlar"][-1]) == 1300
+    html = client_rol("admin").get(reverse("panel:dinamika"), {"umumiy": "1"}).content.decode()
+    assert 'name="umumiy" value="1" checked' in html
+
+
+def test_tepadagi_raqamlar_tanlangan_filiallar_boyicha(muhit, foydalanuvchi):
+    a, b = muhit
+    params = QueryDict(f"dan={oy_qosh(JORIY, -5):%Y-%m}&gacha={JORIY:%Y-%m}", mutable=True)
+    params.setlist("f", [str(b.pk)])
+    d = filial_dinamikasi(foydalanuvchi("admin"), params)
+    assert (d.tanlangan_jami["boshi"], d.tanlangan_jami["oxiri"]) == (0, 300)
+    assert d.jami["oxiri"] == 1600  # jadval ostidagi «Jami» — barcha filiallar

@@ -85,7 +85,8 @@
         yuborish(blok.closest("form"));
       }
     }
-    document.querySelectorAll("[data-oy-tanlov]").forEach(function (b) { if (!b.contains(t)) oyYop(b); });
+    // `blok` yuqorida aniqlangan: yil tugmasi panel qayta chizilganda DOM'dan chiqib ketadi — `contains` ga ishonib bo'lmaydi
+    document.querySelectorAll("[data-oy-tanlov]").forEach(function (b) { if (b !== blok) oyYop(b); });
 
     var details = t.closest && t.closest("[data-filial-tanlov]");
     if (details && (t.matches("[data-filial-hammasi]") || t.matches("[data-filial-tozala]"))) {
@@ -93,6 +94,11 @@
       details.querySelectorAll("input[name=f]").forEach(function (c) { c.checked = belgi; });
     }
     document.querySelectorAll("[data-filial-tanlov][open]").forEach(function (d) { if (!d.contains(t)) d.open = false; });
+  });
+
+  // «Umumiy ko'rish» almashtirilsa — darhol
+  document.addEventListener("change", function (e) {
+    if (e.target.matches && e.target.matches("[data-umumiy]")) yuborish(e.target.closest("form"));
   });
 
   // Ro'yxat yopilganda tanlov o'zgargan bo'lsa — grafik yangilanadi

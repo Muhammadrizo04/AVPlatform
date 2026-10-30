@@ -704,3 +704,23 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 .dinamika-filiallar-amallar .btn-link { font-size: .8125rem; font-weight: 600; text-decoration: none; color: var(--av-indigo); }
 .dinamika-filiallar-qatorlar { max-height: 15rem; overflow-y: auto; margin-bottom: .5rem; }
 .dinamika-filiallar-royxat { max-height: none; overflow: visible; }
+/* Dinamika: yaxshilangan grafik, legend tugmalari, «Umumiy ko'rish», yorliqlar sanadan keyin */
+.oy-tanlov-yorliq { color: var(--av-ikkilamchi); font-weight: 500; }
+.dinamika-umumiy { display: flex; align-items: center; gap: .5rem; margin: 0 .25rem; padding-left: 2.5em; white-space: nowrap; color: var(--av-siyoh); font-weight: 600; }
+.dinamika-umumiy .form-check-input { cursor: pointer; }
+.dinamika-legend button { display: inline-flex; align-items: center; padding: .15rem .4rem; border: 1px solid transparent; border-radius: 6px;
+  background: none; color: var(--av-ikkilamchi); font-size: .8125rem; cursor: pointer; }
+.dinamika-legend button:hover:not(:disabled) { background: var(--av-chiziq-och, #eef1f5); }
+.dinamika-legend button:disabled { cursor: default; }
+.dinamika-legend button[aria-pressed="false"] { opacity: .45; text-decoration: line-through; }
+.dinamika-legend i { width: 14px; height: 4px; }
+.dinamika-grafik .tor { stroke-dasharray: 3 4; }
+.dinamika-grafik .asos { stroke: var(--av-chiziq, #dfe3ea); stroke-width: 1; }
+.dinamika-grafik .belgi { stroke: var(--av-chiziq, #dfe3ea); stroke-width: 1; }
+.dinamika-grafik .chiziq { stroke-width: 2.25; transition: opacity .15s, stroke-width .15s; }
+.dinamika-grafik .chiziq.qalin { stroke-width: 3; }
+.dinamika-grafik .oxiri { stroke: var(--av-sirt, #fff); stroke-width: 1.5; }
+.dinamika-grafik .oxiri-matn { font-size: 11px; font-weight: 600; fill: var(--av-siyoh); dominant-baseline: middle; }
+.dinamika-grafik svg.fokusda .seriya:not(.faol) { opacity: .18; }
+.dinamika-grafik svg.fokusda .seriya.faol .chiziq { stroke-width: 3.25; }
+.dinamika-jami-izoh { align-self: flex-end; font-size: .75rem; color: var(--av-xira); padding-bottom: .2rem; }
