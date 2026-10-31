@@ -44,7 +44,7 @@ def _oy(matn) -> date | None:
     try:
         yil, oy = str(matn or "").split("-")
         return date(int(yil), int(oy), 1)
-    except ValueError:
+    except (ValueError, OverflowError):
         return None
 
 

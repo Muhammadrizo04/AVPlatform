@@ -118,3 +118,9 @@ def test_tepadagi_raqamlar_tanlangan_filiallar_boyicha(muhit, foydalanuvchi):
     d = filial_dinamikasi(foydalanuvchi("admin"), params)
     assert (d.tanlangan_jami["boshi"], d.tanlangan_jami["oxiri"]) == (0, 300)
     assert d.jami["oxiri"] == 1600  # jadval ostidagi «Jami» — barcha filiallar
+
+
+@pytest.mark.parametrize("qiymat", ["99999999999999999999-03", "2026-99999999999999999999"])
+def test_juda_katta_oy_qiymati_500_bermaydi(qiymat):
+    from panel.dinamika import _oy
+    assert _oy(qiymat) is None
