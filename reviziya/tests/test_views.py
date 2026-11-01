@@ -6,7 +6,7 @@ from django.urls import reverse
 from openpyxl import load_workbook
 from pypdf import PdfReader
 
-from reviziya.models import Reviziya, ReviziyaQollash
+from reviziya.models import Reviziya
 from reviziya.servis import reviziya_och
 from reviziya.solishtir import solishtir
 from vositalar.models import Bolim, Holat, Taqsimot

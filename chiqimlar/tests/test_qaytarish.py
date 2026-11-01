@@ -1,7 +1,7 @@
 """1C'da bekor qilingan tasdiqlangan chiqim: aniqlash, xabar, «Tasdiqni qaytarish»; tasdiqni qo'lda bekor qilish;
 chiqim tarixi."""
 import uuid
-from datetime import datetime, timedelta, timezone as dt_tz
+from datetime import datetime, timezone as dt_tz
 from decimal import Decimal
 
 import pytest

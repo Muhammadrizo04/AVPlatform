@@ -124,3 +124,15 @@ def test_tepadagi_raqamlar_tanlangan_filiallar_boyicha(muhit, foydalanuvchi):
 def test_juda_katta_oy_qiymati_500_bermaydi(qiymat):
     from panel.dinamika import _oy
     assert _oy(qiymat) is None
+
+
+def test_shkala_va_foiz():
+    from decimal import Decimal
+    from panel.dinamika import _foiz, _shkala
+    assert _shkala(Decimal(0)) == [0, 1]
+    belgilar = _shkala(Decimal(1600))
+    assert belgilar[0] == 0 and belgilar[-1] >= 1600 and len(belgilar) <= 6
+    assert all(b - a == belgilar[1] - belgilar[0] for a, b in zip(belgilar, belgilar[1:]))
+    assert _foiz(Decimal(0), Decimal(5)) is None
+    assert _foiz(Decimal(1000), Decimal(1600)) == 60
+    assert _foiz(Decimal(1000), Decimal(500)) == -50

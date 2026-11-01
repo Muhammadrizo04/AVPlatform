@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from chiqimlar.models import ChiqimHujjat
 from onec.models import AV, AVQoldiq
-from vositalar.models import Bolim, Holat, Taqsimot
+from vositalar.models import Bolim, Taqsimot
 from vositalar.tarix import tarix
 
 pytestmark = pytest.mark.django_db
