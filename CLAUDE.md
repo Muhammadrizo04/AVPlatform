@@ -28,7 +28,7 @@
 
 ## Buyruqlar
 - Testlar (Windows, lokal): `venv\Scripts\python.exe -m pytest -q` (`.env` shart emas; `config.settings_test`; PostgreSQL rol `av`/`av`, CREATEDB)
-- Sinxron: `python manage.py sinxron` (keyingi tasklarda qo'shiladi)
+- Sinxron: `python manage.py sinxron` (to'liq: `--toliq`)
 - Tekshiruv: `python manage.py check`
 - Mahalliy ishga tushirish uchun `.env.example` dan `.env` yarating (dev: `DEBUG=True`).
 
