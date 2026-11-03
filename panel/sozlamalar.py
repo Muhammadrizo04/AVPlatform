@@ -57,6 +57,24 @@ def _farq_yoz(kim, obyekt, eski: dict, yangi: dict) -> None:
 
 # --- foydalanuvchilar ---
 
+# Django'ning o'zbekcha tarjimasida parol tekshiruvi xabarlari bo'sh — inglizcha chiqmasin
+PAROL_XATOLARI = {
+    "password_too_short": "Parol juda qisqa: kamida {min_length} ta belgi bo'lishi kerak.",
+    "password_too_common": "Bu parol juda oddiy (keng tarqalgan parollar ro'yxatida bor).",
+    "password_entirely_numeric": "Parol faqat raqamlardan iborat bo'lmasin — harf ham qo'shing.",
+    "password_too_similar": "Parol login yoki ismga juda o'xshash.",
+}
+
+
+def parol_xatolari(xato: ValidationError) -> list[str]:
+    """validate_password xatolarini o'zbekchaga o'giradi (noma'lum kod — asl matn)."""
+    natija = []
+    for x in xato.error_list:
+        matn = PAROL_XATOLARI.get(x.code)
+        natija.append(matn.format(**(x.params or {})) if matn else " ".join(x.messages))
+    return natija
+
+
 class FoydalanuvchiForma(forms.Form):
     username = forms.CharField(label="Login", max_length=150, validators=[UnicodeUsernameValidator()])
     ism = forms.CharField(label="Ism", max_length=150, required=False)
@@ -94,7 +112,7 @@ class FoydalanuvchiForma(forms.Form):
             try:
                 validate_password(parol, self.user or User(username=data.get("username", "")))
             except ValidationError as xato:
-                self.add_error("parol", xato)
+                self.add_error("parol", parol_xatolari(xato))
         if self.user is not None and self.user.pk == getattr(self.kim, "pk", None):
             if "is_active" in data and not data["is_active"]:
                 self.add_error("is_active", "O'zingizni faolsizlantira olmaysiz.")

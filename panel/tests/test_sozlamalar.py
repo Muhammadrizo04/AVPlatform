@@ -1,3 +1,4 @@
+import html
 import uuid
 from datetime import timedelta
 from decimal import Decimal
@@ -88,6 +89,11 @@ def test_foydalanuvchi_zaif_parol_va_takror_nom(client_admin, admin_user):
     url = reverse("panel:foydalanuvchilar")
     javob = client_admin.post(url, {"username": "x1", "rol": "hr", "parol": "12345678"})
     assert javob.status_code == 200 and not User.objects.filter(username="x1").exists()
+    matn = html.unescape(javob.content.decode())
+    assert "Bu parol juda oddiy" in matn and "faqat raqamlardan" in matn and "too common" not in matn
+    javob = client_admin.post(url, {"username": "x1", "rol": "hr", "parol": "1234"})
+    matn = html.unescape(javob.content.decode())
+    assert "kamida 8 ta belgi" in matn and "too short" not in matn
     javob = client_admin.post(url, {"username": "x1", "rol": "hr"})  # parolsiz
     assert javob.status_code == 200 and not User.objects.filter(username="x1").exists()
     javob = client_admin.post(url, {"username": admin_user.username, "rol": "hr", "parol": KUCHLI})
