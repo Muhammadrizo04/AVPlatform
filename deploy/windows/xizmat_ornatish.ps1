@@ -26,11 +26,11 @@ if (Get-Service $Xizmat -ErrorAction SilentlyContinue) {
 & $Nssm set $Xizmat AppExit Default Restart
 & $Nssm start $Xizmat
 
-Start-Sleep -Seconds 3
+# Kirish sahifasi yo'naltirishsiz 200 qaytaradi (PowerShell 5.1 da -MaximumRedirection 0 302 ni tushunarsiz xatoga aylantiradi)
+Start-Sleep -Seconds 5
 try {
-    $j = Invoke-WebRequest "http://127.0.0.1:$IchkiPort/" -UseBasicParsing -MaximumRedirection 0 -ErrorAction Stop
-    Write-Host "waitress javob berdi: $($j.StatusCode)"
+    $j = Invoke-WebRequest "http://127.0.0.1:$IchkiPort/kirish/" -UseBasicParsing -TimeoutSec 30 -ErrorAction Stop
+    Write-Host "waitress ishlayapti: /kirish/ -> $($j.StatusCode)"
 } catch {
-    $kod = $_.Exception.Response.StatusCode.value__
-    if ($kod -in 301, 302, 400) { Write-Host "waitress ishlayapti (javob $kod)" } else { throw "waitress javob bermadi: $($_.Exception.Message). Logni ko'ring: $Loglar\waitress.log" }
+    throw "waitress javob bermadi: $($_.Exception.Message). Holat: $((Get-Service $Xizmat).Status). Logni ko'ring: $Loglar\waitress.log"
 }
