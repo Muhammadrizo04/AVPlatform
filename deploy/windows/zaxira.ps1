@@ -1,8 +1,9 @@
-﻿# AV zaxirasi (Windows): PostgreSQL (pg_dump -Fc) + MEDIA_ROOT (zip) -> C:\av\zaxira\YYYY-MM-DD.*; 14 kundan eskisi o'chadi.
+﻿# AV zaxirasi (Windows): PostgreSQL (pg_dump -Fc) + MEDIA_ROOT (zip) -> E:\AVPlatform-malumot\zaxira\YYYY-MM-DD.*; 14 kundan eskisi o'chadi.
 # DB manzili/paroli .env dagi DATABASE_URL dan olinadi (skriptda yozilmagan, buyruq qatorida ko'rinmaydi).
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\sozlamalar.ps1"
 
+if (-not $PgBin) { throw "zaxira: C:\Program Files\PostgreSQL\*\bin\pg_dump.exe topilmadi" }
 $envFayl = "$Ilova\.env"
 if (-not (Test-Path $envFayl)) { throw "zaxira: $envFayl topilmadi" }
 $q = @{}

@@ -1,6 +1,6 @@
 ﻿# waitress'ni Windows xizmati (AV-platforma) qilib o'rnatadi. Administrator PowerShell'da:
-#   powershell -ExecutionPolicy Bypass -File C:\av\app\deploy\windows\xizmat_ornatish.ps1 -Nssm C:\av\nssm\nssm.exe
-# NSSM (https://nssm.cc) win64\nssm.exe ni oldindan C:\av\nssm\ ga qo'ying.
+#   powershell -ExecutionPolicy Bypass -File E:\AVPlatform\deploy\windows\xizmat_ornatish.ps1 -Nssm E:\AVPlatform-malumot\nssm\nssm.exe
+# NSSM (https://nssm.cc) win64\nssm.exe ni oldindan E:\AVPlatform-malumot\nssm\ ga qo'ying.
 param([Parameter(Mandatory = $true)][string]$Nssm)
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\sozlamalar.ps1"

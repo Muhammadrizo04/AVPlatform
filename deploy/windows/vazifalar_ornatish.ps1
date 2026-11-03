@@ -1,7 +1,7 @@
 ﻿# Vazifalar rejalashtiruvchisi (Task Scheduler): sinxron har soatda, to'liq sinxron har kecha 03:02:30,
 # zaxira har kecha 02:30. Administrator PowerShell'da:
-#   powershell -ExecutionPolicy Bypass -File C:\av\app\deploy\windows\vazifalar_ornatish.ps1
-# Vazifalar SYSTEM nomidan ishlaydi (foydalanuvchi tizimdan chiqsa ham). Natija: C:\av\loglar\*.log va panel «Sinxron jurnali».
+#   powershell -ExecutionPolicy Bypass -File E:\AVPlatform\deploy\windows\vazifalar_ornatish.ps1
+# Vazifalar SYSTEM nomidan ishlaydi (foydalanuvchi tizimdan chiqsa ham). Natija: E:\AVPlatform-malumot\loglar\*.log va panel «Sinxron jurnali».
 $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\sozlamalar.ps1"
 New-Item -ItemType Directory -Force $Loglar, $Zaxira | Out-Null

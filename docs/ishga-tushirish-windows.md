@@ -8,12 +8,12 @@ Tuzilma:
 
 ```
 Internet -> router 87.192.241.38:8092 -> 192.168.100.30:8092 (IIS, HTTPS, win-acme sertifikati)
-         -> http://127.0.0.1:8000 (waitress, «AV-platforma» xizmati) -> PostgreSQL 16 (localhost)
+         -> http://127.0.0.1:8000 (waitress, «AV-platforma» xizmati) -> PostgreSQL 14 (localhost)
 Platforma -> http://localhost:8090/<1C publikatsiyasi>/hs/av/ (shu serverdagi IIS, 1C ishchi bazasi)
 ```
 
-Papkalar (`deploy\windows\sozlamalar.ps1` da o'zgartiriladi): ilova `C:\av\app`, venv `C:\av\venv`,
-media `C:\av\media`, zaxira `C:\av\zaxira`, loglar `C:\av\loglar`, IIS sayti `C:\av\iis`.
+Papkalar (`deploy\windows\sozlamalar.ps1` da o'zgartiriladi): ilova `E:\AVPlatform`, venv `E:\AVPlatform\venv`,
+media `E:\AVPlatform-malumot\media`, zaxira `E:\AVPlatform-malumot\zaxira`, loglar `E:\AVPlatform-malumot\loglar`, IIS sayti `E:\AVPlatform-malumot\iis`.
 Parol va kalitlar quyida faqat `<...>` o'rin belgisi.
 
 ## 1. Tarmoq: router va DNS
@@ -43,19 +43,19 @@ Unda ichki DNS'da (yoki har kompyuterning `C:\Windows\System32\drivers\etc\hosts
 
 1. **Python 3.12** (64-bit, python.org). O'rnatishda «Add python.exe to PATH» belgisini qo'ying.
 2. **Git for Windows**.
-3. **PostgreSQL 16** (EDB o'rnatuvchisi). Port 5432, faqat localhost. Agar serverda 1C uchun PostgreSQL allaqachon
+3. **PostgreSQL 14** (EDB o'rnatuvchisi). Port 5432, faqat localhost. Agar serverda 1C uchun PostgreSQL allaqachon
    bo'lsa, o'shanga alohida rol va baza qo'shsangiz ham bo'ladi (1C bazasiga tegilmaydi). Unda 3-bo'limdagi port
    va `sozlamalar.ps1` dagi `$PgBin` ni o'shanga moslang.
 4. **MSYS2** (msys2.org) va Pango: MSYS2 terminalida `pacman -S mingw-w64-x86_64-pango`. WeasyPrint (PDF yorliq va
    hisobotlar) shuni ishlatadi.
 5. **IIS** allaqachon bor (1C publikatsiyasi). Qo'shimcha: **URL Rewrite 2.1** va **Application Request Routing 3.0**
    (Microsoft sahifasidan), so'ng IIS'ni qayta ishga tushiring (`iisreset`).
-6. **NSSM** (nssm.cc): arxivdagi `win64\nssm.exe` ni `C:\av\nssm\nssm.exe` ga qo'ying.
-7. **win-acme** (win-acme.com): `C:\av\win-acme\` ga oching.
+6. **NSSM** (nssm.cc): arxivdagi `win64\nssm.exe` ni `E:\AVPlatform-malumot\nssm\nssm.exe` ga qo'ying.
+7. **win-acme** (win-acme.com): `E:\AVPlatform-malumot\win-acme\` ga oching.
 
 ## 3. Ma'lumotlar bazasi
 
-`psql` (PostgreSQL 16 → SQL Shell) da `postgres` nomidan:
+`psql` (PostgreSQL 14 → SQL Shell) da `postgres` nomidan:
 
 ```sql
 CREATE ROLE av LOGIN PASSWORD '<DB_PAROL>';
@@ -67,13 +67,13 @@ CREATE DATABASE av OWNER av ENCODING 'UTF8';
 Administrator PowerShell:
 
 ```powershell
-New-Item -ItemType Directory -Force C:\av, C:\av\media, C:\av\zaxira, C:\av\loglar
-git clone <REPO_MANZILI> C:\av\app
-py -3.12 -m venv C:\av\venv
-C:\av\venv\Scripts\python.exe -m pip install -r C:\av\app\requirements.txt
+New-Item -ItemType Directory -Force E:\AVPlatform-malumot, E:\AVPlatform-malumot\media, E:\AVPlatform-malumot\zaxira, E:\AVPlatform-malumot\loglar
+git clone <REPO_MANZILI> E:\AVPlatform
+py -3.12 -m venv E:\AVPlatform\venv
+E:\AVPlatform\venv\Scripts\python.exe -m pip install -r E:\AVPlatform\requirements.txt
 ```
 
-`C:\av\app\.env` (Bloknotda, UTF-8):
+`E:\AVPlatform\.env` (Bloknotda, UTF-8):
 
 ```ini
 SECRET_KEY=<uzun-tasodifiy-kalit>
@@ -86,42 +86,42 @@ DATABASE_URL=postgresql://av:<DB_PAROL>@localhost:5432/av
 ONEC_URL=http://localhost:8090/<1C_PUBLIKATSIYA>/hs/av
 ONEC_LOGIN=<1C texnik foydalanuvchi>
 ONEC_PAROL=<uning paroli>
-MEDIA_ROOT=C:\av\media
+MEDIA_ROOT=E:\AVPlatform-malumot\media
 WEASYPRINT_DLL_DIRECTORIES=C:\msys64\mingw64\bin
 ```
 
-- `SECRET_KEY`: `C:\av\venv\Scripts\python.exe -c "from django.core.management.utils import get_random_secret_key as g; print(g())"`
+- `SECRET_KEY`: `E:\AVPlatform\venv\Scripts\python.exe -c "from django.core.management.utils import get_random_secret_key as g; print(g())"`
 - `CSRF_TRUSTED_ORIGINS` da **port bilan** yozing: port standart (443) bo'lmagani uchun kirish formasi shusiz
   CSRF tekshiruvidan o'tmaydi.
 - DB parolida `@`, `:`, `/` bo'lsa, URL-kodlang (`@` → `%40`).
-- `.env` ga faqat Administratorlar va SYSTEM kirsin: `icacls C:\av\app\.env /inheritance:r /grant:r Administrators:F SYSTEM:F`.
+- `.env` ga faqat Administratorlar va SYSTEM kirsin: `icacls E:\AVPlatform\.env /inheritance:r /grant:r Administrators:F SYSTEM:F`.
 
 ```powershell
-cd C:\av\app
-C:\av\venv\Scripts\python.exe manage.py check --deploy
-C:\av\venv\Scripts\python.exe manage.py migrate
-C:\av\venv\Scripts\python.exe manage.py collectstatic --noinput
-C:\av\venv\Scripts\python.exe manage.py createsuperuser
+cd E:\AVPlatform
+E:\AVPlatform\venv\Scripts\python.exe manage.py check --deploy
+E:\AVPlatform\venv\Scripts\python.exe manage.py migrate
+E:\AVPlatform\venv\Scripts\python.exe manage.py collectstatic --noinput
+E:\AVPlatform\venv\Scripts\python.exe manage.py createsuperuser
 ```
 
 Birinchi administratorga rol bering (`<login>` — yuqorida kiritilgan nom):
 
 ```powershell
-C:\av\venv\Scripts\python.exe manage.py shell -c "from django.contrib.auth import get_user_model; from hisoblar.models import Profil, Rol; u = get_user_model().objects.get(username='<login>'); print(Profil.objects.update_or_create(user=u, defaults={'rol': Rol.ADMIN})[0])"
+E:\AVPlatform\venv\Scripts\python.exe manage.py shell -c "from django.contrib.auth import get_user_model; from hisoblar.models import Profil, Rol; u = get_user_model().objects.get(username='<login>'); print(Profil.objects.update_or_create(user=u, defaults={'rol': Rol.ADMIN})[0])"
 ```
 
 ## 5. waitress xizmati va IIS sayti
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\av\app\deploy\windows\xizmat_ornatish.ps1 -Nssm C:\av\nssm\nssm.exe
-powershell -ExecutionPolicy Bypass -File C:\av\app\deploy\windows\iis_sozla.ps1
+powershell -ExecutionPolicy Bypass -File E:\AVPlatform\deploy\windows\xizmat_ornatish.ps1 -Nssm E:\AVPlatform-malumot\nssm\nssm.exe
+powershell -ExecutionPolicy Bypass -File E:\AVPlatform\deploy\windows\iis_sozla.ps1
 ```
 
 Birinchisi «AV-platforma» Windows xizmatini (waitress, `127.0.0.1:8000`, avtomatik ishga tushadi) o'rnatadi.
 Ikkinchisi quyidagilarni qiladi:
 
 - ARR proksini yoqadi (Host saqlanadi, kutish 120 s);
-- `C:\av\iis\web.config` ni qo'yadi;
+- `E:\AVPlatform-malumot\iis\web.config` ni qo'yadi;
 - «AV» saytini va `/static/` virtual papkasini yaratadi;
 - Windows Firewall'da 8092 portni ochadi.
 
@@ -131,7 +131,7 @@ Ikkinchisi quyidagilarni qiladi:
 (**acme-dns**) o'tadi. Bir marta CNAME qo'shiladi, keyin yangilash avtomatik.
 
 ```powershell
-cd C:\av\win-acme
+cd E:\AVPlatform-malumot\win-acme
 .\wacs.exe --source manual --host av.dsyuksak.uz --validation acme-dns --acmednsserver https://auth.acme-dns.io/ `
   --installation iis --installationsiteid <AV_SAYT_ID> --sslport 8092 --store certificatestore
 ```
@@ -160,16 +160,16 @@ Tekshiruv (serverda): `curl.exe -I https://av.dsyuksak.uz:8092/static/panel/htmx
 ## 8. Sinxron va zaxira vazifalari
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File C:\av\app\deploy\windows\vazifalar_ornatish.ps1
+powershell -ExecutionPolicy Bypass -File E:\AVPlatform\deploy\windows\vazifalar_ornatish.ps1
 ```
 
 Task Scheduler'da `\AV\` papkasida uchta vazifa paydo bo'ladi. Hammasi SYSTEM nomidan ishlaydi:
 
 | Vazifa | Qachon | Log |
 |---|---|---|
-| AV sinxron | har soatda, soat boshida | `C:\av\loglar\sinxron.log` |
-| AV sinxron toliq | har kecha 03:02:30 | `C:\av\loglar\sinxron-toliq.log` |
-| AV zaxira | har kecha 02:30 | `C:\av\zaxira\YYYY-MM-DD.dump` + `.media.zip`, 14 kun saqlanadi |
+| AV sinxron | har soatda, soat boshida | `E:\AVPlatform-malumot\loglar\sinxron.log` |
+| AV sinxron toliq | har kecha 03:02:30 | `E:\AVPlatform-malumot\loglar\sinxron-toliq.log` |
+| AV zaxira | har kecha 02:30 | `E:\AVPlatform-malumot\zaxira\YYYY-MM-DD.dump` + `.media.zip`, 14 kun saqlanadi |
 
 Birinchi to'liq sinxronni hoziroq ishga tushiring:
 
@@ -186,19 +186,19 @@ Zaxirani vaqti-vaqti bilan boshqa diskka yoki kompyuterga nusxalang.
 
 ```powershell
 Stop-Service AV-platforma; Disable-ScheduledTask -TaskPath "\AV\" -TaskName "AV sinxron"
-& "C:\Program Files\PostgreSQL\16\bin\pg_restore.exe" -U av -d av --clean --if-exists --no-owner C:\av\zaxira\<SANA>.dump
-Expand-Archive C:\av\zaxira\<SANA>.media.zip -DestinationPath C:\av\media -Force
+& "C:\Program Files\PostgreSQL\14\bin\pg_restore.exe" -U av -d av --clean --if-exists --no-owner E:\AVPlatform-malumot\zaxira\<SANA>.dump
+Expand-Archive E:\AVPlatform-malumot\zaxira\<SANA>.media.zip -DestinationPath E:\AVPlatform-malumot\media -Force
 Enable-ScheduledTask -TaskPath "\AV\" -TaskName "AV sinxron"; Start-Service AV-platforma
 ```
 
 ## 9. Yangilash (yangi versiya chiqqanda)
 
 ```powershell
-cd C:\av\app
+cd E:\AVPlatform
 git pull
-C:\av\venv\Scripts\python.exe -m pip install -r requirements.txt
-C:\av\venv\Scripts\python.exe manage.py migrate
-C:\av\venv\Scripts\python.exe manage.py collectstatic --noinput
+E:\AVPlatform\venv\Scripts\python.exe -m pip install -r requirements.txt
+E:\AVPlatform\venv\Scripts\python.exe manage.py migrate
+E:\AVPlatform\venv\Scripts\python.exe manage.py collectstatic --noinput
 Restart-Service AV-platforma
 ```
 
@@ -212,5 +212,5 @@ Restart-Service AV-platforma
   bloklanmaydi (mijoz IP'si to'g'ri olinyapti).
 - [ ] Admin «Hozir sinxronlash» → «Muvaffaqiyatli». Soat boshida jurnalda yangi yozuv paydo bo'ladi.
 - [ ] PDF yorliq ochiladi (WeasyPrint/Pango ishlayapti); AV kartochkasidagi rasm yuklanadi va ko'rinadi.
-- [ ] Ertasi kuni `C:\av\zaxira` da `.dump` fayli bor.
+- [ ] Ertasi kuni `E:\AVPlatform-malumot\zaxira` da `.dump` fayli bor.
 - [ ] Rollarni tekshiring: `docs/ishga-tushirish.md`, 10-bo'lim.
