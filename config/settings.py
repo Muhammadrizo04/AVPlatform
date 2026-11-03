@@ -12,7 +12,8 @@ DEBUG = env.bool("DEBUG", default=False)
 
 # Standart qiymatlar faqat DEBUG da; ishlab chiqarishda .env da bo'lishi shart.
 SECRET_KEY = env.str("SECRET_KEY", default="dev-faqat-ishlab-chiqish-uchun" if DEBUG else environ.Env.NOTSET)
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
+# ALLOWED_HOSTS = env.list("ALLOWED_HOSTS",  default=[])
+ALLOWED_HOSTS = ['192.168.100.37', '127.0.0.1', 'localhost']
 
 # nginx ortida bo'lsa mijoz IP'si X-Forwarded-For dan olinadi (1 ta proksi); aks holda REMOTE_ADDR.
 PROXY_ORQASIDA = env.bool("PROXY_ORQASIDA", default=False)
