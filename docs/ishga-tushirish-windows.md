@@ -8,7 +8,7 @@ Tuzilma:
 
 ```
 Internet -> router 87.192.241.38:8092 -> 192.168.100.30:8092 (IIS, HTTPS, win-acme sertifikati)
-         -> http://127.0.0.1:8000 (waitress, «AV-platforma» xizmati) -> PostgreSQL 14 (localhost)
+         -> http://127.0.0.1:8000 (waitress, «AV-platforma» xizmati, deploywindowswaitress_xizmat.py) -> PostgreSQL 14 (localhost)
 Platforma -> http://localhost:8090/<1C publikatsiyasi>/hs/av/ (shu serverdagi IIS, 1C ishchi bazasi)
 ```
 

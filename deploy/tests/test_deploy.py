@@ -133,7 +133,14 @@ def test_windows_vazifalar_jadvali():
     assert '(New-ScheduledTaskTrigger -Daily -At (Vaqt 3 2 30))' in v and '"sinxron --toliq"' in v
     assert '(New-ScheduledTaskTrigger -Daily -At (Vaqt 2 30))' in v and "zaxira.ps1" in v
     x = (WINDOWS / "xizmat_ornatish.ps1").read_text(encoding="utf-8-sig")
-    assert '"--listen=127.0.0.1:$IchkiPort"' in x and '"--channel-timeout=130"' in x and "config.wsgi:application" in x
+    assert '$Python "deploy' in x and "waitress_xizmat.py" in x and "AV_ICHKI_PORT=$IchkiPort" in x
+
+
+def test_waitress_iis_proksisiga_ishonadi():
+    """waitress 3 ishonchli proksi berilmasa X-Forwarded-* ni o'chiradi: HTTPS va mijoz IP'si yo'qoladi."""
+    w = (WINDOWS / "waitress_xizmat.py").read_text(encoding="utf-8")
+    assert 'trusted_proxy="127.0.0.1"' in w and '{"x-forwarded-for", "x-forwarded-proto"}' in w
+    assert 'listen=f"127.0.0.1:' in w and "channel_timeout=130" in w
 
 
 def test_waitress_talablarda():

@@ -6,17 +6,17 @@ $ErrorActionPreference = "Stop"
 . "$PSScriptRoot\sozlamalar.ps1"
 
 if (-not (Test-Path $Nssm)) { throw "NSSM topilmadi: $Nssm" }
-$Waitress = "$Venv\Scripts\waitress-serve.exe"
-if (-not (Test-Path $Waitress)) { throw "waitress yo'q: $Venv da 'pip install -r requirements.txt' bajaring" }
+if (-not (Test-Path "$Venv\Scripts\waitress-serve.exe")) { throw "waitress yo'q: $Venv da 'pip install -r requirements.txt' bajaring" }
 New-Item -ItemType Directory -Force $Loglar | Out-Null
 
 if (Get-Service $Xizmat -ErrorAction SilentlyContinue) {
     & $Nssm stop $Xizmat | Out-Null
     & $Nssm remove $Xizmat confirm | Out-Null
 }
-# --channel-timeout 130: admin «Hozir sinxronlash» so'rov ichida ishlaydi (1C kutish 60 s, IIS proksi 120 s)
-& $Nssm install $Xizmat $Waitress "--listen=127.0.0.1:$IchkiPort" "--threads=8" "--channel-timeout=130" "config.wsgi:application"
+# Parametrlar (port, oqimlar, timeout, ishonchli proksi 127.0.0.1) — waitress_xizmat.py da
+& $Nssm install $Xizmat $Python "deploy\windows\waitress_xizmat.py"
 & $Nssm set $Xizmat AppDirectory $Ilova
+& $Nssm set $Xizmat AppEnvironmentExtra "AV_ICHKI_PORT=$IchkiPort"
 & $Nssm set $Xizmat DisplayName "AV platformasi (waitress)"
 & $Nssm set $Xizmat Start SERVICE_AUTO_START
 & $Nssm set $Xizmat AppStdout "$Loglar\waitress.log"
