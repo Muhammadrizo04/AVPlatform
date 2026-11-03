@@ -1,4 +1,4 @@
-"""`python manage.py sinxron [--toliq]` — 1C'dan sinxron (systemd timer har 5 daqiqada, kechasi --toliq)."""
+"""`python manage.py sinxron [--toliq]` — 1C'dan sinxron (har soatda, kechasi --toliq: systemd timer yoki Windows vazifalar rejalashtiruvchisi)."""
 import time
 
 from django.core.management.base import BaseCommand, CommandError
@@ -7,7 +7,7 @@ from onec.client import OneCClient
 from onec.models import SinxronJurnal
 from onec.sinxron import SinxronBand, sinxronla
 
-# To'liq sinxron band bo'lsa (masalan, 5 daqiqalik sinxron ayni paytda ishlayapti) — shu oraliqda qayta urinadi.
+# To'liq sinxron band bo'lsa (masalan, soatlik sinxron ayni paytda ishlayapti) — shu oraliqda qayta urinadi.
 TOLIQ_KUTISH_S = 15
 TOLIQ_KUTISH_JAMI_S = 5 * 60
 

@@ -32,7 +32,7 @@ Ikkalasining farqi va mosligi (taqsimot = 1C qoldig'i, «1C bilan mos / farq») 
 
 ## Operating Context
 
-- 1C'dan sinxron har 5 daqiqada, kechasi to'liq; aloqa uzilsa banner chiqadi.
+- 1C'dan sinxron har soatda, kechasi to'liq; aloqa uzilsa banner chiqadi.
 - Filiallararo o'tkazish 1C'da (Реализация + Поступление), platformada «1C chiqimlari» orqali tasdiqlanadi.
 - МОЛ o'zgarishi faqat topshirish-qabul akti orqali (qoralama → tasdiqlangan / bekor qilingan), PDF chop etiladi.
 - QR-yorliqlar printerda chop etiladi; hisobotlar Excel'ga yuklanadi va chop etiladi.

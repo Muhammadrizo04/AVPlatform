@@ -104,10 +104,10 @@ sudo nginx -t && sudo systemctl reload nginx
 curl -I http://<host>/static/panel/htmx.min.js
 ```
 
-Jadval: sinxron har 5 daqiqada (`*:0/5`), to'liq sinxron (`--toliq`) har kecha 03:02:30, zaxira har kecha 02:30.
-To'liq sinxron 03:00 dagi 5 daqiqalik sinxron bilan to'qnashmasligi uchun 2,5 daqiqa keyin boshlanadi; baribir band
+Jadval: sinxron har soatda (`*-*-* *:00:00`), to'liq sinxron (`--toliq`) har kecha 03:02:30, zaxira har kecha 02:30.
+To'liq sinxron 03:00 dagi soatlik sinxron bilan to'qnashmasligi uchun 2,5 daqiqa keyin boshlanadi; baribir band
 bo'lsa (`sinxron --toliq` advisory lock ololmasa), har 15 s da qayta urinadi, 5 daqiqadan keyin to'xtaydi
-(`journalctl -u av-sinxron-toliq.service` da «Sinxron band» yozuvi). Oddiy (5 daqiqalik) sinxron band bo'lsa kutmaydi.
+(`journalctl -u av-sinxron-toliq.service` da «Sinxron band» yozuvi). Oddiy (soatlik) sinxron band bo'lsa kutmaydi.
 Holatni ko'rish:
 
 ```bash

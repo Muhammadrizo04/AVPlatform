@@ -13,7 +13,7 @@
   queryset darajasida (`hisoblar.huquqlar`) — faqat sahifalarda emas: Excel, PDF, HTMX bo'laklar, rasm URL'larida ham.
 - Kirish: 5 noto'g'ri urinish -> 15 daqiqa blok; sessiya 8 soat harakatsizlikdan keyin tugaydi.
 - Holatlar: `ishlatilmoqda`, `zaxirada`, `tamirda`, `nosoz`, `hisobdan_chiqarishga`, `topilmadi`.
-- Sinxron: har 5 daqiqada, harakatlar oynasi 45 kun, har kecha 03:00 to'liq, HTTP timeout 60 s, bitta tranzaksiya,
+- Sinxron: har soatda, harakatlar oynasi 45 kun, har kecha 03:00 to'liq, HTTP timeout 60 s, bitta tranzaksiya,
   bir vaqtda bitta sinxron (PostgreSQL advisory lock, kalit `7310001`).
 - Taqsimot invarianti: har (AV, filial) uchun Σ `Taqsimot.soni` = `AVQoldiq.soni`.
 - Python 3.12 bilan mos kod yozing (3.13'ga xos imkoniyatlar yo'q).
@@ -36,3 +36,4 @@
 - Spetsifikatsiya: `docs/superpowers/specs/2026-10-17-av-platforma-1-bosqich-design.md`
 - Reja: `docs/superpowers/plans/2026-10-17-av-platforma-1-bosqich.md`
 - 1C farazlari: `docs/1c-farazlar.md`
+- Ishchi server (Windows, av.dsyuksak.uz:8092): `docs/ishga-tushirish-windows.md`, skriptlar `deploy/windows/`

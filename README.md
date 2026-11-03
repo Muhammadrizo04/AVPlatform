@@ -38,7 +38,7 @@ platforma esa uning ustidagi **jismoniy hisob qatlami** bo'ladi.
 
 ## Asosiy imkoniyatlar
 
-- **1C sinxroni.** Har 5 daqiqada o'zgarishlar, har kecha to'liq ma'lumot olinadi. Aloqa uzilsa, panelda ogohlantirish chiqadi.
+- **1C sinxroni.** Har soatda o'zgarishlar, har kecha to'liq ma'lumot olinadi. Aloqa uzilsa, panelda ogohlantirish chiqadi.
 - **AV ro'yxati va kartochkasi.** Filtrlar, qidiruv, saralash, sahifalash va Excel. Kartochkada rasmlar, amortizatsiya, taqsimot va tarix bor.
 - **Taqsimot.** AV'ni bo'limlar (xonalar) o'rtasida ko'chirish va holatini o'zgartirish. Holatlar: ishlatilmoqda, zaxirada, ta'mirda, nosoz, hisobdan chiqarishga, topilmadi.
 - **Javobgar shaxslar (МОЛ).** Kimda nima borligi, ishdan ketganlarda qolgan AV'lar, topshirish-qabul aktlari.
@@ -136,10 +136,11 @@ Huquqlar server tomonida tekshiriladi. Har foydalanuvchi faqat o'ziga biriktiril
 ### Server (ishlab chiqarish) o'rnatish
 
 Ubuntu 24.04 serverga o'rnatish bosqichma-bosqich [docs/ishga-tushirish.md](docs/ishga-tushirish.md) da yozilgan.
+Ishchi server (Windows Server 192.168.100.30, https://av.dsyuksak.uz:8092): [docs/ishga-tushirish-windows.md](docs/ishga-tushirish-windows.md).
 U quyidagilarni o'z ichiga oladi:
 
 - gunicorn, nginx va systemd. Tayyor fayllar `deploy/` papkasida.
-- Sinxron taymerlari: har 5 daqiqada va har kecha to'liq.
+- Sinxron taymerlari: har soatda va har kecha to'liq.
 - Har kecha avtomatik zaxira (`pg_dump` va rasmlar), 14 kun saqlanadi. Zaxiradan tiklash tartibi ham shu yerda.
 - HTTPS (VPS uchun).
 

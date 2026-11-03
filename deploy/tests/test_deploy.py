@@ -37,7 +37,7 @@ def test_fayl_mavjud_va_lf(nom):
 @pytest.mark.parametrize(
     "nom,oncalendar",
     [
-        ("av-sinxron.timer", "*:0/5"),
+        ("av-sinxron.timer", "*-*-* *:00:00"),
         ("av-sinxron-toliq.timer", "*-*-* 03:02:30"),
         ("av-backup.timer", "*-*-* 02:30:00"),
     ],
@@ -106,3 +106,35 @@ def test_backup_sh():
     assert "-mtime +14" in t
     assert "DATABASE_URL" in t and "MEDIA_ROOT" in t
     assert not re.search(r"postgres(ql)?://\S+:\S+@", t), "parol qattiq yozilgan"
+
+
+WINDOWS = DEPLOY / "windows"
+
+
+@pytest.mark.parametrize("nom", ["sozlamalar.ps1", "xizmat_ornatish.ps1", "iis_sozla.ps1", "vazifalar_ornatish.ps1", "zaxira.ps1"])
+def test_windows_skriptlari_bom_va_crlf(nom):
+    """PowerShell 5.1 BOM'siz UTF-8 ni ANSI deb o'qiydi (o'zbekcha belgilar buziladi)."""
+    xom = (WINDOWS / nom).read_bytes()
+    assert xom.startswith(b"\xef\xbb\xbf")
+    assert b"\n" not in xom.replace(b"\r\n", b"")
+
+
+def test_windows_sozlamalari_bir_xil():
+    s = (WINDOWS / "sozlamalar.ps1").read_text(encoding="utf-8-sig")
+    assert '$Domen     = "av.dsyuksak.uz"' in s and "$Port      = 8092" in s and "$IchkiPort = 8000" in s
+    web = (WINDOWS / "web.config").read_text(encoding="utf-8")
+    assert "http://127.0.0.1:8000/{R:1}" in web and 'name="HTTP_X_FORWARDED_PROTO" value="https"' in web
+    assert 'maxAllowedContentLength="16777216"' in web
+
+
+def test_windows_vazifalar_jadvali():
+    v = (WINDOWS / "vazifalar_ornatish.ps1").read_text(encoding="utf-8-sig")
+    assert "-RepetitionInterval (New-TimeSpan -Hours 1)" in v  # sinxron har soatda
+    assert '(New-ScheduledTaskTrigger -Daily -At "03:02:30")' in v and '"sinxron --toliq"' in v
+    assert '(New-ScheduledTaskTrigger -Daily -At "02:30")' in v and "zaxira.ps1" in v
+    x = (WINDOWS / "xizmat_ornatish.ps1").read_text(encoding="utf-8-sig")
+    assert '"--listen=127.0.0.1:$IchkiPort"' in x and '"--channel-timeout=130"' in x and "config.wsgi:application" in x
+
+
+def test_waitress_talablarda():
+    assert any(q.startswith("waitress") for q in (DEPLOY.parent / "requirements.txt").read_text().splitlines())
