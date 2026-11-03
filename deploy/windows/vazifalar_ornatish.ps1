@@ -22,15 +22,17 @@ function Manage($Buyruq, $Log) {
 }
 
 # Har soatda, soat boshida (00:00 dan boshlab, cheksiz)
-$soatlik = New-ScheduledTaskTrigger -Once -At "00:00" -RepetitionInterval (New-TimeSpan -Hours 1)
+# Vaqt matn emas, aniq DateTime: ru-RU madaniyatida "03:02:30" matni noto'g'ri soniyalar bilan o'qildi
+function Vaqt($Soat, $Daqiqa, $Soniya = 0) { (Get-Date).Date.AddHours($Soat).AddMinutes($Daqiqa).AddSeconds($Soniya) }
+$soatlik = New-ScheduledTaskTrigger -Once -At (Vaqt 0 0) -RepetitionInterval (New-TimeSpan -Hours 1)
 Vazifa "AV sinxron" "1C'dan sinxron (oddiy, 45 kunlik oyna), har soatda" (Manage "sinxron" "sinxron.log") $soatlik
 
 # 03:00 dagi soatlik sinxron bilan to'qnashmasin — 2,5 daqiqa keyin; band bo'lsa buyruq o'zi 5 daqiqa qayta urinadi
 Vazifa "AV sinxron toliq" "1C'dan to'liq sinxron (--toliq), har kecha" (Manage "sinxron --toliq" "sinxron-toliq.log") `
-    (New-ScheduledTaskTrigger -Daily -At "03:02:30")
+    (New-ScheduledTaskTrigger -Daily -At (Vaqt 3 2 30))
 
 $zaxiraAmal = New-ScheduledTaskAction -Execute "powershell.exe" -WorkingDirectory $Ilova `
     -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$Ilova\deploy\windows\zaxira.ps1`""
-Vazifa "AV zaxira" "PostgreSQL (pg_dump) + media zaxirasi, har kecha" $zaxiraAmal (New-ScheduledTaskTrigger -Daily -At "02:30")
+Vazifa "AV zaxira" "PostgreSQL (pg_dump) + media zaxirasi, har kecha" $zaxiraAmal (New-ScheduledTaskTrigger -Daily -At (Vaqt 2 30))
 
 Get-ScheduledTask -TaskPath "\AV\" | Get-ScheduledTaskInfo | Format-Table TaskName, NextRunTime -AutoSize

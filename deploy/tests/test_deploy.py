@@ -130,8 +130,8 @@ def test_windows_sozlamalari_bir_xil():
 def test_windows_vazifalar_jadvali():
     v = (WINDOWS / "vazifalar_ornatish.ps1").read_text(encoding="utf-8-sig")
     assert "-RepetitionInterval (New-TimeSpan -Hours 1)" in v  # sinxron har soatda
-    assert '(New-ScheduledTaskTrigger -Daily -At "03:02:30")' in v and '"sinxron --toliq"' in v
-    assert '(New-ScheduledTaskTrigger -Daily -At "02:30")' in v and "zaxira.ps1" in v
+    assert '(New-ScheduledTaskTrigger -Daily -At (Vaqt 3 2 30))' in v and '"sinxron --toliq"' in v
+    assert '(New-ScheduledTaskTrigger -Daily -At (Vaqt 2 30))' in v and "zaxira.ps1" in v
     x = (WINDOWS / "xizmat_ornatish.ps1").read_text(encoding="utf-8-sig")
     assert '"--listen=127.0.0.1:$IchkiPort"' in x and '"--channel-timeout=130"' in x and "config.wsgi:application" in x
 
