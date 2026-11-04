@@ -145,7 +145,7 @@
     if (!tugma) qidir.focus();
   });
 
-  // Qidiruv qatori xona satri ostida qotadi; kartochka qidiruv qatorigacha ko'tariladi (uni yopmaydi).
+  // Qidiruv qatori xona satri ostida qotadi; natija ko'rsatilganda uning tepasi shu qator ostida turadi (scroll-margin).
   // Balandliklar ekranga qarab o'zgaradi (xona nomi ikki qator bo'lishi mumkin) — o'lchab olinadi.
   function joylashuv() {
     var xona = document.querySelector(".m-xona");
@@ -177,6 +177,8 @@
 
   document.addEventListener("htmx:afterSwap", function (e) {
     if (e.detail.target.id !== "kartochka") return;
+    // Natija qidiruv ostida chiqadi: ko'rinmay qolgan bo'lsa (sahifa pastga aylantirilgan) — unga qaytamiz
+    if (e.detail.target.innerHTML.trim()) e.detail.target.scrollIntoView({ block: "nearest" });
     var soni = e.detail.target.querySelector("input[name=soni]");
     if (soni && klaviatura) soni.select();  // kartochka ochildi: son tayyor, Enter — saqlash
     if (e.detail.target.querySelector(".m-ok")) {

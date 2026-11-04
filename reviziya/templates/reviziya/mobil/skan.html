@@ -6,17 +6,15 @@
   .m-xona { position: sticky; top: 56px; z-index: 15; display: flex; align-items: center; gap: .5rem; margin: -.75rem -.75rem .75rem;
     padding: .5rem .75rem; background: var(--av-indigo-och); border-bottom: 1px solid var(--av-chiziq); }
   .m-xona b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-  /* Qidiruv qatori doim ko'rinadi: xona satri ostida qotadi; kartochka uni yopmaydi (balandligi cheklangan) */
+  /* Qidiruv qatori doim ko'rinadi: xona satri ostida qotadi */
   .m-qidiruv { position: sticky; top: var(--qidiruv-top, 121px); z-index: 14; display: flex; gap: .5rem; margin: .5rem -.75rem 0;
     padding: .5rem .75rem; background: var(--av-fon); }
   .m-qidiruv .qidiruv-quti { flex: 1; min-width: 0; }
   #kamera-video { width: 100%; max-height: 50vh; margin-top: .5rem; border-radius: var(--av-radius); background: #000; object-fit: cover; }
   #kartochka:empty { display: none; }
-  #kartochka { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; max-height: calc(100vh - var(--kartochka-joy, 190px));
-    max-height: calc(100dvh - var(--kartochka-joy, 190px)); overflow-y: auto; margin: 0 auto;
-    max-width: 640px; padding: .5rem 1rem calc(1rem + env(safe-area-inset-bottom)); background: var(--av-sirt);
-    border-radius: 18px 18px 0 0; box-shadow: var(--av-soya-katta); border: 1px solid var(--av-chiziq); }
-  #kartochka::before { content: ""; display: block; width: 40px; height: 4px; margin: 0 auto .5rem; border-radius: 4px; background: var(--av-chiziq); }
+  /* Natija (qidiruv yoki QR) — alohida oyna emas: qidiruv qatori ostida, sahifa ichida; sahifa bilan birga aylanadi */
+  #kartochka { margin: .5rem 0 0; padding: .75rem 1rem 1rem; background: var(--av-sirt); border: 1px solid var(--av-chiziq);
+    border-radius: 14px; box-shadow: var(--av-soya); scroll-margin-top: var(--kartochka-joy, 190px); }
   .m-sanoq { display: flex; align-items: stretch; gap: .5rem; }
   .m-sanoq .m-tugma { min-width: 56px; font-size: 1.4rem; padding: 0; }
   .m-sanoq .m-maydon { flex: 1; text-align: center; font-size: 1.25rem; font-weight: 700; }
@@ -48,8 +46,10 @@
     border: 1px dashed var(--av-chiziq); border-radius: 12px; background: var(--av-sirt); font-weight: 600; cursor: pointer; }
   .m-rasm-tugma input { position: absolute; width: 1px; height: 1px; opacity: 0; }
   .m-rasm-tugma.tanlangan { border-style: solid; border-color: var(--av-yashil); background: var(--av-yashil-och); color: #087251; }
-  .m-saqla-panel { position: sticky; bottom: calc(-1rem - env(safe-area-inset-bottom)); margin: .75rem -1rem 0;
-    padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom)); background: var(--av-sirt); border-top: 1px solid var(--av-chiziq-och); z-index: 1; }
+  /* «Saqlash» uzun kartochkada ham ko'rinib tursin: ekran pastida qotadi */
+  .m-saqla-panel { position: sticky; bottom: 0; margin: .75rem -1rem -1rem;
+    padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom)); background: var(--av-sirt); border-top: 1px solid var(--av-chiziq-och);
+    border-radius: 0 0 14px 14px; z-index: 1; }
   .m-xona-tugadi { margin-top: 1.5rem; }
   .m-begona { display: flex; flex-direction: column; align-items: flex-end; text-align: right; max-width: 9.5rem; gap: .15rem; }
   .m-begona .m-xira { font-size: .72rem; line-height: 1.25; }
@@ -138,5 +138,5 @@
 {% endblock %}
 {% block skript %}
 <script src="{% static 'panel/htmx.min.js' %}" defer></script>
-<script src="{% static 'reviziya/skan.js' %}?v=4" defer></script>
+<script src="{% static 'reviziya/skan.js' %}?v=5" defer></script>
 {% endblock %}
