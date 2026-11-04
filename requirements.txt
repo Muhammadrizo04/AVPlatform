@@ -1,6 +1,6 @@
 asgiref==3.12.1
-brotli==1.2.0
-certifi==2026.7.22
+brotli==1.2.1
+certifi==2026.10.23
 cffi==2.1.1
 charset-normalizer==3.5.2
 colorama==0.4.6
@@ -22,7 +22,7 @@ psycopg-binary==3.3.6
 pycparser==3.11
 pydyf==0.13.0
 Pygments==2.21.0
-pypdf==6.21.1
+pypdf==6.21.4
 pyphen==0.18.1
 pytest==9.1.1
 pytest-django==4.14.0
