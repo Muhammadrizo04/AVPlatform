@@ -19,6 +19,11 @@ if (-not ($bor -match "HTTP_X_FORWARDED_PROTO")) {
     & $AppCmd set config -section:system.webServer/rewrite/allowedServerVariables /+"[name='HTTP_X_FORWARDED_PROTO']" /commit:apphost
 }
 
+# Statik fayllarni siqish moduli (web.config: urlCompression)
+if ((Get-Command Install-WindowsFeature -ErrorAction SilentlyContinue) -and -not (Get-WindowsFeature Web-Stat-Compression).Installed) {
+    Install-WindowsFeature Web-Stat-Compression | Out-Null
+}
+
 New-Item -ItemType Directory -Force $IisPapka | Out-Null
 Copy-Item "$PSScriptRoot\web.config" "$IisPapka\web.config" -Force
 

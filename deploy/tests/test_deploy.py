@@ -125,6 +125,7 @@ def test_windows_sozlamalari_bir_xil():
     web = (WINDOWS / "web.config").read_text(encoding="utf-8")
     assert "http://127.0.0.1:8000/{R:1}" in web and 'name="HTTP_X_FORWARDED_PROTO" value="https"' in web
     assert 'maxAllowedContentLength="16777216"' in web
+    assert 'doStaticCompression="true" doDynamicCompression="false"' in web
 
 
 def test_windows_vazifalar_jadvali():
