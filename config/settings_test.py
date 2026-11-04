@@ -9,3 +9,6 @@ if os.name == "nt" and os.path.isdir(_MSYS2):
     os.environ.setdefault("WEASYPRINT_DLL_DIRECTORIES", _MSYS2)
 
 from .settings import *  # noqa: E402,F401,F403
+
+# Testlarni tezlatish: parol hesh'i (PBKDF2 ~0.3 s/login) o'rniga MD5. Faqat testlarda; ishchi settings.py o'zgarmaydi.
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
