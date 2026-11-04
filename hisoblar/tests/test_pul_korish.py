@@ -1,7 +1,7 @@
 """Pul (summa, qiymat, amortizatsiya) faqat `pul_korish` huquqi borlarga: admin, hisobchi, rahbar. HR — faqat soni."""
 import io
 import uuid
-from datetime import date, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
 import pytest
