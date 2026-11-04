@@ -19,7 +19,8 @@ def sinxron_holati(request):
         "chiqim_kutilmoqda_soni": chiqim_soni,
         "akt_qoralama_soni": sum(i["soni"] for i in ishlar if i["tur"] == "akt"),
         "kutayotgan_ishlar": ishlar,
-        "kutayotgan_jami": sum(i["soni"] for i in ishlar),
+        # Qo'ng'iroqchadagi qizil son — faqat shu foydalanuvchi hali o'qimaganlar (menyudagi sonlar — barcha ishlar)
+        "kutayotgan_jami": sum(i["yangi"] for i in ishlar),
         "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
         "pul_huquqi": huquqi_bor(request.user, "pul_korish"),
         "korish_huquqi": huquqi_bor(request.user, "korish"),

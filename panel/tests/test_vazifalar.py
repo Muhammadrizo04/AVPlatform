@@ -74,3 +74,38 @@ def test_reviziya_sahifasida_aktlar(muhit, foydalanuvchi, filial_yarat):
     akt.save()
     assert "Javobgar shaxsga biriktirish aktlari" not in matn(kirgan(hisobchi).get(reverse("reviziya:sahifa", args=[rv.pk])))
     assert MolAkt.objects.count() == 1
+
+
+def qizil(user) -> int:
+    return sum(i["yangi"] for i in kutayotgan_ishlar(user))
+
+
+def test_oqildi_har_kim_ozi_uchun(muhit, foydalanuvchi):
+    """Bir hisobchi o'qisa — boshqa hisobchida qizil belgi qoladi; ish bajarilmaguncha ro'yxatda turadi."""
+    fa, rv, akt, revizor, hisobchi = muhit
+    boshqa = foydalanuvchi("hisobchi", filiallar=[fa])
+    assert qizil(hisobchi) == qizil(boshqa) == 1
+    javob = kirgan(hisobchi).post(reverse("panel:ishlar_oqildi"), {"kalit": "akt"}, HTTP_HX_REQUEST="true")
+    assert javob.status_code == 200 and "av-qongiroq-son" not in matn(javob)
+    assert "Topshirish akti tasdiq kutmoqda" in matn(javob)  # ish hali bajarilmagan — ro'yxatda qoladi
+    assert qizil(hisobchi) == 0 and nomlar(hisobchi) == {"Topshirish akti tasdiq kutmoqda": 1}
+    assert qizil(boshqa) == 1
+
+
+def test_yangi_obyekt_yana_qizil(muhit):
+    fa, rv, akt, revizor, hisobchi = muhit
+    kirgan(hisobchi).post(reverse("panel:ishlar_oqildi"))  # hammasi
+    assert qizil(hisobchi) == 0
+    MolAkt.objects.create(raqam=akt.raqam + 1, qabul_qiluvchi=akt.qabul_qiluvchi, tuzdi=revizor)
+    ishlar = {i["kalit"]: i for i in kutayotgan_ishlar(hisobchi)}
+    assert ishlar["akt"]["soni"] == 2 and ishlar["akt"]["yangi"] == 1
+
+
+def test_oqildi_jssiz_qaytadi_va_tashqi_manzilga_yonaltirmaydi(muhit):
+    fa, rv, akt, revizor, hisobchi = muhit
+    c = kirgan(hisobchi)
+    javob = c.post(reverse("panel:ishlar_oqildi"), {"keyin": reverse("vositalar:royxat")})
+    assert javob.status_code == 302 and javob.url == reverse("vositalar:royxat")
+    javob = c.post(reverse("panel:ishlar_oqildi"), {"keyin": "https://yomon.example/"})
+    assert javob.url == "/"
+    assert c.get(reverse("panel:ishlar_oqildi")).status_code == 405

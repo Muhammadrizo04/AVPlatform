@@ -92,6 +92,17 @@ def test_kesim_tur(hisobchi, filial_a):
     assert set(qatorlar) == {"Kompyuter", "Turi yo'q"}
 
 
+def test_filial_va_tur_kesimi_alohida_hisob_bilan_bir_xil(hisobchi, filial_a, filial_b):
+    """Bosh sahifa bitta o'tishda oladi — natija `filial_kesimi` va `kesim(..., "tur")` bilan aynan teng."""
+    kartochka(av_yarat(filial_a, turi=tur("Kompyuter")), oy_qosh(BUGUN, -12), 24)
+    av_yarat(filial_b, turi=tur("Mebel"))
+    av_yarat(filial_a)
+    filiallar, turlar = servis.filial_va_tur_kesimi(hisobchi, BUGUN)
+    assert filiallar == servis.filial_kesimi(hisobchi, BUGUN)
+    assert turlar == servis.kesim(hisobchi, "tur", BUGUN)
+    assert servis.jami(turlar) == servis.jami(filiallar)
+
+
 def test_kesim_notogri_guruh(hisobchi):
     with pytest.raises(ValueError):
         servis.kesim(hisobchi, "xato", BUGUN)

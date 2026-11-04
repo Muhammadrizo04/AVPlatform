@@ -126,8 +126,9 @@ def _yorliq_almashtirish(user, bugun):
     return [av for av in qs if av.kalit != av.kartochka.yorliq_kaliti]
 
 
-def _tugash_sanalari(user, bugun):
+def _tugash_sanalari(user, bugun) -> list[tuple]:
     """(AV, tugash sanasi) — xizmat muddati va ishga tushgan sanasi ma'lum faol AV'lar uchun."""
+    natija = []
     qs = (
         av_lar(user)
         .filter(kartochka__ishga_tushgan_sana__isnull=False)
@@ -137,16 +138,25 @@ def _tugash_sanalari(user, bugun):
         kartochka = av.kartochka
         amortizatsiya = hisobla(av.jami_summa, kartochka.ishga_tushgan_sana, samarali_muddat(kartochka), bugun)
         if amortizatsiya is not None:
-            yield av, amortizatsiya.tugash_sanasi
+            natija.append((av, amortizatsiya.tugash_sanasi))
+    return natija
+
+
+def _tugaganlar(tugashlar, bugun):
+    return [av for av, tugash in tugashlar if tugash <= bugun]
+
+
+def _olti_oyda_tugaydiganlar(tugashlar, bugun):
+    chegara = oy_qosh(bugun, 6)
+    return [av for av, tugash in tugashlar if bugun < tugash <= chegara]
 
 
 def _muddat_tugagan(user, bugun):
-    return [av for av, tugash in _tugash_sanalari(user, bugun) if tugash <= bugun]
+    return _tugaganlar(_tugash_sanalari(user, bugun), bugun)
 
 
 def _muddat_6oy(user, bugun):
-    chegara = oy_qosh(bugun, 6)
-    return [av for av, tugash in _tugash_sanalari(user, bugun) if bugun < tugash <= chegara]
+    return _olti_oyda_tugaydiganlar(_tugash_sanalari(user, bugun), bugun)
 
 
 BAYROQLAR: dict[str, Bayroq] = {
@@ -168,8 +178,15 @@ BAYROQLAR: dict[str, Bayroq] = {
 def bayroq_sonlari(user, bugun: date, kalitlar=None) -> dict[str, int]:
     """Har bayroq (yoki faqat `kalitlar`) bo'yicha obyektlar soni (AV yoki taqsimot qatorlari)."""
     sonlar = {}
+    tugashlar = None  # ikkala muddat bayrog'i uchun amortizatsiya bir marta hisoblanadi
+    muddatlar = {"muddat_tugagan": _tugaganlar, "muddat_6oy": _olti_oyda_tugaydiganlar}
     for kalit, bayroq in BAYROQLAR.items():
         if kalitlar is not None and kalit not in kalitlar:
+            continue
+        if kalit in muddatlar:
+            if tugashlar is None:
+                tugashlar = _tugash_sanalari(user, bugun)
+            sonlar[kalit] = len(muddatlar[kalit](tugashlar, bugun))
             continue
         natija = bayroq.so_rov(user, bugun)
         sonlar[kalit] = len(natija) if isinstance(natija, list) else natija.count()

@@ -44,17 +44,34 @@ def _qoldiqlar(user):
     return filial_bilan_chekla(qs, user).select_related("filial", "av__kartochka", "av__turi__sozlama")
 
 
-def filial_kesimi(user, bugun: date) -> list[dict]:
-    """Ruxsat etilgan filiallar bo'yicha: soni, boshlang'ich qiymat (Σ summa), qoldiq qiymat (eskirish bilan)."""
-    jamlar = defaultdict(_bo_sh_jam)
+def _qoldiq_jamlari(user, bugun: date) -> tuple[dict[int, Filial], dict, dict]:
+    """1C qoldiqlari bo'yicha bitta o'tishda filial va AV turi jamlari (amortizatsiya har qatorga bir marta)."""
     filiallar: dict[int, Filial] = {}
+    filial_jam, tur_jam = defaultdict(_bo_sh_jam), defaultdict(_bo_sh_jam)
     for q in _qoldiqlar(user):
         filiallar[q.filial_id] = q.filial
-        jam = jamlar[q.filial_id]
-        jam["soni"] += q.soni
-        jam["boshlangich"] += q.summa
-        jam["qoldiq"] += _qoldiq_qiymati(q.summa, q.av, bugun)
+        qoldiq = _qoldiq_qiymati(q.summa, q.av, bugun)
+        for jam in (filial_jam[q.filial_id], tur_jam[q.av.turi.nomi if q.av.turi else TURI_YOQ]):
+            jam["soni"] += q.soni
+            jam["boshlangich"] += q.summa
+            jam["qoldiq"] += qoldiq
+    return filiallar, filial_jam, tur_jam
+
+
+def _filial_qatorlari(filiallar: dict[int, Filial], jamlar: dict) -> list[dict]:
     return [{"filial": f, **jamlar[f.pk]} for f in sorted(filiallar.values(), key=lambda f: (f.nomi, f.pk))]
+
+
+def filial_kesimi(user, bugun: date) -> list[dict]:
+    """Ruxsat etilgan filiallar bo'yicha: soni, boshlang'ich qiymat (Σ summa), qoldiq qiymat (eskirish bilan)."""
+    filiallar, filial_jam, _ = _qoldiq_jamlari(user, bugun)
+    return _filial_qatorlari(filiallar, filial_jam)
+
+
+def filial_va_tur_kesimi(user, bugun: date) -> tuple[list[dict], list[dict]]:
+    """Bosh sahifa uchun: `filial_kesimi` va `kesim(..., "tur")` — qoldiqlar bir marta o'qiladi."""
+    filiallar, filial_jam, tur_jam = _qoldiq_jamlari(user, bugun)
+    return _filial_qatorlari(filiallar, filial_jam), _tartibla(tur_jam)
 
 
 def _taqsimotlar(user):
@@ -101,14 +118,10 @@ def kesim(user, guruh: Literal["filial", "bolim", "tur"], bugun: date) -> list[d
     if guruh == "filial":
         return [{"nomi": q["filial"].nomi, **{k: q[k] for k in ("soni", "boshlangich", "qoldiq")}}
                 for q in filial_kesimi(user, bugun)]
-    jamlar = defaultdict(_bo_sh_jam)
     if guruh == "tur":
-        for q in _qoldiqlar(user):
-            jam = jamlar[q.av.turi.nomi if q.av.turi else TURI_YOQ]
-            jam["soni"] += q.soni
-            jam["boshlangich"] += q.summa
-            jam["qoldiq"] += _qoldiq_qiymati(q.summa, q.av, bugun)
-    elif guruh == "bolim":
+        return _tartibla(_qoldiq_jamlari(user, bugun)[2])
+    jamlar = defaultdict(_bo_sh_jam)
+    if guruh == "bolim":
         qatorlar, avlar = _taqsimotlar(user)
         bolimlar = _bolimlar()
         av_qatorlari = defaultdict(list)
@@ -128,9 +141,12 @@ def kesim(user, guruh: Literal["filial", "bolim", "tur"], bugun: date) -> list[d
                 jam["qoldiq"] += qoldiq
     else:
         raise ValueError(f"Noma'lum guruh: {guruh!r}")
-    qatorlar = [
-        {"nomi": nomi, **j} for nomi, j in jamlar.items()
-    ]
+    return _tartibla(jamlar)
+
+
+def _tartibla(jamlar: dict) -> list[dict]:
+    """{nomi: jam} -> nomi bo'yicha qatorlar, «Bo'limsiz» — oxirida."""
+    qatorlar = [{"nomi": nomi, **j} for nomi, j in jamlar.items()]
     return sorted(qatorlar, key=lambda q: (q["nomi"] == BOLIMSIZ, q["nomi"]))
 
 

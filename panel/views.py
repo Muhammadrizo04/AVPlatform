@@ -1,18 +1,21 @@
 from decimal import Decimal
 
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
-from hisobotlar.servis import filial_kesimi, jami, kesim
+from hisobotlar.servis import filial_va_tur_kesimi, jami
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from onec.models import AV
 from vositalar.bayroqlar import BAYROQLAR, bayroq_sonlari
 from vositalar.models import Holat, Taqsimot
 
 from .dinamika import filial_dinamikasi
+from .vazifalar import kutayotgan_ishlar, oqildi_belgila
 
 # Buxgalteriya tozalash vazifalarini ko'rmaydigan (pul huquqi yo'q) rol — HR — uchun faqat o'zi hal qiladigan bayroqlar:
 # МОЛ biriktirish (akt orqali), ketgan xodimdagi AV'lar va bo'limsiz qatorlar.
@@ -84,7 +87,8 @@ def _bosh(request):
         kalitlar = None
     sonlar = bayroq_sonlari(request.user, bugun, kalitlar)
     bayroqlar = [{"kalit": k, "nomi": BAYROQLAR[k].nomi, "soni": sonlar[k], "rang": VAZIFA_RANGI.get(k, "hisobot")} for k in sonlar]
-    filiallar = filial_kesimi(request.user, bugun)
+    # Filiallar va AV turlari kesimi — 1C qoldiqlari bir o'tishda (amortizatsiya ikki marta hisoblanmasin)
+    filiallar, tur_kesimi = filial_va_tur_kesimi(request.user, bugun)
     jamlar = jami(filiallar)
 
     # Grafik: eng ko'p AV'li filiallar (soni bo'yicha kamayuvchi)
@@ -126,7 +130,7 @@ def _bosh(request):
         kontekst.update(
             qiymat_filial=_qiymat_grafigi(filial_qiymat),
             qiymat_filial_qolgan=max(len(filial_qiymat) - GRAFIK_FILIALLAR, 0),
-            qiymat_tur=_qiymat_grafigi(kesim(request.user, "tur", bugun), GRAFIK_TURLAR),
+            qiymat_tur=_qiymat_grafigi(tur_kesimi, GRAFIK_TURLAR),
             eskirish_foizi=_ulush(jamlar["boshlangich"] - jamlar["qoldiq"], jamlar["boshlangich"]),
         )
     return render(request, "panel/bosh.html", kontekst)
@@ -135,6 +139,22 @@ def _bosh(request):
 def _dinamika_kontekst(request) -> dict:
     d = filial_dinamikasi(request.user, request.GET)
     return {"d": d, "grafik_malumot": d.grafik}
+
+
+@require_POST
+@login_required
+def ishlar_oqildi(request):
+    """«Kutayotgan ishlar»: bitta tur (`kalit`) yoki hammasini o'qilgan qilish — faqat shu foydalanuvchi uchun.
+    HTMX'da yangilangan qo'ng'iroqcha qaytadi; JS'siz — kelgan sahifaga qaytadi."""
+    oqildi_belgila(request.user, request.POST.get("kalit") or None)
+    if request.headers.get("HX-Request"):
+        ishlar = kutayotgan_ishlar(request.user)
+        return render(request, "panel/_kutayotgan_ishlar.html",
+                      {"kutayotgan_ishlar": ishlar, "kutayotgan_jami": sum(i["yangi"] for i in ishlar)})
+    keyin = request.POST.get("keyin", "")
+    if not url_has_allowed_host_and_scheme(keyin, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        keyin = "/"
+    return redirect(keyin)
 
 
 @amal_kerak("bosh_sahifa")
