@@ -76,3 +76,17 @@ def test_yorliq_olchami_faqat_bitta_standart(db):
 def test_yorliq_olchami_chegarasi(db, eni, boyi):
     with pytest.raises(IntegrityError), transaction.atomic():
         YorliqOlchami.objects.create(nomi="X", eni_mm=Decimal(eni), boyi_mm=Decimal(boyi))
+
+
+def test_nulls_distinct_ishlatilmaydi():
+    """Ishchi server PostgreSQL 14: `nulls_distinct` (PG15+) u yerda jimgina tashlab yuboriladi — noyoblik yo'qoladi."""
+    from django.apps import apps
+    from django.db.models import UniqueConstraint
+
+    topildi = [
+        f"{m._meta.label}.{c.name}"
+        for m in apps.get_models()
+        for c in m._meta.constraints
+        if isinstance(c, UniqueConstraint) and c.nulls_distinct is not None
+    ]
+    assert topildi == []

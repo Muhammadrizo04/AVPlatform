@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 
@@ -99,8 +100,9 @@ class Taqsimot(models.Model):
         constraints = [
             models.CheckConstraint(condition=Q(soni__gt=0), name="taqsimot_soni_musbat"),
             # Bo'sh bo'lim/MOL ham bir xil deb hisoblanadi: bir xil qatorlar birlashadi.
+            # PostgreSQL 14 da NULLS NOT DISTINCT yo'q — bo'sh qiymat Coalesce bilan 0 ga tenglashtiriladi.
             models.UniqueConstraint(
-                fields=["av", "filial", "bolim", "mol", "holat"], nulls_distinct=False, name="taqsimot_unikal"
+                "av", "filial", Coalesce("bolim", 0), Coalesce("mol", 0), "holat", name="taqsimot_unikal"
             ),
         ]
 

@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 
 from vositalar.models import Holat as TaqsimotHolat
@@ -77,10 +78,9 @@ class ReviziyaQayd(models.Model):
 
     class Meta:
         constraints = [
+            # PostgreSQL 14 da NULLS NOT DISTINCT yo'q — bo'sh qiymat Coalesce bilan 0 ga tenglashtiriladi.
             models.UniqueConstraint(
-                fields=["reviziya", "bolim", "av", "holat", "qr_matn"],
-                nulls_distinct=False,
-                name="reviziya_qayd_noyob",
+                "reviziya", Coalesce("bolim", 0), Coalesce("av", 0), "holat", "qr_matn", name="reviziya_qayd_noyob"
             )
         ]
 
@@ -95,7 +95,7 @@ class ReviziyaXona(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=["reviziya", "bolim"], nulls_distinct=False, name="reviziya_xona_noyob")
+            models.UniqueConstraint("reviziya", Coalesce("bolim", 0), name="reviziya_xona_noyob")
         ]
 
 
