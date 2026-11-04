@@ -170,7 +170,7 @@ Haqiqiy 1C bazasiga ulanadigan jonli testlar alohida ishga tushiriladi: `python 
 | `jurnal/` | O'zgarishlar jurnali |
 | `panel/` | Umumiy shablonlar, bosh sahifa, sozlamalar |
 | `1c/` | 1C kengaytmasi «AVSinxron» |
-| `deploy/` | Server sozlama fayllari (systemd, nginx, zaxira) |
+| `deploy/` | Server sozlama fayllari (systemd, nginx, zaxira; Windows Server — `deploy/windows/`) |
 | `docs/` | Spetsifikatsiya, rejalar, o'rnatish yo'riqnomasi |
 
 ## Muhim qoidalar
