@@ -111,7 +111,8 @@ def test_backup_sh():
 WINDOWS = DEPLOY / "windows"
 
 
-@pytest.mark.parametrize("nom", ["sozlamalar.ps1", "xizmat_ornatish.ps1", "iis_sozla.ps1", "vazifalar_ornatish.ps1", "zaxira.ps1"])
+@pytest.mark.parametrize("nom", ["sozlamalar.ps1", "xizmat_ornatish.ps1", "iis_sozla.ps1", "vazifalar_ornatish.ps1", "zaxira.ps1",
+                                 "media_ulashish.ps1"])
 def test_windows_skriptlari_bom_va_crlf(nom):
     """PowerShell 5.1 BOM'siz UTF-8 ni ANSI deb o'qiydi (o'zbekcha belgilar buziladi)."""
     xom = (WINDOWS / nom).read_bytes()
@@ -146,3 +147,9 @@ def test_waitress_iis_proksisiga_ishonadi():
 
 def test_waitress_talablarda():
     assert any(q.startswith("waitress") for q in (DEPLOY.parent / "requirements.txt").read_text().splitlines())
+
+
+def test_media_ulushi_faqat_oqish():
+    m = (WINDOWS / "media_ulashish.ps1").read_text(encoding="utf-8-sig")
+    assert "-ReadAccess" in m and "-FullAccess" not in m and "-ChangeAccess" not in m
+    assert ":(OI)(CI)RX" in m and "-RemoteAddress $Agentlar" in m and '$Agentlar = "192.168.100.37"' in m

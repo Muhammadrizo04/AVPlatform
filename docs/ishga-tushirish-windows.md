@@ -257,3 +257,15 @@ ishchi sayt o'zgarmaydi.
 5. Agentlar kompyuterida `D:\claude\agentlar\.env`:
    `MANBA_DATABASE_URL=postgresql://av_nusxa:<KUCHLI_PAROL>@192.168.100.30:5432/av`
    (tungi `zaxira.py` ham ishchi bazani shu rol bilan Z: diskka zaxiralaydi).
+6. Rasmlar (ixtiyoriy, lekin rasm sahifalarini tekshirish uchun kerak) — serverda, administrator PowerShell'da:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File E:\AVPlatform\deploy\windows\media_ulashish.ps1
+   ```
+   Skript `av_media` hisobini yaratadi (parolni o'zi so'raydi), media papkasini `\\192.168.100.30\av-media` nomi bilan
+   **faqat o'qish** uchun ochadi va 445 portni faqat 192.168.100.37 ga ruxsat beradi.
+   Agentlar kompyuterida (agentlar ishlaydigan Windows foydalanuvchisi nomidan) parolni Windows'ga saqlang — u so'raydi:
+   ```powershell
+   cmdkey /add:192.168.100.30 /user:192.168.100.30\av_media /pass
+   ```
+   va `D:\claude\agentlar\.env` ga: `MANBA_MEDIA=\\192.168.100.30\av-media`
+
