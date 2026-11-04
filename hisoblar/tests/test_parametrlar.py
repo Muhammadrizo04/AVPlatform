@@ -148,8 +148,10 @@ SOZLAMALAR = Path(__file__).resolve().parents[2] / "config" / "settings.py"
 
 
 def _sozlamalar(monkeypatch, **muhit):
+    # Bo'sh qiymat (o'chirish emas): settings.py `.env` ni qayta o'qiydi, o'chirilgan kalit u yerdan qaytib keladi
+    # (ishchi serverda `.env` da HTTPS=True va CSRF_TRUSTED_ORIGINS bor)
     for kalit in ("HTTPS", "CSRF_TRUSTED_ORIGINS", "ALLOWED_HOSTS"):
-        monkeypatch.delenv(kalit, raising=False)
+        monkeypatch.setenv(kalit, "")
     for kalit, qiymat in muhit.items():
         monkeypatch.setenv(kalit, qiymat)
     return runpy.run_path(str(SOZLAMALAR))

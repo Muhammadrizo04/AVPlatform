@@ -214,3 +214,46 @@ Restart-Service AV-platforma
 - [ ] PDF yorliq ochiladi (WeasyPrint/Pango ishlayapti); AV kartochkasidagi rasm yuklanadi va ko'rinadi.
 - [ ] Ertasi kuni `E:\AVPlatform-malumot\zaxira` da `.dump` fayli bor.
 - [ ] Rollarni tekshiring: `docs/ishga-tushirish.md`, 10-bo'lim.
+
+## 11. Serverda testlar va tezlik
+
+Testlar alohida `test_av` bazasida ishlaydi (pytest uni o'zi yaratadi va o'chiradi), ishchi `av` bazasiga tegmaydi.
+`config/settings_test.py` serverdagi `.env` dagi HTTPS, proksi va media sozlamalarini testlar uchun o'chiradi.
+Bir marta `av` roliga test bazasi yaratish huquqini bering (psql, `postgres` nomidan):
+
+```sql
+ALTER ROLE av CREATEDB;
+```
+
+Ishga tushirish:
+
+```powershell
+cd E:\AVPlatform
+venv\Scripts\python.exe -m pytest -q
+```
+
+Sahifalar tezligi (bazaga hech narsa yozmaydi — hammasi tranzaksiyada qaytariladi; `<login>` — mavjud foydalanuvchi):
+
+```powershell
+venv\Scripts\python.exe manage.py sahifa_tezligi <login>
+```
+
+## 12. Agentlar uchun nusxa (faqat o'qish)
+
+Agentlar (192.168.100.37 dagi `D:\claude\agentlar`) ishchi bazadan faqat `pg_dump` bilan nusxa oladi; nusxa
+(`av_agent_sinov`) va sinov serveri o'sha kompyuterda — agentlar hamma tugmani o'sha yerda bosadi, ishchi baza va
+ishchi sayt o'zgarmaydi.
+
+1. Faqat o'qiydigan rol: `psql -U postgres -d av -v parol="'<KUCHLI_PAROL>'" -f E:\AVPlatform\deploy\windows\av_nusxa_roli.sql`
+2. PostgreSQL ichki tarmoqni ham tinglasin — `C:\Program Files\PostgreSQL\14\data\postgresql.conf`:
+   `listen_addresses = 'localhost,192.168.100.30'`
+3. Faqat agentlar kompyuteri va faqat shu rol — `pg_hba.conf` oxiriga:
+   `host    av    av_nusxa    192.168.100.37/32    scram-sha-256`
+4. Firewall: 5432 faqat 192.168.100.37 dan (routerda 5432 ochilmaydi):
+   ```powershell
+   New-NetFirewallRule -DisplayName "PostgreSQL agentlar" -Direction Inbound -Protocol TCP -LocalPort 5432 -RemoteAddress 192.168.100.37 -Action Allow
+   Restart-Service postgresql-x64-14
+   ```
+5. Agentlar kompyuterida `D:\claude\agentlar\.env`:
+   `MANBA_DATABASE_URL=postgresql://av_nusxa:<KUCHLI_PAROL>@192.168.100.30:5432/av`
+   (tungi `zaxira.py` ham ishchi bazani shu rol bilan Z: diskka zaxiralaydi).
