@@ -13,7 +13,7 @@
   queryset darajasida (`hisoblar.huquqlar`) — faqat sahifalarda emas: Excel, PDF, HTMX bo'laklar, rasm URL'larida ham.
 - Kirish: 5 noto'g'ri urinish -> 15 daqiqa blok; sessiya 8 soat harakatsizlikdan keyin tugaydi.
 - Holatlar: `ishlatilmoqda`, `zaxirada`, `tamirda`, `nosoz`, `hisobdan_chiqarishga`, `topilmadi`.
-- Sinxron: har soatda, harakatlar oynasi 45 kun, har kecha 03:00 to'liq, HTTP timeout 60 s, bitta tranzaksiya,
+- Sinxron: har soatda, harakatlar oynasi 45 kun, har kecha 03:02:30 to'liq, HTTP timeout 60 s, bitta tranzaksiya,
   bir vaqtda bitta sinxron (PostgreSQL advisory lock, kalit `7310001`).
 - Taqsimot invarianti: har (AV, filial) uchun Σ `Taqsimot.soni` = `AVQoldiq.soni`.
 - Python 3.12 bilan mos kod yozing (3.13'ga xos imkoniyatlar yo'q).
@@ -30,6 +30,7 @@
 - Testlar (Windows, lokal): `venv\Scripts\python.exe -m pytest -q` (`.env` shart emas; `config.settings_test`; PostgreSQL rol `av`/`av`, CREATEDB)
 - Sinxron: `python manage.py sinxron` (to'liq: `--toliq`)
 - Tekshiruv: `python manage.py check`
+- Sahifa tezligi: `python manage.py sahifa_tezligi <login>`
 - Mahalliy ishga tushirish uchun `.env.example` dan `.env` yarating (dev: `DEBUG=True`).
 
 ## Hujjatlar
