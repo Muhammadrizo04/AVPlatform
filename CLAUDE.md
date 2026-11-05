@@ -37,3 +37,4 @@
 - Reja: `docs/superpowers/plans/2026-10-17-av-platforma-1-bosqich.md`
 - 1C farazlari: `docs/1c-farazlar.md`
 - Ishchi server (Windows, av.dsyuksak.uz:8092): `docs/ishga-tushirish-windows.md`, skriptlar `deploy/windows/`
+- Administrator qo'llanmasi: `docs/admin-qollanma.md` (video va rasmli PDF: `D:/claude/video/out`, git'ga kirmaydi)
