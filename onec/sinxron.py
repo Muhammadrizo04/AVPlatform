@@ -12,6 +12,7 @@ from django.db import connection, transaction
 from django.utils import timezone
 
 from chiqimlar.servis import chiqimlarni_yangila
+from vositalar.models import Taqsimot
 from vositalar.moslash import moslashtir
 
 from .client import OneCClient
@@ -25,14 +26,25 @@ HARAKAT_OYNASI = timedelta(days=45)
 TOLIQ_BOSHI = datetime(1900, 1, 1)
 # Harakatlar doim shu sanagacha olinadi: kelajak sanali 1C hujjatlari ham oynaga kiradi.
 CHEKSIZ_GACHA = datetime(3999, 12, 31, 23, 59, 59)
+# Musbat qoldiq qatorlari bir sinxronda shu ulushdan ko'p kamaysa — javob shubhali (oddiy ishda bir necha foiz).
+KESKIN_KAMAYISH = Decimal("0.2")
+# Bundan kam qatorli bazada ulush ma'nosiz: faqat butunlay bo'sh javob to'xtatiladi.
+KICHIK_BAZA = 20
 
 
 class SinxronBand(Exception):
     """Boshqa sinxron ishlayapti (advisory lock band)."""
 
 
-def sinxronla(client: OneCClient, toliq: bool = False, hozir: datetime | None = None) -> SinxronJurnal:
-    """Bitta sinxron urinishi. Natija jurnalga yoziladi; band bo'lsa `SinxronBand` ko'tariladi."""
+class ShubhaliJavob(Exception):
+    """1C javobi shubhali: qo'llansa, faqat platformada turgan bo'lim va МОЛ ma'lumoti yo'qoladi."""
+
+
+def sinxronla(
+    client: OneCClient, toliq: bool = False, hozir: datetime | None = None, majburiy: bool = False
+) -> SinxronJurnal:
+    """Bitta sinxron urinishi. Natija jurnalga yoziladi; band bo'lsa `SinxronBand` ko'tariladi.
+    `majburiy` — javob tekshiruvisiz (`_javobni_tekshir`): 1C'dagi katta o'zgarish haqiqiy ekani aniq bo'lganda."""
     boshlandi = timezone.now()
     hozir = hozir or boshlandi
     # Hali birorta muvaffaqiyatli to'liq sinxron bo'lmasa, to'liq tarix olinadi: aks holda AV'ning birinchi kirimi
@@ -50,7 +62,7 @@ def sinxronla(client: OneCClient, toliq: bool = False, hozir: datetime | None = 
 
     try:
         try:
-            ozgarishlar = _bajar(client, toliq, hozir, boshlandi)
+            ozgarishlar = _bajar(client, toliq, hozir, boshlandi, majburiy)
         except Exception as xato:
             # atomic blok allaqachon rollback qilingan; jurnal alohida (autocommit) yoziladi.
             logger.exception("Sinxron xato bilan tugadi")
@@ -86,7 +98,31 @@ def ketma_ket_xatolar() -> int:
     return son
 
 
-def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime) -> dict:
+def _javobni_tekshir(sprav: dict, vos: dict) -> None:
+    """Javob bazadagi holatdan keskin farq qilsa — `ShubhaliJavob`, hech narsa yozilmaydi. Qoldiqsiz AV'ning bo'limi
+    va МОЛ'i o'chiriladi, 1C keyin to'g'rilansa ham ular qaytmaydi: bo'sh yoki chala javobni qo'llab bo'lmaydi."""
+    filial_reflar = {uuid.UUID(f["ref"]) for f in sprav["filiallar"]}
+    yoqolgan = (
+        Filial.objects.filter(pk__in=Taqsimot.objects.values("filial_id"))
+        .exclude(ref_1c__in=filial_reflar)
+        .order_by("nomi")
+        .values_list("nomi", flat=True)
+    )
+    if yoqolgan:
+        raise ShubhaliJavob(f"1C javobida taqsimoti bor filial yo'q: {', '.join(yoqolgan)}. Hech narsa o'zgarmadi.")
+    av_reflar = {uuid.UUID(v["ref"]) for v in vos["vositalar"]}
+    yangi = sum(
+        1 for q in vos["qoldiqlar"]
+        if _son(q.get("soni")) > 0 and q.get("av") and q.get("filial")
+        and uuid.UUID(q["av"]) in av_reflar and uuid.UUID(q["filial"]) in filial_reflar
+    )
+    joriy = AVQoldiq.objects.filter(soni__gt=0).count()
+    chegara = joriy * (1 - KESKIN_KAMAYISH) if joriy >= KICHIK_BAZA else min(joriy, 1)
+    if yangi < chegara:
+        raise ShubhaliJavob(f"1C javobida qoldiq qatorlari keskin kamaydi: {joriy} -> {yangi}. Hech narsa o'zgarmadi.")
+
+
+def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime, majburiy: bool = False) -> dict:
     # 1C so'rovlari tranzaksiyadan oldin: tarmoq kutilayotganda baza qulflanmaydi.
     # 1C oralig'i — zonasiz mahalliy vaqt: [dan, CHEKSIZ_GACHA].
     if toliq:
@@ -97,6 +133,8 @@ def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime) -> dict:
     sprav = client.spravochniklar()
     vos = client.vositalar()
     harakatlar = client.harakatlar(dan, CHEKSIZ_GACHA)
+    if not majburiy:
+        _javobni_tekshir(sprav, vos)
 
     ozgarishlar = {}
     with transaction.atomic():
@@ -115,7 +153,7 @@ def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime) -> dict:
         ozgarishlar["chiqim"] = chiqimlarni_yangila(
             timezone.make_aware(dan, zona), timezone.make_aware(CHEKSIZ_GACHA, zona)
         )
-        ozgarishlar["moslash"] = moslashtir()
+        ozgarishlar["moslash"] = moslashtir(toliq=toliq)
     return ozgarishlar
 
 

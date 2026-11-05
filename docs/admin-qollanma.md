@@ -298,6 +298,13 @@ Har sinxron: boshlangan va tugagan vaqti, natijasi, to'liq yoki oddiyligi va xat
 - Har sinxron bitta tranzaksiyada ishlaydi. 1C javob bermasa yoki xato bersa, hech narsa o'zgarmaydi: eski ma'lumot
   qoladi, jurnalga xato yoziladi.
 - Bir vaqtda faqat bitta sinxron ishlaydi. Band bo'lsa, «Sinxron hozir ishlayapti» xabari chiqadi.
+- 1C javobi shubhali bo'lsa, sinxron hech narsa yozmay xato bilan tugaydi: qoldiq qatorlari 20% dan ko'p kamaygan yoki
+  taqsimoti bor filial javobda yo'q. Bu bo'lim va javobgar shaxs ma'lumotini yo'qotishdan himoya qiladi. Avval 1C'ni
+  tekshiring. O'zgarish haqiqiy bo'lsa (masalan, filial yopilgan), serverda bir marta
+  `venv\Scripts\python.exe manage.py sinxron --toliq --majburiy` ni bajaring.
+- 1C qoldig'i 0 bo'lgan AV soatlik sinxronda o'chirilmaydi: chiqim hujjati 45 kundan eski sanada bo'lishi mumkin. Kechasi
+  to'liq sinxron hujjatni topsa, chiqim tasdiq kutadi; hujjat bo'lmasa, AV shunda taqsimotdan chiqadi. Shu vaqtgacha u
+  «Taqsimot 1C bilan mos emas» bo'lishi mumkin.
 
 **Sinxron nima qiladi:** 1C'da AV ko'paysa, yangi donalar bo'limsiz va javobgarsiz qatorga tushadi («Bo'limga joylash
 kerak»). Kamaysa, avval shu qatordan ayiriladi, yetmasa AV «Taqsimot 1C bilan mos emas»ga tushadi. Xodim ketsa, u
@@ -342,6 +349,7 @@ Hammasi Excel'ga yuklanadi va chop etiladi. Qaydnomalarda **summali** va **summa
 | Holat | Sabab | Nima qilish kerak |
 |---|---|---|
 | «1C bilan aloqa yo'q» | Server 1C'ga ulana olmayapti | «Sinxron jurnali»dagi xato matnini ko'ring, 1C ishlayotganini tekshiring. Platforma eski ma'lumot bilan ishlashda davom etadi |
+| Jurnalda «qoldiq qatorlari keskin kamaydi» yoki «taqsimoti bor filial yo'q» | 1C javobi chala yoki 1C'da katta o'zgarish bo'lgan | 1C'ni tekshiring. O'zgarish haqiqiy bo'lsa, serverda `manage.py sinxron --toliq --majburiy` ni bajaring |
 | Foydalanuvchi kira olmayapti | 5 marta noto'g'ri parol | 15 daqiqa kuting yoki yangi parol bering. «Faol» belgisini ham tekshiring |
 | AV'da «Farq» bor | Taqsimot va 1C qoldig'i teng emas | Kartochkada «Moslash»dan foydalaning yoki kutayotgan 1C chiqimini tasdiqlang |
 | Foydalanuvchi AV'ni ko'rmayapti | Filial cheklovi | Foydalanuvchi filiallarini tekshiring |

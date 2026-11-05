@@ -292,7 +292,7 @@ def test_takroriy_moslash_idempotent(av, filial_a, filial_b):
     ikkinchi = moslashtir()
 
     assert ikkinchi == {
-        "yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "mos_emas": 1,
+        "yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "kechiktirildi": 0, "mos_emas": 1,
     }
     assert holat() == oldin
 

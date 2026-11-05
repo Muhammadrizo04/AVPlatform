@@ -42,15 +42,19 @@ def farq(av: AV, filial) -> Decimal:
     return max(qoldiq, NOL) + k - taqsimot
 
 
-def moslashtir() -> dict:
+def moslashtir(toliq: bool = True) -> dict:
     """Taqsimotni 1C qoldig'iga moslaydi. Statistika (sonlar — (AV, filial) juftlari):
-    `yangi_kartochka`, `kopaydi`, `kamaydi`, `nolga_tushdi`, `mos_emas` (moslashdan keyin farq < 0).
+    `yangi_kartochka`, `kopaydi`, `kamaydi`, `nolga_tushdi`, `kechiktirildi`, `mos_emas` (moslashdan keyin farq < 0).
+
+    `toliq=False` (soatlik sinxron): 1C qoldig'i 0 bo'lgan qatorlar o'chirilmaydi. Soatlik sinxron faqat 45 kunlik
+    harakatlarni ko'radi: eski sanali chiqim hujjati hali `ChiqimHujjat` bo'lmagan bo'lishi mumkin, o'chirilsa — tasdiq
+    chetlab o'tiladi va bo'lim/МОЛ yo'qoladi. Hujjat bor-yo'qligini tungi to'liq sinxron aniqlaydi.
 
     Eslatma: formula `max(1C, 0) + K` bo'yicha kutilayotgan chiqim yetishmayotgan donalarni taqsimlanmaganga qayta
     qo'shadi. Bu faqat `chiqim_boshlanishi` o'tmishga surilganda yoki chiqim kutilayotgan paytda qaytish (kirim)
     kelganda bo'lishi mumkin."""
     with transaction.atomic():
-        statistika = {"yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "mos_emas": 0}
+        statistika = {"yangi_kartochka": 0, "kopaydi": 0, "kamaydi": 0, "nolga_tushdi": 0, "kechiktirildi": 0, "mos_emas": 0}
         statistika["yangi_kartochka"] = _kartochkalar()
 
         # Bir (av, filial) uchun bir nechta tashkilot qatori bo'lishi mumkin — yig'iladi.
@@ -75,13 +79,16 @@ def moslashtir() -> dict:
                 taqsimlanmagan[juft] = t
 
         ishlar = []  # (juft, tur, miqdor)
+        kechiktirilgan = set()  # soatlik sinxronda o'chirilmagan juftlar
         for juft in qoldiq.keys() | taqsimot.keys() | kutilayotgan.keys():
             # Kutilayotgan chiqim (K) tasdiqlanmaguncha taqsimotda qoladi: 1C 0 bo'lsa ham qatorlar o'chmaydi.
             q = max(qoldiq.get(juft, NOL), NOL) + kutilayotgan.get(juft, NOL)
             t = taqsimot.get(juft, NOL)
             if q <= 0:
-                if t > 0:
+                if t > 0 and toliq:
                     ishlar.append((juft, "nolga", t))
+                elif t > 0:
+                    kechiktirilgan.add(juft)
                 continue
             d = q - t
             if d > 0:
@@ -105,11 +112,12 @@ def moslashtir() -> dict:
                 statistika["kamaydi"] += 1
 
         _ishga_tushgan_sanalar()
-        statistika["mos_emas"] = _invariantni_tekshir()
+        statistika["kechiktirildi"] = len(kechiktirilgan)
+        statistika["mos_emas"] = _invariantni_tekshir(kechiktirilgan)
         return statistika
 
 
-def _invariantni_tekshir() -> int:
+def _invariantni_tekshir(kechiktirilgan: frozenset | set = frozenset()) -> int:
     """Bazadagi haqiqiy yig'indilar bo'yicha invariantni tekshiradi (spec §8): Σ taqsimot = max(1C, 0) + K.
     Faqat Σ taqsimot > 1C qoldig'i + K bo'lgan (mos emas, farq < 0) juftlar ruxsat etiladi; ularning soni qaytariladi. Boshqasi — `MoslashXato`
     (sinxron tranzaksiyasi rollback bo'ladi)."""
@@ -121,7 +129,7 @@ def _invariantni_tekshir() -> int:
         k = kutilayotgan.get(juft, NOL)
         q = max(qoldiq.get(juft, NOL), NOL) + k
         t = taqsimot.get(juft, NOL)
-        if t < q or (q <= 0 and t != 0):
+        if t < q or (q <= 0 and t != 0 and juft not in kechiktirilgan):
             raise MoslashXato(
                 f"Taqsimot invarianti buzildi: av={juft[0]} filial={juft[1]} 1C+K={q} (K={k}) taqsimot={t}"
             )

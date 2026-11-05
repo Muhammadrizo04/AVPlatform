@@ -259,7 +259,7 @@ def test_tranzaksiya_ichidagi_xato_rollback(monkeypatch):
     filial["nomi"] = "Yangi nom"
     client.sprav["filiallar"].append({"ref": str(uuid.uuid4()), "kod": "999", "nomi": "Yangi filial"})
 
-    def buzilgan():
+    def buzilgan(toliq=True):
         raise RuntimeError("moslashda xato")
 
     monkeypatch.setattr("onec.sinxron.moslashtir", buzilgan)
@@ -441,7 +441,7 @@ def _band_keyin_ok(monkeypatch, band_soni):
     holat = {"chaqiruv": 0}
     kutishlar = []
 
-    def soxta(client, toliq=False):
+    def soxta(client, toliq=False, majburiy=False):
         holat["chaqiruv"] += 1
         if holat["chaqiruv"] <= band_soni:
             raise SinxronBand("band")

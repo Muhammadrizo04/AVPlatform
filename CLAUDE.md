@@ -15,6 +15,7 @@
 - Holatlar: `ishlatilmoqda`, `zaxirada`, `tamirda`, `nosoz`, `hisobdan_chiqarishga`, `topilmadi`.
 - Sinxron: har soatda, harakatlar oynasi 45 kun, har kecha 03:02:30 to'liq, HTTP timeout 60 s, bitta tranzaksiya,
   bir vaqtda bitta sinxron (PostgreSQL advisory lock, kalit `7310001`).
+- Sinxron himoyasi: shubhali 1C javobi (qoldiq qatorlari 20% dan ko'p kamaysa, taqsimoti bor filial yo'q bo'lsa) hech narsa yozmay xato bilan tugaydi (`--majburiy` chetlab o'tadi); qoldig'i 0 bo'lgan qatorlar faqat to'liq sinxronda o'chiriladi (`moslashtir(toliq=False)` kechiktiradi).
 - Taqsimot invarianti: har (AV, filial) uchun Σ `Taqsimot.soni` = `AVQoldiq.soni`.
 - Python 3.12 bilan mos kod yozing (3.13'ga xos imkoniyatlar yo'q).
 

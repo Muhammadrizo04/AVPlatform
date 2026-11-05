@@ -19,13 +19,17 @@ class Command(BaseCommand):
         parser.add_argument(
             "--toliq", action="store_true", help="Barcha harakatlarni to'liq qayta olish (45 kunlik oyna o'rniga)"
         )
+        parser.add_argument(
+            "--majburiy", action="store_true",
+            help="1C javobi tekshiruvisiz: filial yopilgani yoki qoldiq keskin kamaygani haqiqiy ekani aniq bo'lganda",
+        )
 
-    def handle(self, *args, toliq=False, **options):
+    def handle(self, *args, toliq=False, majburiy=False, **options):
         client = OneCClient.settingsdan()
         urinishlar = TOLIQ_KUTISH_JAMI_S // TOLIQ_KUTISH_S if toliq else 0
         while True:
             try:
-                jurnal = sinxronla(client, toliq=toliq)
+                jurnal = sinxronla(client, toliq=toliq, majburiy=majburiy)
                 break
             except SinxronBand:
                 if urinishlar <= 0:
