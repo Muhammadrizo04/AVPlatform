@@ -1,9 +1,11 @@
 {% extends "panel/base.html" %}
+{% load static %}
 {% block sarlavha %}Kirish bloklandi{% endblock %}
 {% block yol %}Kirish bloklandi{% endblock %}
 {% block kontent %}
 <div class="row justify-content-center pt-5">
   <div class="col-sm-9 col-md-6 col-lg-5">
+    <div class="text-center mb-4"><img class="kirish-logotip" src="{% static 'panel/logotip.png' %}" alt="Dom Stroy"></div>
     <div class="card border-danger">
       <div class="card-body p-4">
         <h1 class="h4 mb-3"><i class="cil-ban text-danger me-2"></i>Kirish vaqtincha bloklandi</h1>

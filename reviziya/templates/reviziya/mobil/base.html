@@ -23,6 +23,7 @@
     .m-ust .m-nom { flex: 1; min-width: 0; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .m-ust .m-nom small { display: block; font-weight: 500; opacity: .75; font-size: .8rem; }
     .m-ust form { margin: 0; }
+    .m-logotip { flex: none; width: 58px; height: auto; padding: 3px 5px; border-radius: 7px; background: #fff; box-sizing: content-box; }
     .m-ikon { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px;
       border: 0; background: transparent; font: inherit; font-size: .875rem; cursor: pointer; border-radius: 10px; }
     .m-ikon:hover { background: rgba(255, 255, 255, .1); }
@@ -66,6 +67,7 @@
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <header class="m-ust">
     {% block orqaga %}<a class="m-ikon" href="{% url 'reviziya:mobil' %}" aria-label="Reviziyalarim" title="Reviziyalarim"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></a>{% endblock %}
+    <img class="m-logotip" src="{% static 'panel/logotip.png' %}" alt="Dom Stroy">
     <div class="m-nom">{% block ust %}Reviziya{% endblock %}</div>
     {% if user.is_authenticated %}
     <form method="post" action="{% url 'hisoblar:chiqish' %}">{% csrf_token %}<button class="m-ikon" type="submit">Chiqish</button></form>

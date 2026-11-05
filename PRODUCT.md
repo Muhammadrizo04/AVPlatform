@@ -47,7 +47,7 @@ Ikkalasining farqi va mosligi (taqsimot = 1C qoldig'i, «1C bilan mos / farq») 
 
 ## Brand Commitments
 
-Kompaniya nomi ko'rinsin (Sozlamalar → Umumiy → «Kompaniya nomi»); majburiy logotip yoki rang yo'q.
+Kompaniya nomi ko'rinsin (Sozlamalar → Umumiy → «Kompaniya nomi»). Dom Stroy logotipi (`panel/static/panel/logotip.png`): kirish, menyu, mobil sarlavha, chop etish va PDF hujjatlarda.
 
 Vizual ko'rinish bo'yicha foydalanuvchi qarori (2026-10-22): minimal/quruq uslub rad etildi; panel **rangli, jonli dashboard**
 bo'lishi kerak — sifat darajasi bo'yicha Stripe Dashboard va monday.com yonida tura oladigan (rangli holat belgilari,

@@ -9,8 +9,9 @@
   .yorliq { width: {{ eni }}mm; height: {{ boyi }}mm; box-sizing: border-box; padding: {{ chekka }}mm;
             overflow: hidden; page-break-after: always; break-after: page; }
   .yorliq:last-child { page-break-after: auto; break-after: auto; }
-  .qator { height: {{ qr }}mm; overflow: hidden; }
+  .qator { position: relative; height: {{ qr }}mm; overflow: hidden; }
   .qator img { float: left; width: {{ qr }}mm; height: {{ qr }}mm; margin-right: 1mm; }
+  .qator img.logotip { position: absolute; right: 0; bottom: 0; float: none; width: {{ logotip_eni }}mm; height: auto; margin: 0; }
   .inv { font-size: {{ inv_shrifti }}pt; font-weight: bold; line-height: 1.1; word-break: break-all; }
   .filial { font-size: 5pt; line-height: 1.15; margin-top: 0.6mm; }
   .nom { font-size: {{ nom_shrifti }}pt; line-height: 1.15; margin-top: 0.5mm; white-space: nowrap; overflow: hidden; }
@@ -20,6 +21,7 @@
 {% for y in yorliqlar %}<div class="yorliq">
   <div class="qator">
     <img src="{{ y.qr }}" alt="">
+    {% if logotip %}<img class="logotip" src="{{ logotip }}" alt="">{% endif %}
     <div class="inv">{{ y.inv }}</div>
     <div class="filial">{{ y.filial }}</div>
     {% if nom_yonida %}<div class="nom">{% for q in y.nom %}{{ q }}{% if not forloop.last %}<br>{% endif %}{% endfor %}</div>{% endif %}

@@ -3,6 +3,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.template.loader import render_to_string
 
+from panel.logotip import logotip_uri
 from vositalar.models import Holat, Sozlama
 
 from .sorovlar import akt_narxlari
@@ -38,6 +39,7 @@ def akt_pdf(akt, pul: bool = True) -> bytes:
         {
             "akt": akt,
             "kompaniya": Sozlama.ol().kompaniya_nomi,
+            "logotip": logotip_uri(),
             "satrlar": satrlar,
             "jami": f"{jami:.2f}",
             "pul_huquqi": pul,

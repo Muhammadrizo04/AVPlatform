@@ -1,11 +1,13 @@
 {% extends "panel/base.html" %}
 {% block sarlavha %}Javobgar shaxs qaydnomasi{% endblock %}
 {% block yol %}Hisobotlar{% endblock %}
+{% block chop_logotip %}{% if not chop %}{{ block.super }}{% endif %}{% endblock %}
 {% block kontent %}
 {% if chop %}
 {% include "hisobotlar/_chop_rejimi.html" with qator_soni=qatorlar|length %}
 {% for g in guruhlar %}
 <section class="chop-guruh">
+{% include "panel/_chop_logotip.html" %}
 <h1>Javobgar shaxs qaydnomasi: {{ g.xodim.ism }}</h1>
 {% include "hisobotlar/_mol_jadval.html" with qatorlar=g.qatorlar jami_soni=g.jami_soni jami=g.jami %}
 {% include "hisobotlar/_imzo.html" with masul="Moddiy javobgar shaxs" masul_ism=g.xodim.ism %}

@@ -118,7 +118,10 @@ a { text-underline-offset: 3px; }
   #sidebar:not(.hide) ~ .wrapper { --cui-sidebar-occupy-start: 240px; }
 }
 .sidebar-header { padding: 1.125rem 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, .08) !important; }
-.av-brend { display: flex; align-items: center; gap: .75rem; color: #fff; line-height: 1.2; }
+.av-brend { display: flex; flex-direction: column; align-items: flex-start; gap: .625rem; color: #fff; line-height: 1.2; }
+.av-logotip { display: block; width: 8.5rem; height: auto; padding: .375rem .5rem; border-radius: 10px; background: #fff; box-sizing: content-box; }
+.kirish-logotip { display: block; width: 15rem; max-width: 80%; height: auto; margin: 0 auto .75rem; }
+.chop-logotip { display: none; }
 .av-brend a { color: #fff; text-decoration: none; }
 .av-logo { flex: 0 0 2.25rem; height: 2.25rem; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 1.125rem;
   background: linear-gradient(135deg, #7a73ff 0%, #635bff 45%, #2a78d6 100%); }
@@ -535,6 +538,7 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
   main.av-sahifa { max-width: none !important; padding: 0 !important; }
   /* Reviziya vedomosti (spec §6): filtr, tugmalar va tanlash ustuni chop etilmaydi */
   .chop-yoq, .filtrlar, form button { display: none !important; }
+  .chop-logotip { display: block; width: 42mm; height: auto; margin: 0 0 4mm; }
   .table-responsive { overflow: visible !important; }
   a.korsatkich { box-shadow: none !important; }
 }

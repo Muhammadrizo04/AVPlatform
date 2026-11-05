@@ -11,11 +11,13 @@ from django.utils import timezone
 
 from jurnal.yoz import yoz
 from onec.models import AV
+from panel.logotip import logotip_uri
 from vositalar.models import AVKartochka, YorliqOlchami
 
 BELGI_KOEFF = Decimal("0.55")
 CHEKKA_MM = 1.5  # yorliq ichki chetlari
 QR_BORDER = 2  # modullarda
+LOGOTIP_QR_MM = 18  # bundan past QR ustunida logotipga joy yo'q
 
 
 def belgi_soni(olcham: YorliqOlchami) -> int:
@@ -102,6 +104,9 @@ def yorliq_pdf(elementlar: list[tuple[AV, int]], olcham: YorliqOlchami) -> bytes
             "qr": _mm(qr),
             "chekka": _mm(CHEKKA_MM),
             "nom_yonida": yonida,
+            # Past yorliqda matnga joy qolmaydi: logotip faqat QR ustuni yetarli baland bo'lganda chiqadi.
+            "logotip": logotip_uri() if not yonida and qr >= LOGOTIP_QR_MM else "",
+            "logotip_eni": _mm(min(eni - qr - 2 * CHEKKA_MM - 1, 14)),
             "nom_shrifti": f"{max(shrift_pt, 3.0):.2f}",
             "inv_shrifti": f"{min(max(boyi * 0.28, 7), 16):.2f}",
             "yorliqlar": [y for y in yorliqlar for _ in range(y["nusxa"])],

@@ -4,6 +4,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from django.template.loader import render_to_string
 
 from onec.models import AV, Xodim
+from panel.logotip import logotip_uri
 from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Holat, Sozlama
 
@@ -70,6 +71,7 @@ def dalolatnoma_pdf(reviziya, pul: bool = False, bolim: str = "") -> bytes:
     html = render_to_string("reviziya/dalolatnoma_pdf.html", {
         "rv": reviziya,
         "kompaniya": Sozlama.ol().kompaniya_nomi,
+        "logotip": logotip_uri(),
         "jamlar": [(GURUH_NOMLARI[g], jami[g]) for g in reversed(GURUHLAR)],
         "farqlar": farqlar,
         "jami_qiymat": jami_qiymat,

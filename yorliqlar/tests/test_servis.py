@@ -269,3 +269,10 @@ def test_juda_uzun_son_500_bermaydi(client_rol, filial_a, olcham_40, uzun):
     assert client.get(reverse(TANLASH), {"bolim": uzun}).status_code == 200
     assert client.get(reverse(TANLASH), {"av": uzun}).status_code == 404
     assert not AVKartochka.objects.filter(av=av).exists()
+
+
+def test_logotip_baland_yorliqda_bor_past_yorliqda_yoq(filial_a, olcham_40):
+    av = qayta(av_yarat(filial_a, inv="125"))
+    assert len(sahifalar(servis.yorliq_pdf([(av, 1)], olcham_40))[0].images) == 1
+    past = YorliqOlchami.objects.create(nomi="40×20", eni_mm=Decimal("40"), boyi_mm=Decimal("20"))
+    assert len(sahifalar(servis.yorliq_pdf([(av, 1)], past))[0].images) == 0

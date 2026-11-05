@@ -7,7 +7,9 @@
   @page { size: A4; margin: 18mm 14mm; }
   body { font-family: "DejaVu Sans", Arial, sans-serif; font-size: 10pt; color: #000; }
   h1 { font-size: 14pt; text-align: center; margin: 4mm 0 2mm; }
-  .kompaniya { text-align: center; font-weight: bold; }
+  .bosh { border-bottom: 0.7mm solid #F04E27; padding-bottom: 3mm; margin-bottom: 5mm; overflow: hidden; }
+  .bosh img { float: left; height: 17mm; }
+  .kompaniya { float: right; text-align: right; font-weight: bold; padding-top: 6mm; }
   .sana { text-align: center; margin-bottom: 6mm; }
   table { width: 100%; border-collapse: collapse; }
   th, td { border: 1px solid #000; padding: 2mm; text-align: left; vertical-align: top; }
@@ -18,7 +20,7 @@
 </style>
 </head>
 <body>
-<div class="kompaniya">{{ kompaniya }}</div>
+<div class="bosh"><img src="{{ logotip }}" alt="Dom Stroy"><div class="kompaniya">{{ kompaniya }}</div></div>
 <h1>Moddiy javobgar shaxs topshirish-qabul akti {{ akt.nomi }}</h1>
 <div class="sana">{{ akt.sana|date:"d.m.Y" }}</div>
 <p>Topshiruvchi: <b>{{ akt.topshiruvchi.ism|default:"— (javobgar shaxs biriktirilmagan)" }}</b><br>
