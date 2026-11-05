@@ -7,7 +7,7 @@ from openpyxl import load_workbook
 from pypdf import PdfReader
 
 from reviziya.models import Reviziya
-from reviziya.servis import reviziya_och
+from reviziya.servis import reviziya_och, xona_tugadi
 from reviziya.solishtir import solishtir
 from vositalar.models import Bolim, Holat, Taqsimot
 from vositalar.tests.test_bayroqlar import av_yarat, qator
@@ -55,6 +55,7 @@ def ikki_topilmadi(fa, revizor, hisobchi):
     qator(stol, fa, "1", bolim=a)
     qator(stul, fa, "1", bolim=a)
     rv = reviziya_och(fa, None, [revizor], [{"ism": "Karimov A.", "lavozim": "Rais"}], hisobchi)
+    xona_tugadi(rv, a, revizor)  # xona sanaldi, hech narsa topilmadi — haqiqiy kamomad
     return rv, stol, stul
 
 

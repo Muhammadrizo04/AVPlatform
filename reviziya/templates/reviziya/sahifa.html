@@ -18,6 +18,13 @@
   {% endif %}
 </div>
 
+{% if sanalmagan %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 chop-yoq" role="status">
+  <i class="cil-warning" aria-hidden="true"></i>
+  <span class="me-auto"><b>{{ sanalmagan_sarlavha }} ({{ sanalmagan|length }}):</b> {% for x in sanalmagan %}{{ x.toliq }}{% if not forloop.last %}, {% endif %}{% endfor %}. Reviziyani yakunlab bo'lmaydi. {{ sanalmagan_izoh }}</span>
+</div>
+{% endif %}
+
 {% if rv.holat == "yakunlangan" and farqlar.yozilmagan %}
 <div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 yozilmagan-eslatma chop-yoq" role="status">
   <i class="cil-warning" aria-hidden="true"></i>

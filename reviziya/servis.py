@@ -6,7 +6,7 @@ kelgan qayd yopiq reviziyaga tushmaydi, ikki revizorning bir vaqtdagi skanlari b
 from decimal import Decimal
 
 from django.db import connection, transaction
-from django.db.models import Max, Sum
+from django.db.models import Max, Q, Sum
 from django.db.models.functions import Trim
 from django.utils import timezone
 
@@ -50,17 +50,35 @@ def _ota_idlari(bolim) -> set[int]:
     return natija
 
 
+def _kesishadi_mi(bolim, boshqa_bolim) -> bool:
+    """Ikki qamrov (None — butun filial) kesishadimi."""
+    if bolim is None or boshqa_bolim is None:
+        return True
+    return boshqa_bolim.pk in _qamrov(bolim) | _ota_idlari(bolim)
+
+
 def _kesishadi(filial, bolim) -> bool:
     """Shu filialda qamrovi `bolim` bilan kesishgan ochiq reviziya bormi."""
-    ochiqlar = list(
-        Reviziya.objects.filter(filial=filial, holat=Reviziya.Holat.OCHIQ).values_list("bolim_id", flat=True)
-    )
-    if not ochiqlar:
-        return False
-    if bolim is None or None in ochiqlar:
-        return True
-    yaqinlar = _qamrov(bolim) | _ota_idlari(bolim)
-    return any(b in yaqinlar for b in ochiqlar)
+    ochiqlar = Reviziya.objects.filter(filial=filial, holat=Reviziya.Holat.OCHIQ).select_related("bolim")
+    return any(_kesishadi_mi(bolim, r.bolim) for r in ochiqlar)
+
+
+def qaytarishni_tekshir(reviziya: Reviziya) -> None:
+    """Yakunlangan reviziyani qayta ochish mumkinmi: kesishgan ochiq reviziya bo'lsa, ikkalasi bir AV'ni ikki marta
+    yozadi; keyingi yakunlangan reviziya bo'lsa, eski natija undagi tasdiqlangan holatni bosib ketadi.
+    Chaqiruvchi tranzaksiyada: `reviziya_och` bilan bir xil qulf ostida tekshiriladi."""
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_advisory_xact_lock(%s)", [RV_RAQAM_QULFI])
+    if _kesishadi(reviziya.filial, reviziya.bolim):
+        raise ReviziyaXato("Bu filial yoki bo'lim bo'yicha qamrovi kesishgan ochiq reviziya bor — avval uni yoping.")
+    keyingilar = Reviziya.objects.filter(
+        filial_id=reviziya.filial_id, holat=Reviziya.Holat.YAKUNLANGAN, raqam__gt=reviziya.raqam
+    ).select_related("bolim").order_by("raqam")
+    for keyingi in keyingilar:
+        if _kesishadi_mi(reviziya.bolim, keyingi.bolim):
+            raise ReviziyaXato(
+                f"Bu joylar keyinroq {keyingi.nomi} reviziyasida tekshirilgan — eski reviziyani qaytarib bo'lmaydi."
+            )
 
 
 def _komissiya(komissiya) -> list[dict]:
@@ -135,6 +153,9 @@ def qr_tahlil(matn: str, reviziya: Reviziya) -> tuple[AV | None, str]:
     _, kod, inv = qismlar
     filial = reviziya.filial
     if kod != filial.kod.strip():
+        kochgan = _kochib_kelgan(kod, inv, reviziya)
+        if kochgan is not None:
+            return kochgan, ""
         boshqa = Filial.objects.annotate(k=Trim("kod")).filter(k=kod).exclude(pk=filial.pk).exists()
         return None, BOSHQA_FILIAL if boshqa else NOMALUM
     nomzodlar = list(
@@ -150,6 +171,20 @@ def qr_tahlil(matn: str, reviziya: Reviziya) -> tuple[AV | None, str]:
             if av.pk in shu_yerda:
                 return av, ""
     return nomzodlar[0], ""
+
+
+def _kochib_kelgan(kod: str, inv: str, reviziya: Reviziya) -> AV | None:
+    """Yorliqdagi filial — 1C rekviziti, haqiqiy joy esa `AVQoldiq`: boshqa filial yorlig'i bilan shu filialga kelgan
+    (suratda kutilgan yoki qoldig'i shu yerda) AV."""
+    shu_yerda = Q(pk__in=reviziya.kutilganlar.values("av_id")) | Q(
+        pk__in=AVQoldiq.objects.filter(filial_id=reviziya.filial_id, soni__gt=0).values("av_id")
+    )
+    return (
+        AV.objects.annotate(inv=Trim("inv_raqam"), filial_kodi=Trim("filial_rekvizit__kod"))
+        .filter(shu_yerda, inv=inv, filial_kodi=kod)
+        .order_by("pk")
+        .first()
+    )
 
 
 def _soni_tekshir(soni, *, nol_mumkin: bool) -> Decimal:
@@ -290,6 +325,14 @@ def yakunla(reviziya: Reviziya, kim) -> None:
         reviziya.yakunladi = kim
         reviziya.yakunlangan_vaqt = timezone.now()
         reviziya.save(update_fields=["holat", "yakunladi", "yakunlangan_vaqt"])
+
+
+def sanalmagan_xonalar(reviziya: Reviziya) -> list[dict]:
+    """Kutilgan narsasi bor, lekin bironta qayd ham, «Xona tugadi» belgisi ham yo'q xonalar. Bunday xonada yakunlash
+    hamma narsani «Topilmadi» qilib yozardi; xona chindan bo'sh bo'lsa, buni «Xona tugadi» tasdiqlaydi."""
+    from .kesim import xonalar_kesimi  # kesim.py servis'ni import qiladi
+
+    return [x for x in xonalar_kesimi(reviziya) if x["kutilgan"] > 0 and not x["belgilangan"] and not x["tugadi"]]
 
 
 def bekor_qil(reviziya: Reviziya, kim) -> None:

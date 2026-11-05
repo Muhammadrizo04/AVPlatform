@@ -14,12 +14,13 @@ from vositalar.amallar import AmalXato, _ozgartir, holat_ozgartir, kochir
 from vositalar.models import Bolim, Holat, Taqsimot, TaqsimotHarakat
 
 from .models import Reviziya, ReviziyaQollash
-from .servis import ReviziyaXato, yakunla
+from .servis import ReviziyaXato, qaytarishni_tekshir, yakunla
 from .solishtir import solishtir
 
 NOL = Decimal("0")
 QOLLANADI = ("boshqa_joyda", "holat_boshqa", "kam", "topilmadi")
 REVIZIYA = TaqsimotHarakat.Sabab.REVIZIYA
+MOL_AKT = TaqsimotHarakat.Sabab.MOL_AKT
 
 
 def qollanadimi(q) -> bool:
@@ -73,6 +74,27 @@ def _kalit_qolla(reviziya, kalit, q, kim) -> ReviziyaQollash:
         return ReviziyaQollash.objects.create(natija="xato", xato=str(xato), **jurnal)
 
 
+def _begona_harakatlar(reviziya, av_id, dan):
+    """`dan` vaqtidan beri shu AV bilan bu reviziyadan tashqari bajarilgan amallar (eng eskisi birinchi)."""
+    return (
+        TaqsimotHarakat.objects.filter(av_id=av_id, filial_id=reviziya.filial_id, sana__gte=dan)
+        .exclude(sabab=REVIZIYA, hujjat_izoh__startswith=reviziya.nomi)
+        .order_by("sana")
+    )
+
+
+def _surat_eskirmaganini_tekshir(reviziya, q) -> None:
+    """Farq reviziya ochilgandagi suratdan hisoblangan: oraliqda AV joyi, holati yoki soni o'zgargan bo'lsa, farq
+    haqiqatni aks ettirmaydi (qonuniy ko'chirilgan dona «kamomad» bo'lib chiqadi) — yozilmaydi. МОЛ akti suratdagi
+    bo'lim, holat va sonni o'zgartirmaydi, u to'xtatmaydi."""
+    h = _begona_harakatlar(reviziya, q.av_id, reviziya.ochilgan_vaqt).exclude(sabab=MOL_AKT).first()
+    if h is not None:
+        raise ReviziyaXato(
+            f"Reviziya ochilgandan keyin «{q.av_nomi}» bilan boshqa amal bajarilgan ({h.get_sabab_display()}, "
+            f"{timezone.localtime(h.sana):%d.%m.%Y %H:%M}) — farq eskirgan, AV kartochkasida qo'lda tuzating."
+        )
+
+
 def _taqsimotga(reviziya, q, soni, kim) -> None:
     """Bitta vedomost qatorini joriy taqsimotga qo'llaydi; mos qatorlar (har xil МОЛ) pk tartibida sarflanadi."""
     # Qatorlar `qolla` da global pk tartibida (moslash/mol/chiqimlar bilan bir xil) allaqachon qulflangan;
@@ -87,6 +109,7 @@ def _taqsimotga(reviziya, q, soni, kim) -> None:
         raise ReviziyaXato(f"Taqsimot o'zgargan: {nomi} — kerak {soni:f}, mavjud {mavjud:f}.")
     if q.guruh in ("kam", "topilmadi") and q.holat == Holat.TOPILMADI:
         return  # allaqachon «topilmadi» holatida
+    _surat_eskirmaganini_tekshir(reviziya, q)
     nishon_bolim = None
     if q.guruh == "boshqa_joyda":
         nishon_bolim = Bolim.objects.filter(pk=q.nishon_bolim_id).first()
@@ -128,12 +151,7 @@ def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
         if q is None:
             raise ReviziyaXato("Vedomost qatori topilmadi.")
         list(Taqsimot.objects.select_for_update().filter(filial_id=reviziya.filial_id, av_id=q.av_id).order_by("pk"))
-        keyingi = (
-            TaqsimotHarakat.objects.filter(av_id=q.av_id, filial_id=reviziya.filial_id, sana__gte=jurnal.qachon)
-            .exclude(sabab=REVIZIYA, hujjat_izoh__startswith=reviziya.nomi)
-            .order_by("sana")
-            .first()
-        )
+        keyingi = _begona_harakatlar(reviziya, q.av_id, jurnal.qachon).first()
         if keyingi is not None:
             raise ReviziyaXato(
                 f"«{q.av_nomi}» ({q.inv}): yakunlashdan keyin bu AV bilan boshqa amal bajarilgan "
@@ -194,10 +212,12 @@ def ochiqqa_qaytar(reviziya: Reviziya, kim) -> None:
     """Yakunlangan reviziyani «Ochiq» ga qaytaradi: taqsimotga yozilgan har farq teskari amal bilan qaytariladi.
 
     Hammasi yoki hech biri: bittasini qaytarib bo'lmasa (yakunlashdan keyin shu AV bilan boshqa amal bo'lgan) — rad
-    etiladi va reviziya «Yakunlangan» qoladi. Yozilmagan farqlarning xato yozuvlari o'chiriladi (qayta yakunlashda
+    etiladi va reviziya «Yakunlangan» qoladi. Qamrovi kesishgan ochiq yoki keyingi yakunlangan reviziya bo'lsa ham
+    rad etiladi (`qaytarishni_tekshir`). Yozilmagan farqlarning xato yozuvlari o'chiriladi (qayta yakunlashda
     yangidan yoziladi).
     """
     with transaction.atomic():
+        qaytarishni_tekshir(reviziya)  # advisory qulf — reviziya qatori qulfidan oldin, `reviziya_och` bilan bir tartib
         reviziya = _yakunlangan_qulfla(reviziya.pk)
         for jurnal in reviziya.qollashlar.filter(natija=ReviziyaQollash.Natija.OK).order_by("-pk"):
             qollashni_bekor_qil(reviziya, jurnal.kalit, kim)

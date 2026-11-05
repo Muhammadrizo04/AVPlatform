@@ -31,7 +31,7 @@ from .qollash import QOLLANADI, ochiqqa_qaytar, qollanadimi, yakunla_va_yoz
 from .servis import (
     BOSHQA_FILIAL, KOMISSIYA_AZO, KOMISSIYA_RAIS, KOMISSIYA_ROLLARI, ReviziyaXato, bekor_qil, progress, qamrov_bolim_idlari,
     qayd_qosh, qayd_tuzat, qr_tahlil, reviziya_och,
-    revizorlarni_ozgartir,
+    revizorlarni_ozgartir, sanalmagan_xonalar,
 )
 from .kesim import xonalar_kesimi
 from .mobil import _av_doirasi, _begona_av, _boshqa_filialdan, _qidir
@@ -42,6 +42,8 @@ from .solishtir import (
 NOL = Decimal("0")
 SAHIFA_HAJMI = 50
 KOMISSIYA_NATIJALARI = 15
+SANALMAGAN = "Sanalmagan xonalar"
+SANALMAGAN_IZOH = "Har birini sanang; xona chindan bo'sh bo'lsa, skan sahifasida «Xona tugadi» ni belgilang."
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 HOLAT_NOMLARI = dict(Holat.choices)
 # Guruh filtri: har guruh alohida, `kamomad` — kam va topilmadi birga (ko'rsatkich plitkasi)
@@ -332,6 +334,8 @@ def sahifa(request, pk):
         "belgilangan": belgilangan, "kutilgan": kutilgan, "farqlar": farqlar,
         "foiz": min(100, int(belgilangan * 100 / kutilgan)) if kutilgan else 0,
         "kesim": _bolimlar_kesimi(rv, hammasi),
+        "sanalmagan": sanalmagan_xonalar(rv) if rv.holat == Reviziya.Holat.OCHIQ else [],
+        "sanalmagan_sarlavha": SANALMAGAN, "sanalmagan_izoh": SANALMAGAN_IZOH,
         "revizorlar": rv.revizorlar.order_by("first_name", "username"),
         # revizor telefondan Javobgar shaxsga biriktirgan AV'lar — qoralama МОЛ aktlari (tasdiqni hisobchi/HR beradi)
         "aktlar": list(
@@ -382,6 +386,10 @@ def _amal(request, pk, bajar, xabar):
 def yakunla_view(request, pk):
     """Yakunlash: sanash yopiladi va farqlar AV taqsimotiga yoziladi (bitta qadam)."""
     rv = _ozgartiradigan_reviziya(request, pk)
+    sanalmagan = sanalmagan_xonalar(rv) if rv.holat == Reviziya.Holat.OCHIQ else []
+    if sanalmagan:
+        messages.error(request, f"{SANALMAGAN}: {', '.join(x['toliq'] for x in sanalmagan)}. {SANALMAGAN_IZOH}")
+        return redirect("reviziya:sahifa", pk=rv.pk)
     try:
         natijalar = yakunla_va_yoz(rv, request.user)
     except ReviziyaXato as e:

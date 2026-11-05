@@ -218,14 +218,17 @@ olinadi. Bir joyda qamrovi kesishgan ikkinchi ochiq reviziya ochilmaydi. Revizor
 
 **2. Sanash (telefonda).** Revizor reviziyani ochib, xonani tanlaydi va QR'ni kamera bilan o'qiydi yoki inv. raqam / nom
 bo'yicha qidiradi. Qayta skan qilinsa, soni bittaga oshadi. Kamera faqat HTTPS'da ishlaydi. Bir xonada kutilganlar
-hammasi joyida bo'lsa, tez belgilash mumkin. Xona tugagach, «xona tugadi» belgilanadi. Revizor javobgarsiz AV'ni xodimga
+hammasi joyida bo'lsa, tez belgilash mumkin: har AV kutilgan holati bilan belgilanadi, «Topilmadi» holatidagilar esa faqat
+skanerlab belgilanadi. Xona tugagach, «xona tugadi» belgilanadi. Revizor javobgarsiz AV'ni xodimga
 biriktirsa, qoralama akt tuziladi: u tasdiqlangach javobgar almashadi.
 
 **3. Vedomost (kompyuterda).** Reviziya sahifasi jonli yangilanadi: Belgilangan / kutilgan, Bo'limlar kesimi (Tugadi,
 Sanalmoqda, Boshlanmagan) va guruhlar: topildi, holati boshqa, boshqa joyda, kam / topilmadi, ortiqcha. Vedomostdan
 ham AV'ni belgilash, belgini olish yoki qidirib qo'shish mumkin.
 
-**4. Yakunlash.** «Yakunlash» bosilganda sanash yopiladi va farqlar **avtomatik** AV'larga yoziladi:
+**4. Yakunlash.** Kutilgan narsasi bor xonada bironta qayd ham, «xona tugadi» belgisi ham bo'lmasa, reviziyani yakunlab
+bo'lmaydi: bunday xonalar sahifa tepasida ko'rsatiladi. Xona chindan bo'sh bo'lsa, «xona tugadi» ni belgilang.
+«Yakunlash» bosilganda sanash yopiladi va farqlar **avtomatik** AV'larga yoziladi:
 
 | Natija | Nima bo'ladi |
 |---|---|
@@ -235,10 +238,13 @@ ham AV'ni belgilash, belgini olish yoki qidirib qo'shish mumkin.
 | Ortiqcha | Faqat qayd qilinadi: soni 1C'dan keladi, kirim 1C'da qilinadi |
 
 Biror farqni yozib bo'lmasa, sababi vedomostda qator yonida ko'rsatiladi va uni AV kartochkasida qo'lda tuzatish kerak.
-«Bo'limsiz» joyga ko'chish yozilmaydi, chunki xona noma'lum.
+Reviziya ochilgandan keyin AV ko'chirilgan, holati yoki soni o'zgargan bo'lsa, uning farqi ham yozilmaydi, chunki farq
+eskirgan: kamomad soxta chiqishi mumkin. Javobgar shaxs akti bunga kirmaydi. «Bo'limsiz» joyga ko'chish yozilmaydi, chunki
+xona noma'lum.
 
 **5. Qaytarish va bekor qilish.** **Ochiqqa qaytarish** yozilgan farqlarni teskari amal bilan qaytaradi. Yakunlashdan
-keyin shu AV bilan boshqa amal bo'lgan bo'lsa, rad etiladi va reviziya yakunlangan holida qoladi. **Bekor qilish** — faqat
+keyin shu AV bilan boshqa amal bo'lgan bo'lsa, rad etiladi va reviziya yakunlangan holida qoladi. Qamrovi kesishgan ochiq
+reviziya yoki shu joylarni keyinroq tekshirgan yakunlangan reviziya bo'lsa ham rad etiladi. **Bekor qilish** — faqat
 ochiq reviziya uchun.
 
 **6. Hujjatlar.** Vedomost Excel'ga yuklanadi, **Dalolatnoma** PDF'da komissiya imzolari bilan chiqadi.

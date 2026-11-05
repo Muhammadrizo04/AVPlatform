@@ -588,6 +588,30 @@ def tarix_view(request, pk):
     return render(request, "reviziya/mobil/_tarix.html", {"tarix": av_tarixi(av, request.user)})
 
 
+def _joyida_qaydlari(rv, xona, qolganlar) -> list[tuple]:
+    """«Hammasi joyida» uchun [(av, holat, soni)]: qolgan son kutilgan holatlari bo'yicha bo'linadi. «Topilmadi»
+    holatidagi AV ko'zdan kechirilmay «joyida» bo'lmaydi — u faqat skanerlab belgilanadi."""
+    xona_id = None if xona is None else xona.pk
+    av_idlar = [q["av"].pk for q in qolganlar]
+
+    def yigindi(qs):
+        qatorlar = qs.filter(bolim_id=xona_id, av_id__in=av_idlar).order_by().values_list("av_id", "holat")
+        return {(av_id, holat): s for av_id, holat, s in qatorlar.annotate(s=Sum("soni"))}
+
+    kutilgan, topilgan = yigindi(rv.kutilganlar), yigindi(rv.qaydlar)
+    natija = []
+    for q in qolganlar:
+        qoldi = q["soni"]
+        for (av_id, holat), soni in sorted(kutilgan.items()):
+            if av_id != q["av"].pk or holat == TaqsimotHolat.TOPILMADI or qoldi <= 0:
+                continue
+            m = min(soni - topilgan.get((av_id, holat), NOL), qoldi)
+            if m > 0:
+                natija.append((q["av"], holat, m))
+                qoldi -= m
+    return natija
+
+
 @_mobil
 @require_POST
 def hammasi_bor(request, pk):
@@ -598,14 +622,16 @@ def hammasi_bor(request, pk):
         return _xato("Avval xonani tanlang.", "#kartochka")
     xona = _xona(rv, qiymat)
     qolganlar = _qolganlar(rv, xona)
+    qaydlar = _joyida_qaydlari(rv, xona, qolganlar)
     try:
         with transaction.atomic():  # hammasi yoki hech biri
-            for q in qolganlar:
-                qayd_qosh(rv, xona, request.user, av=q["av"], soni=q["soni"], usul=ReviziyaQayd.Usul.QIDIRUV)
+            for av, holat, soni in qaydlar:
+                qayd_qosh(rv, xona, request.user, av=av, soni=soni, holat=holat, usul=ReviziyaQayd.Usul.QIDIRUV)
     except ReviziyaXato as e:
         return _xato(str(e), "#kartochka")
     request.session[_sessiya_kaliti(rv)] = qiymat
-    xabar = format_html('<p class="m-ok" role="status">{} ta AV belgilandi.</p>', len(qolganlar))
+    belgilangan = len({av.pk for av, _, _ in qaydlar})
+    xabar = format_html('<p class="m-ok" role="status">{} ta AV belgilandi.</p>', belgilangan)
     return HttpResponse(xabar + _yangilanishlar(request, rv, xona))
 
 
