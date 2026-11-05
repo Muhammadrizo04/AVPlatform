@@ -11,6 +11,8 @@ from vositalar.models import Taqsimot
 from .models import MolAkt, MolAktQator
 
 NOL = Decimal("0")
+# `Xodim.ketgan` ning so'rov ko'rinishi
+KETGAN = Q(ishdan_bushagan=True) | Q(neaktiv=True) | Q(ochirilgan=True) | Q(onec_da_yoq=True)
 
 
 def ruxsat_taqsimot(user):
@@ -28,7 +30,7 @@ def korinadigan_xodimlar(user):
 
 def faol_xodimlar(user):
     """Qabul qiluvchi bo'la oladigan xodimlar."""
-    return korinadigan_xodimlar(user).filter(ishdan_bushagan=False, neaktiv=False, onec_da_yoq=False)
+    return korinadigan_xodimlar(user).exclude(KETGAN)
 
 
 def xodim_yigindilari(user, qatorlar=None) -> dict[int, tuple[Decimal, Decimal]]:

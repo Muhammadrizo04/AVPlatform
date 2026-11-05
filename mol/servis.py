@@ -148,7 +148,7 @@ def _tasdiqla(akt: MolAkt, kim) -> None:
 
     # 2) Tekshiruvlar.
     qabul = Xodim.objects.get(pk=joriy.qabul_qiluvchi_id)
-    if qabul.ishdan_bushagan or qabul.neaktiv or qabul.onec_da_yoq:
+    if qabul.ketgan:
         raise AktXato(f"Qabul qiluvchi ({qabul.ism}) faol xodim emas: ishdan bo'shagan yoki o'chirilgan.")
     arxiv = set(
         AV.objects.arxiv().filter(pk__in={q.av_id for q in qatorlar}).values_list("nomi", flat=True)

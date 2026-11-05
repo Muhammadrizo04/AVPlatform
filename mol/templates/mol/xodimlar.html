@@ -10,13 +10,17 @@
   {% if akt_huquqi %}<a class="btn btn-primary btn-sm tugma" href="{% url 'mol:akt_yangi' %}"><i class="cil-plus me-1"></i>Yangi akt</a>{% endif %}
 </div>
 <div class="korsatkichlar">
-  <a class="korsatkich" href="?holat=faol"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-people"></i></span><span><b>{{ korsatkichlar.faol|son }}</b>faol xodim</span></a>
-  <a class="korsatkich" href="?av_bor=1"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ korsatkichlar.ushlab|son }}</b>AV ushlab turgan</span></a>
-  <a class="korsatkich{% if korsatkichlar.ketgan_ushlab %} ogoh{% else %} nol{% endif %}" href="?holat=ketgan&amp;av_bor=1"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.ketgan_ushlab|son }}</b>ketgan, lekin AV'si bor</span></a>
+  <a class="korsatkich" href="?{% if filial %}filial={{ filial.pk }}&amp;{% endif %}holat=faol"><span class="kpi-ikonka r-bg-mol" aria-hidden="true"><i class="cil-people"></i></span><span><b>{{ korsatkichlar.faol|son }}</b>faol xodim</span></a>
+  <a class="korsatkich" href="?{% if filial %}filial={{ filial.pk }}&amp;{% endif %}av_bor=1"><span class="kpi-ikonka r-bg-vosita" aria-hidden="true"><i class="cil-storage"></i></span><span><b>{{ korsatkichlar.ushlab|son }}</b>AV ushlab turgan</span></a>
+  <a class="korsatkich{% if korsatkichlar.ketgan_ushlab %} ogoh{% else %} nol{% endif %}" href="?{% if filial %}filial={{ filial.pk }}&amp;{% endif %}holat=ketgan&amp;av_bor=1"><span class="kpi-ikonka r-bg-ogoh" aria-hidden="true"><i class="cil-warning"></i></span><span><b>{{ korsatkichlar.ketgan_ushlab|son }}</b>ketgan, lekin AV'si bor</span></a>
 </div>
 <div class="card mb-3"><div class="card-body">
 <form method="get" class="filtrlar">
   <input class="form-control form-control-sm" type="search" name="q" value="{{ params.q|default:'' }}" placeholder="Xodim ismi" aria-label="Xodim ismi">
+  {% if filiallar|length > 1 %}<select class="form-select form-select-sm" name="filial" aria-label="Filial">
+    <option value="">Barcha filiallar</option>
+    {% for f in filiallar %}<option value="{{ f.pk }}"{% if filial.pk == f.pk %} selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+  </select>{% endif %}
   <select class="form-select form-select-sm" name="holat" aria-label="Xodim holati">
     <option value="">Barcha xodimlar</option>
     <option value="faol"{% if params.holat == "faol" %} selected{% endif %}>Faol</option>
@@ -36,7 +40,7 @@
     <tr>
       <td><a href="{% url 'mol:xodim' x.pk %}" class="fw-semibold text-decoration-none">{{ x.ism }}</a></td>
       <td>{% if x.begona %}<span class="text-body-secondary" title="Bu xodim boshqa filialda ishlaydi, lekin sizning filialingizdagi AV'lar unga biriktirilgan">Boshqa filial xodimi</span>{% else %}{{ x.filial.nomi|default:"—" }}{% endif %}</td>
-      <td>{% if x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq %}{% if x.av_soni %}<span class="badge bg-danger">Ketgan</span>{% else %}<span class="badge bg-secondary">Ketgan</span>{% endif %}{% else %}<span class="badge bg-success">Faol</span>{% endif %}</td>
+      <td>{% if x.ketgan %}{% if x.av_soni %}<span class="badge bg-danger">Ketgan</span>{% else %}<span class="badge bg-secondary">Ketgan</span>{% endif %}{% else %}<span class="badge bg-success">Faol</span>{% endif %}</td>
       <td class="son">{{ x.av_soni|son }}</td>
       {% if pul_huquqi %}<td class="son">{{ x.qiymat|pul }}</td>{% endif %}
     </tr>

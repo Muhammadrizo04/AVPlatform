@@ -105,7 +105,7 @@ def _molsiz(user, bugun):
 
 def _ketgan_xodimda(user, bugun):
     return _taqsimotlar(user).filter(
-        Q(mol__ishdan_bushagan=True) | Q(mol__neaktiv=True) | Q(mol__onec_da_yoq=True)
+        Q(mol__ishdan_bushagan=True) | Q(mol__neaktiv=True) | Q(mol__ochirilgan=True) | Q(mol__onec_da_yoq=True)
     ).select_related("mol")
 
 

@@ -52,6 +52,11 @@ class Xodim(OneCModel):
     def __str__(self):
         return self.ism
 
+    @property
+    def ketgan(self) -> bool:
+        """AV ushlab turishi va qabul qilishi mumkin emas: ishdan bo'shagan, neaktiv yoki 1C'da o'chirilgan/yo'q."""
+        return self.ishdan_bushagan or self.neaktiv or self.ochirilgan or self.onec_da_yoq
+
 
 class AVQuerySet(models.QuerySet):
     """AV so'rovlari. Qoldiq yig'indilari alohida kichik so'rovda — qatorlar ko'paymaydi."""

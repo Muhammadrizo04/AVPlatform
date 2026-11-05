@@ -135,7 +135,9 @@ uchun asos bo'ladi.
 orqali almashadi.
 
 **Javobgar shaxslar sahifasi:** xodimlar ro'yxati, filiali, holati, AV soni va qiymati. Xodimni bossangiz, undagi AV'lar
-ochiladi. **«Ketgan xodimlardagi AV'lar»** — ishdan bo'shagan, nofaol yoki 1C'da topilmagan xodimlarda qolgan AV'lar.
+ochiladi. Filial filtri shu filial xodimlarini va shu filialdagi AV'ni ushlab turgan boshqa filial xodimlarini ko'rsatadi;
+AV soni, qiymati va tepadagi ko'rsatkichlar ham faqat shu filial bo'yicha chiqadi.
+**«Ketgan xodimlardagi AV'lar»** — ishdan bo'shagan, nofaol, 1C'da o'chirilgan yoki topilmagan xodimlarda qolgan AV'lar.
 Bu ro'yxat bo'sh bo'lishi kerak.
 
 **Akt oqimi:**

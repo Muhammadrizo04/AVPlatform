@@ -38,7 +38,7 @@ XODIM_SAHIFA_HAJMI = 50
 XODIM_USTUNLARI = {
     "ism": lambda x: x.ism.strip().casefold(),
     "filial": lambda x: "" if x.begona else (x.filial.nomi.casefold() if x.filial else None),
-    "holat": lambda x: bool(x.ishdan_bushagan or x.neaktiv or x.onec_da_yoq),
+    "holat": lambda x: x.ketgan,
     "av_soni": lambda x: x.av_soni,
     "qiymat": lambda x: x.qiymat,
 }
@@ -46,12 +46,20 @@ AKT_USTUNLARI = {
     "raqam": "raqam", "sana": "sana", "topshiruvchi": "topshiruvchi__ism", "qabul": "qabul_qiluvchi__ism",
     "tuzdi": "tuzdi__username", "holat": "holat",
 }
-KETGAN = Q(ishdan_bushagan=True) | Q(neaktiv=True) | Q(onec_da_yoq=True)
+KETGAN = sorovlar.KETGAN
 
 
 @amal_kerak("korish")
 def xodimlar(request):
-    qs = sorovlar.korinadigan_xodimlar(request.user).order_by("ism", "pk")
+    filiallar = list(filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"))
+    filial = next((f for f in filiallar if f.pk == son(request.GET.get("filial"))), None)
+    hammasi = sorovlar.korinadigan_xodimlar(request.user)
+    qatorlar = sorovlar.ruxsat_taqsimot(request.user)
+    if filial is not None:
+        # Shu filial xodimlari va shu filialdagi AV'ni ushlab turgan boshqa filial xodimlari; AV soni — faqat shu filialdan
+        qatorlar = qatorlar.filter(filial=filial)
+        hammasi = hammasi.filter(Q(filial=filial) | Q(pk__in=qatorlar.filter(mol__isnull=False).values("mol_id")))
+    qs = hammasi.order_by("ism", "pk")
     q = request.GET.get("q", "").strip()
     if q:
         qs = qs.filter(ism__icontains=q)
@@ -60,7 +68,7 @@ def xodimlar(request):
         qs = qs.exclude(KETGAN)
     elif holat == "ketgan":
         qs = qs.filter(KETGAN)
-    yigindi = sorovlar.xodim_yigindilari(request.user)
+    yigindi = sorovlar.xodim_yigindilari(request.user, qatorlar)
     if request.GET.get("av_bor") == "1":
         qs = qs.filter(pk__in=[pk for pk, (soni, _) in yigindi.items() if soni > 0])
     # AV soni va qiymat Python'da hisoblanadi — xodimlar soni kichik, butun ro'yxat saralanib keyin sahifalanadi
@@ -75,7 +83,6 @@ def xodimlar(request):
         ustunlar.pop("qiymat")
     saralash = Saralash(request, ustunlar)
     sahifa = sahifala(request, saralash.royxat(xodimlar_royxati), XODIM_SAHIFA_HAJMI)
-    hammasi = sorovlar.korinadigan_xodimlar(request.user)
     ushlab = {pk for pk, (soni, _) in yigindi.items() if soni > 0}
     korsatkichlar = {
         "faol": hammasi.exclude(KETGAN).count(),
@@ -87,7 +94,8 @@ def xodimlar(request):
     return render(
         request, "mol/xodimlar.html",
         {"xodimlar": sahifa, "sahifa": sahifa, "query": params.urlencode(), "params": request.GET,
-         "akt_huquqi": huquqi_bor(request.user, "mol_akt"), "korsatkichlar": korsatkichlar, "saralash": saralash},
+         "akt_huquqi": huquqi_bor(request.user, "mol_akt"), "korsatkichlar": korsatkichlar, "saralash": saralash,
+         "filiallar": filiallar, "filial": filial},
     )
 
 
