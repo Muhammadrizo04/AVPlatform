@@ -118,17 +118,12 @@ a { text-underline-offset: 3px; }
   #sidebar:not(.hide) ~ .wrapper { --cui-sidebar-occupy-start: 240px; }
 }
 .sidebar-header { padding: 1.125rem 1.25rem; border-bottom: 1px solid rgba(255, 255, 255, .08) !important; }
-.av-brend { display: flex; flex-direction: column; align-items: flex-start; gap: .625rem; color: #fff; line-height: 1.2; }
-.av-logotip { display: block; width: 8.5rem; height: auto; padding: .375rem .5rem; border-radius: 10px; background: #fff; box-sizing: content-box; }
+.av-brend { display: flex; flex-direction: column; align-items: center; gap: .5rem; width: 100%; line-height: 1.2; }
+.av-logotip { display: block; width: 11rem; height: auto; }
 .kirish-logotip { display: block; width: 15rem; max-width: 80%; height: auto; margin: 0 auto .75rem; }
 .chop-logotip { display: none; }
-.av-brend a { color: #fff; text-decoration: none; }
-.av-logo { flex: 0 0 2.25rem; height: 2.25rem; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 1.125rem;
-  background: linear-gradient(135deg, #7a73ff 0%, #635bff 45%, #2a78d6 100%); }
-.av-logo i { line-height: 1; display: block; }
-.av-brend b { display: block; font-size: .9375rem; font-weight: 700; }
-.av-brend div > span, .av-brend .av-brend-bosh { display: block; font-size: .75rem; color: #8ea2bd; }
-.av-brend .av-brend-bosh { text-decoration: underline; }
+.av-brend-nom { font-size: .75rem; color: #8ea2bd; text-align: center; }
+.av-brend-bosh { display: block; color: #8ea2bd; }
 .sidebar-nav .nav-link { font-size: .875rem; font-weight: 500; margin-bottom: 2px; }
 .sidebar-nav .nav-link.active { font-weight: 600; box-shadow: 0 4px 12px rgba(99, 91, 255, .35); }
 .sidebar-nav .nav-title { font-size: .6875rem; letter-spacing: .08em; font-weight: 700; }

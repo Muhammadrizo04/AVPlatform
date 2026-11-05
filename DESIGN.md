@@ -425,7 +425,7 @@ Gradientlar faqat uch joyda: bosh sahifa bandi (indigo→ko'k radial, pastki o'n
 - 10px, 1px ramka, .8125rem: xato qizil-och/#9b0b33 600; ogohlantirish sariq-och/#6e4700; muvaffaqiyat yashil-och/#075f44; ma'lumot indigo-och/#3730a3. Sinxron uzilishi banneri — to'liq qizil, oq 600 matn.
 
 ### Navigation
-- **Menyu ustuni:** navi siyoh, 240px; brend bloki (oq plitadagi Dom Stroy logotipi, ostida nom 700, kompaniya nomi). Bandlar 8px yumaloq, .5rem .75rem, .875rem 500, menyu-matn; ikonkalar bo'lim rangining yorqin tusida. Hover: 7% oq fon, oq matn. Faol: indigo pill, oq matn va ikonka, 600, indigo yog'du. Guruh nomlari .6875rem 700 bosh harfli, menyu-bolim rangida. Kutilayotgan chiqimlar soni o'ng chetda qizil badge.
+- **Menyu ustuni:** navi siyoh, 240px; brend bloki (fonda markazlangan Dom Stroy logotipi, ostida bir qator: nom · kompaniya, .75rem). Bandlar 8px yumaloq, .5rem .75rem, .875rem 500, menyu-matn; ikonkalar bo'lim rangining yorqin tusida. Hover: 7% oq fon, oq matn. Faol: indigo pill, oq matn va ikonka, 600, indigo yog'du. Guruh nomlari .6875rem 700 bosh harfli, menyu-bolim rangida. Kutilayotgan chiqimlar soni o'ng chetda qizil badge.
 - **Header:** sahifa yo'li 600 siyoh (ota havolasi ikkilamchi 500); sinxron chipi yashil-och pill, ichida 8px yashil nuqta 3px halqa bilan; avatar 2rem indigo→ko'k gradient doira, bosh harf.
 - **Tablar:** pastki 2px indigo chiziq faol tabda; nav-pills oq pill'lar, faoli indigo + yog'du.
 

@@ -25,7 +25,7 @@
   {% with ns=request.resolver_match.namespace nom=request.resolver_match.url_name %}
   <div class="sidebar sidebar-dark sidebar-fixed border-end" id="sidebar">
     <div class="sidebar-header border-bottom">
-      <div class="av-brend"><img class="av-logotip" src="{% static 'panel/logotip.png' %}" alt="Dom Stroy"><div><a href="{% if bosh_huquqi %}{% url 'panel:bosh' %}{% elif korish_huquqi %}{% url 'vositalar:royxat' %}{% else %}{% url 'reviziya:royxat' %}{% endif %}"><b>Asosiy vositalar</b></a>{% if kompaniya_nomi %}<span>{{ kompaniya_nomi }}</span>{% elif sozlama_huquqi %}<a class="av-brend-bosh" href="{% url 'panel:umumiy' %}">Kompaniya nomi kiritilmagan</a>{% endif %}</div></div>
+      <div class="av-brend"><a href="{% if bosh_huquqi %}{% url 'panel:bosh' %}{% elif korish_huquqi %}{% url 'vositalar:royxat' %}{% else %}{% url 'reviziya:royxat' %}{% endif %}"><img class="av-logotip" src="{% static 'panel/logotip.png' %}" alt="Dom Stroy"></a><div class="av-brend-nom">Asosiy vositalar{% if kompaniya_nomi %} · {{ kompaniya_nomi }}{% elif sozlama_huquqi %}<a class="av-brend-bosh" href="{% url 'panel:umumiy' %}">Kompaniya nomi kiritilmagan</a>{% endif %}</div></div>
       <button class="btn-close btn-close-white d-lg-none" type="button" aria-label="Yopish" data-sidebar-toggle></button>
     </div>
     <ul class="sidebar-nav">
