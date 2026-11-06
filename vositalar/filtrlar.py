@@ -41,8 +41,13 @@ def av_filtrla(qs: QuerySet, params, user) -> QuerySet:
     if arxiv:
         qs = filial_bilan_chekla(qs.arxiv(), user, "filial_rekvizit")
     else:
-        # soni/summa — faqat ruxsat etilgan filiallardagi qoldiq (boshqa filialdagi qism ko'rinmaydi)
-        qs = qs.qoldiq_bilan(ruxsat_filial_idlar(user)).faol().filter(ruxsat_qoldiq(user))
+        # soni/summa — faqat ruxsat etilgan filiallardagi qoldiq (boshqa filialdagi qism ko'rinmaydi); filial
+        # tanlangan bo'lsa — faqat shu filialdagi, aks holda ustun filtrga mos kelmaydi
+        ruxsat = ruxsat_filial_idlar(user)
+        tanlangan = son(params.get("filial"))
+        if tanlangan is not None and (ruxsat is None or tanlangan in ruxsat):
+            ruxsat = {tanlangan}
+        qs = qs.qoldiq_bilan(ruxsat).faol().filter(ruxsat_qoldiq(user))
 
     q = (params.get("q") or "").strip()
     if q:

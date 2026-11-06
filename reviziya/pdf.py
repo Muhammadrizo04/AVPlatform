@@ -3,10 +3,10 @@ from decimal import ROUND_HALF_UP, Decimal
 
 from django.template.loader import render_to_string
 
-from onec.models import AV, Xodim
+from onec.models import Xodim
 from panel.logotip import logotip_uri
-from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Holat, Sozlama
+from vositalar.narx import filial_narxlari
 
 from .servis import KOMISSIYA_RAIS
 from .solishtir import (
@@ -17,12 +17,11 @@ TIYIN = Decimal("0.01")
 KAMOMAD = ("kam", "topilmadi")
 
 
-def _narxlar(qatorlar) -> dict[int, Decimal]:
-    """Kamomad qatorlaridagi AV'larning joriy dona narxi (barcha filiallar qoldig'i bo'yicha)."""
+def _narxlar(reviziya, qatorlar) -> dict[int, Decimal]:
+    """Kamomad qatorlaridagi AV'larning reviziya filialidagi joriy dona narxi."""
     idlar = {q.av_id for q in qatorlar if q.guruh in KAMOMAD}
-    return {
-        av.pk: dona_narxi(av.jami_summa, av.jami_soni) for av in AV.objects.qoldiq_bilan().filter(pk__in=idlar)
-    }
+    narx = filial_narxlari(idlar)
+    return {av_id: narx(av_id, reviziya.filial_id) for av_id in idlar}
 
 
 def mollar(reviziya, bolim: str = ""):
@@ -44,7 +43,7 @@ def dalolatnoma_pdf(reviziya, pul: bool = False, bolim: str = "") -> bytes:
     qatorlar = bolim_boyicha(solishtir(reviziya), bolim)
     nomlar = bolim_nomlari(reviziya.filial_id)
     holatlar = dict(Holat.choices)
-    narxlar = _narxlar(qatorlar) if pul else {}
+    narxlar = _narxlar(reviziya, qatorlar) if pul else {}
     jami_qiymat = Decimal("0")
     farqlar = []
     for q in qatorlar:

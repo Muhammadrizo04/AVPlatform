@@ -13,8 +13,8 @@ from django.utils import timezone
 
 from onec.models import AV, Xodim
 from vositalar.amallar import AmalXato, mol_ozgartir
-from vositalar.amortizatsiya import dona_narxi
 from vositalar.models import Taqsimot
+from vositalar.narx import filial_narxlari
 
 from .models import MolAkt, MolAktQator
 
@@ -175,12 +175,9 @@ def _tasdiqla(akt: MolAkt, kim) -> None:
         mol_ozgartir(mavjud[k], soni, qabul, kim, hujjat_izoh=joriy.nomi)
 
     # 4) Tasdiqlangan akt o'zgarmaydi (spec §7.6): qiymat uchun bir dona narxi shu paytdagi 1C ma'lumotidan saqlanadi.
-    narxlar = {
-        av.pk: dona_narxi(av.jami_summa, av.jami_soni).quantize(TIYIN, ROUND_HALF_UP)
-        for av in AV.objects.qoldiq_bilan().filter(pk__in={q.av_id for q in qatorlar})
-    }
+    narx = filial_narxlari({q.av_id for q in qatorlar})
     for q in qatorlar:
-        q.dona_narxi = narxlar.get(q.av_id, NOL)
+        q.dona_narxi = narx(q.av_id, q.filial_id).quantize(TIYIN, ROUND_HALF_UP)
     MolAktQator.objects.bulk_update(qatorlar, ["dona_narxi"])
 
     joriy.holat = MolAkt.Holat.TASDIQLANGAN

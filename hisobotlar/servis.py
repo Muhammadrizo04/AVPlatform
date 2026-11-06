@@ -13,9 +13,10 @@ from django.db.models import F, prefetch_related_objects
 
 from hisoblar.huquqlar import filial_bilan_chekla
 from onec.models import AV, AVQoldiq, Filial, Xodim
-from vositalar.amortizatsiya import dona_narxi, hisobla, oy_qosh, samarali_muddat
+from vositalar.amortizatsiya import hisobla, oy_qosh, samarali_muddat
 from vositalar.bayroqlar import BAYROQLAR
 from vositalar.models import Bolim, Taqsimot, TaqsimotHarakat
+from vositalar.narx import filial_narxlari
 
 NOL = Decimal("0")
 TIYIN = Decimal("0.01")
@@ -95,10 +96,6 @@ def _bolimlar() -> dict[int, Bolim]:
     return bolimlar
 
 
-def _qiymat(soni: Decimal, av: AV) -> Decimal:
-    return soni * dona_narxi(av.jami_summa, av.jami_soni)
-
-
 def _taqsimla(jami: Decimal, ogirliklar: list[Decimal]) -> list[Decimal]:
     """`jami` (0.01 aniqlikda) ni og'irliklarga proporsional bo'ladi (eng katta qoldiq usuli): qismlar 0.01 ga
     yaxlitlangan va yig'indisi aynan `jami` ga teng."""
@@ -124,13 +121,14 @@ def kesim(user, guruh: Literal["filial", "bolim", "tur"], bugun: date) -> list[d
     if guruh == "bolim":
         qatorlar, avlar = _taqsimotlar(user)
         bolimlar = _bolimlar()
-        av_qatorlari = defaultdict(list)
+        narx = filial_narxlari(avlar)
+        juft_qatorlari = defaultdict(list)  # (AV, filial): filiallar narxi har xil, bir-biriga aralashmaydi
         for t in qatorlar:
-            av_qatorlari[t.av_id].append(t)
-        for av_id, royxat in av_qatorlari.items():
+            juft_qatorlari[(t.av_id, t.filial_id)].append(t)
+        for (av_id, filial_id), royxat in juft_qatorlari.items():
             av = avlar[av_id]
             ogirliklar = [t.soni for t in royxat]
-            jami_summa = sum((_qiymat(t.soni, av) for t in royxat), NOL).quantize(TIYIN)
+            jami_summa = sum((t.soni * narx(av_id, filial_id) for t in royxat), NOL).quantize(TIYIN)
             boshlangichlar = _taqsimla(jami_summa, ogirliklar)
             qoldiqlar = _taqsimla(_qoldiq_qiymati(jami_summa, av, bugun), ogirliklar)
             for t, boshlangich, qoldiq in zip(royxat, boshlangichlar, qoldiqlar):
@@ -182,6 +180,7 @@ def mol_qaydnoma(user, xodim: Xodim | None = None) -> list[dict]:
     xodimga oxirgi biriktirilgan sana (`sana_soni` — necha marta)."""
     qatorlar, avlar = _taqsimotlar(user)
     bolimlar = _bolimlar()
+    narx = filial_narxlari(avlar)
     sanalar = _biriktirish_sanalari([t for t in qatorlar if t.mol_id], "mol")
     natija = []
     for t in qatorlar:
@@ -197,7 +196,7 @@ def mol_qaydnoma(user, xodim: Xodim | None = None) -> list[dict]:
             "bolim": bolimlar[t.bolim_id].toliq_nomi if t.bolim_id else "",
             "holat": t.get_holat_display(),
             "soni": t.soni,
-            "qiymat": _qiymat(t.soni, av).quantize(TIYIN),
+            "qiymat": (t.soni * narx(t.av_id, t.filial_id)).quantize(TIYIN),
         })
     return sorted(natija, key=lambda q: (q["xodim"].ism, q["xodim"].pk, q["av"].nomi, q["av"].pk))
 
@@ -208,6 +207,7 @@ def bolim_qaydnoma(user, filial_id: int, bolim_idlari: set | None = None) -> lis
     joylashtirilgan sana; tartib — bo'lim, AV nomi."""
     qatorlar, avlar = _taqsimotlar(user)
     bolimlar = _bolimlar()
+    narx = filial_narxlari(avlar)
     sanalar = _biriktirish_sanalari([t for t in qatorlar if t.filial_id == filial_id and t.bolim_id], "bolim")
     natija = []
     for t in qatorlar:
@@ -223,7 +223,7 @@ def bolim_qaydnoma(user, filial_id: int, bolim_idlari: set | None = None) -> lis
             "mol": t.mol,
             "holat": t.get_holat_display(),
             "soni": t.soni,
-            "qiymat": _qiymat(t.soni, av).quantize(TIYIN),
+            "qiymat": (t.soni * narx(t.av_id, t.filial_id)).quantize(TIYIN),
         })
     return sorted(natija, key=lambda q: (q["bolim"] == BOLIMSIZ, q["bolim"].casefold(), q["av"].nomi, q["av"].pk))
 

@@ -4,9 +4,9 @@ from decimal import Decimal
 from django.db.models import Exists, OuterRef, Q, Sum
 
 from hisoblar.huquqlar import filial_bilan_chekla, ruxsat_filial_idlar
-from onec.models import AV, Xodim
-from vositalar.amortizatsiya import dona_narxi
+from onec.models import Xodim
 from vositalar.models import Taqsimot
+from vositalar.narx import filial_narxlari
 
 from .models import MolAkt, MolAktQator
 
@@ -36,16 +36,14 @@ def faol_xodimlar(user):
 def xodim_yigindilari(user, qatorlar=None) -> dict[int, tuple[Decimal, Decimal]]:
     """{xodim_id: (AV soni, qiymat)} — faqat ruxsat etilgan filiallardagi qatorlardan; 2 ta so'rov."""
     qatorlar = ruxsat_taqsimot(user) if qatorlar is None else qatorlar
-    juftlar = qatorlar.filter(mol__isnull=False).order_by().values_list("mol_id", "av_id").annotate(s=Sum("soni"))
-    juftlar = list(juftlar)
-    narxlar = {
-        av.pk: dona_narxi(av.jami_summa, av.jami_soni)
-        for av in AV.objects.qoldiq_bilan().filter(pk__in={av for _, av, _ in juftlar})
-    }
+    juftlar = list(
+        qatorlar.filter(mol__isnull=False).order_by().values_list("mol_id", "av_id", "filial_id").annotate(s=Sum("soni"))
+    )
+    narx = filial_narxlari({av_id for _, av_id, _, _ in juftlar})
     natija: dict[int, tuple[Decimal, Decimal]] = {}
-    for mol_id, av_id, soni in juftlar:
+    for mol_id, av_id, filial_id, soni in juftlar:
         eski_soni, eski_qiymat = natija.get(mol_id, (NOL, NOL))
-        natija[mol_id] = (eski_soni + soni, eski_qiymat + soni * narxlar.get(av_id, NOL))
+        natija[mol_id] = (eski_soni + soni, eski_qiymat + soni * narx(av_id, filial_id))
     return natija
 
 
@@ -53,14 +51,9 @@ def akt_narxlari(akt, qatorlar) -> dict[int, Decimal]:
     """{akt qatori pk: bir dona narxi}. Tasdiqlangan akt — tasdiqlash paytida saqlangan narx (keyin o'zgarmaydi);
     qoralama — joriy 1C qoldig'idan (summa / soni)."""
     tasdiqlangan = akt.holat == MolAkt.Holat.TASDIQLANGAN
-    joriy = {}
-    kerak = {q.av_id for q in qatorlar if not (tasdiqlangan and q.dona_narxi is not None)}
-    if kerak:
-        joriy = {
-            av.pk: dona_narxi(av.jami_summa, av.jami_soni) for av in AV.objects.qoldiq_bilan().filter(pk__in=kerak)
-        }
+    narx = filial_narxlari({q.av_id for q in qatorlar if not (tasdiqlangan and q.dona_narxi is not None)})
     return {
-        q.pk: q.dona_narxi if tasdiqlangan and q.dona_narxi is not None else joriy.get(q.av_id, NOL)
+        q.pk: q.dona_narxi if tasdiqlangan and q.dona_narxi is not None else narx(q.av_id, q.filial_id)
         for q in qatorlar
     }
 

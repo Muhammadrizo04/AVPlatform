@@ -59,6 +59,9 @@ def _royxat_qs(request):
     qs = av_filtrla(AV.objects.all(), request.GET, request.user)
     # «Filial» ustuni bo'yicha tartib — AV turgan (ko'rinadigan) filial nomi; arxivda — 1C kartochkasidagi filial
     turgan = filial_bilan_chekla(AVQoldiq.objects.filter(av=OuterRef("pk"), soni__gt=0), request.user)
+    filial = son(request.GET.get("filial"))
+    if filial is not None:
+        turgan = turgan.filter(filial_id=filial)
     qs = qs.annotate(joy_filial=Coalesce(
         Subquery(turgan.order_by("filial__nomi").values("filial__nomi")[:1]), F("filial_rekvizit__nomi"),
     ))

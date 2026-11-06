@@ -14,9 +14,9 @@ from hisoblar.parametrlar import son
 from onec.models import AV, Filial
 from panel.sahifalash import sahifala
 from panel.saralash import Saralash
-from vositalar.amortizatsiya import dona_narxi
 from vositalar.bayroqlar import BAYROQLAR
 from vositalar.models import Holat
+from vositalar.narx import filial_narxlari
 
 from . import sorovlar
 from .models import MolAkt
@@ -110,13 +110,10 @@ def xodim(request, pk):
         .select_related("av", "filial", "bolim__ota__ota")
         .order_by("av__nomi", "filial__nomi", "pk")
     )
-    narxlar = {
-        av.pk: dona_narxi(av.jami_summa, av.jami_soni)
-        for av in AV.objects.qoldiq_bilan().filter(pk__in={t.av_id for t in qatorlar})
-    }
+    narx = filial_narxlari({t.av_id for t in qatorlar})
     holatlar = dict(Holat.choices)
     for t in qatorlar:
-        t.qiymat = t.soni * narxlar.get(t.av_id, NOL)
+        t.qiymat = t.soni * narx(t.av_id, t.filial_id)
         t.holat_nomi = holatlar.get(t.holat, t.holat)
     aktlar = sorovlar.korinadigan_aktlar(request.user).filter(Q(topshiruvchi=x) | Q(qabul_qiluvchi=x))
     kontekst = {

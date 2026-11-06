@@ -210,7 +210,7 @@ def test_hisobotlar_sorovlar_soni_qatorlarga_bogliq_emas(hisobchi, filial_a, dja
         av = av_yarat(filial_a, soni="2", turi=tur("T"))
         kartochka(av, oy_qosh(BUGUN, -10), 12)
         qator(av, filial_a, "2", bolim=bolim, mol=ali)
-    with django_assert_max_num_queries(9):  # +1 — biriktirilgan sanalar (bitta so'rov)
+    with django_assert_max_num_queries(10):  # +1 — filial narxlari, +1 — biriktirilgan sanalar (bitta so'rov)
         servis.kesim(hisobchi, "bolim", BUGUN)
         servis.mol_qaydnoma(hisobchi)
     with django_assert_max_num_queries(7):  # +1: soni/summa — ruxsat etilgan filiallar bo'yicha
