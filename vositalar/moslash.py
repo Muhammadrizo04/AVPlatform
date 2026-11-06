@@ -12,7 +12,8 @@ from django.db import transaction
 from django.db.models import Min, Q, Sum
 from django.utils import timezone
 
-from jurnal.yoz import yoz
+from jurnal.models import Jurnal
+from jurnal.yoz import SINXRON_NOMI, yoz
 from onec.models import AV, AVQoldiq, Harakat1C
 
 from .models import AVKartochka, Holat, Taqsimot, TaqsimotHarakat
@@ -225,8 +226,13 @@ def _nolga_tushdi(juft, izoh) -> None:
 
 def _ishga_tushgan_sanalar() -> None:
     """Bo'sh `ishga_tushgan_sana` — AV'ning eng erta `kirim` harakati sanasi (mahalliy sana). Qo'lda kiritilgani
-    o'zgarmaydi."""
-    bosh = {k.av_id: k for k in AVKartochka.objects.filter(ishga_tushgan_sana__isnull=True)}
+    o'zgarmaydi, foydalanuvchi ataylab tozalagani ham qayta to'ldirilmaydi."""
+    qolda = (
+        Jurnal.objects.filter(obyekt_turi="vositalar.avkartochka", maydon="ishga_tushgan_sana")
+        .exclude(kim_nomi=SINXRON_NOMI).values_list("obyekt_id", flat=True)
+    )
+    qolda = {int(pk) for pk in qolda}
+    bosh = {k.av_id: k for k in AVKartochka.objects.filter(ishga_tushgan_sana__isnull=True).exclude(pk__in=qolda)}
     if not bosh:
         return
     eng_erta = (

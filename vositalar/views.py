@@ -355,6 +355,10 @@ def _rasmlar_kontekst(user, av, **qoshimcha) -> dict:
     return kontekst
 
 
+def _qoshimcha_ozgardi(yuborilgan: dict, joriy: dict) -> bool:
+    return any(str(v or "").strip() != str(joriy.get(k) or "").strip() for k, v in yuborilgan.items())
+
+
 def kartochka_saqla(kartochka: AVKartochka, malumot: dict, versiya: int, kim) -> None:
     """Faqat platforma maydonlarini saqlaydi (1C maydonlari e'tiborga olinmaydi). `malumot` kalitlari:
     ishga_tushgan_sana, xizmat_muddati_oy, qoshimcha ({kalit: qiymat}), izoh — berilmaganlari o'zgarmaydi.
@@ -381,7 +385,10 @@ def kartochka_saqla(kartochka: AVKartochka, malumot: dict, versiya: int, kim) ->
                 xatolar["xizmat_muddati_oy"] = ["Xizmat muddati 1 dan 1200 gacha oy bo'lishi kerak."]
         if "izoh" in malumot:
             yangi["izoh"] = str(malumot["izoh"] or "").strip()
-        if "qoshimcha" in malumot:
+        # Faqat izoh, sana yoki muddat o'zgarsa, qo'shimcha maydonlar tekshirilmaydi: turga keyin qo'shilgan majburiy
+        # maydon eski AV kartochkasini saqlashni to'xtatmasin. Boshqa holatda — to'liq tekshiruv.
+        boshqasi_ozgardi = any(getattr(joriy, m) != v for m, v in yangi.items())
+        if "qoshimcha" in malumot and (_qoshimcha_ozgardi(malumot["qoshimcha"], joriy.qoshimcha) or not boshqasi_ozgardi):
             maydonlar = _maydonlar(kartochka.av)
             try:
                 toza = qoshimcha_tekshir(maydonlar, malumot["qoshimcha"], joriy.qoshimcha)

@@ -130,6 +130,8 @@ def _bajar(client, toliq: bool, hozir: datetime, vaqt: datetime, majburiy: bool 
     else:
         dan = timezone.localtime(hozir - HARAKAT_OYNASI).replace(tzinfo=None, microsecond=0)
 
+    # Tartib muhim: qoldiq harakatlardan oldin olinadi. Oraliqda kiritilgan chiqim bir soatga soxta dona qo'shadi va
+    # keyingi sinxronda o'zi tuzaladi. Teskari tartibda shu holat to'liq sinxronda taqsimotni o'chirib yuborardi.
     sprav = client.spravochniklar()
     vos = client.vositalar()
     harakatlar = client.harakatlar(dan, CHEKSIZ_GACHA)

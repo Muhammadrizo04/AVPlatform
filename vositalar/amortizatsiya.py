@@ -36,7 +36,7 @@ def oy_qosh(sana: date, oylar: int) -> date:
 
 def _toliq_oylar(boshlanish: date, bugun: date) -> int:
     oylar = (bugun.year - boshlanish.year) * 12 + bugun.month - boshlanish.month
-    if bugun.day < boshlanish.day:
+    if oy_qosh(boshlanish, oylar) > bugun:  # `oy_qosh` bilan bir xil: 31-avgust + 6 oy = 28-fevral — 6 oy to'ldi
         oylar -= 1
     return max(0, oylar)
 
