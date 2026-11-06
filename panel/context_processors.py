@@ -1,9 +1,27 @@
+from django.utils import timezone
+
 from hisoblar.huquqlar import huquqi_bor
 from vositalar.models import Sozlama
 from onec.sinxron import ketma_ket_xatolar, oxirgi_muvaffaqiyatli
 from panel.vazifalar import kutayotgan_ishlar
 
 XATO_CHEGARASI = 3
+OYLAR = ("yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr")
+KUNLAR = ("dushanba", "seshanba", "chorshanba", "payshanba", "juma", "shanba", "yakshanba")
+
+
+def joriy_vaqt() -> dict:
+    """Yuqori panel uchun: mahalliy soat va sana; `panel/vaqt.js` qolgan vaqtni server soatidan hisoblab boradi."""
+    hozir = timezone.localtime()
+    return {
+        "soat": f"{hozir:%H:%M}",
+        "sana": f"{hozir.day}-{OYLAR[hozir.month - 1]}, {KUNLAR[hozir.weekday()]}",
+        "iso": f"{hozir:%Y-%m-%dT%H:%M}",
+        "ms": int(hozir.timestamp() * 1000),
+        "zona": int(hozir.utcoffset().total_seconds() // 60),
+        "oylar": ",".join(OYLAR),
+        "kunlar": ",".join(KUNLAR),
+    }
 
 
 def sinxron_holati(request):
@@ -29,6 +47,7 @@ def sinxron_holati(request):
         "kompaniya_nomi": Sozlama.ol().kompaniya_nomi,
         "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),
         "tozalash_huquqi": huquqi_bor(request.user, "tozalash"),
+        "joriy_vaqt": joriy_vaqt(),
         "sinxron_holati": {
             "oxirgi": (oxirgi.tugadi or oxirgi.boshlandi) if oxirgi else None,
             "xato": ketma_ket_xatolar() >= XATO_CHEGARASI,

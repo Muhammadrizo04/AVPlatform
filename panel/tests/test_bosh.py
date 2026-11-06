@@ -103,7 +103,8 @@ def test_sinxron_banner_kulrang_oxirgi_vaqt(client_hisobchi):
         natija=SinxronJurnal.Natija.OK,
     )
     matn = html.unescape(client_hisobchi.get(reverse("panel:bosh")).content.decode())
-    assert "Oxirgi muvaffaqiyatli sinxron:" in matn
+    assert "Oxirgi muvaffaqiyatli sinxron:" not in matn  # yuqori panelda sinxron emas, sana va soat
+    assert 'id="av-vaqt"' in matn
 
 
 def test_bosh_qiymat_grafiklari(client_hisobchi, client_rol, filial_yarat):

@@ -59,8 +59,8 @@ reviziyalarim» sahifasi ochiladi.
 
 Yuqori panelda uchta narsa doim ko'rinadi:
 
-- **Oxirgi muvaffaqiyatli sinxron** — yashil belgi va vaqt. 1C bilan aloqa uzilsa, sahifa tepasida «1C bilan aloqa yo'q»
-  ogohlantirishi chiqadi.
+- **Bugungi sana va soat.** Oxirgi sinxron vaqti «Sozlamalar → 1C ulanish»da. 1C bilan aloqa uzilsa, sahifa tepasida
+  «1C bilan aloqa yo'q» ogohlantirishi chiqadi.
 - **Qo'ng'iroqcha — Kutayotgan ishlar**: tasdiq kutayotgan 1C chiqimlari, 1C'da bekor qilingan chiqimlar, tasdiq
   kutayotgan aktlar va siz revizor bo'lgan ochiq reviziyalar. Qizil belgi hali o'qilmagan ishlar sonini ko'rsatadi.
 - **Foydalanuvchi va rol.**
@@ -336,7 +336,7 @@ Hammasi Excel'ga yuklanadi va chop etiladi. Qaydnomalarda **summali** va **summa
 
 **Har kuni**
 
-1. Yuqori paneldagi sinxron vaqti yashil va yangi ekanini tekshiring.
+1. «Sozlamalar → 1C ulanish»da oxirgi sinxron vaqti yangi ekanini tekshiring.
 2. Qo'ng'iroqchadagi kutayotgan ishlarni ko'ring.
 3. Bosh sahifadagi «Bajarilishi kerak» sonlarini ko'ring.
 

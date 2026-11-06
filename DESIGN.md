@@ -293,7 +293,7 @@ Oq matnli pill fonlari uchun shu tuslarning chuqurroq variantlari: **hp-ishlatil
 
 ### Semantik
 - **Signal qizil** (qizil), matni **To'q qizil** (qizil-to), foni **Qizil och** (qizil-och): 1C bilan farq, МОЛ'siz qatorlar, ketgan xodimda AV, kutilayotgan chiqim soni, xato, sinxron uzilish banneri, xavfli tugma.
-- **Yashil** (yashil, yashil-to, yashil-och): sinxron muvaffaqiyatli chipi, "mos" belgisi, Farq=0, muvaffaqiyat xabari.
+- **Yashil** (yashil, yashil-to, yashil-och): "mos" belgisi, Farq=0, muvaffaqiyat xabari.
 - **Sariq och** (sariq-och, sariq-to): ogohlantirish belgisi va xabari.
 
 ### Neutral
@@ -339,7 +339,7 @@ Oq matnli pill fonlari uchun shu tuslarning chuqurroq variantlari: **hp-ishlatil
 
 ## Layout
 
-Qobiq: chapda 240px navi menyu ustuni (≥992px doimiy, kichikda ochiladigan), tepada yopishqoq 56px (3.5rem) oq header (92% shaffof, blur): menyu tugmasi (<992px), sahifa yo'li, sinxron chipi (<576px yashirin), avatar doirasi + ism/rol (<992px faqat avatar) + "Chiqish". Sahifa: `max-width: 1840px` (keng monitorda ham o'ng tomonda bo'sh joy qolmasin), padding 1.75rem 2rem 3rem; <992px da 1.25rem 1rem 2rem.
+Qobiq: chapda 240px navi menyu ustuni (≥992px doimiy, kichikda ochiladigan), tepada yopishqoq 56px (3.5rem) oq header (92% shaffof, blur): menyu tugmasi (<992px), sahifa yo'li, sana va soat (<576px faqat soat), qo'ng'iroqcha, avatar doirasi + ism/rol (<992px faqat avatar) + "Chiqish" ikonkasi. Sahifa: `max-width: 1840px` (keng monitorda ham o'ng tomonda bo'sh joy qolmasin), padding 1.75rem 2rem 3rem; <992px da 1.25rem 1rem 2rem.
 
 Bosh sahifa: gradient band sahifa paddingini yopib to'liq kenglikda (pastki padding 5.5rem), KPI qatori -4rem bilan bandga chiqib turadi: 4 ustun, <1200px da 2, <576px da 1, oraliq 1rem. Ostida 7/5 to'r (`col-xl-7` / `col-xl-5`, 1.5rem oraliq): chapda filiallar bar grafigi, o'ngda holatlar grafigi va "Bajarilishi kerak"; pastda to'liq kenglikdagi filiallar jadvali.
 
@@ -363,7 +363,7 @@ Gibrid: fon/sirt farqi + yumshoq navi soyalar. Har oq yuza 1px chiziq ramkasi va
 
 ## Shapes
 
-Yumshoq, do'stona geometriya. Kartochka, plita, ro'yxat guruhi, "harakat kerak" chizig'i — 12px; ikonka kvadratlari va vazifa qatorlari — 10px; tugma va maydon — 8px (kichigi 6–7px); AV rasmi — 14px. Holat pill'lari, belgilar, sinxron chipi, nav-pills, identifikator bo'laklari — to'liq yumaloq (999px). Avatar, holat nuqtalari, vazifa nuqtalari, tarix nuqtalari — doira. Bar grafik izi va bari faqat o'ng tomondan 4px yumaloq (chap tomon o'q chizig'iga tegib turadi); yig'ma holat chizig'i 7px, segmentlar orasi 2px.
+Yumshoq, do'stona geometriya. Kartochka, plita, ro'yxat guruhi, "harakat kerak" chizig'i — 12px; ikonka kvadratlari va vazifa qatorlari — 10px; tugma va maydon — 8px (kichigi 6–7px); AV rasmi — 14px. Holat pill'lari, belgilar, nav-pills, identifikator bo'laklari — to'liq yumaloq (999px). Avatar, holat nuqtalari, vazifa nuqtalari, tarix nuqtalari — doira. Bar grafik izi va bari faqat o'ng tomondan 4px yumaloq (chap tomon o'q chizig'iga tegib turadi); yig'ma holat chizig'i 7px, segmentlar orasi 2px.
 
 Gradientlar faqat uch joyda: bosh sahifa bandi (indigo→ko'k radial, pastki o'ngda yashil yog'du), brend logotipi/avatar/AV rasmi o'rni (indigo→ko'k), KPI va ko'rsatkich ikonka kvadratlari (bo'lim rangining och→to'q 135° gradienti).
 
@@ -426,7 +426,7 @@ Gradientlar faqat uch joyda: bosh sahifa bandi (indigo→ko'k radial, pastki o'n
 
 ### Navigation
 - **Menyu ustuni:** navi siyoh, 240px; brend bloki (fonda markazlangan Dom Stroy logotipi, ostida bir qator: nom · kompaniya, .75rem). Bandlar 8px yumaloq, .5rem .75rem, .875rem 500, menyu-matn; ikonkalar bo'lim rangining yorqin tusida. Hover: 7% oq fon, oq matn. Faol: indigo pill, oq matn va ikonka, 600, indigo yog'du. Guruh nomlari .6875rem 700 bosh harfli, menyu-bolim rangida. Kutilayotgan chiqimlar soni o'ng chetda qizil badge.
-- **Header:** sahifa yo'li 600 siyoh (ota havolasi ikkilamchi 500); sinxron chipi yashil-och pill, ichida 8px yashil nuqta 3px halqa bilan; avatar 2rem indigo→ko'k gradient doira, bosh harf.
+- **Header:** sahifa yo'li 600 siyoh (ota havolasi ikkilamchi 500); sana va soat ikki qatorda (soat 700 siyoh, tabular raqam; sana .6875rem xira), o'ngida ingichka ajratgich; «Chiqish» — qo'ng'iroqcha bilan bir xil 2.25rem doira; avatar 2rem indigo→ko'k gradient doira, bosh harf.
 - **Tablar:** pastki 2px indigo chiziq faol tabda; nav-pills oq pill'lar, faoli indigo + yog'du.
 
 ### Tarix ro'yxati
