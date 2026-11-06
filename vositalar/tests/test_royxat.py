@@ -329,3 +329,12 @@ def test_royxat_qidiruv_platforma_malumotlari(client_hisobchi, filial_a):
     assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "buxgalteriya"})) == {noutbuk.nomi}
     assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "ryzen"})) == {boshqa.nomi}
     assert nomlar(client_hisobchi.get(reverse(ROYXAT), {"q": "cpu"})) == set()
+
+
+@pytest.mark.parametrize("korinish, faol, boshqa", [("jadval", "Jadval", "Kartochka"), ("kartochka", "Kartochka", "Jadval")])
+def test_korinish_tugmasi_faolini_belgilaydi(client_hisobchi, korinish, faol, boshqa):
+    html = client_hisobchi.get(reverse(ROYXAT), {"korinish": korinish}).content.decode()
+    blok = html[html.index('class="av-korinish'):html.index("</div>", html.index('class="av-korinish'))]
+    tugmalar = dict(reversed(t.rsplit("</svg>", 1)) for t in blok.split("</a>") if "</svg>" in t)
+
+    assert ' faol"' in tugmalar[faol] and ' faol"' not in tugmalar[boshqa]

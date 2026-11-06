@@ -4,9 +4,9 @@
   {% if faol_filtrlar %}
   <a class="btn btn-sm btn-outline-secondary" href="?{% if korinish == 'kartochka' %}korinish=kartochka{% endif %}"><i class="cil-x me-1"></i>Filtrlarni tozalash <span class="badge text-bg-secondary ms-1">{{ faol_filtrlar }}</span></a>
   {% endif %}
-  <div class="btn-group btn-group-sm ms-auto" role="group" aria-label="Ko'rinish">
-    <a class="btn {% if korinish == 'jadval' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?{% if korinishsiz_query %}{{ korinishsiz_query }}&amp;{% endif %}korinish=jadval" aria-pressed="{% if korinish == 'jadval' %}true{% else %}false{% endif %}"><i class="cil-list me-1"></i>Jadval</a>
-    <a class="btn {% if korinish == 'kartochka' %}btn-secondary{% else %}btn-outline-secondary{% endif %}" href="?{% if korinishsiz_query %}{{ korinishsiz_query }}&amp;{% endif %}korinish=kartochka" aria-pressed="{% if korinish == 'kartochka' %}true{% else %}false{% endif %}"><i class="cil-view-module me-1"></i>Kartochka</a>
+  <div class="av-korinish ms-auto" role="group" aria-label="Ko'rinish">
+    <a class="av-korinish-tugma{% if korinish == 'jadval' %} faol{% endif %}" href="?{% if korinishsiz_query %}{{ korinishsiz_query }}&amp;{% endif %}korinish=jadval" aria-pressed="{% if korinish == 'jadval' %}true{% else %}false{% endif %}"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 3.5h12M2 8h12M2 12.5h12"/></svg>Jadval</a>
+    <a class="av-korinish-tugma{% if korinish == 'kartochka' %} faol{% endif %}" href="?{% if korinishsiz_query %}{{ korinishsiz_query }}&amp;{% endif %}korinish=kartochka" aria-pressed="{% if korinish == 'kartochka' %}true{% else %}false{% endif %}"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Kartochka</a>
   </div>
 </div>
 

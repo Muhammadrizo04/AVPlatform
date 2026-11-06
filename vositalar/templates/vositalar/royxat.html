@@ -8,7 +8,7 @@
 
 <form method="get" action="{% url 'vositalar:royxat' %}" hx-get="{% url 'vositalar:royxat' %}" hx-target="#jadval" hx-push-url="true"
       hx-trigger="change, keyup changed delay:300ms from:input[name=q], keyup changed delay:400ms from:input[name=mol_ism]" class="filtrlar av-filtr">
-  {# 1-qator: qidiruv (AV va javobgar shaxs); 2-qator: tanlovlar; 3-qator: belgilar va saralash #}
+  {# Bitta to'r (panel.css .av-filtr): qidiruv, tanlovlar, belgilar va saralash bir xil ustun chiziqlarida turadi #}
   <div class="filtr-qidiruv">
     <input type="search" class="form-control form-control-sm" name="q" value="{{ params.q }}" placeholder="Inv. raqam, AV nomi yoki platforma ma'lumoti (masalan, i7)" aria-label="Inv. raqam, AV nomi yoki platforma ma'lumotlari bo'yicha qidirish">
     {% if params.mol %}<input type="hidden" name="mol" value="{{ params.mol }}">{% endif %}
@@ -35,7 +35,7 @@
   <div class="filtr-pastki">
     <div class="form-check mb-0" title="Faqat soni 1 dan ko'p AV'lar (bir kartochkada bir nechta dona)"><input class="form-check-input" type="checkbox" id="f_guruh" name="guruh" value="1" {% if params.guruh == "1" %}checked{% endif %}><label class="form-check-label" for="f_guruh">Faqat ko'p donalilar</label></div>
     <div class="form-check mb-0" title="1C'da qoldig'i qolmagan (hisobdan chiqqan) AV'lar"><input class="form-check-input" type="checkbox" id="f_arxiv" name="arxiv" value="1" {% if params.arxiv == "1" %}checked{% endif %}><label class="form-check-label" for="f_arxiv">Arxivdagilar</label></div>
-    <select class="form-select form-select-sm ms-auto" name="tartib" aria-label="Saralash">
+    <select class="form-select form-select-sm" name="tartib" aria-label="Saralash">
       {% for kalit, nomi in tartiblar %}
       <option value="{{ kalit }}" {% if saralash.kalit == kalit and not saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↑</option>
       <option value="-{{ kalit }}" {% if saralash.kalit == kalit and saralash.teskari %}selected{% endif %}>Saralash: {{ nomi }} ↓</option>

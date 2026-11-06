@@ -368,6 +368,13 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 /* ---------- AV ro'yxati ---------- */
 /* AV ro'yxati: ko'rinish almashtirgich, ixcham jadval, yopishqoq amallar paneli */
 .av-royxat-bosh { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .75rem; }
+.av-korinish { display: inline-flex; gap: 2px; padding: 2px; background: var(--av-chiziq-och); border-radius: 8px; }
+.av-korinish-tugma { display: inline-flex; align-items: center; gap: .375rem; padding: .25rem .625rem; border-radius: 6px;
+  color: var(--av-ikkilamchi); font-size: .8125rem; font-weight: 500; line-height: 1.25rem; text-decoration: none; }
+.av-korinish-tugma:hover { color: var(--av-siyoh); }
+.av-korinish-tugma:focus-visible { outline: 2px solid var(--av-indigo); outline-offset: 1px; }
+.av-korinish-tugma.faol { background: var(--av-sirt); color: var(--av-indigo); font-weight: 600; box-shadow: 0 1px 2px rgba(10, 37, 64, .12); }
+.av-korinish-tugma svg { width: 1rem; height: 1rem; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .av-jadval td.tanlash, .av-jadval th.tanlash { width: 2.5rem; position: relative; z-index: 2; }
 .av-jadval .av-nomi { min-width: 16rem; }
 .av-jadval .av-nomi > a { color: var(--av-siyoh); }
@@ -609,16 +616,26 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 /* Javobgar qaydnomasini chop etish: har javobgar shaxs yangi varaqdan */
 @media print { .chop-guruh + .chop-guruh { break-before: page; } }
 .chop-guruh + .chop-guruh { margin-top: 2.5rem; }
-/* AV ro'yxati filtri: qidiruv / tanlovlar / belgilar va saralash — uch qator, ustunlar teng */
-.av-filtr { display: grid; gap: .5rem; }
-.av-filtr > div { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
-.av-filtr .form-select, .av-filtr .form-control { max-width: none; }
-.av-filtr .filtr-qidiruv > .form-control { flex: 1 1 16rem; }
-.av-filtr .filtr-qidiruv > .form-control[name=q] { flex-grow: 2; }
-.av-filtr .filtr-tanlov > .form-select { flex: 1 1 10rem; width: auto; min-width: 0; }
-.av-filtr .filtr-tanlov > .form-select[name=bolim] { flex-grow: 1.6; }
-.av-filtr .filtr-pastki { column-gap: 1.25rem; }
-.av-filtr .filtr-pastki .form-select { width: auto; }
+/* AV ro'yxati filtri: bitta to'r — qidiruv, tanlovlar, belgilar va saralash bir xil ustun chiziqlarida */
+.av-filtr { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .5rem; align-items: center; }
+.av-filtr > div { display: contents; }
+.av-filtr .form-select, .av-filtr .form-control { width: 100%; max-width: none; min-width: 0; }
+.av-filtr [name=q] { grid-column: span 3; }
+.av-filtr [name=mol_ism] { grid-column: span 2; }
+.av-filtr [name=tartib] { grid-column: -2 / -1; }
+@media (max-width: 1199.98px) {
+  .av-filtr { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .av-filtr [name=q] { grid-column: span 2; }
+  .av-filtr [name=mol_ism] { grid-column: span 1; }
+  .av-filtr [name=bayroq] { grid-column: span 2; }
+}
+@media (max-width: 767.98px) {
+  .av-filtr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .av-filtr [name=q], .av-filtr [name=mol_ism], .av-filtr [name=bayroq], .av-filtr [name=tartib] { grid-column: 1 / -1; }
+}
+@media (max-width: 575.98px) {
+  .av-filtr { grid-template-columns: minmax(0, 1fr); }
+}
 /* Kutayotgan ishlar (qo'ng'iroqcha, panel/vazifalar.py) */
 .av-qongiroq { position: relative; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%;
   border: 1px solid var(--av-chiziq); background: var(--av-sirt); color: var(--av-ikkilamchi); cursor: pointer; }
