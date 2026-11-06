@@ -12,6 +12,7 @@ urlpatterns = [
     path("sozlamalar/foydalanuvchilar/<int:pk>/", sozlamalar.foydalanuvchi_tahrir, name="foydalanuvchi_tahrir"),
     path("sozlamalar/av-turlari/", sozlamalar.av_turlari, name="av_turlari"),
     path("sozlamalar/av-turlari/<int:pk>/", sozlamalar.av_turi_tahrir, name="av_turi_tahrir"),
+    path("sozlamalar/av-turlari/<int:pk>/nusxa/", sozlamalar.av_turi_nusxa, name="av_turi_nusxa"),
     path("sozlamalar/umumiy/", sozlamalar.umumiy, name="umumiy"),
     path("sozlamalar/yorliq-olchamlari/", sozlamalar.yorliq_olchamlari, name="yorliq_olchamlari"),
     path("sozlamalar/yorliq-olchamlari/<int:pk>/", sozlamalar.yorliq_olchami_tahrir, name="yorliq_olchami_tahrir"),

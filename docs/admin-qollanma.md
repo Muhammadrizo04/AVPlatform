@@ -279,6 +279,10 @@ Turlar 1C'dan keladi. «Sozlash»da ikkita narsa kiritiladi:
 - **Qo'shimcha maydonlar** — kartochkada chiqadigan maydonlar: kalit, nom, tip (matn, son, sana, tanlov, xotira),
   majburiylik, tanlov qiymatlari. Masalan, kompyuterlar uchun protsessor va xotira.
 
+Maydonlar faqat aynan shu turga tegishli. 1C'da kompyuterlar bir nechta turda bo'lsa, maydonlarni bir turda saqlang,
+keyin shu sahifadagi **«Maydonlarni boshqa turlarga nusxalash»** bo'limida kerakli turlarni belgilang. Turda bor
+maydonlar, xizmat muddati va kartochkalardagi qiymatlar o'zgarmaydi, faqat yetishmagan maydonlar qo'shiladi.
+
 ### 13.3. Umumiy
 
 - **Kompaniya nomi** — hujjatlarda chiqadi.

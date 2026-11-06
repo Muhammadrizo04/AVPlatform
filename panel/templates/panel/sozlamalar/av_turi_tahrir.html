@@ -28,4 +28,16 @@
     <a href="{% url 'panel:av_turlari' %}" class="btn btn-outline-secondary">Bekor qilish</a>
   </div>
 </form>
+{% if boshqa_turlar %}
+<form method="post" action="{% url 'panel:av_turi_nusxa' tur.pk %}" class="card mb-4">{% csrf_token %}
+  <div class="card-header fw-semibold">Maydonlarni boshqa turlarga nusxalash</div>
+  <div class="card-body">
+    <p class="text-body-secondary small">Shu turning saqlangan maydonlari belgilangan turlarga qo'shiladi. Turda bor maydonlar, xizmat muddati va kartochkalardagi qiymatlar o'zgarmaydi.</p>
+    <div class="border rounded p-2 katakchalar-royxat mb-3">
+      {% for t in boshqa_turlar %}{% with n=t.sozlama.maydonlar|length %}<div class="form-check mb-1"><input class="form-check-input" type="checkbox" name="turlar" value="{{ t.pk }}" id="nt_{{ t.pk }}"><label class="form-check-label" for="nt_{{ t.pk }}">{{ t.nomi }} <span class="text-body-secondary small">· {{ t.av_soni }} ta AV{% if n %} · {{ n }} ta maydon bor{% endif %}</span></label></div>{% endwith %}{% endfor %}
+    </div>
+    <button type="submit" class="btn btn-outline-primary"><i class="cil-copy me-1"></i>Nusxalash</button>
+  </div>
+</form>
+{% endif %}
 {% endblock %}

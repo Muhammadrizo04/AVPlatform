@@ -13,6 +13,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_POST
@@ -285,6 +286,14 @@ class MuddatForma(forms.Form):
     xizmat_muddati_oy = forms.IntegerField(label="Xizmat muddati, oy", min_value=1, max_value=1200, required=False)
 
 
+class NusxaForma(forms.Form):
+    turlar = forms.ModelMultipleChoiceField(queryset=AVTuri.objects.none())
+
+    def __init__(self, *args, manba: AVTuri, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["turlar"].queryset = AVTuri.objects.exclude(pk=manba.pk)
+
+
 def _maydonlarni_o_qi(post) -> tuple[list[dict], list[str]]:
     """POST'dagi parallel ro'yxatlardan maydonlar; (maydonlar, xatolar). Bo'sh qatorlar tushiriladi."""
     ustunlar = [post.getlist(n) for n in ("maydon_kalit", "maydon_nomi", "maydon_tip", "maydon_majburiy", "maydon_tanlov")]
@@ -348,8 +357,51 @@ def av_turi_tahrir(request, pk):
             return redirect("panel:av_turlari")
     return render(request, "panel/sozlamalar/av_turi_tahrir.html", {
         "tur": tur, "forma": forma, "maydonlar": maydonlar, "xatolar": xatolar, "tiplar": MAYDON_TIPLARI,
-        "bosh_qatorlar": range(3),
+        "bosh_qatorlar": range(3), "boshqa_turlar": _nusxa_turlari(tur) if sozlama and sozlama.maydonlar else [],
     })
+
+
+def _nusxa_turlari(tur):
+    """Nomi bir xil turlar 1C'da ko'p uchraydi: AV soni ularni ajratishga yordam beradi."""
+    return (
+        AVTuri.objects.exclude(pk=tur.pk).select_related("sozlama")
+        .annotate(av_soni=Count("av", filter=Q(av__ochirilgan=False))).order_by("nomi")
+    )
+
+
+@amal_kerak("sozlama")
+@require_POST
+def av_turi_nusxa(request, pk):
+    """Saqlangan maydonlarni boshqa turlarga qo'shadi. Turda bor kalit o'zgarmaydi, xizmat muddati ko'chirilmaydi."""
+    tur = _ol(AVTuri, pk)
+    manba = AVTuriSozlama.objects.filter(av_turi=tur).first()
+    forma = NusxaForma(request.POST, manba=tur)
+    if not (manba and manba.maydonlar and forma.is_valid()):
+        messages.error(request, "Nusxalash uchun kamida bitta tur belgilang.")
+        return redirect("panel:av_turi_tahrir", pk=tur.pk)
+    qoshildi, sigmadi = 0, []
+    with transaction.atomic():
+        for boshqa in forma.cleaned_data["turlar"]:
+            sozlama, _ = AVTuriSozlama.objects.get_or_create(av_turi=boshqa)
+            mavjud = {m["kalit"] for m in sozlama.maydonlar}
+            yangilari = [m for m in manba.maydonlar if m["kalit"] not in mavjud]
+            if not yangilari:
+                continue
+            if len(sozlama.maydonlar) + len(yangilari) > MAX_MAYDON:
+                sigmadi.append(boshqa.nomi)
+                continue
+            eski = _json(sozlama.maydonlar)
+            sozlama.maydonlar = [*sozlama.maydonlar, *yangilari]
+            sozlama.save()
+            _farq_yoz(request.user, sozlama, {"maydonlar": eski}, {"maydonlar": _json(sozlama.maydonlar)})
+            qoshildi += 1
+    if qoshildi:
+        messages.success(request, f"Maydonlar {qoshildi} ta turga qo'shildi.")
+    if sigmadi:
+        messages.warning(request, f"Maydonlar soni {MAX_MAYDON} tadan oshgani uchun sig'madi: {', '.join(sigmadi)}.")
+    if not qoshildi and not sigmadi:
+        messages.info(request, "Hamma maydon tanlangan turlarda allaqachon bor.")
+    return redirect("panel:av_turi_tahrir", pk=tur.pk)
 
 
 def _tanlov_matni(qiymatlar: list[str]) -> str:
