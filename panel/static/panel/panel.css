@@ -642,6 +642,14 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
 @media (max-width: 575.98px) {
   .av-filtr { grid-template-columns: minmax(0, 1fr); }
 }
+/* Xususiyat bo'yicha qidiruv (hisobotlar/xususiyat.py) */
+.xususiyat-filtr { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: .75rem; }
+.xususiyat-filtr label { color: var(--av-ikkilamchi); font-size: .75rem; font-weight: 600; }
+.xususiyat-filtr .form-select { margin-top: .125rem; }
+.xususiyat-filtr .btn { justify-self: start; }
+.xususiyat-natija { display: grid; grid-template-columns: minmax(14rem, 1fr) minmax(0, 2fr); gap: 1rem; align-items: start; }
+.xususiyat-son { color: var(--av-siyoh); font-size: 1.75rem; font-weight: 700; line-height: 1.2; }
+@media (max-width: 767.98px) { .xususiyat-natija { grid-template-columns: minmax(0, 1fr); } }
 /* Kutayotgan ishlar (qo'ng'iroqcha, panel/vazifalar.py) */
 .av-qongiroq { position: relative; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; border-radius: 50%;
   border: 1px solid var(--av-chiziq); background: var(--av-sirt); color: var(--av-ikkilamchi); cursor: pointer; }

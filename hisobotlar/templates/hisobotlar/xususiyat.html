@@ -1,0 +1,93 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Xususiyat bo'yicha qidiruv{% endblock %}
+{% block yol %}Hisobotlar{% endblock %}
+{% block kontent %}
+<h1>Xususiyat bo'yicha qidiruv</h1>
+<p class="text-body-secondary">Masalan, 16 GB RAMli noutbuklar nechta va qayerda. Kartochkaga kiritilgan ma'lumotdan qidiriladi.</p>
+<form method="get" class="card mb-3 chop-yoq"><div class="card-body">
+  {% if natija.maydonlar %}
+  <div class="xususiyat-filtr">
+    {% for m in natija.maydonlar %}
+    <label class="form-label mb-0">{{ m.nomi }}
+      <select class="form-select form-select-sm" name="m_{{ m.kalit }}" onchange="this.form.submit()">
+        <option value="">Hammasi</option>
+        {% for qiymat, dona in m.variantlar %}<option value="{{ qiymat }}"{% if qiymat == m.tanlangan %} selected{% endif %}>{{ qiymat }} ({{ dona|son }})</option>{% endfor %}
+        {% if m.tanlangan and not m.variantlar %}<option value="{{ m.tanlangan }}" selected>{{ m.tanlangan }} (0)</option>{% endif %}
+      </select>
+    </label>
+    {% endfor %}
+  </div>
+  <hr>
+  {% else %}
+  <div class="alert alert-warning py-2">Hali kartochkalarda xususiyat kiritilmagan. Kartochkani tahrirlab CPU, RAM va boshqa maydonlarni to'ldiring.</div>
+  {% endif %}
+  <div class="xususiyat-filtr">
+    <label class="form-label mb-0">Filial
+      <select class="form-select form-select-sm" name="filial" onchange="this.form.submit()">
+        <option value="">Barcha filiallar</option>
+        {% for f in filiallar %}<option value="{{ f.pk }}"{% if params.filial == f.pk|stringformat:"s" %} selected{% endif %}>{{ f.nomi }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="form-label mb-0">AV turi
+      <select class="form-select form-select-sm" name="turi" onchange="this.form.submit()">
+        <option value="">Barcha turlar</option>
+        {% for t in turlar %}<option value="{{ t.pk }}"{% if params.turi == t.pk|stringformat:"s" %} selected{% endif %}>{{ t.nomi }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="form-label mb-0">Holat
+      <select class="form-select form-select-sm" name="holat" onchange="this.form.submit()">
+        <option value="">Barcha holatlar</option>
+        {% for kalit, nomi in holatlar %}<option value="{{ kalit }}"{% if params.holat == kalit %} selected{% endif %}>{{ nomi }}</option>{% endfor %}
+      </select>
+    </label>
+    {% if request.GET %}<a class="btn btn-sm btn-outline-secondary align-self-end" href="?"><i class="cil-x me-1"></i>Tozalash</a>{% endif %}
+  </div>
+  <noscript><button type="submit" class="btn btn-sm btn-primary mt-3">Qidirish</button></noscript>
+</div></form>
+
+{% if not natija.tanlangan %}
+<p class="text-body-secondary">Natijani ko'rish uchun kamida bitta xususiyatni tanlang.</p>
+{% else %}
+<div class="xususiyat-natija mb-3">
+  <div class="card"><div class="card-body">
+    <div class="text-body-secondary small">Topildi</div>
+    <div class="xususiyat-son">{{ natija.jami|son }} dona</div>
+    {% if natija.kiritilmagan %}<div class="small text-warning-emphasis mt-2">Yana {{ natija.kiritilmagan|son }} dona AV'da bu xususiyat kiritilmagan, ular sanalmadi.</div>{% endif %}
+  </div></div>
+  <div class="card">
+    <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Filial</th><th class="son">Soni</th></tr></thead>
+      <tbody>
+      {% for nomi, dona in natija.filiallar %}<tr><td>{{ nomi }}</td><td class="son">{{ dona|son }}</td></tr>
+      {% empty %}<tr><td colspan="2" class="text-body-secondary">Topilmadi.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+    </div>
+  </div>
+</div>
+{% if natija.qatorlar %}
+<div class="card mb-3">
+<div class="table-responsive">
+<table class="table table-hover align-middle mb-0">
+  <thead><tr><th>AV</th><th>Inv. raqam</th><th>Filial</th><th>Bo'lim</th><th>Javobgar</th><th>Holat</th><th class="son">Soni</th>{% for nomi in ustunlar %}<th>{{ nomi }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for t in sahifa.object_list %}
+    <tr>
+      <td><a class="av-havola" href="{% url 'vositalar:kartochka' t.av_id %}">{{ t.av.nomi }}</a></td>
+      <td>{{ t.av.inv_raqam }}</td><td>{{ t.filial.nomi }}</td>
+      <td>{% if t.bolim %}{{ t.bolim.toliq_nomi }}{% else %}Bo'limsiz{% endif %}</td>
+      <td>{% if t.mol %}{{ t.mol.ism }}{% else %}—{% endif %}</td>
+      <td>{{ t.get_holat_display }}</td><td class="son">{{ t.soni|son }}</td>
+      {% for qiymat in t.tanlangan_qiymatlar %}<td>{{ qiymat }}</td>{% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% include "panel/_sahifalash.html" %}
+<div class="amallar mb-4 chop-yoq"><a class="btn btn-sm btn-outline-success" href="{{ excel_url }}"><i class="cil-spreadsheet me-1"></i>Excel</a></div>
+{% endif %}
+{% endif %}
+{% endblock %}

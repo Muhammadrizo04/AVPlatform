@@ -10,4 +10,5 @@ urlpatterns = [
     path("mol-qaydnoma/", views.mol_qaydnoma, name="mol_qaydnoma"),
     path("bolim-qaydnoma/", views.bolim_qaydnoma, name="bolim_qaydnoma"),
     path("muddat/", views.muddat, name="muddat"),
+    path("xususiyat/", views.xususiyat, name="xususiyat"),
 ]

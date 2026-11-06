@@ -7,12 +7,14 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
 from hisobotlar import servis
+from hisobotlar.xususiyat import qidir
 from hisobotlar.excel import jadval_xlsx
 from hisoblar.parametrlar import son
 from mol.sorovlar import korinadigan_xodimlar
-from onec.models import Filial
+from onec.models import AVTuri, Filial
 from panel.sahifalash import sahifala
 from vositalar.bolimlar import daraxt, pastkilar
+from vositalar.models import Holat
 
 XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 GURUHLAR = {"filial": "Filial", "bolim": "Bo'lim", "tur": "AV turi"}
@@ -68,6 +70,30 @@ def _qaydnoma_konteksti(request, qatorlar) -> dict:
 
 def _av_qatori(av):
     return (av.inv_raqam, av.nomi, av.filial_rekvizit.nomi if av.filial_rekvizit else "", av.jami_soni, av.jami_summa)
+
+
+@amal_kerak("hisobot")
+def xususiyat(request):
+    natija = qidir(request.user, request.GET)
+    tanlangan = [m for m in natija.maydonlar if m["kalit"] in natija.tanlangan]
+    for t in natija.qatorlar:
+        t.tanlangan_qiymatlar = [t.xom.get(m["kalit"], "") for m in tanlangan]
+    ustunlar = [m["nomi"] for m in tanlangan]
+    if _xlsx_so_ralgan(request):
+        return _xlsx("xususiyat", ["Nomi", "Inv. raqam", "AV turi", "Filial", "Bo'lim", "Javobgar", "Holat", "Soni", *ustunlar], (
+            (t.av.nomi, t.av.inv_raqam, t.av.turi.nomi, t.filial.nomi, t.bolim.toliq_nomi if t.bolim else "Bo'limsiz",
+             t.mol.ism if t.mol else "", t.get_holat_display(), t.soni, *t.tanlangan_qiymatlar)
+            for t in natija.qatorlar
+        ))
+    params = request.GET.copy()
+    for kalit in ("page", "format"):
+        params.pop(kalit, None)
+    return render(request, "hisobotlar/xususiyat.html", {
+        "natija": natija, "ustunlar": ustunlar, "sahifa": sahifala(request, natija.qatorlar, 50), "params": request.GET,
+        "excel_url": f"?{params.urlencode()}&format=xlsx", "holatlar": Holat.choices,
+        "filiallar": filial_bilan_chekla(Filial.objects.all(), request.user, "pk").order_by("nomi"),
+        "turlar": AVTuri.objects.filter(sozlama__isnull=False).exclude(sozlama__maydonlar=[]).order_by("nomi"),
+    })
 
 
 @amal_kerak("tozalash")

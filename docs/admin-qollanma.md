@@ -341,6 +341,10 @@ Hammasi Excel'ga yuklanadi va chop etiladi. Qaydnomalarda **summali** va **summa
 - **Bo'lim qaydnomasi** — filial yoki bo'limdagi AV'lar. Bo'lim tanlansa, ichki bo'limlari ham kiradi.
 - **Xizmat muddati** — muddati tugagan va 6 oyda tugaydigan AV'lar. Ro'yxat chiqishi uchun xizmat muddatlari kiritilgan
   bo'lishi kerak (13.2).
+- **Xususiyat bo'yicha qidiruv** — kartochkaga kiritilgan qo'shimcha maydonlar bo'yicha: masalan, 16 GB RAMli noutbuklar
+  nechta, qaysi filialda va kimda. Tanlovlar yonida dona soni chiqadi. «16 GB» tanlansa, «16 GB (8 + 8)» ham kiradi,
+  Storage'da esa shu hajm bor barcha AV'lar chiqadi. Kartochkada to'ldirilmagan AV'lar sanalmaydi, ularning soni alohida
+  ko'rsatiladi. Ro'yxat Excel'ga yuklanadi.
 
 ## 15. Administratorning ish tartibi
 
