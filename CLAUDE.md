@@ -35,6 +35,7 @@
 - Testlar (Windows, lokal): `venv\Scripts\python.exe -m pytest -q` (`.env` shart emas; `config.settings_test`; PostgreSQL rol `av`/`av`, CREATEDB)
 - Sinxron: `python manage.py sinxron` (to'liq: `--toliq`)
 - Tekshiruv: `python manage.py check`
+- AV turi maydonlari bazada saqlanadi, `git pull` olib bormaydi; `deploy/turi_maydonlari.json` dan: `python manage.py turi_maydonlarini_yukla`
 - Sahifa tezligi: `python manage.py sahifa_tezligi <login>`
 - Mahalliy ishga tushirish uchun `.env.example` dan `.env` yarating (dev: `DEBUG=True`).
 

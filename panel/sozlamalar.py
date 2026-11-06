@@ -27,10 +27,10 @@ from onec.models import AVTuri, Filial, SinxronJurnal
 from onec.sinxron import SinxronBand, ketma_ket_xatolar, oxirgi_muvaffaqiyatli, sinxronla
 from panel.sahifalash import sahifala
 from vositalar.models import AVTuriSozlama, Sozlama, YorliqOlchami
+from vositalar.turi_maydonlari import MAX_MAYDON, yetishmaganlarni_qosh
 
 User = get_user_model()
 SAHIFA_HAJMI = 50
-MAX_MAYDON = 50
 MAYDON_TIPLARI = ("matn", "son", "sana", "tanlov", "xotira")  # xotira — Storage: turi + hajmi qatorlari
 KALIT_RE = re.compile(r"[a-z0-9_]+")
 MAX_PK = 2**62
@@ -383,18 +383,10 @@ def av_turi_nusxa(request, pk):
     with transaction.atomic():
         for boshqa in forma.cleaned_data["turlar"]:
             sozlama, _ = AVTuriSozlama.objects.get_or_create(av_turi=boshqa)
-            mavjud = {m["kalit"] for m in sozlama.maydonlar}
-            yangilari = [m for m in manba.maydonlar if m["kalit"] not in mavjud]
-            if not yangilari:
-                continue
-            if len(sozlama.maydonlar) + len(yangilari) > MAX_MAYDON:
+            natija = yetishmaganlarni_qosh(sozlama, manba.maydonlar, request.user)
+            qoshildi += natija == "qoshildi"
+            if natija == "sigmadi":
                 sigmadi.append(boshqa.nomi)
-                continue
-            eski = _json(sozlama.maydonlar)
-            sozlama.maydonlar = [*sozlama.maydonlar, *yangilari]
-            sozlama.save()
-            _farq_yoz(request.user, sozlama, {"maydonlar": eski}, {"maydonlar": _json(sozlama.maydonlar)})
-            qoshildi += 1
     if qoshildi:
         messages.success(request, f"Maydonlar {qoshildi} ta turga qo'shildi.")
     if sigmadi:

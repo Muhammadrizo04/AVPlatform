@@ -283,6 +283,10 @@ Maydonlar faqat aynan shu turga tegishli. 1C'da kompyuterlar bir nechta turda bo
 keyin shu sahifadagi **«Maydonlarni boshqa turlarga nusxalash»** bo'limida kerakli turlarni belgilang. Turda bor
 maydonlar, xizmat muddati va kartochkalardagi qiymatlar o'zgarmaydi, faqat yetishmagan maydonlar qo'shiladi.
 
+Maydonlar kodda emas, bazada saqlanadi, shuning uchun `git pull` ularni serverga olib bormaydi. Tayyor kompyuter
+maydonlari `deploy/turi_maydonlari.json` da: serverda `venv\Scripts\python.exe manage.py turi_maydonlarini_yukla`
+ularni qo'shadi, bor maydonlarga tegmaydi.
+
 ### 13.3. Umumiy
 
 - **Kompaniya nomi** — hujjatlarda chiqadi.

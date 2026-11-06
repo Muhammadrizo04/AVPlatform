@@ -8,12 +8,10 @@ def _matn(qiymat) -> str:
     return "" if qiymat is None else str(qiymat)
 
 
-def yoz(kim, obyekt, maydon: str, eski, yangi) -> Jurnal:
-    """Bitta maydon o'zgarishini jurnalga yozadi. `kim=None` — 1C sinxron."""
-    if kim is None:
-        kim_nomi = SINXRON_NOMI
-    else:
-        kim_nomi = kim.get_full_name() or kim.get_username()
+def yoz(kim, obyekt, maydon: str, eski, yangi, kim_nomi: str | None = None) -> Jurnal:
+    """Bitta maydon o'zgarishini jurnalga yozadi. `kim=None` — 1C sinxron, boshqa manba bo'lsa `kim_nomi` beriladi."""
+    if kim_nomi is None:
+        kim_nomi = SINXRON_NOMI if kim is None else kim.get_full_name() or kim.get_username()
     return Jurnal.objects.create(
         kim=kim,
         kim_nomi=kim_nomi,
