@@ -47,3 +47,16 @@ def filial_yarat(db):
         return Filial.objects.create(ref_1c=uuid.uuid4(), kod=kod, nomi=nomi or f"Filial {kod}")
 
     return yarat
+
+
+@pytest.fixture(scope="session")
+def django_db_setup(django_db_setup, django_db_blocker):
+    """Migratsiyalar yozadigan boshlang'ich ma'lumotlar (`--reuse-db` da ham) har sessiya boshida tiklanadi:
+    `transaction=True` testlari (parallel so'rovlar) bazani tozalab, ularni ham o'chiradi."""
+    import importlib
+
+    from django.apps import apps
+
+    with django_db_blocker.unblock():
+        importlib.import_module("vositalar.migrations.0002_boshlangich_yorliq_olchamlari").olchamlar_yarat(apps, None)
+        importlib.import_module("vositalar.migrations.0003_chiqim").chiqim_boshlanishini_yoz(apps, None)

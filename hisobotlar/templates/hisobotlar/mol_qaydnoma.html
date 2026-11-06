@@ -1,0 +1,41 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Javobgar shaxs qaydnomasi{% endblock %}
+{% block yol %}Hisobotlar{% endblock %}
+{% block chop_logotip %}{% if not chop %}{{ block.super }}{% endif %}{% endblock %}
+{% block kontent %}
+{% if chop %}
+{% include "hisobotlar/_chop_rejimi.html" with qator_soni=qatorlar|length %}
+{% for g in guruhlar %}
+<section class="chop-guruh">
+{% include "panel/_chop_logotip.html" %}
+<h1>Javobgar shaxs qaydnomasi: {{ g.xodim.ism }}</h1>
+{% include "hisobotlar/_mol_jadval.html" with qatorlar=g.qatorlar jami_soni=g.jami_soni jami=g.jami %}
+{% include "hisobotlar/_imzo.html" with masul="Moddiy javobgar shaxs" masul_ism=g.xodim.ism %}
+</section>
+{% empty %}
+<p class="text-body-secondary">Chop etish uchun ma'lumot yo'q.</p>
+{% endfor %}
+{% else %}
+<h1>Javobgar shaxs qaydnomasi{% if xodim %}: {{ xodim.ism }}{% endif %}</h1>
+<div class="card mb-3 chop-yoq"><div class="card-body">
+<form method="get" class="filtrlar">
+  <select class="form-select form-select-sm" name="xodim" aria-label="Javobgar shaxs" onchange="this.form.submit()">
+    <option value="">Barcha javobgar shaxslar</option>
+    {% for x in xodimlar %}<option value="{{ x.pk }}"{% if xodim and xodim.pk == x.pk %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+  </select>
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="Javobgar shaxs ismi, AV nomi, inv. raqam yoki bo'lim" aria-label="Qidirish">
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-search me-1"></i>Qidirish</button>
+  {% if q or xodim %}<a class="btn btn-sm btn-ghost-secondary" href="?">Tozalash</a>{% endif %}
+</form>
+{% if not xodim %}<p class="small text-body-secondary mb-0 mt-2">Hammasi chop etilsa, har javobgar shaxs alohida varaqdan, o'z imzo qatori bilan chiqadi.</p>{% endif %}
+</div></div>
+<div class="hisobot-xulosa chop-yoq">
+  <span class="xulosa-son">{{ qatorlar|length }} ta qator{% if pul_huquqi %} <span>·</span> {{ jami|pul }}{% endif %}</span>
+  <span class="ms-auto"></span>
+  {% include "hisobotlar/_chop_tugmalari.html" %}
+</div>
+{% if q or xodim %}{% firstof "Qidiruv bo'yicha hech narsa topilmadi." as bosh_matn %}{% else %}{% firstof "Ma'lumot yo'q." as bosh_matn %}{% endif %}
+{% include "hisobotlar/_mol_jadval.html" with qatorlar=korsatiladi %}
+{% include "panel/sozlamalar/_sahifalash_qaydnoma.html" %}
+{% endif %}
+{% endblock %}

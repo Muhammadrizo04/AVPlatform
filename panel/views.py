@@ -1,0 +1,184 @@
+from decimal import Decimal
+
+from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db.models import Sum
+from django.shortcuts import redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils import timezone
+from django.views.decorators.http import require_POST
+
+from hisobotlar.servis import filial_va_tur_kesimi, jami
+from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
+from onec.models import AV
+from vositalar.bayroqlar import BAYROQLAR, bayroq_sonlari
+from vositalar.models import Holat, Taqsimot
+
+from .dinamika import filial_dinamikasi
+from .vazifalar import kutayotgan_ishlar, oqildi_belgila
+
+# Buxgalteriya tozalash vazifalarini ko'rmaydigan (pul huquqi yo'q) rol — HR — uchun faqat o'zi hal qiladigan bayroqlar:
+# МОЛ biriktirish (akt orqali), ketgan xodimdagi AV'lar va bo'limsiz qatorlar.
+XODIM_BAYROQLARI = ("molsiz", "ketgan_xodimda", "bolimsiz")
+GRAFIK_FILIALLAR = 20
+GRAFIK_TURLAR = 8
+# «Bajarilishi kerak» qatorlari bo'lim rangida
+VAZIFA_RANGI = {
+    "molsiz": "mol", "ketgan_xodimda": "mol", "chiqim_kutilmoqda": "chiqim", "mos_emas": "ogoh",
+    "bolimsiz": "vosita", "yorliq_yoq": "vosita", "yorliq_almashtirish": "vosita",
+}  # «Filiallar bo'yicha» grafigida ko'rsatiladigan eng katta filiallar
+NOL = Decimal("0")
+
+
+def _ulush(qiymat, eng_katta) -> float:
+    """Bar uzunligi, % (0 dan farqli qiymat kamida 1% — ko'rinib tursin)."""
+    if not eng_katta or not qiymat:
+        return 0
+    return max(round(float(qiymat) / float(eng_katta) * 100, 1), 1)
+
+
+def _holatlar(user) -> list[dict]:
+    """Ruxsat etilgan filiallardagi faol AV taqsimoti holatlar bo'yicha (Holat tartibida, nollar tushib qoladi)."""
+    qs = filial_bilan_chekla(Taqsimot.objects.filter(av__in=AV.objects.faol().values("pk")), user)
+    sonlar = dict(qs.order_by().values_list("holat").annotate(s=Sum("soni")))
+    jami_soni = sum(sonlar.values(), NOL)
+    natija = []
+    for kalit, nomi in Holat.choices:  # oltitasi ham: nollar xira, palitra doim to'liq ko'rinadi
+        soni = sonlar.get(kalit, NOL)
+        natija.append({"kalit": kalit, "nomi": nomi, "soni": soni,
+                       "foiz": round(float(soni) / float(jami_soni) * 100, 1) if jami_soni else 0})
+    eng_katta = max((h["soni"] for h in natija), default=NOL)
+    for h in natija:
+        h["ulush"] = _ulush(h["soni"], eng_katta)
+    return natija
+
+
+def salomlashuv(soat: int) -> str:
+    """Kun vaqtiga qarab: 5–10 tong, 10–17 kun, 17–20 kech, 20–23 oqshom, 23–5 tun."""
+    if 5 <= soat < 10:
+        return "Xayrli tong"
+    if 10 <= soat < 17:
+        return "Xayrli kun"
+    if 17 <= soat < 20:
+        return "Xayrli kech"
+    if 20 <= soat < 23:
+        return "Xayrli oqshom"
+    return "Xayrli tun"
+
+
+def bosh(request):
+    # Revizor panelga kirmaydi (`korish` yo'q): uning bosh sahifasi — «Mening reviziyalarim» (spec §3.2)
+    if not huquqi_bor(request.user, "korish") and huquqi_bor(request.user, "reviziya_otkazish"):
+        return redirect("reviziya:mobil")
+    if huquqi_bor(request.user, "korish") and not huquqi_bor(request.user, "bosh_sahifa"):
+        return redirect("vositalar:royxat")  # hisobchi — ish sahifasi AV ro'yxati
+    return _bosh(request)
+
+
+@amal_kerak("korish")
+def _bosh(request):
+    bugun = timezone.localdate()
+    pul = huquqi_bor(request.user, "pul_korish")
+    if not pul:
+        kalitlar = XODIM_BAYROQLARI
+    elif not huquqi_bor(request.user, "chiqim_korish"):  # rahbar: chiqimlar sahifasi yo'q
+        kalitlar = tuple(k for k in BAYROQLAR if k != "chiqim_kutilmoqda")
+    else:
+        kalitlar = None
+    sonlar = bayroq_sonlari(request.user, bugun, kalitlar)
+    bayroqlar = [{"kalit": k, "nomi": BAYROQLAR[k].nomi, "soni": sonlar[k], "rang": VAZIFA_RANGI.get(k, "hisobot")} for k in sonlar]
+    # Filiallar va AV turlari kesimi — 1C qoldiqlari bir o'tishda (amortizatsiya ikki marta hisoblanmasin)
+    filiallar, tur_kesimi = filial_va_tur_kesimi(request.user, bugun)
+    jamlar = jami(filiallar)
+
+    # Grafik: eng ko'p AV'li filiallar (soni bo'yicha kamayuvchi)
+    tartiblangan = sorted(filiallar, key=lambda q: q["soni"], reverse=True)
+    eng_katta = tartiblangan[0]["soni"] if tartiblangan else NOL
+    filial_grafik = [{**q, "ulush": _ulush(q["soni"], eng_katta)} for q in tartiblangan[:GRAFIK_FILIALLAR]]
+
+    # KPI kartochkalari: rolga qarab
+    kpi = [{"yorliq": "Asosiy vositalar", "qiymat": jamlar["soni"], "birlik": "dona", "izoh": f"{len(filiallar)} ta filialda",
+            "ikonka": "cil-storage", "rang": "vosita", "url": "vositalar:royxat", "pul": False}]
+    if pul:
+        kpi.append({"yorliq": "Qoldiq qiymat", "qiymat": jamlar["qoldiq"], "birlik": "so'm", "izoh": "amortizatsiya bilan",
+                    "ikonka": "cil-wallet", "rang": "pul", "url": "hisobotlar:kesim", "pul": True})
+    kpi.append({"yorliq": "Javobgar shaxs biriktirilmagan", "qiymat": sonlar.get("molsiz", 0), "birlik": "qator", "izoh": "akt orqali biriktiring",
+                "ikonka": "cil-user-unfollow", "rang": "mol", "bayroq": "molsiz", "ogoh": bool(sonlar.get("molsiz"))})
+    if "chiqim_kutilmoqda" in sonlar:
+        kpi.append({"yorliq": "1C chiqimlari", "qiymat": sonlar["chiqim_kutilmoqda"], "birlik": "kutilmoqda", "izoh": "tasdiqlash kerak",
+                    "ikonka": "cil-swap-horizontal", "rang": "chiqim", "url": "chiqimlar:royxat", "ogoh": bool(sonlar["chiqim_kutilmoqda"])})
+    elif "mos_emas" in sonlar:
+        kpi.append({"yorliq": "1C bilan mos emas", "qiymat": sonlar["mos_emas"], "birlik": "AV", "izoh": "taqsimotni tuzating",
+                    "ikonka": "cil-warning", "rang": "ogoh", "bayroq": "mos_emas", "ogoh": bool(sonlar["mos_emas"])})
+    else:
+        kpi.append({"yorliq": "Ketgan xodimlarda", "qiymat": sonlar.get("ketgan_xodimda", 0), "birlik": "qator", "izoh": "boshqa javobgar shaxsga topshiring",
+                    "ikonka": "cil-warning", "rang": "ogoh", "bayroq": "ketgan_xodimda", "ogoh": bool(sonlar.get("ketgan_xodimda"))})
+    if not pul:
+        kpi.append({"yorliq": "Bo'limsiz", "qiymat": sonlar.get("bolimsiz", 0), "birlik": "qator", "izoh": "bo'limga joylang",
+                    "ikonka": "cil-sitemap", "rang": "vosita", "bayroq": "bolimsiz", "ogoh": False})
+
+    holatlar = _holatlar(request.user)
+    kontekst = {
+        "filiallar": filiallar, "jami": jamlar, "bayroqlar": sorted(bayroqlar, key=lambda b: not b["soni"]),
+        "kpi": kpi[:4], "filial_grafik": filial_grafik, "filial_qolgan": max(len(filiallar) - GRAFIK_FILIALLAR, 0),
+        "holatlar": holatlar, "bugun": bugun, "salom": salomlashuv(timezone.localtime().hour),
+    }
+    if pul:
+        # Summalar grafiklari: boshlang'ich qiymat (yo'lak) va uning ichida qoldiq qiymat (amortizatsiya bilan)
+        filial_qiymat = [{**q, "nomi": q["filial"].nomi} for q in filiallar]
+        kontekst.update(_dinamika_kontekst(request))
+        kontekst.update(
+            qiymat_filial=_qiymat_grafigi(filial_qiymat),
+            qiymat_filial_qolgan=max(len(filial_qiymat) - GRAFIK_FILIALLAR, 0),
+            qiymat_tur=_qiymat_grafigi(tur_kesimi, GRAFIK_TURLAR),
+            eskirish_foizi=_ulush(jamlar["boshlangich"] - jamlar["qoldiq"], jamlar["boshlangich"]),
+        )
+    return render(request, "panel/bosh.html", kontekst)
+
+
+def _dinamika_kontekst(request) -> dict:
+    d = filial_dinamikasi(request.user, request.GET)
+    return {"d": d, "grafik_malumot": d.grafik}
+
+
+@require_POST
+@login_required
+def ishlar_oqildi(request):
+    """«Kutayotgan ishlar»: bitta tur (`kalit`) yoki hammasini o'qilgan qilish — faqat shu foydalanuvchi uchun.
+    HTMX'da yangilangan qo'ng'iroqcha qaytadi; JS'siz — kelgan sahifaga qaytadi."""
+    oqildi_belgila(request.user, request.POST.get("kalit") or None)
+    if request.headers.get("HX-Request"):
+        ishlar = kutayotgan_ishlar(request.user)
+        return render(request, "panel/_kutayotgan_ishlar.html",
+                      {"kutayotgan_ishlar": ishlar, "kutayotgan_jami": sum(i["yangi"] for i in ishlar)})
+    keyin = request.POST.get("keyin", "")
+    if not url_has_allowed_host_and_scheme(keyin, allowed_hosts={request.get_host()}, require_https=request.is_secure()):
+        keyin = "/"
+    return redirect(keyin)
+
+
+@amal_kerak("bosh_sahifa")
+def dinamika(request):
+    """HTMX: dinamika bo'lagi (davr yoki filiallar o'zgarganda). Summa — faqat `pul_korish` bilan."""
+    if not huquqi_bor(request.user, "pul_korish"):
+        raise PermissionDenied
+    return render(request, "panel/_dinamika.html", _dinamika_kontekst(request))
+
+
+def _qiymat_grafigi(qatorlar, nechta=GRAFIK_FILIALLAR) -> list[dict]:
+    """Boshlang'ich qiymat bo'yicha kamayuvchi; `ulush` — eng kattasiga nisbatan, `qoldiq_ulush` — o'z
+    boshlang'ichiga nisbatan (yo'lak ichidagi to'q qism)."""
+    tartiblangan = sorted((q for q in qatorlar if q["boshlangich"] > 0), key=lambda q: q["boshlangich"], reverse=True)
+    eng_katta = tartiblangan[0]["boshlangich"] if tartiblangan else NOL
+    return [
+        {**q, "ulush": _ulush(q["boshlangich"], eng_katta), "qoldiq_ulush": _ulush(q["qoldiq"], q["boshlangich"])}
+        for q in tartiblangan[:nechta]
+    ]
+
+
+def csrf_xato(request, reason=""):
+    """CSRF rad etilganda (sahifa eskirgan: boshqa oynada qayta kirilgan yoki sessiya tugagan) — tushunarli sahifa."""
+    orqaga = request.META.get("HTTP_REFERER", "")
+    if not url_has_allowed_host_and_scheme(orqaga, allowed_hosts={request.get_host()}):
+        orqaga = "/"
+    return render(request, "panel/csrf_xato.html", {"orqaga": orqaga}, status=403)

@@ -1,0 +1,142 @@
+{% extends "reviziya/mobil/base.html" %}
+{% load static %}
+{% block sarlavha %}{{ rv.nomi }} — skan{% endblock %}
+{% block bosh %}
+<style>
+  .m-xona { position: sticky; top: 56px; z-index: 15; display: flex; align-items: center; gap: .5rem; margin: -.75rem -.75rem .75rem;
+    padding: .5rem .75rem; background: var(--av-indigo-och); border-bottom: 1px solid var(--av-chiziq); }
+  .m-xona b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  /* Qidiruv qatori doim ko'rinadi: xona satri ostida qotadi */
+  .m-qidiruv { position: sticky; top: var(--qidiruv-top, 121px); z-index: 14; display: flex; gap: .5rem; margin: .5rem -.75rem 0;
+    padding: .5rem .75rem; background: var(--av-fon); }
+  .m-qidiruv .qidiruv-quti { flex: 1; min-width: 0; }
+  #kamera-video { width: 100%; max-height: 50vh; margin-top: .5rem; border-radius: var(--av-radius); background: #000; object-fit: cover; }
+  #kartochka:empty { display: none; }
+  /* Natija (qidiruv yoki QR) — alohida oyna emas: qidiruv qatori ostida, sahifa ichida; sahifa bilan birga aylanadi */
+  #kartochka { margin: .5rem 0 0; padding: .75rem 1rem 1rem; background: var(--av-sirt); border: 1px solid var(--av-chiziq);
+    border-radius: 14px; box-shadow: var(--av-soya); scroll-margin-top: var(--kartochka-joy, 190px); }
+  .m-sanoq { display: flex; align-items: stretch; gap: .5rem; }
+  .m-sanoq .m-tugma { min-width: 56px; font-size: 1.4rem; padding: 0; }
+  .m-sanoq .m-maydon { flex: 1; text-align: center; font-size: 1.25rem; font-weight: 700; }
+  .m-kart-bosh { display: flex; align-items: flex-start; gap: .5rem; }
+  .m-kart-bosh .m-asosiy { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .m-kart-bosh .m-ikon { color: var(--av-ikkilamchi); font-size: 1.4rem; }
+  .m-raqamlar { display: flex; gap: .5rem; flex-wrap: wrap; margin: .5rem 0; }
+  /* AV kartochkasi: nom, hisob qatori, holat tugmachalari, yig'iladigan qo'shimcha, qotirilgan «Saqlash» */
+  .m-kart-nom { font-size: 1.1rem; line-height: 1.3; }
+  .m-molsiz { color: #b3093a; font-weight: 600; }
+  .m-hisob { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin: .6rem 0 .25rem; }
+  .m-hisob div { display: flex; flex-direction: column; align-items: center; padding: .4rem .25rem; border-radius: 12px;
+    background: var(--av-chiziq-och); }
+  .m-hisob span { font-size: .72rem; font-weight: 600; color: var(--av-ikkilamchi); text-transform: uppercase; letter-spacing: .02em; }
+  .m-hisob b { font-size: 1.15rem; font-variant-numeric: tabular-nums; }
+  .m-hisob .qoldi { background: var(--av-qizil-och); } .m-hisob .qoldi b { color: #b3093a; }
+  .m-hisob .tayyor { background: var(--av-yashil-och); } .m-hisob .tayyor b { color: #087251; }
+  .m-holatlar { border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+  .m-holatlar legend { padding: 0; }
+  .m-holat { position: relative; }
+  .m-holat input { position: absolute; opacity: 0; pointer-events: none; }
+  .m-holat span { display: inline-flex; align-items: center; min-height: 40px; padding: 0 .85rem; border-radius: 999px;
+    border: 1px solid var(--av-chiziq); background: var(--av-sirt); font-size: .9rem; font-weight: 600; cursor: pointer; }
+  .m-holat input:checked + span { background: var(--av-indigo); border-color: var(--av-indigo); color: #fff; }
+  .m-holat input:focus-visible + span { outline: 3px solid rgba(99, 91, 255, .35); outline-offset: 1px; }
+  .m-qoshimcha { margin-top: .75rem; }
+  .m-qoshimcha summary { cursor: pointer; font-weight: 600; color: var(--av-indigo); padding: .35rem 0; }
+  .m-rasm-tugma { display: flex; align-items: center; gap: .5rem; min-height: 48px; margin-top: .4rem; padding: 0 .9rem;
+    border: 1px dashed var(--av-chiziq); border-radius: 12px; background: var(--av-sirt); font-weight: 600; cursor: pointer; }
+  .m-rasm-tugma input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .m-rasm-tugma.tanlangan { border-style: solid; border-color: var(--av-yashil); background: var(--av-yashil-och); color: #087251; }
+  /* «Saqlash» uzun kartochkada ham ko'rinib tursin: ekran pastida qotadi */
+  .m-saqla-panel { position: sticky; bottom: 0; margin: .75rem -1rem -1rem;
+    padding: .6rem 1rem calc(.6rem + env(safe-area-inset-bottom)); background: var(--av-sirt); border-top: 1px solid var(--av-chiziq-och);
+    border-radius: 0 0 14px 14px; z-index: 1; }
+  .m-xona-tugadi { margin-top: 1.5rem; }
+  .m-begona { display: flex; flex-direction: column; align-items: flex-end; text-align: right; max-width: 9.5rem; gap: .15rem; }
+  .m-begona .m-xira { font-size: .72rem; line-height: 1.25; }
+  .m-qator .m-asosiy .m-solishtir { display: inline-block; width: fit-content; margin: .2rem 0; padding: .1rem .5rem;
+    border-radius: 8px; font-size: .8rem; font-weight: 700; }
+  .m-solishtir.teng { color: #087251; background: var(--av-yashil-och); }
+  .m-solishtir.kam { color: #b3093a; background: var(--av-qizil-och); }
+  .m-solishtir.ortiq { color: #8a5a00; background: var(--av-sariq-och); }
+  .m-qator .m-asosiy .m-mol { font-size: .8rem; color: var(--av-ikkilamchi); margin-top: .1rem; }
+  .m-xodimlar { margin-top: .4rem; }
+  .m-xodimlar .m-qator { min-height: 48px; }
+  .m-tanlangan-xodim { display: flex; align-items: center; gap: .5rem; min-height: 48px; padding: .4rem .5rem .4rem .85rem;
+    border: 1px solid var(--av-indigo); border-radius: 12px; background: var(--av-indigo-och); }
+  .m-tanlangan-xodim[hidden] { display: none; }
+  .m-tanlangan-xodim b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+  .m-tarix-qism { margin-top: .5rem; border-top: 1px solid var(--av-chiziq); padding-top: .5rem; }
+  .m-tarix-qism summary { cursor: pointer; color: var(--av-indigo); font-weight: 600; padding: .4rem 0; }
+  .m-tarix { list-style: none; margin: .25rem 0 0; padding: 0; max-height: 40vh; overflow-y: auto; }
+  .m-tarix li { display: grid; gap: .1rem; padding: .5rem 0; border-bottom: 1px solid var(--av-chiziq-och); font-size: .9rem; }
+  .m-tarix time { font-size: .75rem; font-weight: 700; color: var(--av-ikkilamchi); }
+  .m-xona-chiziq { position: absolute; left: 0; right: 0; bottom: -1px; height: 3px; background: transparent; }
+  .m-xona-chiziq i { display: block; height: 100%; background: var(--av-yashil); transition: width .3s; }
+  .m-sarlavha-qator { display: flex; align-items: center; gap: .5rem; }
+  .m-sarlavha-qator h2 { flex: 1; }
+  .m-kichik { min-height: 40px; padding: 0 .85rem; font-size: .9rem; }
+  .m-qolgan { display: flex; gap: .5rem; align-items: stretch; }
+  .m-qolgan .m-qator { flex: 1; min-width: 0; }
+  .m-bor { min-width: 56px; padding: 0; font-size: 1.35rem; color: #087251; background: var(--av-yashil-och); border-color: #b5e6d2; }
+  .m-bor:active { background: #c8eedd; }
+  @media (min-width: 1024px) {
+    body main { max-width: 1160px; }
+    .m-ustunlar { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+  }
+  .m-raqamlar span { padding: .3rem .7rem; border-radius: 999px; background: var(--av-chiziq-och); font-weight: 600; font-size: .9rem; }
+</style>
+{% endblock %}
+{% block ust %}{{ rv.nomi }}<small>{{ rv.filial.nomi }}</small>{% endblock %}
+{% block mazmun %}
+<div class="m-xona">
+  <b>{% if xona %}{{ xona.nomi }}{% else %}Bo'limsiz{% endif %}</b>
+  <span class="m-son" id="xona-progress">{{ xona_progress.belgilangan|son }} / {{ xona_progress.kutilgan|son }}</span>
+  <a class="m-tugma" href="{% url 'reviziya:mobil_xonalar' rv.pk %}">Xona</a>
+  {% include "reviziya/mobil/_xona_chiziq.html" %}
+</div>
+
+<div class="m-ustunlar">
+<div class="m-ustun">
+
+<div id="kamera" data-topish="{% url 'reviziya:mobil_topish' rv.pk %}" data-bolim="{{ xona_qiymati }}">
+  <button class="m-tugma asosiy keng" id="kamera-tugma" type="button" hidden>Kamera — QR skanerlash</button>
+  <video id="kamera-video" playsinline muted hidden></video>
+  <p class="m-izoh" data-xavfsiz>Kamera faqat HTTPS'da ishlaydi — inv. raqamni kiriting</p>
+</div>
+
+<!-- 5+ belgida yozish to'xtagach (0,4 s) natija o'zi chiqadi; qisqaroq so'z — «Topish» bilan -->
+<form class="m-qidiruv" hx-get="{% url 'reviziya:mobil_topish' rv.pk %}" hx-target="#kartochka" role="search"
+  hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms" hx-sync="this:replace">
+  <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
+  <span class="qidiruv-quti">
+    <input class="m-maydon" type="search" name="q" id="qidiruv" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="Inv. raqam yoki nom" autocomplete="off" required maxlength="100">
+    <button class="qidiruv-tozala" type="button" data-tozala data-tozala-natija="#kartochka" aria-label="Qidiruvni tozalash" title="Tozalash" hidden>&times;</button>
+  </span>
+  <button class="m-tugma asosiy" type="submit">Topish</button>
+</form>
+
+<div id="kartochka" aria-live="polite"></div>
+
+{% include "reviziya/mobil/_oxirgilar.html" %}
+</div>
+<div class="m-ustun">
+{% include "reviziya/mobil/_qolganlar.html" %}
+
+<form method="post" action="{% url 'reviziya:mobil_xona_tugadi' rv.pk %}" class="m-xona-tugadi">{% csrf_token %}
+  <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
+  {% if xona_tugagan %}
+  <p class="m-izoh">Bu xona «tugadi» deb belgilangan.</p>
+  <input type="hidden" name="tugadi" value="0">
+  <button class="m-tugma keng" type="submit">Xonani qayta ochish</button>
+  {% else %}
+  <input type="hidden" name="tugadi" value="1">
+  <button class="m-tugma asosiy keng" type="submit">Xona tugadi</button>
+  {% endif %}
+</form>
+</div>
+</div>
+{% endblock %}
+{% block skript %}
+<script src="{% static 'panel/htmx.min.js' %}" defer></script>
+<script src="{% static 'reviziya/skan.js' %}?v=5" defer></script>
+{% endblock %}

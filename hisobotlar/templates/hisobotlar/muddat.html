@@ -1,0 +1,11 @@
+{% extends "panel/base.html" %}
+{% block sarlavha %}Xizmat muddati{% endblock %}
+{% block yol %}Hisobotlar{% endblock %}
+{% block kontent %}
+<h1>Xizmat muddati</h1>
+<h2>Muddati tugagan <span class="badge bg-danger align-middle">{{ tugagan|length }}</span></h2>
+{% include "hisobotlar/_muddat_jadval.html" with royxat=tugagan %}
+<h2>6 oyda tugaydi <span class="badge bg-warning text-dark align-middle">{{ olti_oy|length }}</span></h2>
+{% include "hisobotlar/_muddat_jadval.html" with royxat=olti_oy %}
+{% include "hisobotlar/_pastki.html" %}
+{% endblock %}

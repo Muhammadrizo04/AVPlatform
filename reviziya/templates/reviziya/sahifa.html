@@ -1,0 +1,251 @@
+{% extends "panel/base.html" %}
+{% load jadval %}
+{% block sarlavha %}{{ rv.nomi }}{% endblock %}
+{% block yol %}Vositalar<span class="yol-ajrat">/</span><a href="{% url 'reviziya:royxat' %}">Reviziyalar</a>{% endblock %}
+{% block kontent %}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+  <h1 class="mb-0 me-auto">Reviziya {{ rv.nomi }} {% include "reviziya/_holati.html" with r=rv %}</h1>
+  <a href="{% url 'reviziya:excel' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-spreadsheet me-1"></i>Excel</a>
+  <a href="{% url 'reviziya:pdf' rv.pk %}" class="chop-yoq btn btn-outline-secondary btn-sm"><i class="cil-print me-1"></i>Dalolatnoma</a>
+  {% if skanerlay_oladi %}
+  <a href="{% url 'reviziya:mobil_xonalar' rv.pk %}" class="chop-yoq btn btn-primary btn-sm"><i class="cil-qr-code me-1"></i>Boshlash</a>
+  {% endif %}
+  {% if boshqarish and rv.holat == "ochiq" %}
+  <form method="post" action="{% url 'reviziya:bekor' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} bekor qilinsinmi? Qaydlar saqlanadi, AV'larga hech narsa yozilmaydi." data-tasdiq-tugma="Reviziyani bekor qilish" data-tasdiq-xavfli>{% csrf_token %}<button type="submit" class="btn btn-outline-danger btn-sm"><i class="cil-x me-1"></i>Bekor qilish</button></form>
+  <form method="post" action="{% url 'reviziya:yakunla' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} yakunlansinmi? Sanash yopiladi va natija AV'larga yoziladi{% if farqlar.jami %}: {{ farqlar.jami }} ta farq (topilmagan — «Topilmadi», boshqa xonada topilgan — o'sha xonaga, holati boshqa — yangi holatga){% else %} (farq yo'q — AV'lar o'zgarmaydi){% endif %}." data-tasdiq-tugma="Yakunlash">{% csrf_token %}<button type="submit" class="btn btn-success btn-sm"><i class="cil-check-alt me-1"></i>Yakunlash</button></form>
+  {% elif boshqarish and rv.holat == "yakunlangan" %}
+  <form method="post" action="{% url 'reviziya:ochiqqa' rv.pk %}" class="d-inline chop-yoq" data-tasdiq="Reviziya {{ rv.nomi }} «Ochiq» ga qaytarilsinmi?{% if farqlar.yozilgan %} AV'larga yozilgan {{ farqlar.yozilgan }} ta o'zgarish orqaga qaytariladi.{% endif %} Sanash qayta ochiladi: sonlarni tuzatish mumkin bo'ladi." data-tasdiq-tugma="Ochiqqa qaytarish">{% csrf_token %}<button type="submit" class="btn btn-outline-secondary btn-sm"><i class="cil-action-undo me-1"></i>Ochiqqa qaytarish</button></form>
+  {% endif %}
+</div>
+
+{% if sanalmagan %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 chop-yoq" role="status">
+  <i class="cil-warning" aria-hidden="true"></i>
+  <span class="me-auto"><b>{{ sanalmagan_sarlavha }} ({{ sanalmagan|length }}):</b> {% for x in sanalmagan %}{{ x.toliq }}{% if not forloop.last %}, {% endif %}{% endfor %}. Reviziyani yakunlab bo'lmaydi. {{ sanalmagan_izoh }}</span>
+</div>
+{% endif %}
+
+{% if rv.holat == "yakunlangan" and farqlar.yozilmagan %}
+<div class="alert alert-warning d-flex flex-wrap align-items-center gap-2 yozilmagan-eslatma chop-yoq" role="status">
+  <i class="cil-warning" aria-hidden="true"></i>
+  {% if farqlar.eski == farqlar.yozilmagan %}
+  <span class="me-auto"><b>{{ farqlar.yozilmagan }} ta farq AV'larga hali yozilmagan</b> — reviziya eski tartibda yakunlangan. «Ochiqqa qaytarish», keyin «Yakunlash» ni bosing: farqlar AV'larga yoziladi.</span>
+  {% else %}
+  <span class="me-auto"><b>{{ farqlar.yozilmagan }} ta farq AV'larga yozilmadi.</b> Sababi vedomostda qator yonida; bu AV'larni kartochkasida qo'lda tuzating.</span>
+  {% endif %}
+  <a class="btn btn-sm btn-warning" href="?guruh=farqlar#vedomost"><i class="cil-chevron-bottom me-1"></i>Farqlarni ko'rsatish</a>
+</div>
+{% endif %}
+
+<div class="card mb-3">
+  <div class="card-body">
+    <div class="row g-3">
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Filial</div><strong>{{ rv.filial.nomi }}</strong></div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Bo'lim</div>{% if rv.bolim %}{{ rv.bolim.toliq_nomi }} <span class="text-body-secondary small">(ichki bo'limlari bilan)</span>{% else %}Butun filial{% endif %}</div>
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Ochilgan</div>{{ rv.ochilgan_vaqt|date:"d.m.Y H:i" }} · {{ rv.ochdi.get_full_name|default:rv.ochdi.get_username }}</div>
+      {% if rv.yakunlangan_vaqt %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Yakunlangan</div>{{ rv.yakunlangan_vaqt|date:"d.m.Y H:i" }}</div>{% endif %}
+      {% if rv.bekor_vaqti %}<div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Bekor qilingan</div>{{ rv.bekor_vaqti|date:"d.m.Y H:i" }}</div>{% endif %}
+      <div class="col-sm-6 col-lg-3">
+        <div class="small text-body-secondary">Belgilangan / kutilgan</div>
+        <strong>{{ belgilangan|son }} / {{ kutilgan|son }}</strong> dona
+        <div class="progress mt-1" style="height: .375rem" role="progressbar" aria-label="Progress" aria-valuenow="{{ foiz }}" aria-valuemin="0" aria-valuemax="100"><div class="progress-bar" style="width: {{ foiz }}%"></div></div>
+      </div>
+      {% if rv.holat == "yakunlangan" %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">AV'larga yozilgan farqlar</div>
+        {% if farqlar.jami %}<strong>{{ farqlar.yozilgan }} / {{ farqlar.jami }}</strong> qator
+        {% if farqlar.yozilmagan %}<span class="badge bg-danger-subtle text-danger-emphasis ms-1">{{ farqlar.yozilmagan }} tasi yozilmadi</span>{% endif %}
+        {% else %}<span class="badge bg-success-subtle text-success-emphasis">farq yo'q — hamma AV joyida</span>{% endif %}
+      </div>
+      {% endif %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Revizorlar</div>{% for u in revizorlar %}{{ u.get_full_name|default:u.get_username }}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}
+        {% if revizor_forma %}
+        <button type="button" class="btn btn-sm btn-link p-0 ms-1 align-baseline chop-yoq" data-coreui-toggle="collapse" data-coreui-target="#revizorlar-forma" aria-expanded="false" aria-controls="revizorlar-forma">O'zgartirish</button>
+        {% endif %}
+      </div>
+      {% if revizor_forma %}
+      <div class="col-12 collapse chop-yoq" id="revizorlar-forma">
+        <form method="post" action="{% url 'reviziya:revizorlar' rv.pk %}" class="border rounded p-3">{% csrf_token %}
+          <div class="small text-body-secondary mb-2">Olib tashlangan revizorning qaydlari saqlanadi, lekin u endi skanerlay olmaydi.</div>
+          <div class="d-flex flex-wrap gap-3 mb-3">
+          {% for v in revizor_forma.revizorlar %}
+            <div class="form-check mb-0">{{ v.tag }}<label class="form-check-label" for="{{ v.id_for_label }}">{{ v.choice_label }}</label></div>
+          {% endfor %}
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm"><i class="cil-save me-1"></i>Saqlash</button>
+        </form>
+      </div>
+      {% endif %}
+      <div class="col-sm-6 col-lg-3"><div class="small text-body-secondary">Komissiya</div>{% for a in rv.komissiya %}{{ a.ism }}{% if a.rol == "rais" %} <span class="badge text-bg-light">rais</span>{% endif %}{% if a.lavozim %} <span class="text-body-secondary small">({{ a.lavozim }})</span>{% endif %}{% if not forloop.last %}, {% endif %}{% empty %}—{% endfor %}</div>
+      {% if rv.izoh %}<div class="col-12"><div class="small text-body-secondary">Izoh</div>{{ rv.izoh }}</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="korsatkichlar">
+  {% for p in plitkalar %}
+  <a class="korsatkich{% if not p.soni %} nol{% elif p.ogoh %} ogoh{% endif %}" href="?guruh={{ p.filtr }}"><span class="kpi-ikonka {{ p.rang }}" aria-hidden="true"><i class="{{ p.ikonka }}"></i></span><span><b>{{ p.soni|son }}</b>{{ p.nomi }}</span></a>
+  {% endfor %}
+</div>
+{% if rv.holat == "ochiq" %}<p class="small text-body-secondary chop-yoq">Reviziya ochiq — vedomost joriy qaydlar bo'yicha (jonli).</p>{% endif %}
+
+{% if aktlar %}
+<div class="card mb-3 chop-yoq" id="aktlar">
+  <div class="card-header fw-semibold">Javobgar shaxsga biriktirish aktlari</div>
+  <div class="card-body pb-2">
+    <p class="small text-body-secondary mb-2">Revizor reviziya paytida biriktirgan AV'lar. Javobgar shaxs akt tasdiqlangandan keyin almashadi{% if akt_huquqi %} — aktni chop eting, xodim imzolagach tasdiqlang{% else %}: tasdiqni hisobchi yoki HR beradi{% endif %}.</p>
+  </div>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Akt</th><th>Topshiruvchi</th><th>Qabul qiluvchi</th><th class="son">Qatorlar</th><th>Holati</th></tr></thead>
+    <tbody>
+    {% for a in aktlar %}
+    <tr>
+      <td><a href="{% url 'mol:akt' a.pk %}">{{ a.nomi }}</a></td>
+      <td>{% if a.topshiruvchi %}{{ a.topshiruvchi.ism }}{% else %}<span class="text-body-secondary">Javobgarsiz</span>{% endif %}</td>
+      <td>{{ a.qabul_qiluvchi.ism }}</td>
+      <td class="son">{{ a.qator_soni }}</td>
+      <td>{% include "mol/_akt_holati.html" %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
+{% if kesim|length > 1 %}
+<div class="card mb-3 chop-yoq">
+  <div class="card-header fw-semibold">Bo'limlar kesimi</div>
+  <div class="table-responsive">
+  <table class="table table-hover align-middle mb-0">
+    <thead><tr><th>Bo'lim</th><th class="son">Kutilgan</th><th class="son">Belgilangan</th><th class="son">Kam / topilmadi</th><th class="son">Ortiqcha</th><th>Holati</th><th class="text-end"><span class="visually-hidden">Hujjatlar</span></th></tr></thead>
+    <tbody>
+    {% for x in kesim %}
+      <tr{% if bolim == x.filtr %} class="table-active"{% endif %}>
+        <td{% if x.chuqurlik %} style="padding-inline-start: calc(1.25rem + {{ x.chuqurlik }} * 1rem)"{% endif %}>
+          <a href="?bolim={{ x.filtr }}" class="text-decoration-none fw-semibold">{{ x.nomi }}</a>
+          {% if x.toliq != x.nomi and not x.chuqurlik %}<div class="small text-body-secondary">{{ x.toliq }}</div>{% endif %}
+        </td>
+        <td class="son">{{ x.kutilgan|son }}</td>
+        <td class="son">{{ x.belgilangan|son }}</td>
+        <td class="son{% if x.kamomad %} text-danger fw-semibold{% endif %}">{{ x.kamomad|son }}</td>
+        <td class="son">{{ x.ortiqcha|son }}</td>
+        <td>
+          {% if x.tugadi %}<span class="badge bg-success" title="{{ x.tugadi.tugatdi.get_full_name|default:x.tugadi.tugatdi.get_username }} · {{ x.tugadi.tugagan_vaqt|date:'d.m.Y H:i' }}">Tugadi</span>
+          {% elif x.belgilangan %}<span class="badge bg-warning text-dark">Sanalmoqda</span>
+          {% else %}<span class="badge text-bg-light">Boshlanmagan</span>{% endif %}
+        </td>
+        <td class="text-end text-nowrap">
+          <a class="btn btn-sm btn-ghost-secondary" href="{% url 'reviziya:excel' rv.pk %}?bolim={{ x.filtr }}" title="Bo'lim vedomosti (Excel)" aria-label="{{ x.nomi }} — Excel"><i class="cil-spreadsheet"></i></a>
+          <a class="btn btn-sm btn-ghost-secondary" href="{% url 'reviziya:pdf' rv.pk %}?bolim={{ x.filtr }}" title="Bo'lim dalolatnomasi (PDF)" aria-label="{{ x.nomi }} — dalolatnoma"><i class="cil-print"></i></a>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="card mb-3 chop-yoq"><div class="card-body">
+<form method="get" class="filtrlar">
+  <select class="form-select form-select-sm" name="guruh" aria-label="Guruh">
+    <option value="">Barcha guruhlar</option>
+    <option value="farqlar" {% if guruh == "farqlar" %}selected{% endif %}>Farqlar (AV'ga yoziladigan)</option>
+    <option value="kamomad" {% if guruh == "kamomad" %}selected{% endif %}>Kam / topilmadi</option>
+    {% for kalit, nomi in guruh_nomlari %}<option value="{{ kalit }}" {% if guruh == kalit %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+  </select>
+  <select class="form-select form-select-sm" name="bolim" aria-label="Bo'lim">
+    <option value="">Barcha bo'limlar</option>
+    {% for pk, nomi in bolimlar %}<option value="{{ pk }}" {% if bolim == pk|stringformat:"s" %}selected{% endif %}>{{ nomi }}</option>{% endfor %}
+    <option value="bolimsiz" {% if bolim == "bolimsiz" %}selected{% endif %}>Bo'limsiz</option>
+  </select>
+  <input class="form-control form-control-sm" type="search" name="q" value="{{ q }}" placeholder="Inv. raqam, nomi yoki QR">
+  {% tartib_maydoni %}
+  <button type="submit" class="btn btn-sm btn-primary"><i class="cil-filter me-1"></i>Filtrlash</button>
+</form>
+</div></div>
+
+{% if belgilash %}
+<div class="card mb-3 chop-yoq"><div class="card-body">
+  <div class="fw-semibold mb-2">AV qidirib qo'shish <span class="small text-body-secondary fw-normal">— vedomostda yo'q AV (boshqa filialniki ham) topilgan bo'lsa</span></div>
+  <form class="d-flex flex-wrap gap-2 mb-2" hx-get="{% url 'reviziya:qidir' rv.pk %}" hx-target="#qayd-qidiruv" role="search"
+    hx-trigger="submit, input[target.value.trim().length >= 5] delay:400ms" hx-sync="this:replace">
+    <span class="qidiruv-quti" style="width: 22rem; max-width: 100%">
+      <input class="form-control form-control-sm" type="search" name="q" placeholder="Inv. raqam yoki nom (5+ belgi — o'zi qidiradi)" aria-label="AV qidirish" required maxlength="100">
+      <button class="qidiruv-tozala" type="button" data-tozala data-tozala-natija="#qayd-qidiruv" aria-label="Qidiruvni tozalash" title="Tozalash" hidden>&times;</button>
+    </span>
+    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="cil-search me-1"></i>Qidirish</button>
+  </form>
+  <div id="qayd-qidiruv" aria-live="polite"></div>
+</div></div>
+<form method="post" id="vedomost" action="{% url 'reviziya:belgila' rv.pk %}" data-soni-jamla>{% csrf_token %}
+<input type="hidden" name="keyingi" value="{{ keyingi }}">
+{% include "reviziya/_vedomost.html" %}
+{% if tanlanadigan_bor %}
+<div class="amal-panel">
+  <b><span data-soni="belgi">0</span> ta joyida deb belgilashga · <span data-soni="olib">0</span> ta belgisini olishga tanlandi</b>
+  <span class="small text-body-secondary me-auto">«Soni» — topilgan dona. Belgini olib tashlash uchun topilgan qatorni tanlang{% if guruh != "topildi" %} — <a class="link-light" href="?guruh=topildi#vedomost" data-topilganlar>topilganlarni ko'rsatish</a>{% endif %}.</span>
+  <button type="submit" class="btn btn-outline-light btn-sm" formaction="{% url 'reviziya:belgini_ol' rv.pk %}" data-kerak="olib" disabled
+    data-tasdiq="Tanlangan {n} ta qatorning belgisi olib tashlansinmi? Ular yana «topilmadi» hisoblanadi." data-tasdiq-sanoq="input[name=olib]:checked" data-tasdiq-tugma="Belgini olib tashlash" data-tasdiq-xavfli><i class="cil-x me-1"></i>Belgini olib tashlash</button>
+  <button type="submit" class="btn btn-success btn-sm" data-kerak="belgi" disabled><i class="cil-check-alt me-1"></i>Joyida deb belgilash</button>
+</div>
+{% endif %}
+</form>
+<script>
+  // Vedomost: tanlanganlar soni yopishqoq panelda; sarlavhadagi belgi — ko'rinayotgan hammasini tanlash
+  (function () {
+    var forma = document.getElementById("vedomost");
+    var hammasi = forma.querySelector("[data-hammasini-tanla]");
+    var tanlovlar = forma.querySelectorAll("[data-tanlov]");
+    function yangila() {
+      var jami = 0;
+      forma.querySelectorAll("[data-soni]").forEach(function (el) {
+        el.textContent = forma.querySelectorAll("input[name='" + el.dataset.soni + "']:checked").length;
+      });
+      forma.querySelectorAll("[data-kerak]").forEach(function (t) {
+        t.disabled = !forma.querySelector("input[name='" + t.dataset.kerak + "']:checked");
+      });
+      tanlovlar.forEach(function (b) { if (b.checked) jami++; });
+      if (hammasi) {
+        hammasi.checked = jami > 0 && jami === tanlovlar.length;
+        hammasi.indeterminate = jami > 0 && jami < tanlovlar.length;
+      }
+    }
+    forma.addEventListener("change", function (e) {
+      if (e.target === hammasi) {
+        tanlovlar.forEach(function (b) {
+          b.checked = hammasi.checked;
+          b.closest("tr").classList.toggle("table-active", b.checked);
+        });
+      } else if (e.target.matches("[data-tanlov]")) {
+        e.target.closest("tr").classList.toggle("table-active", e.target.checked);
+      }
+      yangila();
+    });
+    forma.addEventListener("input", function (e) {
+      // son o'zgartirilsa — shu qator o'zi tanlanadi
+      if (!e.target.matches("[data-soni-maydon]")) return;
+      var belgi = e.target.closest("tr").querySelector("[data-tanlov]");
+      if (belgi && !belgi.checked) { belgi.checked = true; belgi.closest("tr").classList.add("table-active"); yangila(); }
+    });
+    // Yuborishda «Soni» maydonlari ketmaydi (500+ qatorda maydonlar chegarasidan oshadi): tanlangan qator soni
+    // katak qiymatiga qo'shiladi — «av:bolim:holat=soni»
+    forma.addEventListener("submit", function () {
+      forma.querySelectorAll("[data-soni-maydon]").forEach(function (m) {
+        var belgi = m.closest("tr").querySelector("input[name=belgi]");
+        if (belgi && belgi.checked) belgi.value = belgi.value.split("=")[0] + "=" + m.value;
+        m.disabled = true;
+      });
+    });
+    // Orqaga (bfcache) qaytilganda maydonlar yana faol
+    window.addEventListener("pageshow", function () {
+      forma.querySelectorAll("[data-soni-maydon]").forEach(function (m) { m.disabled = false; });
+    });
+    yangila();
+  })();
+</script>
+{% else %}
+{% include "reviziya/_vedomost.html" %}
+{% endif %}
+{% endblock %}

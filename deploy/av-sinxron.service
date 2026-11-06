@@ -1,0 +1,11 @@
+[Unit]
+Description=AV: 1C'dan sinxron (oddiy, 45 kunlik oyna)
+After=network.target postgresql.service
+
+[Service]
+Type=oneshot
+User=av
+Group=av
+WorkingDirectory=/opt/av/app
+EnvironmentFile=/opt/av/app/.env
+ExecStart=/opt/av/venv/bin/python manage.py sinxron

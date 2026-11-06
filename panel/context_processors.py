@@ -1,0 +1,55 @@
+from django.utils import timezone
+
+from hisoblar.huquqlar import huquqi_bor
+from vositalar.models import Sozlama
+from onec.sinxron import ketma_ket_xatolar, oxirgi_muvaffaqiyatli
+from panel.vazifalar import kutayotgan_ishlar
+
+XATO_CHEGARASI = 3
+OYLAR = ("yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avgust", "sentabr", "oktabr", "noyabr", "dekabr")
+KUNLAR = ("dushanba", "seshanba", "chorshanba", "payshanba", "juma", "shanba", "yakshanba")
+
+
+def joriy_vaqt() -> dict:
+    """Yuqori panel uchun: mahalliy soat va sana; `panel/vaqt.js` qolgan vaqtni server soatidan hisoblab boradi."""
+    hozir = timezone.localtime()
+    return {
+        "soat": f"{hozir:%H:%M}",
+        "sana": f"{hozir.day}-{OYLAR[hozir.month - 1]}, {KUNLAR[hozir.weekday()]}",
+        "iso": f"{hozir:%Y-%m-%dT%H:%M}",
+        "ms": int(hozir.timestamp() * 1000),
+        "zona": int(hozir.utcoffset().total_seconds() // 60),
+        "oylar": ",".join(OYLAR),
+        "kunlar": ",".join(KUNLAR),
+    }
+
+
+def sinxron_holati(request):
+    """Barcha sahifalar uchun 1C sinxron holati: oxirgi muvaffaqiyatli vaqt va aloqa xatosi belgisi."""
+    if not request.user.is_authenticated:
+        return {}
+    oxirgi = oxirgi_muvaffaqiyatli()
+    # Kutayotgan ishlar (qo'ng'iroqcha) va menyudagi belgilar — HTMX bo'laklarida hisoblanmaydi
+    ishlar = [] if request.headers.get("HX-Request") else kutayotgan_ishlar(request.user)
+    chiqim_soni = sum(i["soni"] for i in ishlar if i["tur"] == "chiqim") or None
+    return {
+        "chiqim_huquqi": huquqi_bor(request.user, "chiqim_korish"),
+        "chiqim_kutilmoqda_soni": chiqim_soni,
+        "akt_qoralama_soni": sum(i["soni"] for i in ishlar if i["tur"] == "akt"),
+        "kutayotgan_ishlar": ishlar,
+        # Qo'ng'iroqchadagi qizil son — faqat shu foydalanuvchi hali o'qimaganlar (menyudagi sonlar — barcha ishlar)
+        "kutayotgan_jami": sum(i["yangi"] for i in ishlar),
+        "hisobot_huquqi": huquqi_bor(request.user, "hisobot"),
+        "pul_huquqi": huquqi_bor(request.user, "pul_korish"),
+        "korish_huquqi": huquqi_bor(request.user, "korish"),
+        "bosh_huquqi": huquqi_bor(request.user, "bosh_sahifa"),
+        "reviziya_huquqi": huquqi_bor(request.user, "reviziya_korish"),
+        "kompaniya_nomi": Sozlama.ol().kompaniya_nomi,
+        "sozlama_huquqi": huquqi_bor(request.user, "sozlama"),
+        "tozalash_huquqi": huquqi_bor(request.user, "tozalash"),
+        "joriy_vaqt": joriy_vaqt(),
+        "sinxron_holati": {
+            "oxirgi": (oxirgi.tugadi or oxirgi.boshlandi) if oxirgi else None,
+            "xato": ketma_ket_xatolar() >= XATO_CHEGARASI,
+        }
+    }

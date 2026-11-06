@@ -1,0 +1,13 @@
+{% if tarix %}
+<ol class="m-tarix">
+  {% for q in tarix %}
+  <li>
+    <time datetime="{{ q.sana|date:'c' }}">{{ q.sana|date:"d.m.Y" }}</time>
+    <span>{{ q.matn }}{% if pul_huquqi and q.summa is not None %} · {{ q.summa|pul }}{% endif %}</span>
+    {% if q.kim %}<span class="m-xira">{{ q.kim }}</span>{% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p class="m-xira">Tarix bo'sh.</p>
+{% endif %}

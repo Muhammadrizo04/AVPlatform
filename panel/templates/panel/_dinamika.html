@@ -1,0 +1,65 @@
+{% load raqamlar %}{# Filiallar kesimida AV summasi dinamikasi (panel/dinamika.py) — bosh sahifada; forma HTMX bilan shu bo'lakni almashtiradi. #}
+<section class="card dinamika" id="dinamika" aria-labelledby="g-dinamika">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span id="g-dinamika">AV summasi dinamikasi <small>filiallar kesimida, oy oxiriga, so'm</small></span>
+    <form class="dinamika-filtr" method="get" action="{% url 'panel:dinamika' %}" hx-get="{% url 'panel:dinamika' %}" hx-target="#dinamika" hx-swap="outerHTML" hx-trigger="submit">
+      {% include "panel/_oy_tanlov.html" with nom="dan" yorliq="dan" qiymat=d.dan matn=d.dan_matn eng_kam=d.eng_erta eng_kop=d.gacha %}
+      {% include "panel/_oy_tanlov.html" with nom="gacha" yorliq="gacha" qiymat=d.gacha matn=d.gacha_matn eng_kam=d.dan eng_kop=d.joriy_oy %}
+      <label class="dinamika-umumiy form-check form-switch" title="Tanlangan filiallar summasini bitta chiziqda ko'rsatish">
+        <input class="form-check-input" type="checkbox" role="switch" name="umumiy" value="1"{% if d.umumiy %} checked{% endif %} data-umumiy>
+        <span class="form-check-label">Umumiy ko'rish</span>
+      </label>
+      <details class="dinamika-filiallar" data-filial-tanlov>
+        <summary class="form-select form-select-sm">Filiallar ({{ d.tanlangan_soni }})</summary>
+        <div class="dinamika-filiallar-royxat">
+          <div class="dinamika-filiallar-amallar">
+            <button type="button" class="btn btn-sm btn-link p-0" data-filial-hammasi>Hammasi</button>
+            <button type="button" class="btn btn-sm btn-link p-0" data-filial-tozala>Tozalash</button>
+          </div>
+          <div class="dinamika-filiallar-qatorlar">
+          {% for f in d.filiallar %}<label class="form-check"><input class="form-check-input" type="checkbox" name="f" value="{{ f.id }}"{% if f.tanlangan %} checked{% endif %}> <span class="form-check-label">{{ f.nomi }}</span></label>{% endfor %}
+          </div>
+          <p class="small text-body-secondary mb-2">8 tadan ko'p tanlansa, kichiklari «Boshqa N ta filial» chizig'iga yig'iladi.</p>
+          <button type="submit" class="btn btn-sm btn-primary w-100">Ko'rsatish</button>
+        </div>
+      </details>
+    </form>
+  </div>
+  <div class="card-body">
+    {% for o in d.ogohlantirishlar %}<p class="small text-warning-emphasis mb-2"><i class="cil-info me-1" aria-hidden="true"></i>{{ o }}</p>{% endfor %}
+    {% with t=d.tanlangan_jami %}
+    <div class="dinamika-jami" aria-label="Grafikdagi {{ d.tanlangan_soni }} ta filial bo'yicha">
+      <div><span>{{ d.dan|date:"m.Y" }} boshida</span><b>{{ t.boshi|qisqa_pul }}</b></div>
+      <div><span>{{ d.gacha|date:"m.Y" }} oxirida</span><b>{{ t.oxiri|qisqa_pul }}</b></div>
+      <div><span>O'zgarish</span><b class="{% if t.farq > 0 %}osish{% elif t.farq < 0 %}kamayish{% endif %}">{% if t.farq > 0 %}+{% endif %}{{ t.farq|qisqa_pul }}{% if t.foiz is not None %} <small>({% if t.farq > 0 %}+{% endif %}{{ t.foiz|floatformat:1 }}%)</small>{% endif %}</b></div>
+      <div class="dinamika-jami-izoh">{% if d.tanlangan_soni == d.jadval|length %}barcha filiallar{% else %}tanlangan {{ d.tanlangan_soni }} ta filial · barchasi: {{ d.jami.oxiri|qisqa_pul }}{% endif %}</div>
+    </div>
+    {% endwith %}
+    {% if d.seriyalar %}
+    <ul class="dinamika-legend" aria-label="Grafikdagi chiziqlar{% if d.seriyalar|length > 1 %} — bosilsa yashiriladi yoki ko'rsatiladi{% endif %}">
+      {% for s in d.seriyalar %}<li><button type="button" data-seriya="{{ forloop.counter0 }}" aria-pressed="true"{% if d.seriyalar|length == 1 %} disabled{% endif %}><i style="background:{{ s.rang }}" aria-hidden="true"></i>{{ s.nomi }}</button></li>{% endfor %}
+    </ul>
+    <div class="dinamika-grafik" data-dinamika>
+      <svg role="img" aria-label="Tanlangan filiallarning oyma-oy AV summasi; aniq qiymatlar pastdagi jadvalda"></svg>
+      <div class="dinamika-tooltip" role="status" hidden></div>
+    </div>
+    {{ grafik_malumot|json_script:"dinamika-malumot" }}
+    {% else %}<p class="text-body-secondary mb-0">Bu davrda ma'lumot yo'q.</p>{% endif %}
+  </div>
+  {% if d.jadval %}
+  <details class="dinamika-jadval">
+    <summary class="card-footer">Filiallar jadvali ({{ d.jadval|length }})</summary>
+    <div class="table-responsive">
+    <table class="table table-sm table-hover align-middle mb-0">
+      <thead><tr><th>Filial</th><th class="son">{{ d.dan|date:"m.Y" }} boshida</th><th class="son">{{ d.gacha|date:"m.Y" }} oxirida</th><th class="son">O'zgarish</th><th class="son">%</th></tr></thead>
+      <tbody>
+      {% for q in d.jadval %}
+        <tr><td>{{ q.nomi }}</td><td class="son">{{ q.boshi|pul }}</td><td class="son">{{ q.oxiri|pul }}</td><td class="son {% if q.farq > 0 %}osish{% elif q.farq < 0 %}kamayish{% endif %}">{% if q.farq > 0 %}+{% endif %}{{ q.farq|pul }}</td><td class="son">{% if q.foiz is None %}—{% else %}{% if q.farq > 0 %}+{% endif %}{{ q.foiz|floatformat:1 }}{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+      <tfoot class="table-light"><tr><th>Jami</th><th class="son">{{ d.jami.boshi|pul }}</th><th class="son">{{ d.jami.oxiri|pul }}</th><th class="son">{% if d.jami.farq > 0 %}+{% endif %}{{ d.jami.farq|pul }}</th><th class="son">{% if d.jami.foiz is None %}—{% else %}{{ d.jami.foiz|floatformat:1 }}{% endif %}</th></tr></tfoot>
+    </table>
+    </div>
+  </details>
+  {% endif %}
+</section>

@@ -1,0 +1,7 @@
+{# Oy tanlagich (panel/static/panel/oy_tanlov.js): butun maydon bosiladi, ichida yil va 12 oy. nom, yorliq (sanadan keyin: «dan»/«gacha»), qiymat (date), matn, eng_kam / eng_kop (date yoki bo'sh). #}
+<div class="oy-tanlov" data-oy-tanlov{% if eng_kam %} data-min="{{ eng_kam|date:'Y-m' }}"{% endif %}{% if eng_kop %} data-max="{{ eng_kop|date:'Y-m' }}"{% endif %}>
+  <input type="hidden" name="{{ nom }}" value="{{ qiymat|date:'Y-m' }}">
+  <button type="button" class="form-select form-select-sm oy-tanlov-tugma" aria-haspopup="dialog" aria-expanded="false" aria-labelledby="oy-{{ nom }}-matn oy-{{ nom }}-yorliq"><i class="cil-calendar" aria-hidden="true"></i><span id="oy-{{ nom }}-matn">{{ matn }}</span></button>
+  <span class="oy-tanlov-yorliq" id="oy-{{ nom }}-yorliq">{{ yorliq }}</span>
+  <div class="oy-tanlov-panel" role="dialog" aria-label="Oyni tanlang ({{ yorliq }})" hidden></div>
+</div>

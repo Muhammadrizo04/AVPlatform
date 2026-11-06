@@ -78,7 +78,7 @@ Platformaning o'z foydalanuvchilari (login + parol). Har foydalanuvchiga **ruxsa
 | Rol | Huquqlar |
 |---|---|
 | **Administrator** | Hammasi + foydalanuvchilar, rollar, AV turlari sozlamalari, 1C ulanishi, «Hozir sinxronlash», jurnallar |
-| **Hisobchi** | AV platforma maydonlari (bo'lim, holat, rasm, xizmat muddati, qo'shimcha maydonlar, izoh), bo'limlar daraxti, МОЛ aktlari, yorliqlar, tozalash ro'yxatlari, hisobotlar |
+| **Hisobchi** | AV platforma maydonlari (bo'lim, holat, rasm, xizmat muddati, qo'shimcha maydonlar, izoh), bo'limlar daraxti, МОЛ aktlari, yorliqlar, tozalash ro'yxatlari, hisobotlar, 1C chiqimlarini tasdiqlash (§6.5) |
 | **HR** | МОЛ nazorati: xodimlar va ulardagi AV, topshirish-qabul aktlari (yaratish, tasdiqlash, chop etish), «Ketgan xodimlarda qolgan AV», hisobotlar. Holat, bo'lim, narx — faqat ko'rish |
 | **Rahbar** | Hammasini ko'rish va hisobotlar, hech narsani o'zgartirmaydi |
 | **Revizor** | 1-bosqichda panelga kirmaydi; 2-bosqichda telefon ilovasi |
@@ -125,13 +125,18 @@ Har jadvalda `ref_1c` (UUID, unique), `sinx_vaqti`, `1c_da_yoq` (bool) bor. 1C'd
   (Xodim), izoh, holat (`qoralama` / `tasdiqlangan`), kim tuzdi, kim tasdiqladi.
   **`MolAktQator`** — akt, AV, manba (filial, bo'lim, holat), soni.
 - **`TaqsimotHarakat`** — har bir taqsimot o'zgarishi: AV, filial, eski (bo'lim, МОЛ, holat) → yangi (bo'lim, МОЛ,
-  holat), soni, sana, kim, sabab (`kochirish` / `holat` / `mol_akt` / `1c_kopaydi` / `1c_kamaydi` / `1c_nolga_tushdi`),
-  1C hujjati (bo'lsa).
+  holat), soni, sana, kim, sabab (`kochirish` / `holat` / `mol_akt` / `1c_kopaydi` / `1c_kamaydi` / `1c_nolga_tushdi` /
+  `sotildi` / `otkazildi` / `hisobdan_chiqarildi`), 1C hujjati (bo'lsa).
+- **`ChiqimHujjat`** (§6.5) — 1C chiqim harakati (hujjat × AV × filial): 1C hujjati (turi, raqami, ref, sana), AV, filial
+  (A), soni, summa, holat (`kutilmoqda` / `tasdiqlangan` / `bekor`), taxmin qilingan tur va tasdiqlangan tur
+  (`otkazish` / `sotildi` / `hisobdan_chiqarildi`), qabul qiluvchi filial (B, faqat o'tkazishda), izoh, kim, qachon.
+  Unikal: (hujjat_ref, AV, filial).
 - **`Jurnal`** — kim (foydalanuvchi yoki «1C sinxron»), qachon, obyekt, maydon, eski qiymat, yangi qiymat.
 - **`Foydalanuvchi`** — Django User + rol + ruxsat berilgan filiallar.
 - **`YorliqOlchami`** — nomi, eni (mm), bo'yi (mm), faol, standart. Administrator yangi o'lcham qo'shadi yoki
   mavjudini o'zgartiradi (eni 20–120 mm, bo'yi 15–120 mm). Boshlang'ich: 40×30 (standart) va 58×40.
-- **`Sozlama`** — kompaniya nomi (yorliq/aktlar uchun) va h.k.
+- **`Sozlama`** — kompaniya nomi (yorliq/aktlar uchun), `chiqim_boshlanishi` (§6.5: shu vaqtdan keyingi 1C chiqimlari
+  tasdiqlashni kutadi) va h.k.
 
 ### 5.3. Hisoblanadigan (saqlanmaydi)
 
@@ -149,7 +154,8 @@ Har jadvalda `ref_1c` (UUID, unique), `sinx_vaqti`, `1c_da_yoq` (bool) bor. 1C'd
 | Inv. raqam bo'sh | inv_raqam bo'sh | hisobchi, 1C'da |
 | Inv. raqam takror | bir filial_rekvizit ichida bir xil inv_raqam | hisobchi, 1C'da |
 | Filial rekviziti bo'sh | filial_rekvizit bo'sh | hisobchi, 1C'da |
-| Taqsimot 1C bilan mos emas | biror (AV, filial) uchun Σ taqsimot ≠ 1C qoldig'i | hisobchi, platformada |
+| Taqsimot 1C bilan mos emas | biror (AV, filial) uchun Σ taqsimot ≠ 1C qoldig'i + kutilayotgan chiqim (§6.5) | hisobchi, platformada |
+| 1C chiqimi kutilmoqda | `kutilmoqda` holatidagi ChiqimHujjat bor (§6.5) | hisobchi, platformada |
 | Bo'limga joylash kerak | bo'limi bo'sh taqsimot qatori bor (soni bilan) | hisobchi, platformada |
 | МОЛ'siz | МОЛ'i bo'sh taqsimot qatori bor (soni bilan) | HR, platformada |
 | Ketgan xodimda | qator МОЛ'i ishdan bo'shatilgan / neaktiv / 1C'da yo'q (soni bilan) | HR, platformada |
@@ -193,16 +199,20 @@ Har jadvalda `ref_1c` (UUID, unique), `sinx_vaqti`, `1c_da_yoq` (bool) bor. 1C'd
 
 ### 6.3. Sinxronning avtomatik oqibatlari (har biri Jurnal'ga «1C sinxron» nomidan)
 
-Har (AV, filial) uchun `d = 1C qoldig'i − Σ taqsimot`:
+Har (AV, filial) uchun `d = 1C qoldig'i + K − Σ taqsimot`, bu yerda `K` — shu juftdagi `kutilmoqda` holatidagi
+ChiqimHujjat'lar sonlari yig'indisi (§6.5). Ya'ni hisobchi tasdiqlamagan 1C chiqimi taqsimotga ta'sir qilmaydi —
+o'sha dona tasdiqlanguncha joyida turadi.
 
 - **d > 0 (ko'paydi:** kirim, boshqa filialdan kelish, 1C'da guruhdan ajratilgan yangi yozuv) → d dona shu filialdagi
   **taqsimlanmagan** qatorga (bo'lim va МОЛ bo'sh, holat `ishlatilmoqda`) qo'shiladi → «Bo'limga joylash kerak».
-- **d < 0 (kamaydi:** hisobdan chiqarish, sotish, boshqa filialga o'tkazish, 1C'da guruhni bo'lish) → avval
+- **d < 0 (kamaydi** chiqim hujjatisiz yoki `chiqim_boshlanishi`dan oldingi chiqim bilan: masalan 1C'da guruhni bo'lish,
+  hujjatni tuzatish; sotish / o'tkazish / hisobdan chiqarish endi §6.5 orqali) → avval
   taqsimlanmagan qatordan ayiriladi; yetmasa qolgan farq uchun AV **«Taqsimot 1C bilan mos emas»** ga tushadi.
   Hisobchi oynada «N dona chiqarilishi kerak» va sababchi 1C hujjati(lari)ni (Harakat1C'dan) ko'radi, qaysi
   qatorlardan kamaytirishni tanlaydi → TaqsimotHarakat (`1c_kamaydi`, hujjat bilan).
-- **1C qoldig'i shu filialda 0** → shu filialdagi barcha qatorlar avtomatik o'chiriladi (`1c_nolga_tushdi`) —
-  noaniqlik yo'q. Barcha filiallarda 0 → **arxiv**: faol ro'yxatlardan chiqadi, tarix saqlanadi.
+- **1C qoldig'i shu filialda 0 va K = 0** → shu filialdagi barcha qatorlar avtomatik o'chiriladi (`1c_nolga_tushdi`) —
+  noaniqlik yo'q. K > 0 bo'lsa — qatorlar tasdiqlashni kutadi. Barcha filiallarda 1C qoldig'i 0 → **arxiv**: faol
+  ro'yxatlardan chiqadi, tarix saqlanadi (kutilayotgan chiqimi bor arxiv AV «1C chiqimlari» sahifasida ko'rinadi).
 - **Xodim ishdan bo'shatildi / neaktiv / 1C'da yo'q** → u МОЛ bo'lgan taqsimot qatorlari «Ketgan xodimda».
 - **Kalit o'zgardi** (inv. raqam yoki filial rekviziti) → «Yorliqni almashtirish kerak».
 - **Yangi AV** → AVKartochka yaratiladi, butun soni taqsimlanmagan qatorga tushadi.
@@ -213,6 +223,35 @@ TestClaude → doms2021 → online 1C: faqat `.env` dagi manzil va login o'zgara
 rejasi `DistributedInfoBase = true` (РИБ) — UUID'lar bazalar o'rtasida bir xil bo'lishi kutiladi. **Ko'chishdan oldin
 majburiy tekshiruv:** kamida 20 ta AV va 5 ta xodimning UUID'i ikkala bazada solishtiriladi; mos kelmasa — ko'chish
 to'xtatiladi va kalit (filial + inv) bo'yicha bog'lash rejasi alohida ishlab chiqiladi.
+
+### 6.5. 1C chiqim hujjatlari — tasdiqlashni kutadi (2026-10-19 kelishildi)
+
+Maqsad: 1C'dagi har bir chiqim (sotish, filialga o'tkazish, hisobdan chiqarish) platformada hisobchi tomonidan turi
+bilan tasdiqlanadi; hech bir taqsimot qatori hisobchi bilmagan holda yo'qolmaydi. TestClaude tahlili (docs/1c-farazlar.md):
+filiallararo o'tkazish = РеализацияОС (A, chiqim) + ПоступлениеОС (B, kirim), bir xil AV yozuvi.
+
+- **Yaratish (sinxron):** olingan Harakat1C'lardan `vid = chiqim`, `soni > 0`, `sana ≥ Sozlama.chiqim_boshlanishi`
+  bo'lganlari uchun ChiqimHujjat (hujjat_ref, AV, filial) yaratiladi yoki yangilanadi (soni, summa, sana). Kirimlar
+  hozirgidek avtomatik (§6.3). `chiqim_boshlanishi` funksiya o'rnatilgan migratsiyada joriy vaqt bilan to'ldiriladi —
+  eski chiqimlar ro'yxatga tushmaydi.
+- **1C'da o'zgarish:** sinxron qayta olgan davr (45 kunlik oyna yoki to'liq) ichida `kutilmoqda` ChiqimHujjat'ning
+  harakati endi yo'q bo'lsa → `bekor` (jurnal bilan). Soni o'zgarsa → yangilanadi. `tasdiqlangan` hujjat o'zgarmaydi;
+  1C'da keyin bekor qilinsa, qoldiq ko'payadi va §6.3 bo'yicha taqsimlanmagan qatorga qaytadi.
+- **Taxmin qilingan tur:** shu AV'ga chiqim sanasidan ±3 kun ichida boshqa filialda `kirim` (soni > 0) bo'lsa —
+  `otkazish` (B = o'sha filial); `hujjat_turi = СписаниеОС` — `hisobdan_chiqarildi`; aks holda — `sotildi`.
+- **Tasdiqlash** (hisobchi, administrator; bitta tranzaksiya, A filial qatorlari `select_for_update` pk tartibida):
+  - tur tanlanadi (taxmin oldindan tanlangan); `otkazish` uchun B filial majburiy;
+  - A filialdagi shu AV taqsimot qatorlari ko'rsatiladi, hisobchi har qatordan nechta ketganini yozadi;
+    yig'indi = ChiqimHujjat.soni bo'lishi shart; bitta qator bo'lsa — avtomatik to'ldiriladi;
+  - qatorlar kamaytiriladi (0 bo'lsa o'chiriladi) → TaqsimotHarakat (`sotildi` / `otkazildi` /
+    `hisobdan_chiqarildi`, hujjat bilan) + Jurnal;
+  - `otkazish`da ixtiyoriy: B filial bo'limi va holati tanlansa, B'dagi taqsimlanmagan qatordan
+    min(ChiqimHujjat.soni, taqsimlanmagan soni) dona shu bo'limga ko'chiriladi (`kochirish`); МОЛ — faqat akt orqali;
+  - amaldan keyin Σ invariant tekshiriladi; bitta shart buzilsa — hech narsa o'zgarmaydi.
+- **Bekor qilib bo'lmaydi** foydalanuvchi tomonidan: chiqim 1C'da bor ekan, u tasdiqlanishi shart (xato bo'lsa —
+  1C'da tuzatiladi).
+- **Filial cheklovi:** ChiqimHujjat foydalanuvchiga A filiali ruxsat etilgan bo'lsa ko'rinadi; B'ga joylash uchun
+  B ham ruxsat etilgan bo'lishi kerak.
 
 ## 7. Veb-panel (o'zbekcha, lotin; kompyuter va planshet)
 
@@ -234,6 +273,10 @@ to'xtatiladi va kalit (filial + inv) bo'yicha bog'lash rejasi alohida ishlab chi
    tasdiqlash (МОЛ o'zgaradi) → chop etish / PDF (kompaniya, sana, raqam, AV jadvali, imzo joylari).
    Tasdiqlangan akt o'zgartirilmaydi; xato bo'lsa — teskari akt tuziladi.
 7. **Tozalash ro'yxatlari** — §5.4'dagi 1C bayroqlari, Excel eksport.
+7a. **1C chiqimlari** (§6.5) — ro'yxat: holat (standart: `kutilmoqda`), tur, filial, sana bo'yicha filtr; har qatorda
+   1C hujjati, AV (kartochkaga havola), filial, soni, summa, taxmin qilingan tur. Tasdiqlash sahifasi: tur, A filial
+   qatorlari bo'yicha sonlar, `otkazish`da B filial va ixtiyoriy bo'lim/holat. Bosh sahifada «1C chiqimi kutilmoqda»
+   kartochkasi; AV tarixida tasdiqlangan tur ko'rinadi. HR va rahbar — faqat ko'rish.
 8. **QR-yorliqlar** — AV ro'yxatidan / bo'lim bo'yicha / «chop etilmagan» / «almashtirish kerak» filtri bo'yicha.
    Chop etishda o'lcham faol `YorliqOlchami`lardan tanlanadi (standart oldindan tanlangan). Har yorliq — PDF'ning
    bitta sahifasi, sahifa aynan tanlangan o'lchamda; matn uzunligi yorliq eniga moslanadi. Tarkibi: QR, inv. raqam (katta), filial nomi (`filial_rekvizit` —
@@ -253,6 +296,9 @@ to'xtatiladi va kalit (filial + inv) bo'yicha bog'lash rejasi alohida ishlab chi
 - Taqsimot amallari (ko'chirish, holat, akt, 1C bilan moslash) — tranzaksiyada, qator `select_for_update` bilan;
   soni 1..qator soni oralig'ida; amaldan keyin Σ invariant tekshiriladi.
 - Bo'lim faqat taqsimot qatorining filialidagi bo'limlardan tanlanadi.
+- ChiqimHujjat tasdiqlash (§6.5) — bitta tranzaksiya: holat `kutilmoqda`; qatorlar yig'indisi = chiqim soni, har qator
+  uchun 0..qator soni; `otkazish`da B ≠ A; tanlangan B bo'limi B filialidan. Bitta shart buzilsa — hech narsa o'zgarmaydi.
+  Ikki foydalanuvchi bir vaqtda tasdiqlasa — ikkinchisi «allaqachon tasdiqlangan» xabarini oladi.
 - AVKartochka tahriri — `versiya` bilan optimistik blokirovka: «Ma'lumot boshqa foydalanuvchi tomonidan o'zgartirildi,
   sahifani yangilang».
 - Rasm: jpg/png, ≤ 15 MB; serverda max 1600 px gacha kichraytiriladi + miniatyura.
@@ -279,6 +325,10 @@ pytest-django. Celery ishlatilmaydi.
   - sinxron mantiqi — TestClaude'dan yozib olingan haqiqiy JSON namunalari bilan: yangi AV, soni ko'payishi,
     kamayishi (taqsimlanmagandan yetadi / yetmaydi), qisman filiallararo o'tkazish, filialda 0, arxiv, xodim ketishi,
     kalit o'zgarishi, 1C'da yo'qolish, xato javobda rollback;
+  - 1C chiqimlari (§6.5): `chiqim_boshlanishi`dan oldingilari yaratilmaydi; kutilayotgan chiqim taqsimotni o'zgartirmaydi
+    (filial qoldig'i 0 bo'lsa ham); takroriy sinxron idempotent; 1C'da hujjat yo'qolsa `bekor`; tur taxmini
+    (o'tkazish ±3 kun, СписаниеОС, sotildi); ko'p qatorli guruhda qisman tasdiqlash; yig'indi ≠ soni rad etiladi;
+    o'tkazishda B'ga joylash; parallel tasdiqlash; rol va filial cheklovlari;
   - taqsimot amallari: bo'lish, birlashish, invariant, chegaraviy soni;
   - bayroqlar (§5.4);
   - rol va filial cheklovlari (har rol × har sahifa/amal);

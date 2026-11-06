@@ -1,0 +1,10 @@
+[Unit]
+Description=AV: sinxron har soatda
+
+[Timer]
+OnCalendar=*-*-* *:00:00
+Persistent=true
+Unit=av-sinxron.service
+
+[Install]
+WantedBy=timers.target

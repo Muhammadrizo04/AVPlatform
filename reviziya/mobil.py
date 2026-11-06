@@ -1,0 +1,672 @@
+"""Revizorning mobil sahifalari (spec §4): reviziyalarim, xona tanlash, skan ekrani, AV kartochkasi, qolganlar.
+
+Kirish (Ruling 2): reviziya revizorlari yoki `reviziya_boshqarish` huquqi borlar, doim `filial_bilan_chekla` ichida;
+boshqalarga 404. Ochiq bo'lmagan reviziya — 403 (HTMX bo'lakda tushunarli xabar bilan).
+"""
+from decimal import Decimal, InvalidOperation
+from functools import wraps
+
+from django.core.exceptions import ValidationError
+from django.db import transaction
+from django.db.models import Count, Q, Sum
+from django.db.models.functions import Trim
+from django.http import Http404, HttpResponse
+from django.shortcuts import redirect, render
+from django.template.loader import render_to_string
+from django.utils.html import format_html
+from django.views.decorators.http import require_GET, require_POST
+
+from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor
+from hisoblar.parametrlar import son as son_id
+from mol.servis import AktXato, qoralamaga_qosh
+from mol.sorovlar import faol_xodimlar
+from onec.models import AV, AVQoldiq, Filial
+from panel.templatetags.raqamlar import son
+from vositalar.bolimlar import daraxt
+from vositalar.models import Bolim, Taqsimot
+from vositalar.models import Holat as TaqsimotHolat
+from vositalar.tarix import tarix as av_tarixi
+
+from .ruxsat import ozgartiradigan_shart
+from .kesim import BOLIMSIZ_QIYMATI as BOLIMSIZ, xonalar_kesimi
+from .models import Reviziya, ReviziyaQayd, ReviziyaXona
+from .servis import (
+    BOSHQA_FILIAL,
+    KOMISSIYA_RAIS,
+    ReviziyaXato,
+    progress,
+    qamrov_bolim_idlari,
+    qayd_qosh,
+    qayd_tuzat,
+    qr_tahlil,
+    reviziya_och,
+    standart_holat,
+    xona_tugadi,
+)
+
+NOL = Decimal("0")
+SON_CHEGARASI = Decimal("1000000")
+QR_MAKS = 255  # ReviziyaQayd.qr_matn uzunligi: undan uzun matn kesiladi (noma'lum yorliq sifatida saqlanadi)
+QIDIRUV_MAKS = 100
+QR_BOSHI = "DS|"  # yorliq QR formati: DS|<filial kodi>|<inv>
+
+QIDIRUV_NATIJALARI = 20
+OXIRGILAR_SONI = 10
+NUL = chr(0)
+
+
+class _Yopiq(Exception):
+    """Reviziya ochiq emas — skanerlash taqiqlangan."""
+
+
+def _mobil(view):
+    """`reviziya_otkazish` huquqi; yopiq reviziya — 403 (HTMX — bo'lak, aks holda mobil sahifa)."""
+
+    @amal_kerak("reviziya_otkazish")
+    @wraps(view)
+    def ichki(request, *args, **kwargs):
+        try:
+            return view(request, *args, **kwargs)
+        except _Yopiq:
+            xabar = "Reviziya ochiq emas: qayd qilib bo'lmaydi."
+            if request.headers.get("HX-Request"):
+                return HttpResponse(format_html('<div class="m-xato" role="alert">{}</div>', xabar), status=403)
+            return render(request, "reviziya/mobil/base.html", {"xabar": xabar}, status=403)
+
+    return ichki
+
+
+def _reviziyalar(user):
+    """Mobil sahifada ochiladigan (o'zgartira oladigan) reviziyalar — `reviziya.ruxsat`, filial cheklovi bilan."""
+    qs = filial_bilan_chekla(Reviziya.objects.select_related("filial", "bolim"), user)
+    return qs.filter(ozgartiradigan_shart(user)).distinct()
+
+
+def _reviziya(request, pk) -> Reviziya:
+    rv = _reviziyalar(request.user).filter(pk=pk).first()
+    if rv is None:
+        raise Http404
+    if rv.holat != Reviziya.Holat.OCHIQ:
+        raise _Yopiq
+    return rv
+
+
+def _sessiya_kaliti(rv) -> str:
+    return f"reviziya_{rv.pk}_xona"
+
+
+def _xona_qiymati(request, rv) -> str | None:
+    """So'rovdagi `bolim` (id yoki 0 — bo'limsiz), bo'lmasa sessiyadagi tanlangan xona; None — tanlanmagan."""
+    manba = request.POST if request.method == "POST" else request.GET
+    qiymat = (manba.get("bolim") or "").strip()
+    return qiymat or request.session.get(_sessiya_kaliti(rv))
+
+
+def _xona(rv, qiymat: str) -> Bolim | None:
+    """Qamrovdagi xona (None — bo'limsiz); boshqa filial yoki qamrovdan tashqari — 404."""
+    if qiymat == BOLIMSIZ:
+        return None
+    if not qiymat.isdigit():
+        raise Http404
+    bolim = Bolim.objects.filter(pk=int(qiymat), filial_id=rv.filial_id).first()
+    qamrov = qamrov_bolim_idlari(rv)
+    if bolim is None or (qamrov is not None and bolim.pk not in qamrov):
+        raise Http404
+    return bolim
+
+
+def _son(qiymat, *, nol_mumkin=False) -> Decimal:
+    """«1,5» -> Decimal("1.5"); bo'sh, noto'g'ri, manfiy (nol) yoki juda katta — `ReviziyaXato`."""
+    try:
+        soni = Decimal((qiymat or "").strip().replace(",", "."))
+    except InvalidOperation:
+        raise ReviziyaXato("Sonni to'g'ri kiriting.") from None
+    if not soni.is_finite():
+        raise ReviziyaXato("Sonni to'g'ri kiriting.")
+    if soni < 0 or (soni == 0 and not nol_mumkin):
+        raise ReviziyaXato("Son noldan katta bo'lishi kerak." if not nol_mumkin else "Son manfiy bo'lmasin.")
+    if soni >= SON_CHEGARASI:
+        raise ReviziyaXato("Son juda katta.")
+    return soni
+
+
+def _matn(qiymat) -> str:
+    """So'rov matni: NUL baytlarsiz (PostgreSQL matn maydonlari ularni qabul qilmaydi), chetlari kesilgan."""
+    return (qiymat or "").replace(NUL, "").strip()
+
+
+def _xato(xabar: str, nishon: str) -> HttpResponse:
+    """400: xabar shakl ichidagi xato joyiga (`HX-Retarget`), kiritilgan qiymatlar saqlanib qoladi."""
+    javob = HttpResponse(format_html('<div class="m-xato" role="alert">{}</div>', xabar), status=400)
+    javob["HX-Retarget"] = nishon
+    javob["HX-Reswap"] = "innerHTML"
+    return javob
+
+
+def _av_doirasi(rv):
+    """Reviziya filialiga tegishli AV'lar: rekvizit, qoldiq yoki kutilgan qator bo'yicha (arxiv ham)."""
+    return AV.objects.filter(
+        Q(filial_rekvizit_id=rv.filial_id)
+        | Q(pk__in=AVQoldiq.objects.filter(filial_id=rv.filial_id).values("av_id"))
+        | Q(pk__in=rv.kutilganlar.values("av_id"))
+    )
+
+
+def _xona_progress(rv, xona) -> dict:
+    belgilangan, kutilgan = progress(rv, bolim_id=None if xona is None else xona.pk)
+    return {"belgilangan": belgilangan, "kutilgan": kutilgan}
+
+
+def _oxirgilar(request, rv, xona) -> list[dict]:
+    boshqaradi = huquqi_bor(request.user, "reviziya_boshqarish")
+    qaydlar = (
+        rv.qaydlar.filter(bolim_id=None if xona is None else xona.pk)
+        .select_related("av", "kim")
+        .order_by("-yangilangan", "-pk")[:OXIRGILAR_SONI]
+    )
+    # Kutilgan va topilgan — shu xonadagi AV bo'yicha (barcha holatlar yig'indisi), solishtirish uchun
+    xona_id = None if xona is None else xona.pk
+    av_idlar = {q.av_id for q in qaydlar if q.av_id}
+    kutilgan = dict(
+        rv.kutilganlar.filter(bolim_id=xona_id, av_id__in=av_idlar).order_by().values_list("av_id")
+        .annotate(s=Sum("soni"))
+    )
+    topilgan = dict(
+        rv.qaydlar.filter(bolim_id=xona_id, av_id__in=av_idlar).order_by().values_list("av_id").annotate(s=Sum("soni"))
+    )
+    natija = []
+    for q in qaydlar:
+        k, t = kutilgan.get(q.av_id, NOL), topilgan.get(q.av_id, NOL)
+        natija.append({
+            "q": q, "qiymat": format(q.soni.normalize(), "f"), "ozi": boshqaradi or q.kim_id == request.user.pk,
+            # boshqa filial yorlig'i — AV nomi va filiali bilan («Noma'lum yorliq» emas)
+            "begona": _begona_av(q.qr_matn) if q.av_id is None and qr_tahlil(q.qr_matn, rv)[1] == BOSHQA_FILIAL
+            else None,
+            "kutilgan": k, "topilgan": t, "farq": t - k,
+        })
+    return natija
+
+
+def _qolganlar(rv, xona) -> list[dict]:
+    """Shu xonada kutilgan, lekin hali to'liq belgilanmagan AV'lar (qolgan soni bilan)."""
+    xona_id = None if xona is None else xona.pk
+    kutilgan = dict(
+        rv.kutilganlar.filter(bolim_id=xona_id).order_by().values_list("av_id").annotate(s=Sum("soni"))
+    )
+    topilgan = dict(
+        rv.qaydlar.filter(bolim_id=xona_id, av__isnull=False).order_by().values_list("av_id").annotate(s=Sum("soni"))
+    )
+    qolgan = {av_id: s - topilgan.get(av_id, NOL) for av_id, s in kutilgan.items() if s > topilgan.get(av_id, NOL)}
+    avlar = AV.objects.in_bulk(qolgan)
+    mollar = _mollar(rv, qolgan)
+    natija = [{"av": avlar[i], "soni": s, "mollar": mollar.get(i, [])} for i, s in qolgan.items()]
+    return sorted(natija, key=lambda q: (q["av"].nomi.casefold(), q["av"].pk))
+
+
+def _mollar(rv, av_idlar) -> dict[int, list[str]]:
+    """Javobgar shaxslar (МОЛ) ismlari: AV -> [ism, ...] — reviziya filialidagi joriy taqsimotdan (reviziya
+    ochilgandan keyin akt bilan biriktirilgan МОЛ ham ko'rinsin)."""
+    qs = Taqsimot.objects.filter(filial_id=rv.filial_id, av_id__in=av_idlar, mol__isnull=False)
+    natija: dict[int, list[str]] = {}
+    for av_id, ism in qs.order_by("mol__ism").values_list("av_id", "mol__ism"):
+        ism = ism.strip()
+        if ism not in natija.setdefault(av_id, []):
+            natija[av_id].append(ism)
+    return natija
+
+
+def _skan_konteksti(request, rv, xona) -> dict:
+    return {
+        "rv": rv,
+        "xona": xona,
+        "xona_qiymati": BOLIMSIZ if xona is None else str(xona.pk),
+        "xona_progress": _xona_progress(rv, xona),
+        "xona_tugagan": ReviziyaXona.objects.filter(reviziya=rv, bolim=xona).exists(),
+        "oxirgilar": _oxirgilar(request, rv, xona),
+        "qolganlar": _qolganlar(rv, xona),
+    }
+
+
+def _yangilanishlar(request, rv, xona, *, oxirgilar_oob=True) -> str:
+    """Saqlash/tuzatishdan keyin oxirgilar, qolganlar va xona progressi (hx-swap-oob; tuzatishda oxirgilar —
+    asosiy nishon)."""
+    ctx = {**_skan_konteksti(request, rv, xona), "oob": True}
+    p = ctx["xona_progress"]
+    return (
+        render_to_string("reviziya/mobil/_oxirgilar.html", {**ctx, "oob": oxirgilar_oob}, request=request)
+        + render_to_string("reviziya/mobil/_qolganlar.html", ctx, request=request)
+        + render_to_string("reviziya/mobil/_xona_chiziq.html", ctx, request=request)
+        + format_html(
+            '<span class="m-son" id="xona-progress" hx-swap-oob="true">{} / {}</span>',
+            son(p["belgilangan"]), son(p["kutilgan"]),
+        )
+    )
+
+
+@_mobil
+@require_GET
+def reviziyalarim(request):
+    qatorlar = []
+    for rv in _reviziyalar(request.user).filter(holat=Reviziya.Holat.OCHIQ).order_by("-raqam"):
+        belgilangan, kutilgan = progress(rv)
+        qatorlar.append({"rv": rv, "belgilangan": belgilangan, "kutilgan": kutilgan})
+    return render(request, "reviziya/mobil/reviziyalarim.html", {"qatorlar": qatorlar})
+
+
+def _ruxsat_filiallar(user):
+    return filial_bilan_chekla(Filial.objects.all(), user, "pk").order_by("nomi")
+
+
+def _av_sonlari(filial_idlar, maydon: str) -> dict:
+    """Faol AV'lar taqsimoti bo'yicha dona: `maydon` — "filial_id" yoki "bolim_id"."""
+    qs = Taqsimot.objects.filter(filial_id__in=filial_idlar, av__in=AV.objects.faol().values("pk"))
+    return dict(qs.order_by().values_list(maydon).annotate(s=Sum("soni")))
+
+
+def _filial_variantlari(user) -> list[dict]:
+    """1-qadam: ruxsat etilgan filiallar — AV soni, bo'limlar soni va butun filial ochiq reviziyadami."""
+    filiallar = list(_ruxsat_filiallar(user))
+    idlar = [f.pk for f in filiallar]
+    sonlar = _av_sonlari(idlar, "filial_id")
+    bolimlar = dict(
+        Bolim.objects.filter(filial_id__in=idlar, faol=True).order_by().values_list("filial_id").annotate(n=Count("pk"))
+    )
+    ochiq = set(Reviziya.objects.filter(filial_id__in=idlar, holat=Reviziya.Holat.OCHIQ).values_list("filial_id", flat=True))
+    return [
+        {"f": f, "soni": sonlar.get(f.pk, NOL), "bolimlar": bolimlar.get(f.pk, 0), "ochiq": f.pk in ochiq}
+        for f in filiallar
+    ]
+
+
+def _bolim_variantlari(filial) -> list[dict]:
+    """2-qadam: «butun filial» + faol bo'limlar daraxti; har birida AV soni (ichki bo'limlari bilan) va qamrovi
+    ochiq reviziya bilan kesishadimi (shunday joyni tanlab bo'lmaydi)."""
+    qatorlar = [q for q in daraxt(filial.pk) if q[0].faol]
+    ozida = _av_sonlari([filial.pk], "bolim_id")
+    otasi = {b.pk: b.ota_id for b, _, _ in qatorlar}
+    jami = {b.pk: ozida.get(b.pk, NOL) for b, _, _ in qatorlar}
+    for b, _, _ in reversed(qatorlar):
+        if otasi[b.pk] in jami:
+            jami[otasi[b.pk]] += jami[b.pk]
+
+    def zanjir(bolim_id) -> set:  # o'zi va barcha otalari
+        natija = set()
+        while bolim_id is not None and bolim_id not in natija:
+            natija.add(bolim_id)
+            bolim_id = otasi.get(bolim_id)
+        return natija
+
+    ochiqlar = list(
+        Reviziya.objects.filter(filial=filial, holat=Reviziya.Holat.OCHIQ).values_list("bolim_id", flat=True)
+    )
+    butun_ochiq = None in ochiqlar
+    variantlar = [{
+        "qiymat": f"f:{filial.pk}", "nomi": "Butun filial", "izoh": "barcha bo'limlar va bo'limsiz AV'lar",
+        "chuqurlik": 0, "soni": sum(ozida.values(), NOL), "band": bool(ochiqlar),
+    }]
+    for b, chuqurlik, toliq in qatorlar:
+        band = butun_ochiq or any(o in zanjir(b.pk) or b.pk in zanjir(o) for o in ochiqlar)
+        variantlar.append({
+            "qiymat": f"b:{b.pk}", "nomi": b.nomi, "izoh": "", "chuqurlik": chuqurlik, "soni": jami[b.pk], "band": band,
+        })
+    return variantlar
+
+
+@_mobil
+def yangi(request):
+    """Revizorning o'zi reviziya boshlaydi: 1) filial, 2) butun filial yoki bo'lim; revizor va komissiya raisi —
+    o'zi. Bitta filiali bor revizor to'g'ridan-to'g'ri 2-qadamga tushadi."""
+    filiallar = list(_ruxsat_filiallar(request.user))
+    manba = request.POST if request.method == "POST" else request.GET
+    filial = next((f for f in filiallar if str(f.pk) == manba.get("filial", "")), None)
+    if filial is None and len(filiallar) == 1:
+        filial = filiallar[0]
+    xato, tanlangan = "", request.POST.get("joy", "")
+    if request.method == "POST":
+        bolim, joy_filial = None, None
+        tur, _, qiymat = tanlangan.partition(":")
+        if tur == "f" and qiymat.isdigit():
+            joy_filial = next((f for f in filiallar if f.pk == int(qiymat)), None)
+        elif tur == "b" and qiymat.isdigit():
+            bolim = Bolim.objects.filter(pk=int(qiymat), faol=True, filial__in=filiallar).select_related("filial").first()
+            joy_filial = bolim.filial if bolim else None
+        if joy_filial is None:
+            xato = "Reviziya qilinadigan joyni tanlang."
+        else:
+            filial = joy_filial
+            u = request.user
+            rais = {"ism": u.get_full_name() or u.get_username(), "lavozim": "Revizor", "rol": KOMISSIYA_RAIS}
+            try:
+                rv = reviziya_och(filial, bolim, [u], [rais], u, izoh=_matn(request.POST.get("izoh"))[:2000])
+            except ReviziyaXato as e:
+                xato = str(e)
+            else:
+                return redirect("reviziya:mobil_xonalar", pk=rv.pk)
+    kontekst = {"xato": xato, "tanlangan": tanlangan, "filial": filial, "bitta_filial": len(filiallar) == 1}
+    if filial is None:
+        kontekst["filiallar"] = _filial_variantlari(request.user)
+    else:
+        kontekst["variantlar"] = _bolim_variantlari(filial)
+        kontekst["hammasi_band"] = all(v["band"] for v in kontekst["variantlar"])
+    return render(request, "reviziya/mobil/yangi.html", kontekst, status=400 if xato else 200)
+
+
+@_mobil
+@require_GET
+def xonalar(request, pk):
+    rv = _reviziya(request, pk)
+    jami_belgilangan, jami_kutilgan = progress(rv)
+    return render(request, "reviziya/mobil/xonalar.html", {
+        "rv": rv, "qatorlar": xonalar_kesimi(rv), "tanlangan": request.session.get(_sessiya_kaliti(rv)),
+        "belgilangan": jami_belgilangan, "kutilgan": jami_kutilgan,
+    })
+
+
+@_mobil
+@require_POST
+def xona_tugadi_view(request, pk):
+    """«Xona tugadi» belgisini qo'yadi (`tugadi=1`) yoki olib tashlaydi; xonalar ro'yxatiga qaytadi."""
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        raise Http404
+    xona_tugadi(rv, _xona(rv, qiymat), request.user, tugadi=request.POST.get("tugadi") == "1")
+    return redirect("reviziya:mobil_xonalar", pk=rv.pk)
+
+
+@_mobil
+@require_GET
+def skan(request, pk):
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return redirect("reviziya:mobil_xonalar", pk=rv.pk)
+    xona = _xona(rv, qiymat)
+    request.session[_sessiya_kaliti(rv)] = qiymat
+    return render(request, "reviziya/mobil/skan.html", _skan_konteksti(request, rv, xona))
+
+
+def _av_kartochka(rv, xona, av, usul) -> dict:
+    xona_id = None if xona is None else xona.pk
+    kutilganlar = rv.kutilganlar.filter(av=av, bolim_id=xona_id)
+    holat = standart_holat(rv, av, xona_id)
+    jami_soni = AVQoldiq.objects.filter(av=av, filial_id=rv.filial_id).aggregate(s=Sum("soni"))["s"] or NOL
+    kutilgan = kutilganlar.aggregate(s=Sum("soni"))["s"] or NOL
+    topilgan = rv.qaydlar.filter(av=av, bolim_id=xona_id).aggregate(s=Sum("soni"))["s"] or NOL
+    return {
+        "tur": "av", "av": av, "usul": usul, "holat": holat, "kutilgan": kutilgan, "topilgan": topilgan,
+        "qoldi": max(kutilgan - topilgan, NOL),
+        "guruh": jami_soni if jami_soni > 1 else None,
+        "mollar": _mollar(rv, [av.pk]).get(av.pk, []),
+    }
+
+
+def _xodim_tanlovi(request, rv) -> list[tuple[str, list]]:
+    """МОЛ biriktirish uchun faol xodimlar: avval reviziya filialiniki, keyin qolganlari."""
+    xodimlar = list(faol_xodimlar(request.user).order_by(Trim("ism"), "pk"))
+    shu = [x for x in xodimlar if x.filial_id == rv.filial_id]
+    boshqa = [x for x in xodimlar if x.filial_id != rv.filial_id]
+    return [(rv.filial.nomi, shu), ("Boshqa filiallar", boshqa)]
+
+
+def _qidir(rv, q: str):
+    doira = _av_doirasi(rv)
+    aniq = list(doira.annotate(inv=Trim("inv_raqam")).filter(inv__iexact=q).order_by("nomi", "pk")[:QIDIRUV_NATIJALARI])
+    if aniq:
+        return aniq
+    # nomi, inv. raqam yoki javobgar shaxs (filialdagi joriy МОЛ) ismi bo'yicha
+    mol_boyicha = Taqsimot.objects.filter(filial_id=rv.filial_id, mol__ism__icontains=q).values("av_id")
+    return list(
+        doira.filter(Q(inv_raqam__icontains=q) | Q(nomi__icontains=q) | Q(pk__in=mol_boyicha))
+        .order_by("nomi", "pk")[:QIDIRUV_NATIJALARI]
+    )
+
+
+BOSHQA_FILIAL_MIN = 5  # boshqa filiallardan qisman (inv. raqam qismi) qidirish uchun eng kam belgi
+
+
+def _boshqa_filialdan(rv, q: str) -> list[dict]:
+    """Inv. raqam shu filialda topilmasa — boshqa filiallardan: aniq moslik birinchi, so'ng (kamida 5 belgi bo'lsa)
+    inv. raqam qismi bo'yicha. Har biri uchun yorliq QR matni (`DS|<filial kodi>|<inv>`) — qayd QR bilan
+    skanerlangandek «ortiqcha (boshqa filial)» bo'ladi."""
+    shart = Q(inv__iexact=q)
+    if len(q) >= BOSHQA_FILIAL_MIN:
+        shart |= Q(inv__icontains=q)
+    avlar = (
+        AV.objects.annotate(inv=Trim("inv_raqam"))
+        .filter(shart, filial_rekvizit__isnull=False)
+        .exclude(filial_rekvizit_id=rv.filial_id)
+        .exclude(inv="")
+        .select_related("filial_rekvizit")
+        .order_by("inv", "filial_rekvizit__nomi", "pk")[:QIDIRUV_NATIJALARI * 5]
+    )
+    avlar = sorted(avlar, key=lambda av: av.inv.casefold() != q.casefold())[:QIDIRUV_NATIJALARI]  # aniq — birinchi
+    return [
+        {"av": av, "filial": av.filial_rekvizit, "qr": f"{QR_BOSHI}{av.filial_rekvizit.kod.strip()}|{av.inv}"}
+        for av in avlar
+    ]
+
+
+def _begona_av(qr: str):
+    """Boshqa filial yorlig'i (`DS|kod|inv`) qaysi AV va filialniki — kartochkada ko'rsatish uchun."""
+    _, kod, inv = (x.strip() for x in qr.split("|", 2))
+    return (
+        AV.objects.annotate(inv=Trim("inv_raqam"), filial_kodi=Trim("filial_rekvizit__kod"))
+        .filter(inv=inv, filial_kodi=kod).select_related("filial_rekvizit").order_by("pk").first()
+    )
+
+
+@_mobil
+@require_GET
+def topish(request, pk):
+    """GET `qr` (kamera), `q` (inv. raqam / nom) yoki `av` (ro'yxatdan) -> AV kartochkasi bo'lagi."""
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return _xato("Avval xonani tanlang.", "#kartochka")
+    xona = _xona(rv, qiymat)
+    ctx = {"rv": rv, "xona_qiymati": qiymat, "holatlar": TaqsimotHolat.choices}
+    qr = _matn(request.GET.get("qr"))[:QR_MAKS]
+    q = _matn(request.GET.get("q"))[:QIDIRUV_MAKS]
+    av_id = (request.GET.get("av") or "").strip()
+    if not qr and q.upper().startswith(QR_BOSHI):
+        # USB skaner QR matnini qidiruv maydoniga «yozadi» — QR sifatida o'qiladi
+        qr, q = _matn(request.GET.get("q"))[:QR_MAKS], ""
+    if qr:
+        av, sabab = qr_tahlil(qr, rv)
+        if av is not None:
+            ctx.update(_av_kartochka(rv, xona, av, "qr"))
+        else:
+            ctx.update({"tur": "nomalum", "qr_matn": qr, "boshqa_filial": sabab == BOSHQA_FILIAL, "usul": "qr"})
+            if sabab == BOSHQA_FILIAL:
+                ctx["begona"] = _begona_av(qr)
+    elif av_id.isdigit():
+        av = _av_doirasi(rv).filter(pk=int(av_id)).first()
+        if av is None:
+            raise Http404
+        ctx.update(_av_kartochka(rv, xona, av, "qidiruv"))
+    elif q:
+        topilganlar = _qidir(rv, q)
+        begonalar = [] if topilganlar else _boshqa_filialdan(rv, q)
+        # Matn bo'yicha qidiruv doim ro'yxat (bitta natija ham tanlanadi) — yozish davomida kartochka o'zi
+        # ochilib ketmasin; to'g'ridan-to'g'ri kartochka faqat QR (skaner) bilan
+        mollar = _mollar(rv, [a.pk for a in topilganlar])
+        ctx.update({
+            "tur": "royxat", "topilganlar": [(a, mollar.get(a.pk, [])) for a in topilganlar], "begonalar": begonalar,
+            "q": q, "qisqa": len(q) < BOSHQA_FILIAL_MIN,
+        })
+    else:
+        return HttpResponse("")
+    if ctx.get("tur") == "av":
+        ctx["xodim_tanlovi"] = _xodim_tanlovi(request, rv)
+    return render(request, "reviziya/mobil/_kartochka.html", ctx)
+
+
+@_mobil
+@require_POST
+def saqla(request, pk):
+    """POST: `bolim`, `av` yoki `qr_matn`, `soni`, `holat`, `izoh`, `rasm`, `usul` -> qayd (takror — +soni)."""
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return _xato("Avval xonani tanlang.", "#saqla-xato")
+    xona = _xona(rv, qiymat)
+    try:
+        soni = _son(request.POST.get("soni"))
+    except ReviziyaXato as e:
+        return _xato(str(e), "#saqla-xato")
+    av_id = (request.POST.get("av") or "").strip()
+    qr = _matn(request.POST.get("qr_matn"))[:QR_MAKS]
+    av = None
+    if av_id:
+        av = _av_doirasi(rv).filter(pk=int(av_id)).first() if av_id.isdigit() else None
+        if av is None:
+            return _xato("AV bu reviziya filialida topilmadi.", "#saqla-xato")
+    elif qr:
+        av, _ = qr_tahlil(qr, rv)
+    try:
+        qayd = qayd_qosh(
+            rv, xona, request.user, av=av, qr_matn=qr, soni=soni,
+            holat=request.POST.get("holat") or None, usul=request.POST.get("usul") or ReviziyaQayd.Usul.QR,
+            izoh=_matn(request.POST.get("izoh")), rasm_fayl=request.FILES.get("rasm"),
+        )
+    except ReviziyaXato as e:
+        return _xato(str(e), "#saqla-xato")
+    except ValidationError as e:
+        return _xato(" ".join(e.messages), "#saqla-xato")
+    request.session[_sessiya_kaliti(rv)] = qiymat
+    kartochka = render_to_string(
+        "reviziya/mobil/_kartochka.html", {"tur": "saqlandi", "qayd": qayd, "rv": rv}, request=request
+    )
+    return HttpResponse(kartochka + _yangilanishlar(request, rv, xona))
+
+
+def _biriktiriladigan(rv, av, xona, xodim) -> list[tuple]:
+    """Biriktiriladigan [(taqsimot qatori, soni)]: shu xonadagi qatorlar. Xonada qatori yo'q (AV boshqa xonadan yoki
+    bo'limsiz kelgan) — shu xonada topilgan soni qadar boshqa joylardan; hali qayd qilinmagan bo'lsa, bitta dona
+    (kartochka ochilgan — AV qo'lda). Boshqa xonadagi donalarga tegilmaydi."""
+    xona_id = None if xona is None else xona.pk
+    qatorlar = list(Taqsimot.objects.filter(filial_id=rv.filial_id, av=av).select_related("mol").order_by("pk"))
+    shu_xonada = [t for t in qatorlar if t.bolim_id == xona_id]
+    if shu_xonada:
+        return [(t, t.soni) for t in shu_xonada if t.mol_id != xodim.pk]
+    qoldi = rv.qaydlar.filter(av=av, bolim_id=xona_id).aggregate(s=Sum("soni"))["s"] or Decimal("1")
+    natija = []
+    for t in qatorlar:
+        m = min(t.soni, qoldi)
+        if m > 0 and t.mol_id != xodim.pk:
+            natija.append((t, m))
+            qoldi -= m
+    return natija
+
+
+@_mobil
+@require_POST
+def mol_biriktir(request, pk):
+    """AV'ni tanlangan xodimga (МОЛ) biriktirish uchun qoralama МОЛ aktiga qo'shadi: shu xonadagi qatorlar
+    (`_biriktiriladigan`) joriy МОЛ'lari bo'yicha guruhlanadi (har topshiruvchi — alohida akt). Taqsimot o'zgarmaydi:
+    akt hisobchi yoki HR tasdiqlagach kuchga kiradi. Bitta xodimga tanlangan AV'lar bitta aktga yig'iladi."""
+    rv = _reviziya(request, pk)
+    av = _av_doirasi(rv).filter(pk=son_id(request.POST.get("av"))).first()
+    xodim = faol_xodimlar(request.user).filter(pk=son_id(request.POST.get("xodim"))).first()
+    if av is None:
+        raise Http404
+    if xodim is None:
+        return _xato("Javobgar xodimni tanlang.", "#mol-natija")
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return _xato("Avval xonani tanlang.", "#mol-natija")
+    guruhlar: dict = {}
+    for t, soni in _biriktiriladigan(rv, av, _xona(rv, qiymat), xodim):
+        guruhlar.setdefault(t.mol, []).append((t, soni))
+    if not guruhlar:
+        return _xato(f"Bu AV allaqachon {xodim.ism.strip()} da.", "#mol-natija")
+    izoh = rv.akt_izohi
+    aktlar = []
+    try:
+        with transaction.atomic():
+            for top, qatorlar in guruhlar.items():
+                akt, qoshildi = qoralamaga_qosh(top, xodim, qatorlar, request.user, izoh)
+                aktlar.append((akt, qoshildi))
+    except AktXato as e:
+        return _xato(str(e), "#mol-natija")
+    nomlar = ", ".join(a.nomi for a, _ in aktlar)
+    if not any(q for _, q in aktlar):
+        matn = f"Bu AV allaqachon qoralama aktda: {nomlar}."
+    else:
+        matn = f"{xodim.ism.strip()} ga biriktirish uchun qoralama aktga qo'shildi: {nomlar}. Hisobchi yoki HR tasdiqlaydi."
+    return HttpResponse(format_html('<p class="m-ok" role="status">{}</p>', matn))
+
+
+@_mobil
+@require_GET
+def tarix_view(request, pk):
+    """HTMX: AV tarixi (qayerdan kelgan, kim ko'chirgan, aktlar, reviziyalar) — kartochkada «Tarix» ochilganda.
+    Filial cheklovi `tarix()` ichida; summa faqat `pul_korish` bilan."""
+    rv = _reviziya(request, pk)
+    av = _av_doirasi(rv).filter(pk=son_id(request.GET.get("av"))).first()
+    if av is None:
+        raise Http404
+    return render(request, "reviziya/mobil/_tarix.html", {"tarix": av_tarixi(av, request.user)})
+
+
+def _joyida_qaydlari(rv, xona, qolganlar) -> list[tuple]:
+    """«Hammasi joyida» uchun [(av, holat, soni)]: qolgan son kutilgan holatlari bo'yicha bo'linadi. «Topilmadi»
+    holatidagi AV ko'zdan kechirilmay «joyida» bo'lmaydi — u faqat skanerlab belgilanadi."""
+    xona_id = None if xona is None else xona.pk
+    av_idlar = [q["av"].pk for q in qolganlar]
+
+    def yigindi(qs):
+        qatorlar = qs.filter(bolim_id=xona_id, av_id__in=av_idlar).order_by().values_list("av_id", "holat")
+        return {(av_id, holat): s for av_id, holat, s in qatorlar.annotate(s=Sum("soni"))}
+
+    kutilgan, topilgan = yigindi(rv.kutilganlar), yigindi(rv.qaydlar)
+    natija = []
+    for q in qolganlar:
+        qoldi = q["soni"]
+        for (av_id, holat), soni in sorted(kutilgan.items()):
+            if av_id != q["av"].pk or holat == TaqsimotHolat.TOPILMADI or qoldi <= 0:
+                continue
+            m = min(soni - topilgan.get((av_id, holat), NOL), qoldi)
+            if m > 0:
+                natija.append((q["av"], holat, m))
+                qoldi -= m
+    return natija
+
+
+@_mobil
+@require_POST
+def hammasi_bor(request, pk):
+    """POST `bolim`: shu xonadagi hamma «qolgan» AV'ni kutilgan soni va holati bilan belgilaydi («Hammasi joyida»)."""
+    rv = _reviziya(request, pk)
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return _xato("Avval xonani tanlang.", "#kartochka")
+    xona = _xona(rv, qiymat)
+    qolganlar = _qolganlar(rv, xona)
+    qaydlar = _joyida_qaydlari(rv, xona, qolganlar)
+    try:
+        with transaction.atomic():  # hammasi yoki hech biri
+            for av, holat, soni in qaydlar:
+                qayd_qosh(rv, xona, request.user, av=av, soni=soni, holat=holat, usul=ReviziyaQayd.Usul.QIDIRUV)
+    except ReviziyaXato as e:
+        return _xato(str(e), "#kartochka")
+    request.session[_sessiya_kaliti(rv)] = qiymat
+    belgilangan = len({av.pk for av, _, _ in qaydlar})
+    xabar = format_html('<p class="m-ok" role="status">{} ta AV belgilandi.</p>', belgilangan)
+    return HttpResponse(xabar + _yangilanishlar(request, rv, xona))
+
+
+@_mobil
+@require_POST
+def tuzat(request, qayd_pk):
+    """POST `soni`: qayd sonini o'rnatadi; 0 — qayd o'chiriladi (faqat o'z qaydi yoki `reviziya_boshqarish`)."""
+    qayd = ReviziyaQayd.objects.select_related("bolim").filter(pk=qayd_pk).first()
+    if qayd is None:
+        raise Http404
+    rv = _reviziya(request, qayd.reviziya_id)
+    try:
+        qayd_tuzat(qayd, _son(request.POST.get("soni"), nol_mumkin=True), request.user)
+    except ReviziyaXato as e:
+        return _xato(str(e), "#oxirgilar-xato")
+    return HttpResponse(_yangilanishlar(request, rv, qayd.bolim, oxirgilar_oob=False))

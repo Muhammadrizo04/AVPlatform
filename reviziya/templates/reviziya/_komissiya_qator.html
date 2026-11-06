@@ -1,0 +1,25 @@
+<div class="row g-2 align-items-center komissiya-qator">
+  <input type="hidden" name="komissiya_xodim" value="{{ a.xodim_id|default_if_none:'' }}">
+  <div class="col-md-5">
+    {% if a.xodim_id %}
+    <input type="hidden" name="komissiya_ism" value="{{ a.ism }}">
+    <div class="fw-semibold">{{ a.ism }}</div>
+    {% if a.filial %}<div class="small text-body-secondary">{{ a.filial }}</div>{% endif %}
+    {% else %}
+    <input class="form-control form-control-sm" name="komissiya_ism" value="{{ a.ism }}" placeholder="F.I.Sh." aria-label="Komissiya a'zosi ismi" maxlength="255" required>
+    <div class="small text-body-secondary">1C ro'yxatida yo'q</div>
+    {% endif %}
+  </div>
+  <div class="col-md-4">
+    <input class="form-control form-control-sm" name="komissiya_lavozim" value="{{ a.lavozim }}" placeholder="Lavozim" aria-label="Lavozim" maxlength="255">
+  </div>
+  <div class="col-8 col-md-2">
+    <select class="form-select form-select-sm" name="komissiya_rol" aria-label="Komissiyadagi o'rni">
+      {% for kalit, nomi in rollar %}<option value="{{ kalit }}"{% if a.rol == kalit %} selected{% endif %}>{{ nomi }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-4 col-md-1 text-end">
+    <button type="button" class="btn btn-sm btn-ghost-danger" onclick="this.closest('.komissiya-qator').remove()" aria-label="Komissiyadan olib tashlash" title="Olib tashlash"><i class="cil-x" aria-hidden="true"></i></button>
+  </div>
+</div>
+{% if yangi %}<div id="komissiya-natija" hx-swap-oob="true"></div>{% endif %}

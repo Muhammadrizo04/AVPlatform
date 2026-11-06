@@ -1,0 +1,10 @@
+[Unit]
+Description=AV: zaxira har kecha 02:30
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=av-backup.service
+
+[Install]
+WantedBy=timers.target

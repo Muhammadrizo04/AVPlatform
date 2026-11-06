@@ -7,16 +7,25 @@ from django.db.models import QuerySet
 
 from .models import Rol
 
-# amal -> shu amalga ruxsati bor rollar. Revizor 1-bosqichda panelga kirmaydi.
+# amal -> shu amalga ruxsati bor rollar. Revizor panelda faqat «Reviziyalar» ni ko'radi (o'z filiallarida boshqaradi).
 HUQUQLAR: dict[str, set[str]] = {
     "korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
+    # Bosh sahifa (umumiy ko'rsatkichlar): hisobchiga kerak emas — u kirgach AV ro'yxatiga o'tadi.
+    "bosh_sahifa": {Rol.ADMIN, Rol.HR, Rol.RAHBAR},
     "av_tahrir": {Rol.ADMIN, Rol.HISOBCHI},
     "taqsimot": {Rol.ADMIN, Rol.HISOBCHI},
     "bolim_tahrir": {Rol.ADMIN, Rol.HISOBCHI},
     "mol_akt": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR},
     "yorliq": {Rol.ADMIN, Rol.HISOBCHI},
-    "tozalash": {Rol.ADMIN, Rol.HISOBCHI},
+    "tozalash": {Rol.ADMIN},  # «Tizim» bo'limi — faqat admin
     "hisobot": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR},
+    # Summa, qiymat, dona narxi, amortizatsiya va 1C izohi: sahifa, Excel, PDF va tarixda. HR — faqat soni.
+    "pul_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.RAHBAR},
+    # «1C chiqimlari» sahifasi: rahbarga kerak emas (menyuda ham, bosh sahifa plitkasida ham ko'rinmaydi).
+    "chiqim_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR},
+    "reviziya_boshqarish": {Rol.ADMIN, Rol.HISOBCHI, Rol.REVIZOR},
+    "reviziya_otkazish": {Rol.ADMIN, Rol.HISOBCHI, Rol.REVIZOR},
+    "reviziya_korish": {Rol.ADMIN, Rol.HISOBCHI, Rol.HR, Rol.RAHBAR, Rol.REVIZOR},
     "sozlama": {Rol.ADMIN},
     "sinxron": {Rol.ADMIN},
 }
@@ -44,8 +53,12 @@ def ruxsat_filial_idlar(user) -> set[int] | None:
     profil = getattr(user, "profil", None)
     if profil is None:
         return set()
-    idlar = set(profil.filiallar.values_list("pk", flat=True))
-    return idlar or None
+    # Bir so'rov (bir user obyekti) ichida qayta-qayta so'ralmasin.
+    idlar = getattr(user, "_ruxsat_filial_idlar", False)
+    if idlar is False:
+        idlar = set(profil.filiallar.values_list("pk", flat=True)) or None
+        user._ruxsat_filial_idlar = idlar
+    return set(idlar) if idlar else None
 
 
 def filial_bilan_chekla(qs: QuerySet, user, maydon: str = "filial") -> QuerySet:

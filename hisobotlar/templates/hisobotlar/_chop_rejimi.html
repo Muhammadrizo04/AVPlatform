@@ -1,0 +1,7 @@
+{# Chop etish rejimi (?chop=…): sahifa ochilgach chop etish oynasi chiqadi (panel/chop.js); bekor qilinsa — qayta tugmasi. #}
+<div class="alert alert-info d-flex flex-wrap align-items-center gap-2 chop-yoq" data-avto-chop>
+  <span>Chop etish uchun tayyorlandi: {{ qator_soni }} ta qator{% if chop == "summasiz" %}, qiymatsiz{% endif %}.</span>
+  <span class="ms-auto"></span>
+  <button type="button" class="btn btn-sm btn-primary" data-chop><i class="cil-print me-1"></i>Chop etish</button>
+  <a class="btn btn-sm btn-ghost-secondary" href="{{ orqa_url }}">Ro'yxatga qaytish</a>
+</div>
