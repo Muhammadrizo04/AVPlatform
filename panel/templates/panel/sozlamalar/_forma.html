@@ -1,11 +1,16 @@
 {% load forma %}{% if forma.non_field_errors %}<div class="alert alert-danger py-2 xato">{{ forma.non_field_errors|join:" " }}</div>{% endif %}
+{# Katakchalar ro'yxati baland: u o'ngda, oddiy maydonlar chapda ketma-ket turadi — ular orasida bo'sh joy qolmaydi #}
+{% if forma|katakchali %}
 <div class="row g-3 mb-3">
-{% for f in forma %}
-  {% if f|katakchalar %}
-  <div class="col-md-6">
+  <div class="col-md-6"><div class="row g-3">
+  {% for f in forma %}{% if not f|katakchalar %}{% include "panel/sozlamalar/_maydon.html" with ustun="col-12" %}{% endif %}{% endfor %}
+  </div></div>
+  <div class="col-md-6 katakchalar-ustun">
+  {% for f in forma %}{% if f|katakchalar %}
+  <div class="katakchalar-maydon">
     <div class="d-flex align-items-center gap-2 mb-2">
       <span class="form-label mb-0">{{ f.label }}</span>
-      <button type="button" class="btn btn-sm btn-link p-0 ms-auto" onclick="this.closest('.col-md-6').querySelectorAll('input[type=checkbox]').forEach(function (k) { k.checked = false; })">Belgilarni tozalash</button>
+      <button type="button" class="btn btn-sm btn-link p-0 ms-auto" onclick="this.closest('.katakchalar-maydon').querySelectorAll('input[type=checkbox]').forEach(function (k) { k.checked = false; })">Belgilarni tozalash</button>
     </div>
     <div class="border rounded p-2 katakchalar-royxat">
       {% for v in f %}<div class="form-check mb-1">{{ v.tag }}<label class="form-check-label" for="{{ v.id_for_label }}">{{ v.choice_label }}</label></div>{% endfor %}
@@ -13,10 +18,11 @@
     {% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}
     {% if f.errors %}<div class="invalid-feedback d-block xato">{{ f.errors|join:" " }}</div>{% endif %}
   </div>
-  {% elif f|belgilash_katagi %}
-  <div class="col-12"><div class="form-check">{{ f|cui }} <label class="form-check-label" for="{{ f.id_for_label }}">{{ f.label }}</label>{% if f.errors %} <span class="xato small">{{ f.errors|join:" " }}</span>{% endif %}{% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}</div></div>
-  {% else %}
-  <div class="col-md-6"><label class="form-label" for="{{ f.id_for_label }}">{{ f.label }}</label>{{ f|cui }}{% if f.errors %}<div class="invalid-feedback d-block xato">{{ f.errors|join:" " }}</div>{% endif %}{% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}</div>
-  {% endif %}
-{% endfor %}
+  {% endif %}{% endfor %}
+  </div>
 </div>
+{% else %}
+<div class="row g-3 mb-3">
+{% for f in forma %}{% include "panel/sozlamalar/_maydon.html" with ustun="col-md-6" %}{% endfor %}
+</div>
+{% endif %}

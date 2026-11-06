@@ -28,6 +28,12 @@ def belgilash_katagi(maydon) -> bool:
 
 
 @register.filter
+def katakchali(forma) -> bool:
+    """Formada katakchalar ro'yxati bormi: bor bo'lsa `_forma.html` ikki ustunli joylashuvni oladi."""
+    return any(katakchalar(maydon) for maydon in forma)
+
+
+@register.filter
 def katakchalar(maydon) -> bool:
     """Bir nechta tanlov katakchalar ro'yxati (`CheckboxSelectMultiple`)."""
     return isinstance(maydon.field.widget, forms.CheckboxSelectMultiple)

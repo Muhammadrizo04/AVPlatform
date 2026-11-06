@@ -401,3 +401,9 @@ def test_av_turi_uzun_tanlov_va_xotira_tipi(client_admin, tur):
     s = AVTuriSozlama.objects.get(av_turi=tur)
     assert s.maydonlar[0]["tanlov_qiymatlari"] == cpu and s.maydonlar[1]["tip"] == "xotira"
     assert "Intel Core i3 (2-avlod)\nIntel Core i3 (3-avlod)" in client_admin.get(url).content.decode()
+
+
+def test_foydalanuvchi_formasida_maydonlar_chapda_filiallar_ongda(client_admin):
+    html = client_admin.get(reverse("panel:foydalanuvchilar")).content.decode()
+
+    assert html.index('name="username"') < html.index('name="parol"') < html.index("katakchalar-ustun")
