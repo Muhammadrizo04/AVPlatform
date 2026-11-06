@@ -541,11 +541,30 @@ def saqla(request, pk):
     return HttpResponse(kartochka + _yangilanishlar(request, rv, xona))
 
 
+def _biriktiriladigan(rv, av, xona, xodim) -> list[tuple]:
+    """Biriktiriladigan [(taqsimot qatori, soni)]: shu xonadagi qatorlar. Xonada qatori yo'q (AV boshqa xonadan yoki
+    bo'limsiz kelgan) — shu xonada topilgan soni qadar boshqa joylardan; hali qayd qilinmagan bo'lsa, bitta dona
+    (kartochka ochilgan — AV qo'lda). Boshqa xonadagi donalarga tegilmaydi."""
+    xona_id = None if xona is None else xona.pk
+    qatorlar = list(Taqsimot.objects.filter(filial_id=rv.filial_id, av=av).select_related("mol").order_by("pk"))
+    shu_xonada = [t for t in qatorlar if t.bolim_id == xona_id]
+    if shu_xonada:
+        return [(t, t.soni) for t in shu_xonada if t.mol_id != xodim.pk]
+    qoldi = rv.qaydlar.filter(av=av, bolim_id=xona_id).aggregate(s=Sum("soni"))["s"] or Decimal("1")
+    natija = []
+    for t in qatorlar:
+        m = min(t.soni, qoldi)
+        if m > 0 and t.mol_id != xodim.pk:
+            natija.append((t, m))
+            qoldi -= m
+    return natija
+
+
 @_mobil
 @require_POST
 def mol_biriktir(request, pk):
-    """AV'ni tanlangan xodimga (МОЛ) biriktirish uchun qoralama МОЛ aktiga qo'shadi: reviziya filialidagi
-    AV qatorlari joriy МОЛ'lari bo'yicha guruhlanadi (har topshiruvchi — alohida akt). Taqsimot o'zgarmaydi:
+    """AV'ni tanlangan xodimga (МОЛ) biriktirish uchun qoralama МОЛ aktiga qo'shadi: shu xonadagi qatorlar
+    (`_biriktiriladigan`) joriy МОЛ'lari bo'yicha guruhlanadi (har topshiruvchi — alohida akt). Taqsimot o'zgarmaydi:
     akt hisobchi yoki HR tasdiqlagach kuchga kiradi. Bitta xodimga tanlangan AV'lar bitta aktga yig'iladi."""
     rv = _reviziya(request, pk)
     av = _av_doirasi(rv).filter(pk=son_id(request.POST.get("av"))).first()
@@ -554,9 +573,12 @@ def mol_biriktir(request, pk):
         raise Http404
     if xodim is None:
         return _xato("Javobgar xodimni tanlang.", "#mol-natija")
+    qiymat = _xona_qiymati(request, rv)
+    if qiymat is None:
+        return _xato("Avval xonani tanlang.", "#mol-natija")
     guruhlar: dict = {}
-    for t in Taqsimot.objects.filter(filial_id=rv.filial_id, av=av).exclude(mol=xodim).select_related("mol"):
-        guruhlar.setdefault(t.mol, []).append((t, t.soni))
+    for t, soni in _biriktiriladigan(rv, av, _xona(rv, qiymat), xodim):
+        guruhlar.setdefault(t.mol, []).append((t, soni))
     if not guruhlar:
         return _xato(f"Bu AV allaqachon {xodim.ism.strip()} da.", "#mol-natija")
     izoh = rv.akt_izohi

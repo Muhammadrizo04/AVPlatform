@@ -222,7 +222,8 @@ olinadi. Bir joyda qamrovi kesishgan ikkinchi ochiq reviziya ochilmaydi. Revizor
 bo'yicha qidiradi. Qayta skan qilinsa, soni bittaga oshadi. Kamera faqat HTTPS'da ishlaydi. Bir xonada kutilganlar
 hammasi joyida bo'lsa, tez belgilash mumkin: har AV kutilgan holati bilan belgilanadi, «Topilmadi» holatidagilar esa faqat
 skanerlab belgilanadi. Xona tugagach, «xona tugadi» belgilanadi. Revizor javobgarsiz AV'ni xodimga
-biriktirsa, qoralama akt tuziladi: u tasdiqlangach javobgar almashadi.
+biriktirsa, qoralama akt tuziladi: u tasdiqlangach javobgar almashadi. Aktga faqat shu xonadagi donalar tushadi. Yakunlashda
+AV ko'chsa yoki holati o'zgarsa, akt qatori ham unga ergashadi va akt tasdiqlanaveradi.
 
 **3. Vedomost (kompyuterda).** Reviziya sahifasi jonli yangilanadi: Belgilangan / kutilgan, Bo'limlar kesimi (Tugadi,
 Sanalmoqda, Boshlanmagan) va guruhlar: topildi, holati boshqa, boshqa joyda, kam / topilmadi, ortiqcha. Vedomostdan

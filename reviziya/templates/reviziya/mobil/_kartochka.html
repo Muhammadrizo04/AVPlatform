@@ -79,6 +79,7 @@
 <details class="m-tarix-qism">
   <summary>Javobgar shaxsni biriktirish</summary>
   <form hx-post="{% url 'reviziya:mobil_mol' rv.pk %}" hx-target="#mol-natija" class="m-mol-forma">
+    <input type="hidden" name="bolim" value="{{ xona_qiymati }}">
     <input type="hidden" name="av" value="{{ av.pk }}">
     <label class="m-yorliq" for="k-xodim">Kimga biriktiriladi</label>
     <input type="hidden" name="xodim" value="" data-xodim-id>

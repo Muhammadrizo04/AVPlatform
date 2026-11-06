@@ -472,9 +472,9 @@ def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalan
     html = matn(c.get(url("mobil_topish", rv.pk, bolim=xona.pk, av=pc.pk)))
     assert "Javobgar shaxsni biriktirish" in html and f'data-xodim="{kassir.pk}" data-xodim-nomi="Akbarov Burxonjon (kassir)"' in html
 
-    r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk})
+    r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk, "bolim": xona.pk})
     assert r.status_code == 200 and "qoralama aktga qo'shildi" in matn(r)
-    c.post(url("mobil_mol", rv.pk), {"av": monitor.pk, "xodim": kassir.pk})
+    c.post(url("mobil_mol", rv.pk), {"av": monitor.pk, "xodim": kassir.pk, "bolim": xona.pk})
     akt = MolAkt.objects.get()  # ikkalasi bitta qoralama aktda
     assert (akt.holat, akt.topshiruvchi, akt.qabul_qiluvchi, akt.tuzdi) == ("qoralama", None, kassir, revizor)
     assert akt.izoh == f"{rv.nomi} reviziyasi bo'yicha"
@@ -483,11 +483,11 @@ def test_reviziyada_mol_biriktirish_qoralama_akt(fa, revizor, hisobchi, foydalan
     assert q1.mol is None  # tasdiqlanmaguncha taqsimot o'zgarmaydi
 
     # takror — qator ikki marta qo'shilmaydi
-    r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk})
+    r = c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk, "bolim": xona.pk})
     assert "allaqachon qoralama aktda" in matn(r) and akt.qatorlar.count() == 2
     # xodim tanlanmagan — 400; boshqa filialdagi revizor — 404
-    assert c.post(url("mobil_mol", rv.pk), {"av": pc.pk}).status_code == 400
-    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk}).status_code == 404
+    assert c.post(url("mobil_mol", rv.pk), {"av": pc.pk, "bolim": xona.pk}).status_code == 400
+    assert kirgan(foydalanuvchi("revizor", filiallar=[filial_yarat("99")])).post(url("mobil_mol", rv.pk), {"av": pc.pk, "xodim": kassir.pk, "bolim": xona.pk}).status_code == 404
 
 
 def test_boshqa_filial_av_inv_raqam_bilan(muhit, revizor, filial_yarat):

@@ -9,6 +9,7 @@ from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
 
+from mol.models import MolAkt, MolAktQator
 from onec.models import AV
 from vositalar.amallar import AmalXato, _ozgartir, holat_ozgartir, kochir
 from vositalar.models import Bolim, Holat, Taqsimot, TaqsimotHarakat
@@ -83,6 +84,38 @@ def _begona_harakatlar(reviziya, av_id, dan):
     )
 
 
+def _aktni_ergashtir(reviziya, t, soni, bolim_id, holat) -> None:
+    """Revizor shu reviziyada tuzgan qoralama akt qatorlari taqsimot qatori ketidan yangi (bo'lim, holat) ga o'tadi:
+    akt shu kalit bo'yicha tasdiqlanadi, aks holda yakunlangach «qator topilmadi» bo'lib qolardi. Chaqiruvchi
+    `t` ning eski bo'lim va holatini beradi: `t` qulflangan, lekin o'zgarishdan oldingi nusxa."""
+    qatorlar = MolAktQator.objects.select_for_update(of=("self",)).filter(
+        akt__holat=MolAkt.Holat.QORALAMA, akt__izoh=reviziya.akt_izohi, akt__topshiruvchi_id=t.mol_id,
+        av_id=t.av_id, filial_id=t.filial_id, bolim_id=t.bolim_id, holat=t.holat,
+    )
+    qoldi = soni
+    for q in qatorlar.order_by("pk"):
+        if qoldi <= 0:
+            break
+        m = min(q.soni, qoldi)
+        qoldi -= m
+        joy = dict(akt_id=q.akt_id, av_id=q.av_id, filial_id=q.filial_id, bolim_id=bolim_id, holat=holat)
+        nishon = MolAktQator.objects.filter(**joy).first()
+        if nishon is not None:
+            nishon.soni += m
+            nishon.save(update_fields=["soni"])
+        elif m < q.soni:
+            MolAktQator.objects.create(soni=m, **joy)
+        else:
+            q.bolim_id, q.holat = bolim_id, holat
+            q.save(update_fields=["bolim", "holat"])
+            continue
+        q.soni -= m
+        if q.soni > 0:
+            q.save(update_fields=["soni"])
+        else:
+            q.delete()
+
+
 def _surat_eskirmaganini_tekshir(reviziya, q) -> None:
     """Farq reviziya ochilgandagi suratdan hisoblangan: oraliqda AV joyi, holati yoki soni o'zgargan bo'lsa, farq
     haqiqatni aks ettirmaydi (qonuniy ko'chirilgan dona «kamomad» bo'lib chiqadi) — yozilmaydi. МОЛ akti suratdagi
@@ -126,10 +159,13 @@ def _taqsimotga(reviziya, q, soni, kim) -> None:
             yangi = kochir(t, m, nishon_bolim, kim, **izoh)
             if q.nishon_holat:
                 holat_ozgartir(yangi, m, q.nishon_holat, kim, **izoh)
+            _aktni_ergashtir(reviziya, t, m, nishon_bolim.pk, q.nishon_holat or t.holat)
         elif q.guruh == "holat_boshqa":
             holat_ozgartir(t, m, q.nishon_holat, kim, **izoh)
+            _aktni_ergashtir(reviziya, t, m, t.bolim_id, q.nishon_holat)
         else:
             holat_ozgartir(t, m, Holat.TOPILMADI, kim, **izoh)
+            _aktni_ergashtir(reviziya, t, m, t.bolim_id, Holat.TOPILMADI)
 
 
 def qollashni_bekor_qil(reviziya: Reviziya, kalit: str, kim) -> None:
@@ -193,6 +229,7 @@ def _teskari(reviziya, q, soni, kim) -> None:
         m = min(t.soni, qoldi)
         qoldi -= m
         _ozgartir(t, m, kim, REVIZIYA, bolim=q.bolim_id, holat=q.holat, hujjat_izoh=izoh)
+        _aktni_ergashtir(reviziya, t, m, q.bolim_id, q.holat)
 
 
 def yakunla_va_yoz(reviziya: Reviziya, kim) -> list[ReviziyaQollash]:
