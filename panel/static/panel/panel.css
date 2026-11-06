@@ -288,8 +288,11 @@ main fieldset { min-width: 0; }
 .dash-band::after { content: ""; position: absolute; inset: auto -10% -60% 40%; height: 140%; border-radius: 50%;
   background: radial-gradient(closest-side, rgba(79, 211, 163, .35), transparent); pointer-events: none; }
 /* Bosh sahifada yuqori panel rangli blok ustida turadi. Ogohlantirish yoki xabar bo'lsa, blok ko'tarilmaydi: ularni yopmasin */
-.wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band { margin-top: -4.25rem; padding-top: 4.75rem; }
-.wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .av-yol { position: relative; background: transparent; color: #fff; }
+.wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band { margin-top: -5rem; padding-top: .5rem; }
+/* Salom yuqori panel bilan bir qatorda; o'ngdagi soat va tugmalar ustiga chiqmasin */
+.wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band > :is(h1, p) { max-width: calc(100% - 27rem); }
+.wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band > h1 { font-size: 1.5rem; line-height: 1.25; margin-bottom: 0; }
+.wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .av-yol { position: relative; min-height: 4.25rem; background: transparent; color: #fff; }
 .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) :is(.av-vaqt b, .av-vaqt span, .av-foydalanuvchi .ism, .header-toggler) { color: #fff; }
 .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .av-foydalanuvchi .rol { color: rgba(255, 255, 255, .8); }
 .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .av-vaqt { border-color: rgba(255, 255, 255, .3); }
@@ -526,7 +529,10 @@ a.korsatkich:hover { transform: translateY(-1px); box-shadow: var(--av-soya-katt
   main.av-sahifa { padding: .5rem 1rem 2rem; }
   .av-yol { padding: 0 1rem; }
   .dash-band { margin: -.5rem -1rem 0; padding: 1.5rem 1rem 5rem; }
+  .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .av-yol { min-height: 3.5rem; }
   .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band { margin-top: -4rem; padding-top: 4.5rem; }
+  .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band > :is(h1, p) { max-width: none; }
+  .wrapper:has(.dash-band):not(:has(.banner, .xabarlar)) .dash-band > h1 { font-size: 1.75rem; margin-bottom: .25rem; }
   .solishtirish { grid-template-columns: repeat(3, 1fr); }
   .solishtirish .izoh { grid-column: 1 / -1; }
   .av-foydalanuvchi .ism-blok { display: none; }
