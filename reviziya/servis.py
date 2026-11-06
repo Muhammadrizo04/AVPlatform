@@ -15,12 +15,14 @@ from onec.models import AV, AVQoldiq, Filial
 from vositalar.bolimlar import pastkilar
 from vositalar.models import Holat as TaqsimotHolat
 from vositalar.models import Taqsimot
+from vositalar.narx import filial_narxlari
 from vositalar.rasmlar import rasm_saqla
 
 from .models import Reviziya, ReviziyaKutilgan, ReviziyaQayd, ReviziyaXona, XodimLavozimi
 
 NOL = Decimal("0")
 MAKS_SONI = Decimal("1000000000000")  # DecimalField(max_digits=15, decimal_places=3) chegarasi
+NARX_ANIQLIGI = Decimal("0.000001")  # ReviziyaKutilgan.dona_narxi
 RV_RAQAM_QULFI = 7310003  # reviziya raqami va qamrov tekshiruvi uchun advisory lock (sinxron 7310001, akt 7310002)
 NOMALUM = "noma'lum"
 BOSHQA_FILIAL = "boshqa filial"
@@ -132,12 +134,14 @@ def reviziya_och(filial, bolim, revizorlar, komissiya, kim, izoh: str = "") -> R
         qamrov = _qamrov(bolim)
         if qamrov is not None:
             qatorlar = qatorlar.filter(bolim_id__in=qamrov)
+        qatorlar = list(qatorlar.order_by("pk"))
+        narx = filial_narxlari({t.av_id for t in qatorlar})
         ReviziyaKutilgan.objects.bulk_create(
             ReviziyaKutilgan(
                 reviziya=reviziya, av_id=t.av_id, bolim_id=t.bolim_id, mol_id=t.mol_id, holat=t.holat,
-                soni=t.soni, taqsimot_id=t.pk,
+                soni=t.soni, taqsimot_id=t.pk, dona_narxi=narx(t.av_id, filial.pk).quantize(NARX_ANIQLIGI),
             )
-            for t in qatorlar.order_by("pk")
+            for t in qatorlar
         )
     return reviziya
 
@@ -346,12 +350,14 @@ def bekor_qil(reviziya: Reviziya, kim) -> None:
 
 
 def progress(reviziya: Reviziya, bolim_id=_HAMMASI) -> tuple[Decimal, Decimal]:
-    """(belgilangan, kutilgan) dona. `bolim_id` berilmasa — butun reviziya; None — bo'limsiz."""
+    """(belgilangan, kutilgan) dona. `bolim_id` berilmasa — butun reviziya; None — bo'limsiz. Belgilangan — kutilgan
+    donalardan topilgani: ortiqcha sanalmaydi, aks holda kutilganlar topilmasa ham 100% chiqardi."""
     qaydlar = reviziya.qaydlar.filter(av__isnull=False)
     kutilganlar = reviziya.kutilganlar.all()
     if bolim_id is not _HAMMASI:
         qaydlar = qaydlar.filter(bolim_id=bolim_id)
         kutilganlar = kutilganlar.filter(bolim_id=bolim_id)
-    belgilangan = qaydlar.aggregate(s=Sum("soni"))["s"] or NOL
-    kutilgan = kutilganlar.aggregate(s=Sum("soni"))["s"] or NOL
-    return belgilangan, kutilgan
+    topilgan = dict(qaydlar.order_by().values_list("av_id").annotate(s=Sum("soni")))
+    kutilgan = dict(kutilganlar.order_by().values_list("av_id").annotate(s=Sum("soni")))
+    belgilangan = sum((min(soni, topilgan.get(av_id, NOL)) for av_id, soni in kutilgan.items()), NOL)
+    return belgilangan, sum(kutilgan.values(), NOL)

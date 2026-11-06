@@ -48,6 +48,7 @@ XLSX_TURI = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 HOLAT_NOMLARI = dict(Holat.choices)
 # Guruh filtri: har guruh alohida, `kamomad` — kam va topilmadi birga (ko'rsatkich plitkasi)
 # Yangi tartibdan oldin yakunlangan (farqlar hali AV'ga yozilmagan) reviziya qatorlari uchun izoh
+XONA_NOMALUM = "Yozilmadi: «Bo'limsiz» da topilgan, xona noma'lum. AV qayerdaligini aniqlab, kartochkada ko'chiring."
 ESKI_TARTIB = "Eski tartibda yakunlangan: «Ochiqqa qaytarish», keyin «Yakunlash» — farq AV'ga yoziladi."
 GURUH_FILTRLARI = {**{g: {g} for g in GURUHLAR}, "kamomad": {"kam", "topilmadi"}, "farqlar": set(QOLLANADI)}
 # Ko'rsatkich plitkalari (spec §5.1: beshta guruh): (filtr, nomi, ikonka, rang sinfi, ogohlantiruvchi)
@@ -311,6 +312,8 @@ def sahifa(request, pk):
         satr["yozilmadi"] = yozilmagan.get(q.kalit, "")
         if yakunlangan and not satr["yozildi"] and not satr["yozilmadi"] and qollanadimi(q):
             satr["yozilmadi"] = ESKI_TARTIB
+        if yakunlangan and q.guruh == "boshqa_joyda" and q.nishon_bolim_id is None:
+            satr["yozilmadi"] = XONA_NOMALUM
         # ochiq reviziya: hali topilmagan qatorni sahifaning o'zidan «joyida» deb belgilash (skanerlashsiz)
         if skanerlay_oladi and q.av_id and q.guruh in ("kam", "topilmadi"):
             satr["belgi"] = f"{q.av_id}:{q.bolim_id or ''}:{q.holat}"
@@ -542,9 +545,10 @@ def belgila_view(request, pk):
                 except InvalidOperation:
                     raise ReviziyaXato("Sonni to'g'ri kiriting.") from None
                 bolim = Bolim.objects.get(pk=bolim_id) if bolim_id else None
+                # «Topilmadi» dagi AV joyida ekan — mobil skanerdagi kabi «ishlatilmoqda» (`standart_holat`)
                 qayd_qosh(
-                    rv, bolim, request.user, av=AV.objects.get(pk=av_id), soni=soni, holat=holat,
-                    usul=ReviziyaQayd.Usul.QIDIRUV,
+                    rv, bolim, request.user, av=AV.objects.get(pk=av_id), soni=soni,
+                    holat=Holat.ISHLATILMOQDA if holat == Holat.TOPILMADI else holat, usul=ReviziyaQayd.Usul.QIDIRUV,
                 )
     except (ValueError, Bolim.DoesNotExist, AV.DoesNotExist):
         messages.error(request, "Noto'g'ri so'rov.")

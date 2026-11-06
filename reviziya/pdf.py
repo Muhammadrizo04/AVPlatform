@@ -18,10 +18,11 @@ KAMOMAD = ("kam", "topilmadi")
 
 
 def _narxlar(reviziya, qatorlar) -> dict[int, Decimal]:
-    """Kamomad qatorlaridagi AV'larning reviziya filialidagi joriy dona narxi."""
+    """Kamomad qatorlaridagi AV'larning reviziya ochilgandagi dona narxi; eski reviziyada — filialdagi joriy narx."""
     idlar = {q.av_id for q in qatorlar if q.guruh in KAMOMAD}
-    narx = filial_narxlari(idlar)
-    return {av_id: narx(av_id, reviziya.filial_id) for av_id in idlar}
+    saqlangan = dict(reviziya.kutilganlar.filter(av_id__in=idlar, dona_narxi__isnull=False).values_list("av_id", "dona_narxi"))
+    narx = filial_narxlari(idlar - saqlangan.keys())
+    return {av_id: saqlangan[av_id] if av_id in saqlangan else narx(av_id, reviziya.filial_id) for av_id in idlar}
 
 
 def mollar(reviziya, bolim: str = ""):

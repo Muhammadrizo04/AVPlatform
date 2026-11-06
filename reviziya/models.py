@@ -54,6 +54,9 @@ class ReviziyaKutilgan(models.Model):
     holat = models.CharField(max_length=30, choices=TaqsimotHolat.choices)
     soni = models.DecimalField(max_digits=15, decimal_places=3)
     taqsimot_id = models.IntegerField()
+    # Reviziya ochilgan paytdagi dona narxi (filial bo'yicha): dalolatnoma keyin qayta chop etilsa ham summa o'zgarmaydi.
+    # Bo'sh — bu maydon qo'shilishidan oldingi reviziya, joriy narx olinadi.
+    dona_narxi = models.DecimalField(max_digits=21, decimal_places=6, null=True, blank=True)
 
 
 class ReviziyaQayd(models.Model):

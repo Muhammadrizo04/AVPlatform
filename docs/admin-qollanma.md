@@ -252,7 +252,8 @@ keyin shu AV bilan boshqa amal bo'lgan bo'lsa, rad etiladi va reviziya yakunlang
 reviziya yoki shu joylarni keyinroq tekshirgan yakunlangan reviziya bo'lsa ham rad etiladi. **Bekor qilish** — faqat
 ochiq reviziya uchun.
 
-**6. Hujjatlar.** Vedomost Excel'ga yuklanadi, **Dalolatnoma** PDF'da komissiya imzolari bilan chiqadi.
+**6. Hujjatlar.** Vedomost Excel'ga yuklanadi, **Dalolatnoma** PDF'da komissiya imzolari bilan chiqadi. Kamomad summasi
+reviziya ochilgan paytdagi narxda hisoblanadi, shuning uchun qayta chop etilganda o'zgarmaydi.
 
 Holatlar: Ochiq, Yakunlangan, Bekor qilingan. Reviziya natijasi AV tarixida ko'rinadi.
 

@@ -257,7 +257,7 @@ def bolim_boyicha(qatorlar, qiymat: str) -> list[VedomostQator]:
     """Bo'lim kesimi: `qiymat` — bo'lim id (shu bo'limda kutilgan/topilgan yoki unga ko'chadigan qatorlar) yoki
     `"bolimsiz"`; boshqa qiymat — filtrsiz."""
     if qiymat == "bolimsiz":
-        return [q for q in qatorlar if q.bolim_id is None]
+        return [q for q in qatorlar if q.bolim_id is None or (q.guruh == "boshqa_joyda" and q.nishon_bolim_id is None)]
     if qiymat.isdigit():
         b = int(qiymat)
         return [q for q in qatorlar if b in (q.bolim_id, q.nishon_bolim_id)]
