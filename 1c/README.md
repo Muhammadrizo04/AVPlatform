@@ -6,7 +6,7 @@ Platforma 8.3.13, moslik rejimi 8.3.9, prefiks `АВС_`, HTTP-servis `АВС_AV
 
 | Endpoint (GET) | Javob |
 |---|---|
-| `/versiya` | `{"versiya":"1.0.0","baza":..,"server_vaqti":..}` |
+| `/versiya` | `{"versiya":"1.1.0","baza":..,"server_vaqti":..,"xodim_ism_maydoni":..}` |
 | `/spravochniklar` | `{"tashkilotlar":[..],"filiallar":[..],"av_turlari":[..],"xodimlar":[..]}` |
 | `/vositalar` | `{"vositalar":[..],"qoldiqlar":[..]}` |
 | `/harakatlar?dan=YYYYMMDDhhmmss&gacha=YYYYMMDDhhmmss` | `{"harakatlar":[..]}` |
@@ -59,6 +59,9 @@ Konfigurator yoki 1C:Предприятие → Администрировани
 
 ## 3. Publikatsiya (`C:\inetpub\wwwroot\TestClaude\default.vrd`)
 
+Xodim `ism` i `Ходимлар` ning «Полное наименование» rekvizitidan olinadi (bo'sh bo'lsa — `Наименование`); qaysi rekvizit
+tanlangani `/versiya` dagi `xodim_ism_maydoni` da ko'rinadi.
+
 Kengaytma HTTP-servislari yoqilganini va sessiyalar qayta ishlatilishini tekshiring:
 
 ```xml
@@ -73,7 +76,7 @@ Kengaytma HTTP-servislari yoqilganini va sessiyalar qayta ishlatilishini tekshir
 - `publishExtensionsByDefault="true"` — bo'lmasa kengaytma servislari 404 beradi.
 - `reuseSessions="autouse"` — har so'rovda yangi seans ochilmasligi (litsenziya va tezlik) uchun.
 - O'zgartirgandan keyin: `iisreset` (yoki TestClaude app pool'ini qayta ishga tushiring).
-- Tekshiruv: `curl -u "AVSinxron:<parol>" http://<host>/TestClaude/hs/av/versiya` → 200 va `"versiya":"1.0.0"`.
+- Tekshiruv: `curl -u "AVSinxron:<parol>" http://<host>/TestClaude/hs/av/versiya` → 200 va `"versiya":"1.1.0"`.
 
 ## 4. 404 bo'lsa
 
@@ -96,7 +99,7 @@ spec qayta kelishilmaguncha keyingi tasklarga o'tilmaydi.
    (rekvizit) o'zgarmagan, `qoldiqlar`da A kamaygan, B paydo bo'lgan; `/harakatlar`da ikki qator (chiqim A, kirim B).
 2. ПоступлениеОС, СписаниеОС, ВводНачальныхОстатковОС, ПереоценкаОС bo'yicha ham `/harakatlar` qator beradi.
 3. `xodimlar` ro'yxati bo'sh emas, `ism`/`filial` to'ldirilgan.
-4. 3-bo'lim tekshiruvi (200 va `"versiya":"1.0.0"`; 404 bo'lsa — 4-bo'lim).
+4. 3-bo'lim tekshiruvi (200 va `"versiya":"1.1.0"`; 404 bo'lsa — 4-bo'lim).
 5. Kengaytma «Безопасный режим» yoqilgan holda 4 ta endpoint 200 qaytaradi.
 
 Jadval shabloni (`docs/1c-farazlar.md` da tayyor):

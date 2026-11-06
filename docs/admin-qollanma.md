@@ -145,7 +145,8 @@ Bu ro'yxat bo'sh bo'lishi kerak.
 1. «Yangi akt» ni bosing.
 2. Topshiruvchini tanlang. Birinchi marta biriktirish uchun «Javobgar shaxsi yo'q qatorlar»ni tanlang.
 3. Qatorlarni qidirib belgilang. Guruh AV'da topshiriladigan sonni yozing.
-4. Qabul qiluvchini tanlang va **«Qoralama aktni yaratish»** ni bosing. Hozircha hech narsa o'zgarmaydi.
+4. Ekran pastidagi panelda qabul qiluvchini tanlang va **«Qoralama aktni yaratish»** ni bosing. Panel qator ko'p bo'lsa ham doim
+   ko'rinib turadi. Hozircha hech narsa o'zgarmaydi.
 5. Aktni PDF qilib chop eting va imzolating.
 6. **«Tasdiqlash»** ni bosing. Faqat shunda javobgar almashadi.
 

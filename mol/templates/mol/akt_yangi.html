@@ -23,10 +23,6 @@
 </div></div>
 {% if kesildi %}<div class="alert alert-warning py-2 ogohlantirish">Faqat birinchi {{ chegara }} ta qator ko'rsatildi. Filtrni toraytiring (inv. raqam, nom yoki filial).</div>{% endif %}
 {% if xato %}<div class="alert alert-danger py-2 xato" role="alert">{{ xato }}</div>{% endif %}
-<div class="akt-tanlov" id="akt-tanlov"{% if not tanlanganlar %} hidden{% endif %}>
-  <b><span data-tanlangan-soni>{{ tanlanganlar|length }}</span> ta qator tanlangan</b>
-  <span class="text-body-secondary small">Qidiruvni o'zgartirsangiz ham tanlov saqlanadi — tanlanganlar jadval tepasida turadi.</span>
-</div>
 <form method="post" id="akt-forma">
   {% csrf_token %}
   <input type="hidden" name="topshiruvchi" value="{{ topshiruvchi.pk|default:'' }}">
@@ -54,26 +50,25 @@
   </table>
   </div>
   </div>
-  <div class="card mb-4"><div class="card-body">
-    <div class="row g-3">
-      <div class="col-md-5"><label class="form-label w-100">Qabul qiluvchi
-        <select class="form-select" name="qabul" required>
-          <option value="">— tanlang —</option>
-          {% for x in qabul_qiluvchilar %}<option value="{{ x.pk }}"{% if forma.qabul == x.pk|stringformat:"s" %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
-        </select>
-      </label></div>
-      <div class="col-md-7"><label class="form-label w-100">Izoh<textarea class="form-control" name="izoh" rows="2">{{ forma.izoh }}</textarea></label></div>
-    </div>
-    <button type="submit" class="btn btn-primary"{% if not qatorlar %} disabled{% endif %}><i class="cil-description me-1"></i>Qoralama aktni yaratish</button>
-  </div></div>
+  {# Qator ko'p bo'lsa ham doim ko'rinib turadi: ekran pastiga yopishadi, sahifa oxirigacha aylantirish shart emas #}
+  <div class="akt-amal">
+    <p class="akt-amal-soni"><b><span data-tanlangan-soni>{{ tanlanganlar|length }}</span> ta qator tanlangan</b>
+      <span>Qidiruvni o'zgartirsangiz ham tanlov saqlanadi — tanlanganlar jadval tepasida turadi.</span></p>
+    <label class="form-label mb-0">Qabul qiluvchi
+      <select class="form-select form-select-sm" name="qabul" required>
+        <option value="">— tanlang —</option>
+        {% for x in qabul_qiluvchilar %}<option value="{{ x.pk }}"{% if forma.qabul == x.pk|stringformat:"s" %} selected{% endif %}>{{ x.ism }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="form-label mb-0">Izoh <input class="form-control form-control-sm" type="text" name="izoh" value="{{ forma.izoh }}"></label>
+    <button type="submit" class="btn btn-primary btn-sm"{% if not qatorlar %} disabled{% endif %}><i class="cil-description me-1"></i>Qoralama aktni yaratish</button>
+  </div>
 </form>
 <script>
   // Faqat belgilangan qatorlarning soni yuboriladi (yuborilmasa — butun qator olinadi).
   function tanlovSoni() {
     var n = document.querySelectorAll('#akt-forma input[name="tanlangan"]:checked').length;
-    var panel = document.getElementById("akt-tanlov");
-    panel.hidden = n === 0;
-    panel.querySelector("[data-tanlangan-soni]").textContent = n;
+    document.querySelector("#akt-forma [data-tanlangan-soni]").textContent = n;
   }
   document.addEventListener("change", function (e) {
     var cb = e.target;

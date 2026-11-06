@@ -100,3 +100,9 @@ def test_ruxsatsiz_filial_filtrda_ishlamaydi(x, y, foydalanuvchi):
 def test_filtr_tanlovi_bir_necha_filialda_chiqadi(x, y, foydalanuvchi):
     assert 'name="filial"' in sahifa(foydalanuvchi("admin")).content.decode()
     assert 'name="filial"' not in sahifa(foydalanuvchi("hisobchi", filiallar=[x])).content.decode()
+
+
+def test_akt_oynasida_qabul_qiluvchi_doim_korinadigan_panelda(x, foydalanuvchi):
+    html = kirgan(foydalanuvchi("hisobchi")).get(reverse("mol:akt_yangi")).content.decode()
+
+    assert html.index('class="akt-amal"') < html.index('name="qabul"') < html.index("Qoralama aktni yaratish")
