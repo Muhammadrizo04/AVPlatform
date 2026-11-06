@@ -43,7 +43,7 @@
       <td class="son">{{ c.soni|son }}</td>
       {% if pul_huquqi %}<td class="son">{{ c.summa|pul }}</td>{% endif %}
       <td>{% if c.tur %}{{ c.get_tur_display }}{% else %}{{ c.get_taxmin_tur_display }} <span class="text-body-secondary">(taxmin)</span>{% endif %}</td>
-      <td>{% if c.holat == "kutilmoqda" %}<span class="badge bg-warning text-dark">{{ c.get_holat_display }}</span>{% elif c.holat == "tasdiqlangan" %}<span class="badge bg-success">{{ c.get_holat_display }}</span>{% else %}<span class="badge bg-secondary">{{ c.get_holat_display }}</span>{% endif %}</td>
+      <td>{% if c.ozgargan_soni is not None %}<span class="badge bg-danger me-1" title="1C'da {{ c.ozgargan_soni|son }} dona">1C'da soni o'zgargan</span>{% endif %}{% if c.holat == "kutilmoqda" %}<span class="badge bg-warning text-dark">{{ c.get_holat_display }}</span>{% elif c.holat == "tasdiqlangan" %}<span class="badge bg-success">{{ c.get_holat_display }}</span>{% else %}<span class="badge bg-secondary">{{ c.get_holat_display }}</span>{% endif %}</td>
       <td class="text-end">{% if taqsim_huquqi and c.holat == "kutilmoqda" %}<a class="btn btn-sm btn-primary" href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Tasdiqlash</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'chiqimlar:tasdiqlash' c.pk %}">Ko'rish</a>{% endif %}</td>
     </tr>
   {% empty %}

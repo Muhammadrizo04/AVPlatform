@@ -37,7 +37,7 @@
   <div><div class="yorliq">1C qoldig'i</div><div class="qiymat">{{ joylashuv.qoldiq|son }}</div></div>
   <div><div class="yorliq">Platforma taqsimoti</div><div class="qiymat platforma">{{ joylashuv.jami|son }}</div></div>
   <div><div class="yorliq">Farq</div>{% if joylashuv.farq %}<div class="qiymat farq-bor">{{ joylashuv.farq|son }}<em>mos emas</em></div>{% else %}<div class="qiymat">0<em>mos</em></div>{% endif %}</div>
-  <div class="izoh">{% if joylashuv.farq %}Taqsimot 1C qoldig'iga teng emas — joylashuv jadvalida qatorlarni tuzating yoki «Moslash»dan foydalaning.{% else %}1C qoldig'i va bo'limlar bo'yicha taqsimot bir xil. Farq paydo bo'lsa, shu yerda ko'rinadi.{% endif %}</div>
+  <div class="izoh">{% if joylashuv.kutilmoqda %}{{ joylashuv.kutilmoqda|son }} dona 1C chiqimi tasdiq kutmoqda: tasdiqlanguncha taqsimotda turadi. {% endif %}{% if joylashuv.farq %}Taqsimot 1C qoldig'iga teng emas — joylashuv jadvalida qatorlarni tuzating yoki «Moslash»dan foydalaning.{% else %}1C qoldig'i va bo'limlar bo'yicha taqsimot bir xil. Farq paydo bo'lsa, shu yerda ko'rinadi.{% endif %}</div>
 </section>
 {% endif %}
 {% if joylashuv.molsiz %}

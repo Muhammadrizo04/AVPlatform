@@ -5,8 +5,8 @@
   <div class="taqsimot-guruh">
     <div class="taqsimot-guruh-bosh">
       <span class="fw-semibold">{{ g.filial }}</span>
-      {% if g.farq == 0 %}<span class="holat-belgi holat-mos" title="Taqsimot yig'indisi 1C qoldig'iga teng"><i class="cil-check-circle" aria-hidden="true"></i>1C bilan mos · {{ g.jami|son }} dona</span>
-      {% else %}<span class="holat-belgi holat-farq" title="Taqsimot yig'indisi 1C qoldig'iga teng emas"><i class="cil-warning" aria-hidden="true"></i>Farq: {{ g.farq|son }} (taqsimot {{ g.jami|son }}, 1C qoldig'i {{ g.qoldiq|son }})</span>{% endif %}
+      {% if g.farq == 0 %}<span class="holat-belgi holat-mos" title="Taqsimot yig'indisi 1C qoldig'iga teng"><i class="cil-check-circle" aria-hidden="true"></i>1C bilan mos · {{ g.jami|son }} dona</span>{% if g.kutilmoqda %} <span class="small text-body-secondary">{{ g.kutilmoqda|son }} dona 1C chiqimi tasdiq kutmoqda</span>{% endif %}
+      {% else %}<span class="holat-belgi holat-farq" title="Taqsimot yig'indisi 1C qoldig'iga teng emas"><i class="cil-warning" aria-hidden="true"></i>Farq: {{ g.farq|son }} (taqsimot {{ g.jami|son }}, 1C qoldig'i {{ g.qoldiq|son }}{% if g.kutilmoqda %}, tasdiq kutayotgan chiqim {{ g.kutilmoqda|son }}{% endif %})</span>{% endif %}
     </div>
     <div class="table-responsive">
     <table class="table table-sm align-middle mb-0">

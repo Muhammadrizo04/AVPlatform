@@ -57,6 +57,8 @@ def _royxat_qs(request):
     filial = son(request.GET.get("filial"))
     if filial is not None:
         qs = qs.filter(filial_id=filial)
+    if request.GET.get("ozgargan") == "1":
+        qs = qs.filter(ozgargan_soni__isnull=False)
     dan, gacha = _sana(request.GET.get("dan")), _sana(request.GET.get("gacha"))
     if dan:
         qs = qs.filter(sana__date__gte=dan)

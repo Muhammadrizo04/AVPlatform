@@ -5,7 +5,7 @@ from decimal import Decimal
 from django.contrib import messages
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import F, OuterRef, Subquery, Sum
+from django.db.models import F, OuterRef, Q, Subquery, Sum
 from django.db.models.functions import Coalesce
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -15,6 +15,7 @@ from django.utils.cache import patch_vary_headers
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
+from chiqimlar.servis import kutilayotgan
 from hisobotlar.excel import jadval_xlsx
 from hisoblar.huquqlar import amal_kerak, filial_bilan_chekla, huquqi_bor, ruxsat_filial_idlar
 from hisoblar.parametrlar import son
@@ -302,8 +303,11 @@ def _taqsimot_kontekst(user, av, **qoshimcha) -> dict:
         g = guruh(t.filial_id, t.filial.nomi)
         g["qatorlar"].append(t)
         g["jami"] += t.soni
+    kutilmoqda = kutilayotgan(Q(av_id=av.pk))
     for g in guruhlar.values():
-        g["farq"] = max(g["qoldiq"], NOL) - g["jami"]  # moslash bilan bir xil qoida; manfiy — taqsimot ortiqcha
+        g["kutilmoqda"] = kutilmoqda.get((av.pk, g["filial_id"]), NOL)
+        # `moslash.farq` bilan bir xil qoida (K — tasdiq kutayotgan chiqim); manfiy — taqsimot ortiqcha
+        g["farq"] = max(g["qoldiq"], NOL) + g["kutilmoqda"] - g["jami"]
     taqsim_huquqi = huquqi_bor(user, "taqsimot")
     kontekst = {
         "av": av,
@@ -337,6 +341,7 @@ def _joylashuv(guruhlar) -> dict:
         "qoldiq": sum((max(g["qoldiq"], NOL) for g in guruhlar), NOL),
         "jami": sum((g["jami"] for g in guruhlar), NOL),
         "farq": sum((g["farq"] for g in guruhlar), NOL),
+        "kutilmoqda": sum((g["kutilmoqda"] for g in guruhlar), NOL),
     }
 
 

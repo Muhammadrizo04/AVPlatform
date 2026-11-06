@@ -38,7 +38,7 @@ def taxmin_qil(av_id: int, filial_id: int, sana: datetime, hujjat_turi: str) -> 
 
 def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
     """[dan, gacha] (aware) oralig'idagi 1C chiqimlarini `ChiqimHujjat`ga aks ettiradi."""
-    stat = {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0, "bekor_1c": 0}
+    stat = {"yaratildi": 0, "yangilandi": 0, "bekor": 0, "qaytdi": 0, "bekor_1c": 0, "ozgardi": 0}
     boshlanish = Sozlama.ol().chiqim_boshlanishi
     if boshlanish is None:
         return stat
@@ -97,6 +97,14 @@ def chiqimlarni_yangila(dan: datetime, gacha: datetime) -> dict:
                 c.save(update_fields=["holat"])
                 jurnal_yoz.yoz(None, c, "holat", ChiqimHujjat.Holat.BEKOR_1C, ChiqimHujjat.Holat.TASDIQLANGAN)
                 stat["qaytdi"] += 1
+            elif c.holat == ChiqimHujjat.Holat.TASDIQLANGAN:
+                # Tasdiq taqsimotni allaqachon o'zgartirgan: son o'zi yangilanmaydi, hisobchiga belgi qo'yiladi.
+                ozgargan = None if g["soni"] == c.soni else g["soni"]
+                if ozgargan != c.ozgargan_soni:
+                    jurnal_yoz.yoz(None, c, "ozgargan_soni", c.ozgargan_soni, ozgargan)
+                    c.ozgargan_soni = ozgargan
+                    c.save(update_fields=["ozgargan_soni"])
+                    stat["ozgardi"] += ozgargan is not None
 
         _taxminlarni_yangila(quyi, gacha, guruhlar)
 
@@ -361,7 +369,10 @@ def tasdiqni_qaytar(chiqim: ChiqimHujjat, kim) -> str:
         c.holat = yangi
         if yangi == ChiqimHujjat.Holat.KUTILMOQDA:
             c.tur, c.qabul_filial, c.kim, c.qachon, c.ayirilganlar = "", None, None, None, []
-        c.save(update_fields=["holat", "tur", "qabul_filial", "kim", "qachon", "ayirilganlar"])
+            if c.ozgargan_soni is not None:  # qayta tasdiq 1C'dagi joriy son bilan
+                c.soni = c.ozgargan_soni
+        c.ozgargan_soni = None
+        c.save(update_fields=["holat", "tur", "qabul_filial", "kim", "qachon", "ayirilganlar", "soni", "ozgargan_soni"])
         jurnal_yoz.yoz(kim, c, "holat", eski, yangi)
         _tekshir_invariant(c)
     chiqim.refresh_from_db()
@@ -405,8 +416,17 @@ def chiqim_tarixi(c: ChiqimHujjat) -> list[dict]:
     holat_nomi = dict(Holat.choices)
     tarix = [{"vaqt": c.yaratildi, "kim": "1C sinxron",
               "matn": f"1C'dan keldi: {_izoh(c)}, {_son(c.soni)} dona (taxmin: {c.get_taxmin_tur_display()})"}]
-    for j in Jurnal.objects.filter(obyekt_turi="chiqimlar.chiqimhujjat", obyekt_id=str(c.pk), maydon="holat"):
-        tarix.append({"vaqt": j.qachon, "kim": j.kim_nomi, "matn": holat_matni(j.eski, j.yangi)})
+    jurnal = Jurnal.objects.filter(
+        obyekt_turi="chiqimlar.chiqimhujjat", obyekt_id=str(c.pk), maydon__in=("holat", "ozgargan_soni")
+    )
+    for j in jurnal:
+        if j.maydon == "holat":
+            matn = holat_matni(j.eski, j.yangi)
+        elif j.yangi:
+            matn = f"1C'da soni o'zgardi: {_son(Decimal(j.yangi))} dona"
+        else:
+            matn = "1C'da soni yana tasdiqlangan songa teng"
+        tarix.append({"vaqt": j.qachon, "kim": j.kim_nomi, "matn": matn})
     harakatlar = (
         TaqsimotHarakat.objects.filter(av_id=c.av_id, filial_id=c.filial_id, hujjat_izoh__startswith=_izoh(c)[:255])
         .select_related("eski_bolim", "eski_mol", "yangi_bolim", "yangi_mol", "kim")

@@ -17,6 +17,7 @@
   bir vaqtda bitta sinxron (PostgreSQL advisory lock, kalit `7310001`).
 - Sinxron himoyasi: shubhali 1C javobi (qoldiq qatorlari 20% dan ko'p kamaysa, taqsimoti bor filial yo'q bo'lsa) hech narsa yozmay xato bilan tugaydi (`--majburiy` chetlab o'tadi); qoldig'i 0 bo'lgan qatorlar faqat to'liq sinxronda o'chiriladi (`moslashtir(toliq=False)` kechiktiradi).
 - Dona narxi filial bo'yicha (`vositalar.narx.filial_narxlari`), umumiy o'rtacha emas: hisobot, qaydnoma, akt va dalolatnoma shundan oladi.
+- Tasdiqlangan chiqimning 1C'dagi soni o'zgarsa, `ChiqimHujjat.ozgargan_soni` belgilanadi; «Tasdiqni bekor qilish» uni `soni` ga o'tkazadi.
 - Taqsimot invarianti: har (AV, filial) uchun Σ `Taqsimot.soni` = `AVQoldiq.soni`.
 - Python 3.12 bilan mos kod yozing (3.13'ga xos imkoniyatlar yo'q).
 

@@ -15,6 +15,9 @@
 </dl>
 </div></div>
 
+{% if chiqim.ozgargan_soni is not None %}
+<div class="alert alert-warning" role="status"><b>1C'da soni o'zgargan:</b> tasdiqlangan {{ chiqim.soni|son }} dona, 1C'da endi {{ chiqim.ozgargan_soni|son }} dona. «Tasdiqni bekor qilish» donalarni joyiga qaytaradi, keyin chiqimni yangi son bilan tasdiqlang.</div>
+{% endif %}
 {% if chiqim.holat == "bekor_1c" %}
 <div class="alert alert-danger d-flex flex-wrap align-items-center gap-2" role="alert">
   <i class="cil-warning" aria-hidden="true"></i>

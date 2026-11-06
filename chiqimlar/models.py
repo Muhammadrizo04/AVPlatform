@@ -24,6 +24,8 @@ class ChiqimHujjat(models.Model):
     av = models.ForeignKey("onec.AV", on_delete=models.PROTECT, related_name="chiqimlar")
     filial = models.ForeignKey("onec.Filial", on_delete=models.PROTECT, related_name="chiqimlar")
     soni = models.DecimalField(max_digits=15, decimal_places=3)
+    # tasdiqlangandan keyin 1C'da hujjat soni o'zgargan bo'lsa — 1C'dagi yangi son («Tasdiqni bekor qilish» qo'llaydi)
+    ozgargan_soni = models.DecimalField(max_digits=15, decimal_places=3, null=True, blank=True)
     summa = models.DecimalField(max_digits=15, decimal_places=2)
     holat = models.CharField(max_length=20, choices=Holat.choices, default=Holat.KUTILMOQDA)
     taxmin_tur = models.CharField(max_length=20, choices=Tur.choices)

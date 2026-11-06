@@ -172,6 +172,8 @@ holda yo'qolmaydi.
 
 - Foydalanuvchi chiqimni rad eta olmaydi: chiqim 1C'da bor ekan, uni tasdiqlash kerak. Noto'g'ri bo'lsa, 1C'da tuzating.
 - Xato tasdiqlangan bo'lsa, **«Tasdiqni bekor qilish»** donalarni joyiga qaytaradi va chiqim qayta tasdiqlashni kutadi.
+- Hujjat tasdiqdan keyin 1C'da soni o'zgarsa, chiqimda «1C'da soni o'zgargan» belgisi chiqadi va u «Kutayotgan ishlar»ga
+  tushadi. **«Tasdiqni bekor qilish»** donalarni joyiga qaytaradi, chiqim yangi son bilan qayta tasdiqlashni kutadi.
 - Hujjat tasdiqdan keyin 1C'da bekor qilinsa, u «1C'da bekor qilindi» holatiga o'tadi va **«Tasdiqni qaytarish»** AV'ni
   avvalgi bo'lim va javobgariga qo'yadi.
 

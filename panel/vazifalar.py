@@ -37,6 +37,9 @@ def _ishlar(user) -> list[dict]:
             f"{url}?holat={H.KUTILMOQDA}", "cil-swap-horizontal", "chiqim")
         ish("chiqim_bekor", "1C'da bekor qilingan — tasdiqni qaytarish kerak",
             chekla(ChiqimHujjat.objects.filter(holat=H.BEKOR_1C)), f"{url}?holat={H.BEKOR_1C}", "cil-warning", "chiqim")
+        ish("chiqim_ozgargan", "1C'da chiqim soni o'zgargan — tasdiqni yangilash kerak",
+            chekla(ChiqimHujjat.objects.filter(holat=H.TASDIQLANGAN, ozgargan_soni__isnull=False)),
+            f"{url}?holat={H.TASDIQLANGAN}&ozgargan=1", "cil-warning", "chiqim")
     # Qoralama МОЛ aktlari (masalan, reviziyada revizor Javobgar shaxsga biriktirgan AV'lar)
     if huquqi_bor(user, "mol_akt"):
         aktlar = MolAkt.objects.filter(holat=MolAkt.Holat.QORALAMA)
