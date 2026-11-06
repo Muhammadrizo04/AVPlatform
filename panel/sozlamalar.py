@@ -83,8 +83,9 @@ class FoydalanuvchiForma(forms.Form):
     filiallar = forms.ModelMultipleChoiceField(
         label="Filiallar", queryset=Filial.objects.order_by("nomi"), required=False,
         widget=forms.CheckboxSelectMultiple(attrs={"class": "form-check-input"}),
-        help_text="Hech biri belgilanmasa — barcha filiallarga ruxsat.",
+        help_text="Hech biri belgilanmasa, foydalanuvchi hech qaysi filialni ko'rmaydi.",
     )
+    hamma_filial = forms.BooleanField(label="Hamma filial", required=False)
     parol = forms.CharField(label="Parol", required=False, widget=forms.PasswordInput(render_value=False))
     is_active = forms.BooleanField(label="Faol", required=False, initial=True)
 
@@ -108,6 +109,8 @@ class FoydalanuvchiForma(forms.Form):
 
     def clean(self):
         data = super().clean()
+        if data.get("hamma_filial"):
+            data["filiallar"] = Filial.objects.none()
         parol = data.get("parol")
         if parol:
             try:
@@ -129,7 +132,7 @@ class FoydalanuvchiForma(forms.Form):
         profil = None if yangi else Profil.objects.get_or_create(user=user)[0]
         eski = {} if yangi else {
             "username": user.username, "ism": user.first_name, "rol": profil.rol, "is_active": user.is_active,
-            "filiallar": sorted(profil.filiallar.values_list("nomi", flat=True)),
+            "hamma_filial": profil.hamma_filial, "filiallar": sorted(profil.filiallar.values_list("nomi", flat=True)),
         }
         user.username, user.first_name = d["username"], d["ism"]
         if "is_active" in d:
@@ -141,11 +144,12 @@ class FoydalanuvchiForma(forms.Form):
         user.save()
         profil = profil or Profil(user=user)
         profil.rol = d["rol"]
+        profil.hamma_filial = d["hamma_filial"]
         profil.save()
         profil.filiallar.set(d["filiallar"])
         yangi_q = {
             "username": user.username, "ism": user.first_name, "rol": profil.rol, "is_active": user.is_active,
-            "filiallar": sorted(f.nomi for f in d["filiallar"]),
+            "hamma_filial": profil.hamma_filial, "filiallar": sorted(f.nomi for f in d["filiallar"]),
         }
         _farq_yoz(self.kim, user, eski, yangi_q)
         if d["parol"] and not yangi:
@@ -172,6 +176,7 @@ def foydalanuvchi_tahrir(request, pk):
         "username": user.username, "ism": user.first_name, "is_active": user.is_active,
         "rol": profil.rol if profil else Rol.REVIZOR,
         "filiallar": profil.filiallar.all() if profil else [],
+        "hamma_filial": profil.hamma_filial if profil else False,
     }
     forma = FoydalanuvchiForma(request.POST or None, initial=boshlangich, user=user, kim=request.user)
     if request.method == "POST" and forma.is_valid():

@@ -79,10 +79,10 @@ def test_foydalanuvchi_filialini_olib_hammasiga_ruxsat(client_admin, filial_yara
     html = client_admin.get(url).content.decode()
     assert 'type="checkbox" name="filiallar"' in html and "Belgilarni tozalash" in html
 
-    # katakchalar belgilanmasa `filiallar` umuman yuborilmaydi — barcha filiallarga ruxsat
-    javob = client_admin.post(url, {"username": "cheklangan", "rol": "hisobchi", "is_active": "on"})
+    javob = client_admin.post(url, {"username": "cheklangan", "rol": "hisobchi", "is_active": "on", "hamma_filial": "on"})
     assert javob.status_code == 302
-    assert not user.profil.filiallar.exists()
+    user.profil.refresh_from_db()
+    assert user.profil.hamma_filial and not user.profil.filiallar.exists()
 
 
 def test_foydalanuvchi_zaif_parol_va_takror_nom(client_admin, admin_user):

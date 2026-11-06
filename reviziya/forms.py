@@ -23,18 +23,17 @@ class _BolimMaydoni(forms.ModelChoiceField):
 
 
 def _filiali_bor(user, filial) -> bool:
-    """Foydalanuvchi profili filialga ruxsat beradimi (bo'sh ro'yxat — hamma filial)."""
-    filiallar = set(user.profil.filiallar.values_list("pk", flat=True))
-    return not filiallar or filial.pk in filiallar
+    """Foydalanuvchi profili filialga ruxsat beradimi."""
+    idlar = ruxsat_filial_idlar(user)
+    return idlar is None or filial.pk in idlar
 
 
 def _revizor_tanlovi(user):
-    """Revizor bo'la oladigan faol foydalanuvchilar — faqat so'rovchining filiallarida ishlay oladiganlar (profil
-    filiallari bo'sh — hamma filial)."""
+    """Revizor bo'la oladigan faol foydalanuvchilar — faqat so'rovchining filiallarida ishlay oladiganlar."""
     revizorlar = get_user_model().objects.filter(is_active=True, profil__rol__in=REVIZOR_ROLLARI)
     idlar = ruxsat_filial_idlar(user)
     if idlar is not None:
-        revizorlar = revizorlar.filter(Q(profil__filiallar__isnull=True) | Q(profil__filiallar__in=idlar))
+        revizorlar = revizorlar.filter(Q(profil__hamma_filial=True) | Q(profil__filiallar__in=idlar))
     return revizorlar.select_related("profil").distinct().order_by("first_name", "last_name", "username")
 
 

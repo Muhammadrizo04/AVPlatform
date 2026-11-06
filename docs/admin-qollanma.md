@@ -262,8 +262,9 @@ Holatlar: Ochiq, Yakunlangan, Bekor qilingan. Reviziya natijasi AV tarixida ko'r
 
 ### 13.1. Foydalanuvchilar
 
-**Yangi foydalanuvchi:** login, ism, rol, filiallar va parol. **Hech bir filial belgilanmasa, barcha filiallarga ruxsat
-beriladi** — bunga e'tibor bering.
+**Yangi foydalanuvchi:** login, ism, rol, filiallar va parol. Filiallar ro'yxatidan kerakli filiallarni belgilang yoki
+**«Hamma filial»** tugmasini bosing: u 1C'dan keyin qo'shiladigan yangi filiallarni ham ochadi. **Hech biri tanlanmasa,
+foydalanuvchi hech qaysi filialni ko'rmaydi.** Ro'yxatda bunday foydalanuvchining filiali qizil «yo'q» bo'lib chiqadi.
 
 Parol juda oddiy, faqat raqamlardan iborat yoki loginga o'xshash bo'lmasligi va kamida 8 belgi bo'lishi kerak.
 

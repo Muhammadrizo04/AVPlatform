@@ -3,18 +3,22 @@
 {% if forma|katakchali %}
 <div class="row g-3 mb-3">
   <div class="col-md-6"><div class="row g-3">
-  {% for f in forma %}{% if not f|katakchalar %}{% include "panel/sozlamalar/_maydon.html" with ustun="col-12" %}{% endif %}{% endfor %}
+  {% for f in forma %}{% if not f|katakchalar and f.name != "hamma_filial" %}{% include "panel/sozlamalar/_maydon.html" with ustun="col-12" %}{% endif %}{% endfor %}
   </div></div>
   <div class="col-md-6 katakchalar-ustun">
   {% for f in forma %}{% if f|katakchalar %}
   <div class="katakchalar-maydon">
     <div class="d-flex align-items-center gap-2 mb-2">
       <span class="form-label mb-0">{{ f.label }}</span>
-      <button type="button" class="btn btn-sm btn-link p-0 ms-auto" onclick="this.closest('.katakchalar-maydon').querySelectorAll('input[type=checkbox]').forEach(function (k) { k.checked = false; })">Belgilarni tozalash</button>
+      {% if f.name == "filiallar" and forma.hamma_filial %}
+      <input type="checkbox" class="btn-check" name="hamma_filial" id="id_hamma_filial" autocomplete="off"{% if forma.hamma_filial.value %} checked{% endif %} onchange="this.closest('.katakchalar-maydon').querySelector('.katakchalar-royxat').disabled = this.checked">
+      <label class="btn btn-sm btn-outline-primary py-0" for="id_hamma_filial">{{ forma.hamma_filial.label }}</label>
+      {% endif %}
+      <button type="button" class="btn btn-sm btn-link p-0 ms-auto" onclick="var m = this.closest('.katakchalar-maydon'); m.querySelectorAll('input[type=checkbox]').forEach(function (k) { k.checked = false; }); m.querySelector('.katakchalar-royxat').disabled = false;">Belgilarni tozalash</button>
     </div>
-    <div class="border rounded p-2 katakchalar-royxat">
+    <fieldset class="border rounded p-2 katakchalar-royxat"{% if f.name == "filiallar" and forma.hamma_filial.value %} disabled{% endif %}>
       {% for v in f %}<div class="form-check mb-1">{{ v.tag }}<label class="form-check-label" for="{{ v.id_for_label }}">{{ v.choice_label }}</label></div>{% endfor %}
-    </div>
+    </fieldset>
     {% if f.help_text %}<div class="form-text">{{ f.help_text }}</div>{% endif %}
     {% if f.errors %}<div class="invalid-feedback d-block xato">{{ f.errors|join:" " }}</div>{% endif %}
   </div>

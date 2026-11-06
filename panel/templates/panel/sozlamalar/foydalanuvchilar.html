@@ -13,7 +13,7 @@
     <tr>
       <td class="fw-semibold">{{ u.username }}</td><td>{{ u.first_name }}</td>
       <td>{{ u.profil.get_rol_display|default:"—" }}</td>
-      <td class="small">{% for f in u.profil.filiallar.all %}{{ f.nomi }}{% if not forloop.last %}, {% endif %}{% empty %}hammasi{% endfor %}</td>
+      <td class="small">{% if u.is_superuser or u.profil.hamma_filial %}hammasi{% else %}{% for f in u.profil.filiallar.all %}{{ f.nomi }}{% if not forloop.last %}, {% endif %}{% empty %}<span class="text-danger">yo'q</span>{% endfor %}{% endif %}</td>
       <td>{% if u.is_active %}<span class="badge bg-success">faol</span>{% else %}<span class="badge bg-secondary">faolsiz</span>{% endif %}</td>
       <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{% url 'panel:foydalanuvchi_tahrir' u.pk %}">Tahrirlash</a></td>
     </tr>

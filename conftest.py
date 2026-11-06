@@ -12,14 +12,14 @@ _hisoblagich = itertools.count(1)
 
 @pytest.fixture
 def foydalanuvchi(db):
-    """Fabrika: foydalanuvchi(rol, filiallar=()) -> Profil'li User."""
+    """Fabrika: foydalanuvchi(rol, filiallar=()) -> Profil'li User (filiallarsiz — «Hamma filial»)."""
     from hisoblar.models import Profil
 
     def yarat(rol, filiallar=()):
         user = get_user_model().objects.create_user(
             username=f"{rol}_{next(_hisoblagich)}", password=PAROL
         )
-        profil = Profil.objects.create(user=user, rol=rol)
+        profil = Profil.objects.create(user=user, rol=rol, hamma_filial=not filiallar)
         profil.filiallar.set(filiallar)
         return user
 

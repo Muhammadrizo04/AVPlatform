@@ -53,12 +53,14 @@ def ruxsat_filial_idlar(user) -> set[int] | None:
     profil = getattr(user, "profil", None)
     if profil is None:
         return set()
+    if profil.hamma_filial:
+        return None
     # Bir so'rov (bir user obyekti) ichida qayta-qayta so'ralmasin.
-    idlar = getattr(user, "_ruxsat_filial_idlar", False)
-    if idlar is False:
-        idlar = set(profil.filiallar.values_list("pk", flat=True)) or None
+    idlar = getattr(user, "_ruxsat_filial_idlar", None)
+    if idlar is None:
+        idlar = set(profil.filiallar.values_list("pk", flat=True))
         user._ruxsat_filial_idlar = idlar
-    return set(idlar) if idlar else None
+    return set(idlar)
 
 
 def filial_bilan_chekla(qs: QuerySet, user, maydon: str = "filial") -> QuerySet:
