@@ -361,3 +361,20 @@ def progress(reviziya: Reviziya, bolim_id=_HAMMASI) -> tuple[Decimal, Decimal]:
     kutilgan = dict(kutilganlar.order_by().values_list("av_id").annotate(s=Sum("soni")))
     belgilangan = sum((min(soni, topilgan.get(av_id, NOL)) for av_id, soni in kutilgan.items()), NOL)
     return belgilangan, sum(kutilgan.values(), NOL)
+
+
+def progress_kop(reviziyalar) -> dict:
+    """{reviziya_id: (belgilangan, kutilgan)} — `progress` ning butun reviziya varianti, ro'yxat uchun 2 ta so'rovda."""
+    idlar = [rv.pk for rv in reviziyalar]
+    topilgan, kutilgan = {}, {}
+    for qs, nishon in (
+        (ReviziyaQayd.objects.filter(reviziya_id__in=idlar, av__isnull=False), topilgan),
+        (ReviziyaKutilgan.objects.filter(reviziya_id__in=idlar), kutilgan),
+    ):
+        for rv_id, av_id, s in qs.order_by().values_list("reviziya_id", "av_id").annotate(s=Sum("soni")):
+            nishon[(rv_id, av_id)] = s
+    natija = {rv_id: [NOL, NOL] for rv_id in idlar}
+    for (rv_id, av_id), s in kutilgan.items():
+        natija[rv_id][0] += min(s, topilgan.get((rv_id, av_id), NOL))
+        natija[rv_id][1] += s
+    return {rv_id: tuple(juft) for rv_id, juft in natija.items()}

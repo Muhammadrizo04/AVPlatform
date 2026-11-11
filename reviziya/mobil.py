@@ -35,6 +35,7 @@ from .servis import (
     KOMISSIYA_RAIS,
     ReviziyaXato,
     progress,
+    progress_kop,
     qamrov_bolim_idlari,
     qayd_qosh,
     qayd_tuzat,
@@ -246,10 +247,9 @@ def _yangilanishlar(request, rv, xona, *, oxirgilar_oob=True) -> str:
 @_mobil
 @require_GET
 def reviziyalarim(request):
-    qatorlar = []
-    for rv in _reviziyalar(request.user).filter(holat=Reviziya.Holat.OCHIQ).order_by("-raqam"):
-        belgilangan, kutilgan = progress(rv)
-        qatorlar.append({"rv": rv, "belgilangan": belgilangan, "kutilgan": kutilgan})
+    reviziyalar = list(_reviziyalar(request.user).filter(holat=Reviziya.Holat.OCHIQ).order_by("-raqam"))
+    natija = progress_kop(reviziyalar)
+    qatorlar = [{"rv": rv, "belgilangan": natija[rv.pk][0], "kutilgan": natija[rv.pk][1]} for rv in reviziyalar]
     return render(request, "reviziya/mobil/reviziyalarim.html", {"qatorlar": qatorlar})
 
 
